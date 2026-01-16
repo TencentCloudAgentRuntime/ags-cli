@@ -1,0 +1,25 @@
+# AGS CLI Configuration File
+# Copy this file to ~/.ags/config.toml and modify as needed
+
+# Backend type: "e2b" or "cloud"
+backend = "e2b"
+
+# Default output format: "text" or "json"
+output = "text"
+
+# E2B API Configuration
+[e2b]
+api_key = ""
+domain = "tencentags.com"
+region = "ap-guangzhou"
+
+# Cloud API Configuration (Tencent Cloud)
+[cloud]
+secret_id = ""
+secret_key = ""
+region = "ap-guangzhou"
+# Use internal endpoints for Tencent Cloud internal network (default: false)
+# When true, uses:
+#   - Control plane: ags.internal.tencentcloudapi.com
+#   - Data plane: internal.tencentags.com
+internal = false
