@@ -1,0 +1,15 @@
+/*-ref
+
+# Build output
+/ags
+/build/
+/man/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store

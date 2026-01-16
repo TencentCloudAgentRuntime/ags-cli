@@ -1,0 +1,47 @@
+---
+description: Version numbering and release process rules. Apply when releasing versions, creating tags, or updating changelogs.
+globs: "**/CHANGELOG*.md,**/version.go,Makefile"
+---
+
+# Versioning Rules
+
+This project follows [Semantic Versioning 2.0.0](https://semver.org/).
+
+## Version Format
+
+`vMAJOR.MINOR.PATCH` (e.g., `v1.2.3`)
+
+- **MAJOR**: Incompatible API changes
+- **MINOR**: Backward-compatible new features
+- **PATCH**: Backward-compatible bug fixes
+
+## Pre-release Versions
+
+- Alpha: `v1.0.0-alpha.1`
+- Beta: `v1.0.0-beta.1`
+- Release Candidate: `v1.0.0-rc.1`
+
+## Git Tag Rules
+
+1. Tags MUST start with `v` prefix
+2. Tags MUST be annotated tags (not lightweight)
+3. Tag message should summarize the release
+
+## Release Checklist
+
+Before creating a release tag:
+
+1. [ ] All tests pass
+2. [ ] CHANGELOG.md updated with new version section
+3. [ ] CHANGELOG-zh.md updated (bilingual sync)
+4. [ ] Version moved from `[Unreleased]` to `[x.y.z] - YYYY-MM-DD`
+5. [ ] README.md updated if needed
+6. [ ] README-zh.md updated (bilingual sync)
+
+## CHANGELOG Update Process
+
+When releasing version `vX.Y.Z`:
+
+1. Move all items under `[Unreleased]` to new `[X.Y.Z] - YYYY-MM-DD` section
+2. Add empty `[Unreleased]` section at top
+3. Update comparison links at bottom of file

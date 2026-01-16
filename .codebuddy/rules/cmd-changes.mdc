@@ -1,0 +1,38 @@
+---
+description: Trigger cmd-sync skill when CLI command definitions change. Apply when modifying cmd/*.go files.
+globs: "cmd/*.go"
+---
+
+# Command Changes Rule
+
+When `cmd/*.go` files are modified, the `cmd-sync` skill should be used to synchronize:
+
+1. **REPL completions** (`internal/repl/repl.go`)
+2. **Command documentation** (`docs/ags-*.md`)
+
+## Trigger Conditions
+
+Use the `cmd-sync` skill when any of these changes occur:
+
+- Adding/removing commands or subcommands
+- Adding/removing/modifying flags
+- Changing command aliases
+- Updating command descriptions (`Short`, `Long`, `Example`)
+
+## Usage
+
+After modifying command definitions, invoke the skill:
+
+```
+Use the cmd-sync skill to update documentation and REPL completions.
+```
+
+## Quick Reference
+
+| Change Type | Files to Update |
+|-------------|-----------------|
+| New command | `docs/ags-<cmd>.md`, `docs/ags-<cmd>-zh.md`, `repl.go` |
+| New subcommand | `docs/ags-<cmd>.md`, `docs/ags-<cmd>-zh.md`, `repl.go` |
+| New flag | `docs/ags-<cmd>.md`, `docs/ags-<cmd>-zh.md`, `repl.go` |
+| Description change | `docs/ags-<cmd>.md`, `docs/ags-<cmd>-zh.md` |
+| Alias change | `docs/ags-<cmd>.md`, `docs/ags-<cmd>-zh.md`, `repl.go` |

@@ -1,0 +1,86 @@
+---
+description: Bilingual documentation and changelog maintenance rules. Apply when editing, creating, or reviewing markdown documentation files.
+globs: "**/*.md"
+---
+
+# Bilingual Documentation Rules
+
+This project maintains bilingual documentation (English and Chinese). All documentation must be kept in sync.
+
+> **Note**: For command documentation updates triggered by `cmd/*.go` changes, use the `cmd-sync` skill.
+
+## File Naming Convention
+
+- English version: `<name>.md` (e.g., `README.md`, `CHANGELOG.md`)
+- Chinese version: `<name>-zh.md` (e.g., `README-zh.md`, `CHANGELOG-zh.md`)
+
+## Documentation Structure
+
+```
+README.md / README-zh.md          # Project overview (kept minimal)
+CHANGELOG.md / CHANGELOG-zh.md    # Version history
+docs/
+  ags.md / ags-zh.md              # Main command documentation
+  ags-<cmd>.md / ags-<cmd>-zh.md  # Subcommand documentation
+man/                              # Man pages (auto-generated, not committed)
+  ags.1, ags-tool.1, ...          # Generated via `make man`
+```
+
+## Required Documentation Files
+
+The following documentation files MUST exist in both languages:
+
+| English | Chinese |
+|---------|---------|
+| `README.md` | `README-zh.md` |
+| `CHANGELOG.md` | `CHANGELOG-zh.md` |
+| `docs/ags.md` | `docs/ags-zh.md` |
+| `docs/ags-tool.md` | `docs/ags-tool-zh.md` |
+| `docs/ags-instance.md` | `docs/ags-instance-zh.md` |
+| `docs/ags-run.md` | `docs/ags-run-zh.md` |
+| `docs/ags-exec.md` | `docs/ags-exec-zh.md` |
+| `docs/ags-file.md` | `docs/ags-file-zh.md` |
+| `docs/ags-apikey.md` | `docs/ags-apikey-zh.md` |
+
+## Synchronization Rules
+
+1. **Content Parity**: Both language versions must contain equivalent information
+2. **Simultaneous Updates**: When updating one version, the other version MUST be updated in the same commit
+3. **Structure Consistency**: Both versions should maintain the same document structure (headings, sections, order)
+
+## CHANGELOG Format
+
+Follow [Keep a Changelog](https://keepachangelog.com/) format:
+
+```markdown
+# Changelog / 更新日志
+
+## [Unreleased]
+
+## [x.y.z] - YYYY-MM-DD
+
+### Added
+- New feature description
+
+### Changed
+- Change description
+
+### Fixed
+- Bug fix description
+
+### Removed
+- Removed feature description
+```
+
+## Rules File Language
+
+All rule files (`.rules/*.mdc`) MUST be written in **English** only.
+
+## Workflow
+
+When making changes that affect documentation:
+
+1. Update the English version first
+2. Translate and update the Chinese version
+3. Ensure both files are included in the same commit
+4. Verify content parity before committing
