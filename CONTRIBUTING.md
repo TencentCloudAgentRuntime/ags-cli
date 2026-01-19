@@ -109,7 +109,7 @@ For significant changes or new features, we recommend submitting a design propos
 
 ```bash
 # Clone the repository
-git clone https://github.com/tencentags/ags-cli.git
+git clone https://github.com/TencentCloudAgentRuntime/ags-cli.git
 cd ags-cli
 
 # Build

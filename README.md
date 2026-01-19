@@ -20,13 +20,13 @@ AGS CLI is a command-line tool for managing Tencent Cloud Agent Sandbox (AGS). I
 ### Using go install
 
 ```bash
-go install github.com/tencentags/ags-cli@latest
+go install github.com/TencentCloudAgentRuntime/ags-cli@latest
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/tencentags/ags-cli.git
+git clone https://github.com/TencentCloudAgentRuntime/ags-cli.git
 cd ags-cli
 make build
 ```

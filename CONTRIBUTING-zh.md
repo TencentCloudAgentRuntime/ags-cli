@@ -109,7 +109,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/tencentags/ags-cli.git
+git clone https://github.com/TencentCloudAgentRuntime/ags-cli.git
 cd ags-cli
 
 # 构建
