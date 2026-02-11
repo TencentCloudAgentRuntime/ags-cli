@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-02-11
+
+### Added
+- Support token acquisition for E2B backend via connect API
+
 ## [0.1.1] - 2026-01-20
 
 ### Changed
