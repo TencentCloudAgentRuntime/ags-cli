@@ -92,8 +92,9 @@ func ConnectWithToken(ctx context.Context, instanceID string, accessToken string
 }
 
 // GetCachedTokenOrAcquire gets the access token from cache, or acquires a new one if not cached.
-// For E2B backend, the token must exist in cache (acquired during instance creation).
-// For Cloud backend, if not cached, it will call the control plane API to acquire a new token.
+// If not cached, it will call the control plane API to acquire a new token.
+// For Cloud backend, this calls AcquireSandboxInstanceToken API.
+// For E2B backend, this calls the connect API with a minimal timeout.
 //
 // Parameters:
 //   - ctx: Context for the operation
@@ -113,16 +114,7 @@ func GetCachedTokenOrAcquire(ctx context.Context, instanceID string) (string, er
 		return cachedToken, nil
 	}
 
-	// Token not in cache - for E2B backend, this is an error
-	// For Cloud backend, we can acquire a new token
-	backend := config.GetBackend()
-	if backend == "e2b" {
-		return "", fmt.Errorf("access token not found in cache for instance %s. "+
-			"For E2B backend, the token is only available during instance creation. "+
-			"Please recreate the instance or switch to cloud backend", instanceID)
-	}
-
-	// Cloud backend: acquire token via control plane API
+	// Token not in cache, acquire from control plane API
 	accessToken, err := acquireInstanceToken(ctx, instanceID)
 	if err != nil {
 		return "", err

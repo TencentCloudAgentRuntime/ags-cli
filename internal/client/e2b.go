@@ -215,11 +215,38 @@ func (c *E2BControlPlane) DeleteInstance(ctx context.Context, id string) error {
 	return nil
 }
 
-// AcquireToken is not supported by E2B backend.
-// For E2B backend, access tokens are only returned during instance creation
-// and should be retrieved from the token cache.
+// AcquireToken acquires an access token for the given instance by calling the connect API.
+// This uses a minimal timeout (1 second) which does not shorten the existing instance timeout.
 func (c *E2BControlPlane) AcquireToken(ctx context.Context, instanceID string) (string, error) {
-	return "", fmt.Errorf("E2B backend does not support acquiring tokens after instance creation; token should be cached at creation time")
+	url := c.getAPIEndpoint() + "/sandboxes/" + instanceID + "/connect"
+
+	reqBody := map[string]any{
+		"timeout": 1,
+	}
+
+	resp, err := c.doRequest(ctx, http.MethodPost, url, reqBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to instance: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("failed to acquire token: %s - %s", resp.Status, string(body))
+	}
+
+	var result struct {
+		EnvdAccessToken string `json:"envdAccessToken"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if result.EnvdAccessToken == "" {
+		return "", fmt.Errorf("no access token returned for instance %s", instanceID)
+	}
+
+	return result.EnvdAccessToken, nil
 }
 
 // ========== API Key Operations (not supported by E2B) ==========

@@ -322,7 +322,7 @@ else
 
     if [ $INSTANCE_CREATE_EXIT -eq 0 ]; then
         # Parse instance ID from output - format is 32-char hex string
-        CREATED_INSTANCE_ID=$(echo "$INSTANCE_CREATE_OUTPUT" | grep -oE '[a-f0-9]{32}' | head -1)
+        CREATED_INSTANCE_ID=$(echo "$INSTANCE_CREATE_OUTPUT" | grep -oE '[a-f0-9]{40}' | head -1)
         if [ -n "$CREATED_INSTANCE_ID" ]; then
             log_success "Created instance: $CREATED_INSTANCE_ID"
         else

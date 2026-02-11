@@ -202,9 +202,6 @@ func acquireInstanceToken(ctx context.Context, instanceID string) (string, error
 
 	accessToken, err := apiClient.AcquireToken(ctx, instanceID)
 	if err != nil {
-		if backend == "e2b" {
-			return "", fmt.Errorf("access token not found in cache; for E2B backend, tokens are only available at instance creation time")
-		}
 		return "", err
 	}
 
