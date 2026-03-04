@@ -16,8 +16,8 @@ type CloudAPIKeyClient struct {
 }
 
 // NewCloudAPIKeyClient creates a new Cloud API Key client
-func NewCloudAPIKeyClient(cfg *config.CloudConfig) (*CloudAPIKeyClient, error) {
-	credential := common.NewCredential(cfg.SecretID, cfg.SecretKey)
+func NewCloudAPIKeyClient(cfg *config.Config, cloudCfg *config.CloudConfig) (*CloudAPIKeyClient, error) {
+	credential := common.NewCredential(cloudCfg.SecretID, cloudCfg.SecretKey)
 
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = cfg.ControlPlaneEndpoint()

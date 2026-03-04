@@ -16,14 +16,13 @@ import (
 // Data plane operations are handled by ags-go-sdk via the cmd layer.
 type CloudInstanceClient struct {
 	client          *ags.Client
-	cfg             *config.CloudConfig
 	region          string
 	dataPlaneDomain string
 }
 
 // NewCloudInstanceClient creates a new Cloud Instance client
-func NewCloudInstanceClient(cfg *config.CloudConfig) (*CloudInstanceClient, error) {
-	credential := common.NewCredential(cfg.SecretID, cfg.SecretKey)
+func NewCloudInstanceClient(cfg *config.Config, cloudCfg *config.CloudConfig) (*CloudInstanceClient, error) {
+	credential := common.NewCredential(cloudCfg.SecretID, cloudCfg.SecretKey)
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = cfg.ControlPlaneEndpoint()
 
@@ -34,7 +33,6 @@ func NewCloudInstanceClient(cfg *config.CloudConfig) (*CloudInstanceClient, erro
 
 	return &CloudInstanceClient{
 		client:          client,
-		cfg:             cfg,
 		region:          cfg.Region,
 		dataPlaneDomain: cfg.DataPlaneDomain(),
 	}, nil

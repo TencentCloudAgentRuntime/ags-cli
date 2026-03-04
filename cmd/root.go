@@ -14,15 +14,19 @@ var (
 	backend     string
 	outputFmt   string
 	showVersion bool
+	// Unified flags
+	region   string
+	domain   string
+	internal bool
 	// E2B flags
 	e2bAPIKey string
-	e2bDomain string
-	e2bRegion string
+	e2bDomain string // Deprecated: use --domain
+	e2bRegion string // Deprecated: use --region
 	// Cloud flags
 	cloudSecretID  string
 	cloudSecretKey string
-	cloudRegion    string
-	cloudInternal  bool
+	cloudRegion    string // Deprecated: use --region
+	cloudInternal  bool   // Deprecated: use --internal
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -113,16 +117,27 @@ func init() {
 	// Version flag (local to root command only)
 	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version information")
 
+	// Unified flags (recommended)
+	rootCmd.PersistentFlags().StringVar(&region, "region", "", "Region for API access (default: ap-guangzhou)")
+	rootCmd.PersistentFlags().StringVar(&domain, "domain", "", "Base domain (default: tencentags.com)")
+	rootCmd.PersistentFlags().BoolVar(&internal, "internal", false, "Use internal endpoints (for Tencent Cloud internal network)")
+
 	// E2B flags
 	rootCmd.PersistentFlags().StringVar(&e2bAPIKey, "e2b-api-key", "", "E2B API key")
-	rootCmd.PersistentFlags().StringVar(&e2bDomain, "e2b-domain", "", "E2B domain (default: tencentags.com)")
-	rootCmd.PersistentFlags().StringVar(&e2bRegion, "e2b-region", "", "E2B region (default: ap-guangzhou)")
+	rootCmd.PersistentFlags().StringVar(&e2bDomain, "e2b-domain", "", "E2B domain (deprecated: use --domain)")
+	rootCmd.PersistentFlags().StringVar(&e2bRegion, "e2b-region", "", "E2B region (deprecated: use --region)")
 
 	// Cloud flags
 	rootCmd.PersistentFlags().StringVar(&cloudSecretID, "cloud-secret-id", "", "Tencent Cloud SecretID")
 	rootCmd.PersistentFlags().StringVar(&cloudSecretKey, "cloud-secret-key", "", "Tencent Cloud SecretKey")
-	rootCmd.PersistentFlags().StringVar(&cloudRegion, "cloud-region", "", "Tencent Cloud region (default: ap-guangzhou)")
-	rootCmd.PersistentFlags().BoolVar(&cloudInternal, "cloud-internal", false, "Use internal endpoints (for Tencent Cloud internal network)")
+	rootCmd.PersistentFlags().StringVar(&cloudRegion, "cloud-region", "", "Tencent Cloud region (deprecated: use --region)")
+	rootCmd.PersistentFlags().BoolVar(&cloudInternal, "cloud-internal", false, "Use internal endpoints (deprecated: use --internal)")
+
+	// Mark deprecated flags
+	_ = rootCmd.PersistentFlags().MarkDeprecated("e2b-domain", "use --domain instead")
+	_ = rootCmd.PersistentFlags().MarkDeprecated("e2b-region", "use --region instead")
+	_ = rootCmd.PersistentFlags().MarkDeprecated("cloud-region", "use --region instead")
+	_ = rootCmd.PersistentFlags().MarkDeprecated("cloud-internal", "use --internal instead")
 }
 
 func initConfig() {
@@ -144,28 +159,39 @@ func initConfig() {
 		config.SetOutput(outputFmt)
 	}
 
-	// E2B overrides
+	// Credential overrides (not subject to priority ordering)
 	if e2bAPIKey != "" {
 		config.SetE2BAPIKey(e2bAPIKey)
 	}
-	if e2bDomain != "" {
-		config.SetE2BDomain(e2bDomain)
-	}
-	if e2bRegion != "" {
-		config.SetE2BRegion(e2bRegion)
-	}
-
-	// Cloud overrides
 	if cloudSecretID != "" {
 		config.SetCloudSecretID(cloudSecretID)
 	}
 	if cloudSecretKey != "" {
 		config.SetCloudSecretKey(cloudSecretKey)
 	}
+
+	// Legacy overrides (lower priority, applied first so unified flags can override)
+	if e2bDomain != "" {
+		config.SetE2BDomain(e2bDomain)
+	}
+	if e2bRegion != "" {
+		config.SetE2BRegion(e2bRegion)
+	}
 	if cloudRegion != "" {
 		config.SetCloudRegion(cloudRegion)
 	}
-	if cloudInternal {
+	if rootCmd.PersistentFlags().Changed("cloud-internal") {
 		config.SetCloudInternal(cloudInternal)
+	}
+
+	// Unified overrides (highest priority, applied last)
+	if region != "" {
+		config.SetRegion(region)
+	}
+	if domain != "" {
+		config.SetDomain(domain)
+	}
+	if rootCmd.PersistentFlags().Changed("internal") {
+		config.SetInternal(internal)
 	}
 }

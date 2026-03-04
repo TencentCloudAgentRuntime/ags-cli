@@ -624,13 +624,8 @@ Examples:
 		}
 
 		// Determine data plane domain
-		cloudCfg := config.GetCloudConfig()
-		var domain string
-		if cloudCfg.Internal {
-			domain = cloudCfg.DataPlaneDomain()
-		} else {
-			domain = fmt.Sprintf("%s.tencentags.com", cloudCfg.Region)
-		}
+		cfg := config.Get()
+		domain := cfg.DataPlaneRegionDomain()
 
 		// Create webshell manager with access token (no AKSK needed)
 		webshellMgr := webshell.NewManagerWithToken(accessToken, domain)
@@ -760,8 +755,8 @@ Examples:
 // buildWebshellURL builds webshell access URL
 // Format: https://{port}-{instance_id}.{region}.{domain}/?access_token={token}
 func buildWebshellURL(instanceID, accessToken string) string {
-	cloudCfg := config.GetCloudConfig()
-	host := fmt.Sprintf("8080-%s.%s.%s", instanceID, cloudCfg.Region, cloudCfg.DataPlaneDomain())
+	cfg := config.Get()
+	host := fmt.Sprintf("8080-%s.%s.%s", instanceID, cfg.Region, cfg.DataPlaneDomain())
 	return fmt.Sprintf("https://%s/?access_token=%s", host, accessToken)
 }
 

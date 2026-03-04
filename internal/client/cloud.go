@@ -19,22 +19,23 @@ type CloudControlPlane struct {
 
 // NewCloudControlPlane creates a new Cloud control plane client
 func NewCloudControlPlane() (*CloudControlPlane, error) {
-	cfg := config.GetCloudConfig()
+	cfg := config.Get()
+	cloudCfg := config.GetCloudConfig()
 
 	// Create tool client (tencentcloud-sdk-go)
-	toolClient, err := NewCloudToolClient(&cfg)
+	toolClient, err := NewCloudToolClient(cfg, &cloudCfg)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create instance client (tencentcloud-sdk-go)
-	instanceClient, err := NewCloudInstanceClient(&cfg)
+	instanceClient, err := NewCloudInstanceClient(cfg, &cloudCfg)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create API key client (tencentcloud-sdk-go)
-	apikeyClient, err := NewCloudAPIKeyClient(&cfg)
+	apikeyClient, err := NewCloudAPIKeyClient(cfg, &cloudCfg)
 	if err != nil {
 		return nil, err
 	}

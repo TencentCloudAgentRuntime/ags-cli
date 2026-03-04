@@ -62,27 +62,14 @@ func getCredential() common.CredentialIface {
 
 // getCreateOptions returns the common create options for sandbox
 func getCreateOptions() []code.CreateOption {
-	cloudCfg := config.GetCloudConfig()
+	cfg := config.Get()
 	opts := []code.CreateOption{
 		code.WithCredential(getCredential()),
-		code.WithRegion(cloudCfg.Region),
+		code.WithRegion(cfg.Region),
 		code.WithSandboxTimeout(300 * time.Second),
 	}
-	if cloudCfg.Internal {
-		opts = append(opts, code.WithDataPlaneDomain(cloudCfg.DataPlaneDomain()))
-	}
-	return opts
-}
-
-// getConnectOptions returns the common connect options for sandbox
-func getConnectOptions() []code.ConnectOption {
-	cloudCfg := config.GetCloudConfig()
-	opts := []code.ConnectOption{
-		code.WithCredential(getCredential()),
-		code.WithRegion(cloudCfg.Region),
-	}
-	if cloudCfg.Internal {
-		opts = append(opts, code.WithDataPlaneDomain(cloudCfg.DataPlaneDomain()))
+	if cfg.Internal {
+		opts = append(opts, code.WithDataPlaneDomain(cfg.DataPlaneDomain()))
 	}
 	return opts
 }
@@ -842,14 +829,14 @@ func openEditor(language string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmpFile.Name()
-	defer os.Remove(tmpPath)
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	template := getEditorTemplate(language)
 	if _, err := tmpFile.WriteString(template); err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return "", fmt.Errorf("failed to write template: %w", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	cmd := exec.Command(editor, tmpPath)
 	cmd.Stdin = os.Stdin

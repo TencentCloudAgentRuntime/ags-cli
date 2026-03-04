@@ -24,11 +24,12 @@ type E2BControlPlane struct {
 
 // NewE2BControlPlane creates a new E2B control plane client
 func NewE2BControlPlane() (*E2BControlPlane, error) {
-	cfg := config.GetE2BConfig()
+	e2bCfg := config.GetE2BConfig()
+	cfg := config.Get()
 	httpClient := &http.Client{Timeout: 60 * time.Second}
 	return &E2BControlPlane{
 		httpClient: httpClient,
-		apiKey:     cfg.APIKey,
+		apiKey:     e2bCfg.APIKey,
 		domain:     cfg.Domain,
 		region:     cfg.Region,
 	}, nil
@@ -115,7 +116,7 @@ func (c *E2BControlPlane) CreateInstance(ctx context.Context, opts *CreateInstan
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(resp.Body)
@@ -149,7 +150,7 @@ func (c *E2BControlPlane) ListInstances(ctx context.Context, opts *ListInstances
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -193,7 +194,7 @@ func (c *E2BControlPlane) GetInstance(ctx context.Context, id string) (*Instance
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -231,7 +232,7 @@ func (c *E2BControlPlane) DeleteInstance(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		body, _ := io.ReadAll(resp.Body)

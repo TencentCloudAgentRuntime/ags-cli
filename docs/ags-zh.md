@@ -35,49 +35,42 @@ AGS CLI 提供了一种便捷的方式来管理沙箱工具、实例，并在隔
 | `--backend` | string | `e2b` | API 后端：`e2b` 或 `cloud` |
 | `--config` | string | `~/.ags/config.toml` | 配置文件路径 |
 | `-o, --output` | string | `text` | 输出格式：`text` 或 `json` |
+| `--region` | string | `ap-guangzhou` | API 访问地域 |
+| `--domain` | string | `tencentags.com` | 基础域名 |
+| `--internal` | bool | `false` | 使用内网端点（腾讯云内网） |
 | `--e2b-api-key` | string | - | E2B API 密钥 |
-| `--e2b-domain` | string | - | E2B 域名 |
-| `--e2b-region` | string | - | E2B 地域 |
 | `--cloud-secret-id` | string | - | 腾讯云 SecretID |
 | `--cloud-secret-key` | string | - | 腾讯云 SecretKey |
-| `--cloud-region` | string | - | 腾讯云地域 |
-| `--cloud-internal` | bool | `false` | 使用内网端点 |
+
+### 已废弃选项
+
+| 选项 | 替代 |
+|------|------|
+| `--e2b-domain` | `--domain` |
+| `--e2b-region` | `--region` |
+| `--cloud-region` | `--region` |
+| `--cloud-internal` | `--internal` |
 
 ## 配置
-
-### 配置文件
 
 创建 `~/.ags/config.toml`：
 
 ```toml
 backend = "e2b"
 output = "text"
+region = "ap-guangzhou"          # 统一地域，适用于所有后端
+domain = "tencentags.com"        # 统一基础域名（可选）
+internal = false                 # 设为 true 时自动在 domain 前加 "internal." 前缀
 
 [e2b]
 api_key = "your-e2b-api-key"
-domain = "tencentags.com"
-region = "ap-guangzhou"
 
 [cloud]
 secret_id = "your-secret-id"
 secret_key = "your-secret-key"
-region = "ap-guangzhou"
-internal = false
 ```
 
-### 环境变量
-
-```bash
-# E2B 后端
-export AGS_E2B_API_KEY="your-api-key"
-export AGS_E2B_DOMAIN="tencentags.com"
-export AGS_E2B_REGION="ap-guangzhou"
-
-# 云端后端
-export AGS_CLOUD_SECRET_ID="your-secret-id"
-export AGS_CLOUD_SECRET_KEY="your-secret-key"
-export AGS_CLOUD_REGION="ap-guangzhou"
-```
+完整配置参考（包括环境变量、内网模式、优先级规则、废弃字段迁移等），请参阅 [ags-config](ags-config-zh.md)。
 
 ## 示例
 
@@ -100,6 +93,7 @@ ags --backend cloud tool list
 
 ## 另请参阅
 
+- [ags-config](ags-config-zh.md) - 配置参考
 - [ags-tool](ags-tool-zh.md) - 工具管理
 - [ags-instance](ags-instance-zh.md) - 实例管理
 - [ags-run](ags-run-zh.md) - 代码执行

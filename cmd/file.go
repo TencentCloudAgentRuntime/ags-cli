@@ -260,7 +260,7 @@ func fileUploadCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open local file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	sandbox, cleanup, createDuration, err := getSandboxForFile(ctx)
 	if err != nil {
@@ -336,7 +336,7 @@ func fileDownloadCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create local file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	n, err := io.Copy(file, reader)
 	if err != nil {

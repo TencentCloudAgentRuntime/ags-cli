@@ -49,15 +49,10 @@ func resolveUser(flagValue string) string {
 //   - *code.Sandbox: A sandbox instance with data plane clients initialized
 //   - error: Any error encountered during initialization
 func ConnectWithToken(ctx context.Context, instanceID string, accessToken string) (*code.Sandbox, error) {
-	cloudCfg := config.GetCloudConfig()
+	cfg := config.Get()
 
 	// Determine the data plane domain
-	var domain string
-	if cloudCfg.Internal {
-		domain = cloudCfg.DataPlaneDomain()
-	} else {
-		domain = fmt.Sprintf("%s.tencentags.com", cloudCfg.Region)
-	}
+	domain := cfg.DataPlaneRegionDomain()
 
 	// Create connection config
 	connConfig := &connection.Config{
@@ -133,11 +128,8 @@ func GetCachedTokenOrAcquire(ctx context.Context, instanceID string) (string, er
 		return "", err
 	}
 
-	// Cache the newly acquired token
-	if err := tokenCache.Set(instanceID, accessToken); err != nil {
-		// Log warning but don't fail
-		// The operation can still succeed without caching
-	}
+	// Cache the newly acquired token (best-effort, ignore errors)
+	_ = tokenCache.Set(instanceID, accessToken)
 
 	return accessToken, nil
 }

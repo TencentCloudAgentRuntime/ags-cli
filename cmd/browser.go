@@ -129,15 +129,15 @@ func browserVNCCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to acquire access token: %w", err)
 	}
 
-	// Get cloud config for region info
-	cloudCfg := config.GetCloudConfig()
+	// Get unified config for region info
+	cfg := config.Get()
 
 	// Build VNC URL
 	// Format: https://{port}-{sandbox_id}.{region}.{domain}/novnc/vnc_lite.html?&path=websockify?access_token={token}
-	vncURL := buildVNCURL(instance.ID, cloudCfg.Region, cloudCfg.DataPlaneDomain(), accessToken, browserPort)
+	vncURL := buildVNCURL(instance.ID, cfg.Region, cfg.DataPlaneDomain(), accessToken, browserPort)
 
 	// Build CDP URL for programmatic access
-	cdpURL := buildCDPURL(instance.ID, cloudCfg.Region, cloudCfg.DataPlaneDomain(), accessToken, browserPort)
+	cdpURL := buildCDPURL(instance.ID, cfg.Region, cfg.DataPlaneDomain(), accessToken, browserPort)
 
 	totalDuration := time.Since(start)
 	var timing *output.Timing

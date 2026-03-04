@@ -337,7 +337,9 @@ var (
 		{Text: "--backend", Description: "API backend (e2b or cloud)"},
 		{Text: "-o", Description: "Output format (text or json)"},
 		{Text: "--output", Description: "Output format (text or json)"},
-		{Text: "--cloud-internal", Description: "Use internal endpoints"},
+		{Text: "--region", Description: "Region for API access"},
+		{Text: "--domain", Description: "Base domain"},
+		{Text: "--internal", Description: "Use internal endpoints"},
 	}
 )
 
@@ -889,7 +891,9 @@ Browser Sandbox:
 Global Flags:
   --backend <e2b|cloud>       API backend to use
   -o, --output <text|json>    Output format
-  --cloud-internal            Use internal endpoints (Tencent Cloud internal network)
+  --region <region>           Region for API access (default: ap-guangzhou)
+  --domain <domain>           Base domain (default: tencentags.com)
+  --internal                  Use internal endpoints (Tencent Cloud internal network)
 
 JSON Output:
   Commands with --time flag include timing info in JSON output.

@@ -255,11 +255,3 @@ func derefInt(i *int64) int {
 	}
 	return int(*i)
 }
-
-// getString safely gets a string value from a map
-func getString(m map[string]any, key string) string {
-	if v, ok := m[key].(string); ok {
-		return v
-	}
-	return ""
-}

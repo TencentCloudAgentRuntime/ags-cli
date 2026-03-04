@@ -171,7 +171,7 @@ func (m *manager) Download(ctx context.Context, instanceID string) error {
 		return fmt.Errorf("failed to get system architecture: %w", err)
 	}
 
-	arch := "x86_64"
+	var arch string
 	sysArch := strings.TrimSpace(string(result.Stdout))
 	switch sysArch {
 	case "aarch64", "arm64":
@@ -334,7 +334,7 @@ func (m *manager) UploadTTYD(ctx context.Context, instanceID string, ttydPath st
 	if err != nil {
 		return fmt.Errorf("failed to open ttyd binary file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Upload ttyd binary to sandbox
 	_, err = sandbox.Files.Write(ctx, "/tmp/ttyd", file, nil)
@@ -376,7 +376,7 @@ func validateTTYDBinary(ttydPath string) error {
 	if err != nil {
 		return fmt.Errorf("ttyd binary file is not readable: %w", err)
 	}
-	file.Close()
+	_ = file.Close()
 
 	// Check file size (ttyd should be at least 1MB, but not larger than 50MB)
 	if info.Size() < 1024*1024 {

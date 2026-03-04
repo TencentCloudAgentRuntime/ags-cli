@@ -1,0 +1,50 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-03-04T08:12:51.546Z
+provider: 
+---
+
+# Changelog Update Rule
+
+When making functional code changes (not purely documentation or CI changes), the `[Unreleased]` section in both `CHANGELOG.md` and `CHANGELOG-zh.md` **MUST** be updated in the same session.
+
+## Trigger Conditions
+
+Update CHANGELOG when any of these occur:
+
+- Adding, removing, or modifying features
+- Changing CLI flags, commands, or configuration structure
+- Fixing bugs
+- Deprecating or removing functionality
+- Changing internal behavior that affects users
+
+## Do NOT Trigger For
+
+- Pure documentation edits (typo fixes, rewording)
+- CI/CD pipeline changes
+- Test-only changes
+- Code formatting / linting fixes
+
+## What to Update
+
+Add entries under `[Unreleased]` / `[未发布]` using the appropriate category:
+
+| English | Chinese | When |
+|---------|---------|------|
+| Added | 新增 | New features, flags, commands, config options |
+| Changed | 变更 | Behavior changes, refactors affecting users |
+| Fixed | 修复 | Bug fixes |
+| Deprecated | 废弃 | Features marked for removal |
+| Removed | 移除 | Features removed |
+| Security | 安全 | Security-related changes |
+
+## Rules
+
+1. **Both languages**: Always update `CHANGELOG.md` and `CHANGELOG-zh.md` together
+2. **Concise entries**: Each entry should be a single clear sentence describing the user-visible change
+3. **No version numbers**: Only add to `[Unreleased]` — version assignment happens during release
+4. **Follow existing style**: Match the tone and format of existing CHANGELOG entries
+5. **Based on final diff, not development iterations**: CHANGELOG entries must reflect the final delivered state compared to the last released version, NOT intermediate fixes made during development. If a bug was introduced and fixed within the same unreleased cycle, do NOT add a "Fixed" entry — the user never experienced the bug. Always run `git diff` against the base branch to determine what actually changed from the user's perspective.
+6. **No process artifacts**: Do not record code review iterations, refactoring steps, or intermediate corrections as separate CHANGELOG entries. The CHANGELOG is a user-facing document, not a development log.

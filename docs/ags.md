@@ -35,49 +35,42 @@ When invoked without arguments, AGS enters interactive REPL mode with auto-compl
 | `--backend` | string | `e2b` | API backend: `e2b` or `cloud` |
 | `--config` | string | `~/.ags/config.toml` | Config file path |
 | `-o, --output` | string | `text` | Output format: `text` or `json` |
+| `--region` | string | `ap-guangzhou` | Region for API access |
+| `--domain` | string | `tencentags.com` | Base domain |
+| `--internal` | bool | `false` | Use internal endpoints (for Tencent Cloud internal network) |
 | `--e2b-api-key` | string | - | E2B API key |
-| `--e2b-domain` | string | - | E2B domain |
-| `--e2b-region` | string | - | E2B region |
 | `--cloud-secret-id` | string | - | Tencent Cloud SecretID |
 | `--cloud-secret-key` | string | - | Tencent Cloud SecretKey |
-| `--cloud-region` | string | - | Tencent Cloud region |
-| `--cloud-internal` | bool | `false` | Use internal endpoints |
+
+### Deprecated Flags
+
+| Flag | Replacement |
+|------|-------------|
+| `--e2b-domain` | `--domain` |
+| `--e2b-region` | `--region` |
+| `--cloud-region` | `--region` |
+| `--cloud-internal` | `--internal` |
 
 ## Configuration
-
-### Configuration File
 
 Create `~/.ags/config.toml`:
 
 ```toml
 backend = "e2b"
 output = "text"
+region = "ap-guangzhou"          # Unified region for all backends
+domain = "tencentags.com"        # Unified base domain (optional)
+internal = false                 # When true, "internal." is prepended to domain automatically
 
 [e2b]
 api_key = "your-e2b-api-key"
-domain = "tencentags.com"
-region = "ap-guangzhou"
 
 [cloud]
 secret_id = "your-secret-id"
 secret_key = "your-secret-key"
-region = "ap-guangzhou"
-internal = false
 ```
 
-### Environment Variables
-
-```bash
-# E2B Backend
-export AGS_E2B_API_KEY="your-api-key"
-export AGS_E2B_DOMAIN="tencentags.com"
-export AGS_E2B_REGION="ap-guangzhou"
-
-# Cloud Backend
-export AGS_CLOUD_SECRET_ID="your-secret-id"
-export AGS_CLOUD_SECRET_KEY="your-secret-key"
-export AGS_CLOUD_REGION="ap-guangzhou"
-```
+For full configuration reference including environment variables, internal network setup, priority rules, and deprecated field migration, see [ags-config](ags-config.md).
 
 ## Examples
 
@@ -100,6 +93,7 @@ ags --backend cloud tool list
 
 ## See Also
 
+- [ags-config](ags-config.md) - Configuration reference
 - [ags-tool](ags-tool.md) - Tool management
 - [ags-instance](ags-instance.md) - Instance management
 - [ags-run](ags-run.md) - Code execution

@@ -17,8 +17,8 @@ type CloudToolClient struct {
 }
 
 // NewCloudToolClient creates a new Cloud Tool client
-func NewCloudToolClient(cfg *config.CloudConfig) (*CloudToolClient, error) {
-	credential := common.NewCredential(cfg.SecretID, cfg.SecretKey)
+func NewCloudToolClient(cfg *config.Config, cloudCfg *config.CloudConfig) (*CloudToolClient, error) {
+	credential := common.NewCredential(cloudCfg.SecretID, cloudCfg.SecretKey)
 
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = cfg.ControlPlaneEndpoint()

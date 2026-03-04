@@ -7,22 +7,35 @@ backend = "e2b"
 # Default output format: "text" or "json"
 output = "text"
 
+# Region for API access (default: ap-guangzhou)
+# region = "ap-guangzhou"
+
+# Base domain for AGS services (default: tencentags.com)
+# domain = "tencentags.com"
+
+# Use internal endpoints for Tencent Cloud internal network (default: false)
+# When true, "internal." is automatically prepended to the domain, e.g.:
+#   - E2B control plane: api.{region}.internal.tencentags.com
+#   - Cloud control plane: ags.internal.tencentcloudapi.com
+#   - Data plane: {port}-{id}.{region}.internal.tencentags.com
+# internal = false
+
 # E2B API Configuration
 [e2b]
 api_key = ""
-domain = "tencentags.com"
-region = "ap-guangzhou"
+# Deprecated: use top-level "domain" instead
+# domain = "tencentags.com"
+# Deprecated: use top-level "region" instead
+# region = "ap-guangzhou"
 
 # Cloud API Configuration (Tencent Cloud)
 [cloud]
 secret_id = ""
 secret_key = ""
-region = "ap-guangzhou"
-# Use internal endpoints for Tencent Cloud internal network (default: false)
-# When true, uses:
-#   - Control plane: ags.internal.tencentcloudapi.com
-#   - Data plane: internal.tencentags.com
-internal = false
+# Deprecated: use top-level "region" instead
+# region = "ap-guangzhou"
+# Deprecated: use top-level "internal" instead
+# internal = false
 
 # Sandbox Configuration
 [sandbox]
