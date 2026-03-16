@@ -274,7 +274,7 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 
 	// Build the command with the same global flags
 	tunnelArgs := []string{"mobile", "tunnel", sandboxID, "--daemon", "--port=0"}
-	// Pass through essential global flags
+	// Pass through essential global flags (non-sensitive only via CLI args)
 	if backend != "" {
 		tunnelArgs = append(tunnelArgs, "--backend", backend)
 	}
@@ -287,18 +287,23 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 	if internal {
 		tunnelArgs = append(tunnelArgs, "--internal")
 	}
-	if e2bAPIKey != "" {
-		tunnelArgs = append(tunnelArgs, "--e2b-api-key", e2bAPIKey)
-	}
-	if cloudSecretID != "" {
-		tunnelArgs = append(tunnelArgs, "--cloud-secret-id", cloudSecretID)
-	}
-	if cloudSecretKey != "" {
-		tunnelArgs = append(tunnelArgs, "--cloud-secret-key", cloudSecretKey)
-	}
 
 	cmd := exec.Command(selfPath, tunnelArgs...)
 	cmd.Stderr = os.Stderr // Let tunnel errors flow to parent stderr
+
+	// Pass sensitive credentials via environment variables instead of CLI args
+	// to avoid exposure in process listing (ps aux).
+	// The child process reads these via viper.BindEnv in config.go.
+	cmd.Env = os.Environ()
+	if e2bAPIKey != "" {
+		cmd.Env = append(cmd.Env, "AGS_E2B_API_KEY="+e2bAPIKey)
+	}
+	if cloudSecretID != "" {
+		cmd.Env = append(cmd.Env, "AGS_CLOUD_SECRET_ID="+cloudSecretID)
+	}
+	if cloudSecretKey != "" {
+		cmd.Env = append(cmd.Env, "AGS_CLOUD_SECRET_KEY="+cloudSecretKey)
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

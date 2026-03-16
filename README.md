@@ -12,6 +12,7 @@ AGS CLI is a command-line tool for managing Tencent Cloud Agent Sandbox (AGS). I
 - **Shell Command Execution**: Run shell commands in sandbox with streaming support
 - **File Operations**: Upload, download, and manage files in sandbox
 - **Dual Backend Support**: Support both E2B API and Tencent Cloud API
+- **Mobile Sandbox ADB Access**: Secure ADB access to remote Android sandboxes via WebSocket tunnels
 - **Interactive REPL**: Built-in interactive mode with auto-completion
 - **Streaming Output**: Real-time output streaming for long-running code
 
@@ -143,6 +144,7 @@ For detailed documentation on each command, see:
 | `run` | `r` | Code execution | [ags-run](docs/ags-run.md) |
 | `exec` | `x` | Shell command execution | [ags-exec](docs/ags-exec.md) |
 | `file` | `f`, `fs` | File operations | [ags-file](docs/ags-file.md) |
+| `mobile` | `m` | Mobile sandbox ADB access | [ags-mobile](docs/ags-mobile.md) |
 | `apikey` | `ak`, `key` | API key management | [ags-apikey](docs/ags-apikey.md) |
 
 See [ags](docs/ags.md) for global options and configuration details.

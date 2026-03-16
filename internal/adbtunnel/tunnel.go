@@ -204,6 +204,7 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 
 	attempt := 0
 	for {
+		connStart := time.Now()
 		preempted, err := t.handleConnection(localConn)
 		if err == nil {
 			// Normal close (context cancelled or clean shutdown)
@@ -221,6 +222,12 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 		case <-t.ctx.Done():
 			return
 		default:
+		}
+
+		// Reset backoff if the connection was stable (lasted > 30s),
+		// so transient blips after a long session start fresh at 1s.
+		if time.Since(connStart) > 30*time.Second {
+			attempt = 0
 		}
 
 		// Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s cap
@@ -305,6 +312,7 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 	// WS Read -> Local TCP
 	go func() {
 		defer transferWg.Done()
+		defer close(doneWrite)
 		wsConn.SetReadDeadline(time.Now().Add(readTimeout))
 		var lastErr error
 		for {
@@ -316,7 +324,6 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 					lastErr = readErr
 				}
 				doneWrite <- lastErr
-				close(doneWrite)
 				return
 			}
 
@@ -327,7 +334,6 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 				if _, copyErr := io.Copy(localConn, reader); copyErr != nil {
 					t.logger.Printf("Local write error: %v", copyErr)
 					doneWrite <- copyErr
-					close(doneWrite)
 					return
 				}
 			}
