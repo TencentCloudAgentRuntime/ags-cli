@@ -38,7 +38,7 @@ var (
 		{Text: "instance start", Description: "Start a new instance"},
 		{Text: "instance list", Description: "List instances"},
 		{Text: "instance get", Description: "Get instance details"},
-		{Text: "instance login", Description: "Login to instance via webshell"},
+		{Text: "instance login", Description: "Login to instance via terminal"},
 		{Text: "instance delete", Description: "Delete an instance"},
 		{Text: "instance stop", Description: "Stop an instance"},
 		{Text: "i", Description: "Alias for instance"},
@@ -48,7 +48,7 @@ var (
 		{Text: "i list", Description: "List instances"},
 		{Text: "i ls", Description: "List instances"},
 		{Text: "i get", Description: "Get instance details"},
-		{Text: "i login", Description: "Login to instance via webshell"},
+		{Text: "i login", Description: "Login to instance via terminal or webshell"},
 		{Text: "i delete", Description: "Delete an instance"},
 		{Text: "i stop", Description: "Stop an instance"},
 		{Text: "i rm", Description: "Delete an instance"},
@@ -135,7 +135,7 @@ var (
 		{Text: "list", Description: "List instances"},
 		{Text: "ls", Description: "List instances"},
 		{Text: "get", Description: "Get instance details"},
-		{Text: "login", Description: "Login to instance via webshell"},
+		{Text: "login", Description: "Login to instance via terminal or webshell"},
 		{Text: "delete", Description: "Delete an instance"},
 		{Text: "stop", Description: "Stop an instance"},
 		{Text: "rm", Description: "Delete an instance"},
@@ -196,9 +196,10 @@ var (
 	}
 
 	instanceLoginFlags = []prompt.Suggest{
+		{Text: "--pty", Description: "Connect a native PTY session directly in the current terminal"},
 		{Text: "--no-browser", Description: "Don't open browser automatically"},
 		{Text: "--ttyd-binary", Description: "Path to custom ttyd binary file to upload"},
-		{Text: "--user", Description: "User to run webshell as"},
+		{Text: "--user", Description: "User to run terminal as"},
 		{Text: "--time", Description: "Print elapsed time to stderr"},
 	}
 

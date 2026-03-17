@@ -9,6 +9,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/client"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/pty"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/token"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/utils"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/webshell"
@@ -31,6 +32,7 @@ var (
 	instanceListLimit    int
 
 	// login command flags
+	instanceLoginMode       string
 	instanceLoginNoBrowser  bool
 	instanceLoginTTYDBinary string
 	instanceLoginUser       string
@@ -555,25 +557,24 @@ var instanceDeleteCmd = &cobra.Command{
 // instanceLoginCmd represents the instance login command
 var instanceLoginCmd = &cobra.Command{
 	Use:   "login <instance-id>",
-	Short: "Login to instance via webshell",
-	Long: `Login to a sandbox instance via web-based terminal (webshell).
+	Short: "Login to instance via terminal",
+	Long: `Login to a sandbox instance interactively.
 
-This command will:
-1. Verify the instance exists and is running
-2. Download and start ttyd webshell service if not already running
-   (or upload custom ttyd binary if --ttyd-binary is specified)
-3. Open the webshell in your default browser
+Two modes are available (controlled by --mode):
 
-The webshell provides a full terminal interface accessible through your browser,
-allowing you to interact with the sandbox environment directly.
+PTY mode (default):
+  Connects a native terminal session directly in your current console using the
+  envd PTY capability.  No browser or extra binaries are required.
 
-If the sandbox cannot download ttyd from GitHub due to network restrictions,
-you can use --ttyd-binary to upload a local ttyd binary file.
-
-Examples:
   ags instance login abc123
-  ags instance login abc123 --no-browser
-  ags instance login abc123 --ttyd-binary /path/to/ttyd`,
+
+Webshell mode (--mode webshell):
+  Downloads and starts a ttyd webshell service inside the sandbox, then opens
+  the terminal in your browser.
+
+  ags instance login abc123 --mode webshell
+  ags instance login abc123 --mode webshell --no-browser
+  ags instance login abc123 --mode webshell --ttyd-binary /path/to/ttyd`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
@@ -626,6 +627,20 @@ Examples:
 		// Determine data plane domain
 		cfg := config.Get()
 		domain := cfg.DataPlaneRegionDomain()
+
+		// Validate and route by login mode
+		mode := strings.ToLower(instanceLoginMode)
+		switch mode {
+		case "pty":
+			// PTY mode: connect a native PTY session directly in the current terminal
+			output.PrintInfo(fmt.Sprintf("Starting PTY session in instance %s...", instanceID))
+			session := pty.NewSession(accessToken, domain)
+			return session.Connect(ctx, instanceID, resolveUser(instanceLoginUser))
+		case "webshell":
+			// fall through to webshell logic below
+		default:
+			return fmt.Errorf("unsupported login mode %q: must be \"pty\" or \"webshell\"", instanceLoginMode)
+		}
 
 		// Create webshell manager with access token (no AKSK needed)
 		webshellMgr := webshell.NewManagerWithToken(accessToken, domain)
@@ -854,14 +869,15 @@ func addInstanceCommand(parent *cobra.Command) {
 	// login command
 	loginCmd := &cobra.Command{
 		Use:   "login <instance-id>",
-		Short: "Login to instance via webshell",
+		Short: "Login to instance via terminal",
 		Long:  instanceLoginCmd.Long,
 		Args:  cobra.ExactArgs(1),
 		RunE:  instanceLoginCmd.RunE,
 	}
-	loginCmd.Flags().BoolVar(&instanceLoginNoBrowser, "no-browser", false, "Don't open browser automatically")
-	loginCmd.Flags().StringVar(&instanceLoginTTYDBinary, "ttyd-binary", "", "Path to custom ttyd binary file to upload")
-	loginCmd.Flags().StringVar(&instanceLoginUser, "user", "", "User to run webshell as (default: \"user\")")
+	loginCmd.Flags().StringVar(&instanceLoginMode, "mode", "pty", "Login mode: \"pty\" (native terminal, default) or \"webshell\" (browser-based)")
+	loginCmd.Flags().BoolVar(&instanceLoginNoBrowser, "no-browser", false, "Don't open browser automatically (webshell mode)")
+	loginCmd.Flags().StringVar(&instanceLoginTTYDBinary, "ttyd-binary", "", "Path to custom ttyd binary file to upload (webshell mode)")
+	loginCmd.Flags().StringVar(&instanceLoginUser, "user", "", "User to run terminal as (default: \"user\")")
 	loginCmd.Flags().BoolVar(&instanceTime, "time", false, "Print elapsed time")
 	cmd.AddCommand(loginCmd)
 

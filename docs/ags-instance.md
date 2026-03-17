@@ -21,7 +21,7 @@ Instances are running sandboxes created from tools. Each instance provides an is
 | `start` | - | Start an instance (alias for create) |
 | `list` | `ls` | List instances |
 | `get` | - | Get instance details |
-| `login` | - | Login to instance via webshell |
+| `login` | - | Login to instance via terminal |
 | `delete` | `rm`, `del` | Delete instances |
 | `stop` | - | Stop instances (alias for delete) |
 
@@ -133,30 +133,27 @@ ags instance get sbi-xxxxxxxx
 
 ## login
 
-Login to a sandbox instance via web-based terminal (webshell).
+Login to a sandbox instance interactively.
 
 ```
 ags instance login <instance-id> [flags]
 ags i login <instance-id> [flags]
 ```
 
-This command will:
-1. Verify the instance exists and is running
-2. Download and start ttyd webshell service if not already running
-   (or upload custom ttyd binary if --ttyd-binary is specified)
-3. Open the webshell in your default browser
+Two modes are available:
 
-The webshell provides a full terminal interface accessible through your browser, allowing you to interact with the sandbox environment directly.
+**PTY mode** (`--pty`, recommended): Connects a native terminal session directly in your current console using the envd PTY capability. No browser or extra binaries are required.
 
-If the sandbox cannot download ttyd from GitHub due to network restrictions, you can use --ttyd-binary to upload a local ttyd binary file.
+**Webshell mode** (default): Downloads and starts a ttyd webshell service inside the sandbox, then opens the terminal in your browser. If the sandbox cannot download ttyd from GitHub due to network restrictions, you can use `--ttyd-binary` to upload a local ttyd binary file.
 
 ### Options
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--no-browser` | bool | `false` | Don't open browser automatically |
-| `--ttyd-binary` | string | - | Path to custom ttyd binary file to upload |
-| `--user` | string | `user` | User to run webshell as |
+| `--pty` | bool | `false` | Connect a native PTY session directly in the current terminal (no browser required) |
+| `--no-browser` | bool | `false` | Don't open browser automatically (webshell mode) |
+| `--ttyd-binary` | string | - | Path to custom ttyd binary file to upload (webshell mode) |
+| `--user` | string | `user` | User to run terminal as |
 | `--time` | bool | `false` | Print elapsed time |
 
 ### Supported Instance Types
@@ -171,13 +168,19 @@ If the sandbox cannot download ttyd from GitHub due to network restrictions, you
 ### Examples
 
 ```bash
-# Login to instance with automatic browser opening
+# PTY mode: direct terminal session (recommended)
+ags instance login sbi-xxxxxxxx --pty
+
+# PTY mode with specific user
+ags instance login sbi-xxxxxxxx --pty --user root
+
+# Webshell mode: open in browser (default)
 ags instance login sbi-xxxxxxxx
 
-# Login without opening browser (manual URL access)
+# Webshell mode: don't open browser (manual URL access)
 ags i login sbi-xxxxxxxx --no-browser
 
-# Login with custom ttyd binary (for network-restricted environments)
+# Webshell mode: custom ttyd binary (for network-restricted environments)
 ags instance login sbi-xxxxxxxx --ttyd-binary /path/to/ttyd
 
 # Login with timing information
