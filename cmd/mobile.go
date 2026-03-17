@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -264,6 +265,11 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 	}
 
 	// Clean up any existing tunnel for this sandbox
+	// First, disconnect old adb address if there was a previous tunnel
+	if oldEntry, ok, _ := store.Get(sandboxID); ok {
+		oldAddr := fmt.Sprintf("127.0.0.1:%d", oldEntry.Port)
+		_ = runAdbCommand(adbPath, "disconnect", oldAddr)
+	}
 	if err := store.Cleanup(sandboxID); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to cleanup existing tunnel: %v\n", err)
 	}
@@ -291,7 +297,19 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 	}
 
 	cmd := exec.Command(selfPath, tunnelArgs...)
-	cmd.Stderr = os.Stderr // Let tunnel errors flow to parent stderr
+	// Redirect tunnel stderr to a log file instead of parent terminal
+	// to avoid background reconnection logs polluting the user's shell.
+	if homeDir, homeErr := os.UserHomeDir(); homeErr == nil {
+		logDir := filepath.Join(homeDir, ".ags")
+		_ = os.MkdirAll(logDir, 0700)
+		logFile, logErr := os.OpenFile(
+			filepath.Join(logDir, fmt.Sprintf("tunnel-%s.log", sandboxID)),
+			os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600,
+		)
+		if logErr == nil {
+			cmd.Stderr = logFile
+		}
+	}
 
 	// Pass sensitive credentials via environment variables instead of CLI args
 	// to avoid exposure in process listing (ps aux).
@@ -376,6 +394,10 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 		output.PrintInfo(fmt.Sprintf("tunnel ready for %s at %s (adb connect failed: %v; use 'adb connect %s' manually)", sandboxID, adbAddr, err, adbAddr))
 	} else {
 		output.PrintInfo(fmt.Sprintf("connected to %s (%s)", sandboxID, adbAddr))
+	}
+	if homeDir, homeErr := os.UserHomeDir(); homeErr == nil {
+		logPath := filepath.Join(homeDir, ".ags", fmt.Sprintf("tunnel-%s.log", sandboxID))
+		output.PrintInfo(fmt.Sprintf("tunnel log: %s", logPath))
 	}
 	return nil
 }
@@ -468,9 +490,10 @@ func runMobileList(_ *cobra.Command, _ []string) error {
 	if f.IsJSON() {
 		items := make([]map[string]any, 0, len(entries))
 		for id, entry := range entries {
+			addr := fmt.Sprintf("127.0.0.1:%d", entry.Port)
 			items = append(items, map[string]any{
 				"sandbox_id":  id,
-				"adb_address": fmt.Sprintf("127.0.0.1:%d", entry.Port),
+				"adb_address": addr,
 				"port":        entry.Port,
 				"pid":         entry.PID,
 				"created_at":  entry.CreatedAt.Format(time.RFC3339),
@@ -490,6 +513,11 @@ func runMobileList(_ *cobra.Command, _ []string) error {
 	fmt.Printf("%-24s %-22s %s\n", "SANDBOX", "ADB ADDRESS", "STATUS")
 	for id, entry := range entries {
 		addr := fmt.Sprintf("127.0.0.1:%d", entry.Port)
+		// Note: we do NOT probe the tunnel port here (e.g., via net.Dial) because
+		// each TCP connection to the tunnel opens a new WebSocket to the server,
+		// and the server only allows one WS connection per sandbox. A probe would
+		// preempt the active ADB connection, causing "error: closed" on the next
+		// user command. The store.List() already filters out zombie entries (dead PIDs).
 		fmt.Printf("%-24s %-22s %s\n", id, addr, "connected")
 	}
 
@@ -572,11 +600,26 @@ func adbConnectWithRetry(adbPath, addr string, maxRetries int) error {
 		if i > 0 {
 			time.Sleep(500 * time.Millisecond)
 		}
-		if err := runAdbCommand(adbPath, "connect", addr); err == nil {
-			return nil
-		} else {
+		out, err := exec.Command(adbPath, "connect", addr).CombinedOutput()
+		if err != nil {
 			lastErr = err
+			continue
 		}
+		outStr := strings.TrimSpace(string(out))
+		fmt.Println(outStr)
+		// adb connect returns "connected to <addr>" or "already connected to <addr>" on success.
+		if strings.Contains(outStr, "connected") {
+			// Wait for ADB protocol handshake to complete.
+			// adb connect establishes TCP and starts CNXN exchange asynchronously.
+			// Without this wait, the first user command may arrive before the
+			// handshake finishes, causing "error: closed".
+			// We cannot use get-state or shell commands to verify because each
+			// adb command opens a new TCP connection through the tunnel, triggering
+			// server-side preemption (close 4001) of the previous connection.
+			time.Sleep(2 * time.Second)
+			return nil
+		}
+		lastErr = fmt.Errorf("adb connect: %s", outStr)
 	}
 	return fmt.Errorf("adb connect failed after %d attempts: %w", maxRetries, lastErr)
 }

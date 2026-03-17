@@ -31,6 +31,11 @@ const (
 	// maxBackoff is the upper bound for reconnection delay.
 	maxBackoff = 30 * time.Second
 
+	// maxDialFailures is the maximum number of consecutive WebSocket dial failures
+	// (e.g., bad handshake due to deleted sandbox or invalid token) before giving up.
+	// Transient network errors that occur after a successful connection do not count.
+	maxDialFailures = 5
+
 	// probeTimeout is the maximum time allowed for a Probe() handshake.
 	probeTimeout = 10 * time.Second
 )
@@ -200,10 +205,13 @@ func (t *Tunnel) acceptLoop() {
 // handleConnectionWithReconnect wraps handleConnection with automatic reconnection.
 // On WebSocket disconnection (except preemption), it re-establishes the WS connection
 // while keeping the local TCP connection alive, so the adb client doesn't need to reconnect.
+// It gives up after maxDialFailures consecutive dial failures (e.g., sandbox deleted),
+// but resets the counter whenever a connection is successfully established.
 func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 	defer func() { _ = localConn.Close() }()
 
 	attempt := 0
+	consecutiveDialFailures := 0
 	for {
 		connStart := time.Now()
 		preempted, err := t.handleConnection(localConn)
@@ -215,6 +223,20 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 		// If preempted by server (close code 4001), do NOT reconnect
 		if preempted {
 			t.logger.Printf("[WARN] Connection preempted by new client. Not reconnecting.")
+			return
+		}
+
+		// Track consecutive dial failures (connection never established).
+		// A dial failure means the error occurred instantly (< 1s), indicating
+		// the server rejected us (bad handshake, sandbox deleted, token invalid).
+		if time.Since(connStart) < time.Second {
+			consecutiveDialFailures++
+		} else {
+			consecutiveDialFailures = 0
+		}
+
+		if consecutiveDialFailures >= maxDialFailures {
+			t.logger.Printf("[ERROR] %d consecutive connection failures. Sandbox may be deleted or token expired. Giving up.", consecutiveDialFailures)
 			return
 		}
 
@@ -238,7 +260,7 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 			float64(maxBackoff),
 		))
 
-		t.logger.Printf("[WARN] WebSocket connection lost: %v. Reconnecting in %v... (attempt %d/∞)", err, delay, attempt)
+		t.logger.Printf("[WARN] WebSocket connection lost: %v. Reconnecting in %v... (attempt %d)", err, delay, attempt)
 
 		select {
 		case <-t.ctx.Done():
