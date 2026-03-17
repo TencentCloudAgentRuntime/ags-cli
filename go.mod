@@ -6,6 +6,8 @@ require (
 	connectrpc.com/connect v1.18.1
 	github.com/TencentCloudAgentRuntime/ags-go-sdk v0.0.10
 	github.com/c-bata/go-prompt v0.2.6
+	github.com/gofrs/flock v0.13.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags v1.3.16

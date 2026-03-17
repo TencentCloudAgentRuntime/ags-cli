@@ -7,15 +7,18 @@
 //
 // This cache provides a persistent file-based storage to save instance ID to access token
 // mappings, allowing CLI commands to retrieve tokens across invocations.
+// Cross-process safety is ensured via flock file locking and atomic writes.
 package token
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
+
+	"github.com/gofrs/flock"
 )
 
 const (
@@ -25,6 +28,10 @@ const (
 	CacheFile = "tokens.json"
 	// CacheVersion is the current version of cache file format
 	CacheVersion = 1
+	// lockTimeout is the maximum wait time to acquire the file lock.
+	lockTimeout = 3 * time.Second
+	// lockRetryDelay is the interval between lock acquisition attempts.
+	lockRetryDelay = 100 * time.Millisecond
 )
 
 // TokenEntry represents a cached access token
@@ -40,10 +47,11 @@ type CacheData struct {
 }
 
 // Cache manages instance access tokens with file-based persistence.
-// It is safe for concurrent use.
+// It is safe for concurrent use both within a single process and across
+// multiple processes via flock-based file locking.
 type Cache struct {
-	path string
-	mu   sync.RWMutex
+	path     string // path to tokens.json
+	lockPath string // path to tokens.json.lock
 }
 
 // NewCache creates a new token cache.
@@ -59,14 +67,30 @@ func NewCache() (*Cache, error) {
 		return nil, fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
+	cachePath := filepath.Join(cacheDir, CacheFile)
+
 	return &Cache{
-		path: filepath.Join(cacheDir, CacheFile),
+		path:     cachePath,
+		lockPath: cachePath + ".lock",
 	}, nil
 }
 
-// load reads the cache file and returns the cache data.
-// If the file doesn't exist, returns an empty cache data.
-func (c *Cache) load() (*CacheData, error) {
+// withLock acquires the file lock, runs fn, then releases the lock.
+func (c *Cache) withLock(fn func() error) error {
+	fl := flock.New(c.lockPath)
+	ctx, cancel := context.WithTimeout(context.Background(), lockTimeout)
+	defer cancel()
+	locked, err := fl.TryLockContext(ctx, lockRetryDelay)
+	if err != nil || !locked {
+		return fmt.Errorf("failed to acquire token cache lock: %w", err)
+	}
+	defer func() { _ = fl.Unlock() }()
+	return fn()
+}
+
+// loadLocked reads the cache file and returns the cache data.
+// Must be called while holding the file lock.
+func (c *Cache) loadLocked() (*CacheData, error) {
 	data, err := os.ReadFile(c.path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -99,15 +123,40 @@ func (c *Cache) load() (*CacheData, error) {
 	return &cache, nil
 }
 
-// save writes the cache data to file
-func (c *Cache) save(cache *CacheData) error {
+// saveLocked writes the cache data to a temp file then atomically renames it.
+// Must be called while holding the file lock.
+func (c *Cache) saveLocked(cache *CacheData) error {
 	data, err := json.MarshalIndent(cache, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal cache data: %w", err)
 	}
 
-	if err := os.WriteFile(c.path, data, 0600); err != nil {
-		return fmt.Errorf("failed to write cache file: %w", err)
+	// Atomic write: write to temp file in same directory, then rename.
+	dir := filepath.Dir(c.path)
+	tmpFile, err := os.CreateTemp(dir, "tokens-*.json.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+	if err := tmpFile.Chmod(0600); err != nil {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to set temp file permissions: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, c.path); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to rename temp file to cache file: %w", err)
 	}
 
 	return nil
@@ -116,81 +165,74 @@ func (c *Cache) save(cache *CacheData) error {
 // Get retrieves the access token for an instance.
 // Returns the token and true if found, empty string and false otherwise.
 func (c *Cache) Get(instanceID string) (string, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	cache, err := c.load()
-	if err != nil {
-		return "", false
-	}
-
-	entry, ok := cache.Tokens[instanceID]
-	if !ok || entry == nil {
-		return "", false
-	}
-
-	return entry.AccessToken, true
+	var token string
+	var found bool
+	_ = c.withLock(func() error {
+		cache, err := c.loadLocked()
+		if err != nil {
+			return err
+		}
+		entry, ok := cache.Tokens[instanceID]
+		if ok && entry != nil {
+			token = entry.AccessToken
+			found = true
+		}
+		return nil
+	})
+	return token, found
 }
 
 // Set stores the access token for an instance.
 func (c *Cache) Set(instanceID, accessToken string) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	cache, err := c.load()
-	if err != nil {
-		return err
-	}
-
-	cache.Tokens[instanceID] = &TokenEntry{
-		AccessToken: accessToken,
-		CreatedAt:   time.Now(),
-	}
-
-	return c.save(cache)
+	return c.withLock(func() error {
+		cache, err := c.loadLocked()
+		if err != nil {
+			return err
+		}
+		cache.Tokens[instanceID] = &TokenEntry{
+			AccessToken: accessToken,
+			CreatedAt:   time.Now(),
+		}
+		return c.saveLocked(cache)
+	})
 }
 
 // Delete removes the access token for an instance.
 func (c *Cache) Delete(instanceID string) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	cache, err := c.load()
-	if err != nil {
-		return err
-	}
-
-	delete(cache.Tokens, instanceID)
-	return c.save(cache)
+	return c.withLock(func() error {
+		cache, err := c.loadLocked()
+		if err != nil {
+			return err
+		}
+		delete(cache.Tokens, instanceID)
+		return c.saveLocked(cache)
+	})
 }
 
 // Clear removes all cached tokens.
 func (c *Cache) Clear() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	cache := &CacheData{
-		Version: CacheVersion,
-		Tokens:  make(map[string]*TokenEntry),
-	}
-
-	return c.save(cache)
+	return c.withLock(func() error {
+		cache := &CacheData{
+			Version: CacheVersion,
+			Tokens:  make(map[string]*TokenEntry),
+		}
+		return c.saveLocked(cache)
+	})
 }
 
 // List returns all cached instance IDs.
 func (c *Cache) List() ([]string, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	cache, err := c.load()
-	if err != nil {
-		return nil, err
-	}
-
-	ids := make([]string, 0, len(cache.Tokens))
-	for id := range cache.Tokens {
-		ids = append(ids, id)
-	}
-
-	return ids, nil
+	var ids []string
+	err := c.withLock(func() error {
+		cache, err := c.loadLocked()
+		if err != nil {
+			return err
+		}
+		ids = make([]string, 0, len(cache.Tokens))
+		for id := range cache.Tokens {
+			ids = append(ids, id)
+		}
+		return nil
+	})
+	return ids, err
 }

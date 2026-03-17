@@ -12,6 +12,7 @@ AGS CLI 是一个用于管理腾讯云智能体沙箱（AGS）的命令行工具
 - **Shell 命令执行**：在沙箱中运行 Shell 命令，支持流式输出
 - **文件操作**：在沙箱中上传、下载和管理文件
 - **双后端支持**：同时支持 E2B API 和腾讯云 API
+- **移动沙箱 ADB 连接**：通过 WebSocket 隧道安全访问远程 Android 沙箱
 - **交互式 REPL**：内置交互模式，支持自动补全
 - **流式输出**：长时间运行代码的实时输出流
 
@@ -143,6 +144,7 @@ ags file download /home/user/file.txt ./local.txt
 | `run` | `r` | 代码执行 | [ags-run](docs/ags-run-zh.md) |
 | `exec` | `x` | Shell 命令执行 | [ags-exec](docs/ags-exec-zh.md) |
 | `file` | `f`, `fs` | 文件操作 | [ags-file](docs/ags-file-zh.md) |
+| `mobile` | `m` | 移动沙箱 ADB 连接 | [ags-mobile](docs/ags-mobile-zh.md) |
 | `apikey` | `ak`, `key` | API 密钥管理 | [ags-apikey](docs/ags-apikey-zh.md) |
 
 参见 [ags](docs/ags-zh.md) 了解全局选项和配置详情。

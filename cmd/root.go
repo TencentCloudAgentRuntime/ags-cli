@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -94,6 +95,7 @@ func executeREPLCommand(args []string) error {
 	addExecCommand(newRoot)
 	addFileCommand(newRoot)
 	addBrowserCommand(newRoot)
+	addMobileCommand(newRoot)
 
 	newRoot.SetArgs(args)
 	return newRoot.Execute()
@@ -102,6 +104,11 @@ func executeREPLCommand(args []string) error {
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
+		// Respect custom exit codes from exitCodeError (used by mobile tunnel daemon)
+		var exitErr *exitCodeError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.code)
+		}
 		os.Exit(1)
 	}
 }

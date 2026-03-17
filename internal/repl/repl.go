@@ -109,6 +109,19 @@ var (
 		{Text: "b", Description: "Alias for browser"},
 		{Text: "b vnc", Description: "Show VNC URL for browser sandbox"},
 
+		// Mobile commands
+		{Text: "mobile", Description: "Mobile sandbox ADB commands"},
+		{Text: "mobile connect", Description: "Connect to mobile sandbox"},
+		{Text: "mobile disconnect", Description: "Disconnect from mobile sandbox"},
+		{Text: "mobile list", Description: "List active mobile connections"},
+		{Text: "mobile adb", Description: "Execute adb command by sandbox ID"},
+		{Text: "mobile tunnel", Description: "Run ADB tunnel in foreground"},
+		{Text: "m", Description: "Alias for mobile"},
+		{Text: "m connect", Description: "Connect to mobile sandbox"},
+		{Text: "m disconnect", Description: "Disconnect from mobile sandbox"},
+		{Text: "m list", Description: "List active mobile connections"},
+		{Text: "m adb", Description: "Execute adb command by sandbox ID"},
+
 		// Other commands
 		{Text: "help", Description: "Show help"},
 		{Text: "history", Description: "Show command history"},
@@ -263,6 +276,24 @@ var (
 	apikeyCreateFlags = []prompt.Suggest{
 		{Text: "-n", Description: "API key name"},
 		{Text: "--name", Description: "API key name"},
+	}
+
+	// Mobile command
+	mobileSubcommands = []prompt.Suggest{
+		{Text: "connect", Description: "Connect to mobile sandbox"},
+		{Text: "disconnect", Description: "Disconnect from mobile sandbox"},
+		{Text: "list", Description: "List active mobile connections"},
+		{Text: "adb", Description: "Execute adb command by sandbox ID"},
+		{Text: "tunnel", Description: "Run ADB tunnel in foreground"},
+	}
+
+	mobileDisconnectFlags = []prompt.Suggest{
+		{Text: "--all", Description: "Disconnect all active connections"},
+	}
+
+	mobileTunnelFlags = []prompt.Suggest{
+		{Text: "--daemon", Description: "Run in daemon mode (used by connect)"},
+		{Text: "--port", Description: "Local port to listen on (0 = auto)"},
 	}
 
 	// Browser command
@@ -613,6 +644,37 @@ func completer(d prompt.Document) []prompt.Suggest {
 			return fileFlags
 		}
 
+	case "mobile", "m":
+		if len(words) == 1 {
+			if strings.HasSuffix(text, " ") {
+				return mobileSubcommands
+			}
+			return prompt.FilterHasPrefix(commands, cmd, true)
+		}
+		if len(words) == 2 && !strings.HasSuffix(text, " ") {
+			return prompt.FilterHasPrefix(mobileSubcommands, words[1], true)
+		}
+		// Handle flags for disconnect subcommand
+		if len(words) >= 2 && words[1] == "disconnect" {
+			lastWord := words[len(words)-1]
+			if strings.HasPrefix(lastWord, "-") && !strings.HasSuffix(text, " ") {
+				return prompt.FilterHasPrefix(mobileDisconnectFlags, lastWord, true)
+			}
+			if strings.HasSuffix(text, " ") {
+				return mobileDisconnectFlags
+			}
+		}
+		// Handle flags for tunnel subcommand
+		if len(words) >= 2 && words[1] == "tunnel" {
+			lastWord := words[len(words)-1]
+			if strings.HasPrefix(lastWord, "-") && !strings.HasSuffix(text, " ") {
+				return prompt.FilterHasPrefix(mobileTunnelFlags, lastWord, true)
+			}
+			if strings.HasSuffix(text, " ") {
+				return mobileTunnelFlags
+			}
+		}
+
 	case "browser", "b":
 		if len(words) == 1 {
 			if strings.HasSuffix(text, " ") {
@@ -888,6 +950,21 @@ Browser Sandbox:
     browser vnc --tool browser-v1         # Create new browser sandbox (alias)
     browser vnc --tool-id sdt-xxxx        # Create using tool ID
     browser vnc -t browser-v1 --timeout 3600  # Create with 1 hour timeout
+
+Mobile Sandbox:
+  mobile connect <id>, m connect    Connect to mobile sandbox (background tunnel + adb connect)
+  mobile disconnect <id>            Disconnect from mobile sandbox
+  mobile disconnect --all           Disconnect all active connections
+  mobile list, m list               List active mobile connections
+  mobile adb <id> <args...>         Execute adb command by sandbox ID
+  mobile tunnel <id>                Run ADB tunnel in foreground (debug)
+
+  Examples:
+    mobile connect sandbox-aaa              # Connect to sandbox
+    mobile list                             # Show all active connections
+    mobile adb sandbox-aaa shell ls /sdcard # Run adb command by ID
+    mobile disconnect sandbox-aaa           # Disconnect from sandbox
+    mobile disconnect --all                 # Disconnect all
 
 Global Flags:
   --backend <e2b|cloud>       API backend to use
