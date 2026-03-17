@@ -9,6 +9,7 @@ package adbtunnel
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -387,22 +388,8 @@ func isPreemptionError(err error) bool {
 		return false
 	}
 	var closeErr *websocket.CloseError
-	if ok := isCloseError(err, &closeErr); ok {
+	if errors.As(err, &closeErr) {
 		return closeErr.Code == closeCodePreempted
-	}
-	return false
-}
-
-// isCloseError attempts to extract a CloseError from the given error.
-func isCloseError(err error, target **websocket.CloseError) bool {
-	if err == nil {
-		return false
-	}
-	// websocket.IsCloseError checks the code, but we need the full CloseError.
-	// Use the standard approach: check if the error string contains the close code pattern.
-	if ce, ok := err.(*websocket.CloseError); ok {
-		*target = ce
-		return true
 	}
 	return false
 }

@@ -264,7 +264,9 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 	}
 
 	// Clean up any existing tunnel for this sandbox
-	_ = store.Cleanup(sandboxID)
+	if err := store.Cleanup(sandboxID); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to cleanup existing tunnel: %v\n", err)
+	}
 
 	// Spawn background tunnel process
 	selfPath, err := os.Executable()
@@ -313,6 +315,9 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start tunnel process: %w", err)
 	}
+
+	// Reap the child process in the background to prevent zombie accumulation
+	go func() { _ = cmd.Wait() }()
 
 	// Read ready message with timeout
 	readyCh := make(chan readyMessage, 1)

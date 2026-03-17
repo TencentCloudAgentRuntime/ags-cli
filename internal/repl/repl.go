@@ -283,7 +283,6 @@ var (
 		{Text: "connect", Description: "Connect to mobile sandbox"},
 		{Text: "disconnect", Description: "Disconnect from mobile sandbox"},
 		{Text: "list", Description: "List active mobile connections"},
-		{Text: "ls", Description: "List active mobile connections"},
 		{Text: "adb", Description: "Execute adb command by sandbox ID"},
 		{Text: "tunnel", Description: "Run ADB tunnel in foreground"},
 	}
