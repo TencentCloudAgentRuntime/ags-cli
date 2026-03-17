@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add `--mode` flag to `instance login` command with `pty` (default) and `webshell` modes; PTY mode connects a native terminal session directly in the current console without requiring a browser or ttyd binary
 
+### Fixed
+- Fix `instance create --tool-id` not being passed to Cloud backend API; ToolID is now preferred over ToolName when specified
+
 ## [0.2.1] - 2026-03-13
 
 ### Changed

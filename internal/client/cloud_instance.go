@@ -40,11 +40,6 @@ func NewCloudInstanceClient(cfg *config.Config, cloudCfg *config.CloudConfig) (*
 
 // CreateInstance creates a new sandbox instance
 func (c *CloudInstanceClient) CreateInstance(ctx context.Context, opts *CreateInstanceOptions) (*Instance, error) {
-	toolName := opts.ToolName
-	if toolName == "" {
-		toolName = "code-interpreter-v1"
-	}
-
 	// Set timeout duration
 	timeout := time.Duration(opts.Timeout) * time.Second
 	if timeout == 0 {
@@ -52,7 +47,17 @@ func (c *CloudInstanceClient) CreateInstance(ctx context.Context, opts *CreateIn
 	}
 
 	request := ags.NewStartSandboxInstanceRequest()
-	request.ToolName = &toolName
+
+	// Prefer ToolID over ToolName when both or either are specified
+	if opts.ToolID != "" {
+		request.ToolId = &opts.ToolID
+	} else {
+		toolName := opts.ToolName
+		if toolName == "" {
+			toolName = "code-interpreter-v1"
+		}
+		request.ToolName = &toolName
+	}
 
 	// Set timeout
 	timeoutStr := formatDuration(timeout)

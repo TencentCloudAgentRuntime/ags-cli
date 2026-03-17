@@ -7,6 +7,9 @@
 ### 新增
 - 为 `instance login` 命令添加 `--mode` 参数，支持 `pty`（默认）和 `webshell` 两种模式；PTY 模式在当前终端中直接开启原生终端会话，无需浏览器或 ttyd 二进制文件
 
+### 修复
+- 修复 `instance create --tool-id` 未传递给 Cloud 后端 API 的问题；现在指定 ToolID 时优先使用 ToolID 而非 ToolName
+
 ## [0.2.1] - 2026-03-13
 
 ### 变更
