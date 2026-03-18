@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-03-18
+
+### Fixed
+- Redirect tunnel subprocess stderr to `~/.ags/tunnel-<id>.log` instead of parent terminal, preventing background reconnection logs from polluting the user's shell
+- Add max consecutive dial failure limit to stop infinite reconnection when sandbox is deleted or token expired
+- Disconnect old ADB address before cleanup when reconnecting the same sandbox, preventing stale offline devices
+- Wait for ADB protocol handshake to complete after `adb connect`, avoiding "error: closed" on the first user command
+- Remove TCP port probe from `mobile list` to prevent preemption of active ADB sessions; use PID-based zombie detection instead
+
 ## [0.3.0] - 2026-03-17
 
 ### Added
