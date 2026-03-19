@@ -7,12 +7,12 @@ import (
 
 func TestParsePortSpec(t *testing.T) {
 	tests := []struct {
-		name           string
-		spec           string
-		wantLocal      int
-		wantRemote     int
-		wantErr        bool
-		errContains    string
+		name        string
+		spec        string
+		wantLocal   int
+		wantRemote  int
+		wantErr     bool
+		errContains string
 	}{
 		{
 			name:       "single port",
