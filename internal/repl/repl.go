@@ -711,7 +711,19 @@ func completer(d prompt.Document) []prompt.Suggest {
 			return prompt.FilterHasPrefix(proxyFlags, lastWord, true)
 		}
 		if strings.HasSuffix(text, " ") {
-			return proxyFlags
+			switch len(words) {
+			case 1:
+				// Position 1: expecting <sandbox_id>
+				return []prompt.Suggest{{Text: "<sandbox-id>", Description: "Sandbox instance ID to forward"}}
+			case 2:
+				// Position 2: expecting [local_port:]<remote_port>
+				return []prompt.Suggest{
+					{Text: "<port>", Description: "Remote port, e.g. 8080"},
+					{Text: "<local>:<remote>", Description: "Map local to remote port, e.g. 3000:8080"},
+				}
+			default:
+				return proxyFlags
+			}
 		}
 	}
 
@@ -990,6 +1002,7 @@ Port Forwarding:
 
   Options:
     --address <addr>                Local address to bind to (default: 127.0.0.1)
+    --verbose                       Enable verbose request logging
 
   Examples:
     proxy sandbox-xxx 8080                  # Forward port 8080 to localhost:8080

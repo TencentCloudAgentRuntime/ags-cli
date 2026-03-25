@@ -31,10 +31,10 @@ func TestNewProxy(t *testing.T) {
 		{
 			name: "valid options",
 			opts: Options{
-				InstanceID:    "sandbox-test",
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    3000,
-				TokenProvider: func() (string, error) { return "token123", nil },
+				InstanceID: "sandbox-test",
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: 3000,
+				Token:      "token123",
 			},
 			wantErr: false,
 		},
@@ -44,7 +44,7 @@ func TestNewProxy(t *testing.T) {
 				InstanceID:    "sandbox-test",
 				Domain:        "ap-guangzhou.tencentags.com",
 				RemotePort:    8080,
-				TokenProvider: func() (string, error) { return "t", nil },
+				Token:         "t",
 				ListenAddress: "127.0.0.1:9999",
 			},
 			wantErr: false,
@@ -52,9 +52,9 @@ func TestNewProxy(t *testing.T) {
 		{
 			name: "missing instanceID",
 			opts: Options{
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    3000,
-				TokenProvider: func() (string, error) { return "t", nil },
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: 3000,
+				Token:      "t",
 			},
 			wantErr: true,
 			errMsg:  "instanceID",
@@ -62,30 +62,30 @@ func TestNewProxy(t *testing.T) {
 		{
 			name: "missing domain",
 			opts: Options{
-				InstanceID:    "sandbox-test",
-				RemotePort:    3000,
-				TokenProvider: func() (string, error) { return "t", nil },
+				InstanceID: "sandbox-test",
+				RemotePort: 3000,
+				Token:      "t",
 			},
 			wantErr: true,
 			errMsg:  "domain",
 		},
 		{
-			name: "nil token provider",
+			name: "empty token",
 			opts: Options{
 				InstanceID: "sandbox-test",
 				Domain:     "ap-guangzhou.tencentags.com",
 				RemotePort: 3000,
 			},
 			wantErr: true,
-			errMsg:  "tokenProvider",
+			errMsg:  "token",
 		},
 		{
 			name: "invalid remote port zero",
 			opts: Options{
-				InstanceID:    "sandbox-test",
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    0,
-				TokenProvider: func() (string, error) { return "t", nil },
+				InstanceID: "sandbox-test",
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: 0,
+				Token:      "t",
 			},
 			wantErr: true,
 			errMsg:  "remotePort",
@@ -93,10 +93,10 @@ func TestNewProxy(t *testing.T) {
 		{
 			name: "invalid remote port negative",
 			opts: Options{
-				InstanceID:    "sandbox-test",
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    -1,
-				TokenProvider: func() (string, error) { return "t", nil },
+				InstanceID: "sandbox-test",
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: -1,
+				Token:      "t",
 			},
 			wantErr: true,
 			errMsg:  "remotePort",
@@ -104,10 +104,10 @@ func TestNewProxy(t *testing.T) {
 		{
 			name: "invalid remote port too large",
 			opts: Options{
-				InstanceID:    "sandbox-test",
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    70000,
-				TokenProvider: func() (string, error) { return "t", nil },
+				InstanceID: "sandbox-test",
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: 70000,
+				Token:      "t",
 			},
 			wantErr: true,
 			errMsg:  "remotePort",
@@ -138,8 +138,6 @@ func TestNewProxy(t *testing.T) {
 
 // TestTargetHost validates target host construction.
 func TestTargetHost(t *testing.T) {
-	tokenFn := func() (string, error) { return "t", nil }
-
 	tests := []struct {
 		name       string
 		opts       Options
@@ -148,30 +146,30 @@ func TestTargetHost(t *testing.T) {
 		{
 			name: "standard host",
 			opts: Options{
-				InstanceID:    "sandbox-aaa",
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    3000,
-				TokenProvider: tokenFn,
+				InstanceID: "sandbox-aaa",
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: 3000,
+				Token:      "t",
 			},
 			wantTarget: "3000-sandbox-aaa.ap-guangzhou.tencentags.com",
 		},
 		{
 			name: "sdt prefix ID",
 			opts: Options{
-				InstanceID:    "sdt-1gqmhtgz",
-				Domain:        "ap-guangzhou.tencentags.com",
-				RemotePort:    8080,
-				TokenProvider: tokenFn,
+				InstanceID: "sdt-1gqmhtgz",
+				Domain:     "ap-guangzhou.tencentags.com",
+				RemotePort: 8080,
+				Token:      "t",
 			},
 			wantTarget: "8080-sdt-1gqmhtgz.ap-guangzhou.tencentags.com",
 		},
 		{
 			name: "internal domain",
 			opts: Options{
-				InstanceID:    "sandbox-bbb",
-				Domain:        "ap-guangzhou.internal.tencentags.com",
-				RemotePort:    5173,
-				TokenProvider: tokenFn,
+				InstanceID: "sandbox-bbb",
+				Domain:     "ap-guangzhou.internal.tencentags.com",
+				RemotePort: 5173,
+				Token:      "t",
 			},
 			wantTarget: "5173-sandbox-bbb.ap-guangzhou.internal.tencentags.com",
 		},
@@ -196,7 +194,7 @@ func TestProxyStartStop(t *testing.T) {
 		InstanceID:    "test",
 		Domain:        "test.example.com",
 		RemotePort:    3000,
-		TokenProvider: func() (string, error) { return "t", nil },
+		Token:         "t",
 		ListenAddress: "127.0.0.1:0",
 	})
 	if err != nil {
@@ -223,11 +221,10 @@ func TestProxyStartStop(t *testing.T) {
 	}
 	_ = conn.Close()
 
-	// Stop and verify listener is closed
+	// Stop and verify listener is closed.
+	// p.Stop() blocks until the server has fully shut down (up to 5 s),
+	// so no sleep is needed before probing the port.
 	p.Stop()
-
-	// Give server time to fully shut down
-	time.Sleep(100 * time.Millisecond)
 
 	_, err = net.DialTimeout("tcp", addr, 500*time.Millisecond)
 	if err == nil {
@@ -238,10 +235,10 @@ func TestProxyStartStop(t *testing.T) {
 // TestProxyLocalAddrBeforeStart tests LocalAddr returns empty before Start.
 func TestProxyLocalAddrBeforeStart(t *testing.T) {
 	p, err := New(Options{
-		InstanceID:    "test",
-		Domain:        "test.example.com",
-		RemotePort:    3000,
-		TokenProvider: func() (string, error) { return "t", nil },
+		InstanceID: "test",
+		Domain:     "test.example.com",
+		RemotePort: 3000,
+		Token:      "t",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -273,7 +270,7 @@ func TestProxyHTTPForwarding(t *testing.T) {
 		InstanceID:    "test-sandbox",
 		Domain:        "test.example.com",
 		RemotePort:    3000,
-		TokenProvider: func() (string, error) { return "my-secret-token", nil },
+		Token:         "my-secret-token",
 		ListenAddress: "127.0.0.1:0",
 		Insecure:      true,
 	})
@@ -356,7 +353,7 @@ func TestProxyWebSocketForwarding(t *testing.T) {
 		InstanceID:    "test-sandbox",
 		Domain:        "test.example.com",
 		RemotePort:    3000,
-		TokenProvider: func() (string, error) { return "ws-token-123", nil },
+		Token:         "ws-token-123",
 		ListenAddress: "127.0.0.1:0",
 		Insecure:      true,
 	})
@@ -443,7 +440,7 @@ func TestProxyWebSocketBidirectional(t *testing.T) {
 		InstanceID:    "test-sandbox",
 		Domain:        "test.example.com",
 		RemotePort:    3000,
-		TokenProvider: func() (string, error) { return "token", nil },
+		Token:         "token",
 		ListenAddress: "127.0.0.1:0",
 		Insecure:      true,
 	})
@@ -507,7 +504,7 @@ func TestProxyMultipleConcurrentHTTPRequests(t *testing.T) {
 		InstanceID:    "test-sandbox",
 		Domain:        "test.example.com",
 		RemotePort:    3000,
-		TokenProvider: func() (string, error) { return "token", nil },
+		Token:         "token",
 		ListenAddress: "127.0.0.1:0",
 		Insecure:      true,
 	})
@@ -534,7 +531,7 @@ func TestProxyMultipleConcurrentHTTPRequests(t *testing.T) {
 			client := &http.Client{
 				Timeout: 5 * time.Second,
 				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
 				},
 			}
 			resp, err := client.Get(fmt.Sprintf("http://%s/", addr))

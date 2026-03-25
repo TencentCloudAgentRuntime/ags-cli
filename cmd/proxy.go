@@ -3,12 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -119,9 +117,11 @@ func runProxy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get verbose flag: %w", err)
 	}
 
-	// Build the token provider
-	tokenProvider := func() (string, error) {
-		return acquireInstanceToken(context.Background(), sandboxID)
+	// Acquire a token once upfront; it remains valid for the proxy's lifetime
+	// (token and instance have the same lifecycle).
+	token, err := acquireInstanceToken(context.Background(), sandboxID)
+	if err != nil {
+		return fmt.Errorf("failed to acquire access token: %w", err)
 	}
 
 	cfg := config.Get()
@@ -133,7 +133,7 @@ func runProxy(cmd *cobra.Command, args []string) error {
 		InstanceID:    sandboxID,
 		Domain:        domain,
 		RemotePort:    remotePort,
-		TokenProvider: tokenProvider,
+		Token:         token,
 		ListenAddress: listenAddr,
 		Insecure:      false,
 		Verbose:       verbose,
@@ -152,25 +152,14 @@ func runProxy(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Remote: https://%d-%s.%s\n", remotePort, sandboxID, domain)
 	fmt.Println("\nPress Ctrl+C to stop.")
 
-	// Wait for signal with graceful shutdown
+	// Block until SIGINT/SIGTERM, then gracefully shut down.
+	// p.Stop() internally waits up to 5 s for in-flight requests to finish.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	<-ctx.Done()
 
 	fmt.Println("\nStopping proxy...")
-
-	// Graceful shutdown with timeout
-	shutdownDone := make(chan struct{})
-	go func() {
-		p.Stop()
-		close(shutdownDone)
-	}()
-
-	select {
-	case <-shutdownDone:
-	case <-time.After(5 * time.Second):
-		fmt.Fprintln(os.Stderr, "[WARN] Graceful shutdown timed out. Forcing exit.")
-	}
+	p.Stop()
 
 	return nil
 }

@@ -11,7 +11,6 @@ package proxy
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -27,34 +26,15 @@ import (
 
 // Options defines configuration for the port-forward proxy.
 type Options struct {
-	InstanceID    string                 // e.g. "sandbox-xxx"
-	Domain        string                 // e.g. "ap-guangzhou.tencentags.com" (region-qualified)
-	RemotePort    int                    // Port on the remote sandbox to proxy to
-	TokenProvider func() (string, error) // Dynamic token provider; called for each request
-	ListenAddress string                 // e.g. "127.0.0.1:3000"
-	Logger        *log.Logger            // Optional logger; defaults to log.Default()
-	Insecure      bool                   // Skip TLS verification
-	Verbose       bool                   // Enable verbose request logging
+	InstanceID    string      // e.g. "sandbox-xxx"
+	Domain        string      // e.g. "ap-guangzhou.tencentags.com" (region-qualified)
+	RemotePort    int         // Port on the remote sandbox to proxy to
+	Token         string      // Access token for the sandbox; valid for the proxy's lifetime
+	ListenAddress string      // e.g. "127.0.0.1:3000"
+	Logger        *log.Logger // Optional logger; defaults to log.Default()
+	Insecure      bool        // Skip TLS verification
+	Verbose       bool        // Enable verbose request logging
 }
-
-// errTokenUnavailable is a sentinel error used to signal that the token could not be obtained.
-var errTokenUnavailable = fmt.Errorf("access token unavailable")
-
-// tokenAwareTransport wraps an http.RoundTripper and checks for a context-embedded
-// token error before sending the request, returning a clear error to the client.
-type tokenAwareTransport struct {
-	base http.RoundTripper
-}
-
-func (t *tokenAwareTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if err, ok := req.Context().Value(tokenErrorKey{}).(error); ok && err != nil {
-		return nil, errTokenUnavailable
-	}
-	return t.base.RoundTrip(req)
-}
-
-// tokenErrorKey is the context key for passing token errors from Director to RoundTripper.
-type tokenErrorKey struct{}
 
 // Proxy manages an active HTTP/WebSocket reverse proxy that forwards local
 // requests to a remote sandbox service through SandPortal.
@@ -70,8 +50,8 @@ type Proxy struct {
 
 // New creates and initializes a new port-forward proxy but does not start it.
 func New(opts Options) (*Proxy, error) {
-	if opts.InstanceID == "" || opts.TokenProvider == nil || opts.Domain == "" {
-		return nil, fmt.Errorf("instanceID, tokenProvider, and domain are required")
+	if opts.InstanceID == "" || opts.Token == "" || opts.Domain == "" {
+		return nil, fmt.Errorf("instanceID, token, and domain are required")
 	}
 	if opts.RemotePort <= 0 || opts.RemotePort > 65535 {
 		return nil, fmt.Errorf("remotePort must be between 1 and 65535")
@@ -115,16 +95,15 @@ func (p *Proxy) Start() (string, error) {
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	// Customize the transport for TLS and token-aware request interception
-	baseTransport := &http.Transport{
+	// Customize the transport for TLS
+	reverseProxy.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: p.options.Insecure,
+			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
 		MaxIdleConns:        100,
 		IdleConnTimeout:     90 * time.Second,
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
-	reverseProxy.Transport = &tokenAwareTransport{base: baseTransport}
 
 	// Customize the Director to inject token and fix Host header
 	originalDirector := reverseProxy.Director
@@ -133,15 +112,8 @@ func (p *Proxy) Start() (string, error) {
 		// Set the correct Host header (changeOrigin equivalent)
 		req.Host = p.targetHost
 		// Inject access token
-		token, err := p.options.TokenProvider()
-		if err != nil {
-			p.logger.Printf("[WARN] Failed to get token: %v", err)
-			// Embed the error into the request context so the transport can reject it
-			*req = *req.WithContext(context.WithValue(req.Context(), tokenErrorKey{}, err))
-			return
-		}
-		req.Header.Set("X-Access-Token", token)
-		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("X-Access-Token", p.options.Token)
+		req.Header.Set("Authorization", "Bearer "+p.options.Token)
 		if p.options.Verbose {
 			p.logger.Printf("[HTTP] %s %s", req.Method, req.URL.Path)
 		}
@@ -149,11 +121,6 @@ func (p *Proxy) Start() (string, error) {
 
 	// Error handler
 	reverseProxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		if errors.Is(err, errTokenUnavailable) {
-			p.logger.Printf("[ERROR] Token unavailable, rejecting request: %s %s", r.Method, r.URL.Path)
-			http.Error(w, "Failed to obtain access token. Please check your credentials.", http.StatusServiceUnavailable)
-			return
-		}
 		p.logger.Printf("[ERROR] Proxy error: %v", err)
 		w.WriteHeader(http.StatusBadGateway)
 		fmt.Fprintf(w, "Bad Gateway: %v", err)
@@ -214,22 +181,13 @@ func (p *Proxy) Stop() {
 
 // handleWebSocket bridges a WebSocket connection from the local client to the remote sandbox.
 func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader *websocket.Upgrader) {
-	// Get token for upstream connection
-	token, err := p.options.TokenProvider()
-	if err != nil {
-		p.logger.Printf("[ERROR] Failed to get token for WebSocket: %v", err)
-		http.Error(w, "Failed to obtain access token. Please check your credentials.", http.StatusServiceUnavailable)
-		return
-	}
-
 	// Build upstream WebSocket URL
-	wsScheme := "wss"
-	upstreamURL := fmt.Sprintf("%s://%s%s", wsScheme, p.targetHost, r.URL.RequestURI())
+	upstreamURL := fmt.Sprintf("wss://%s%s", p.targetHost, r.URL.RequestURI())
 
-	// Prepare upstream headers
+	// Prepare upstream headers with the pre-acquired token
 	upstreamHeaders := http.Header{}
-	upstreamHeaders.Set("X-Access-Token", token)
-	upstreamHeaders.Set("Authorization", "Bearer "+token)
+	upstreamHeaders.Set("X-Access-Token", p.options.Token)
+	upstreamHeaders.Set("Authorization", "Bearer "+p.options.Token)
 	upstreamHeaders.Set("Host", p.targetHost)
 
 	// Copy relevant headers from the original request
@@ -244,7 +202,7 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	dialer := &websocket.Dialer{
 		HandshakeTimeout: 15 * time.Second,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: p.options.Insecure,
+			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
 	}
 
@@ -282,14 +240,14 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	go func() {
 		defer wg.Done()
 		p.bridgeWebSocket(clientConn, upstreamConn, "client->upstream")
-		_ = upstreamConn.Close() // 通知对端 goroutine 退出
+		_ = upstreamConn.Close() // signal the peer goroutine to exit
 	}()
 
 	// Upstream -> Client
 	go func() {
 		defer wg.Done()
 		p.bridgeWebSocket(upstreamConn, clientConn, "upstream->client")
-		_ = clientConn.Close() // 通知对端 goroutine 退出
+		_ = clientConn.Close() // signal the peer goroutine to exit
 	}()
 
 	wg.Wait()
