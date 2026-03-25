@@ -24,6 +24,8 @@ AGS CLI 提供了一种便捷的方式来管理沙箱工具、实例，并在隔
 | [run](ags-run-zh.md) | `r` | 在沙箱中执行代码 |
 | [exec](ags-exec-zh.md) | `x` | 在沙箱中执行 Shell 命令 |
 | [file](ags-file-zh.md) | `f`, `fs` | 沙箱文件操作 |
+| [proxy](ags-proxy-zh.md) | - | 将沙箱端口转发到本地 |
+| [mobile](ags-mobile-zh.md) | `m` | 手机沙箱 ADB 连接 |
 | [apikey](ags-apikey-zh.md) | `ak`, `key` | API 密钥管理（仅云端后端） |
 | `completion` | - | 生成 Shell 补全脚本 |
 | `help` | - | 获取命令帮助 |
@@ -99,4 +101,6 @@ ags --backend cloud tool list
 - [ags-run](ags-run-zh.md) - 代码执行
 - [ags-exec](ags-exec-zh.md) - Shell 命令执行
 - [ags-file](ags-file-zh.md) - 文件操作
+- [ags-proxy](ags-proxy-zh.md) - 端口转发
+- [ags-mobile](ags-mobile-zh.md) - 手机沙箱 ADB 连接
 - [ags-apikey](ags-apikey-zh.md) - API 密钥管理

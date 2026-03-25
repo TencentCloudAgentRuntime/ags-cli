@@ -12,6 +12,7 @@ AGS CLI is a command-line tool for managing Tencent Cloud Agent Sandbox (AGS). I
 - **Shell Command Execution**: Run shell commands in sandbox with streaming support
 - **File Operations**: Upload, download, and manage files in sandbox
 - **Dual Backend Support**: Support both E2B API and Tencent Cloud API
+- **Port Forwarding**: Forward sandbox ports to localhost, with full HTTP and WebSocket support
 - **Mobile Sandbox ADB Access**: Secure ADB access to remote Android sandboxes via WebSocket tunnels
 - **Interactive REPL**: Built-in interactive mode with auto-completion
 - **Streaming Output**: Real-time output streaming for long-running code
@@ -133,6 +134,20 @@ ags file upload local.txt /home/user/remote.txt
 ags file download /home/user/file.txt ./local.txt
 ```
 
+## Port Forwarding
+
+`ags proxy` forwards a remote sandbox port to localhost, similar to `kubectl port-forward`. Both HTTP and WebSocket protocols are fully supported.
+
+```bash
+# Forward sandbox port 8080 to localhost:8080
+ags proxy sandbox-xxx 8080
+
+# Forward sandbox port 8080 to a different local port
+ags proxy sandbox-xxx 3000:8080
+```
+
+> **Note**: The remote port must be configured as accessible in the sandbox console first.
+
 ## Mobile Sandbox (ADB Access)
 
 For **mobile** type sandboxes (Android), AGS CLI provides secure ADB access via WebSocket tunnels. This allows you to use standard `adb` commands to interact with remote Android sandbox instances.
@@ -187,6 +202,7 @@ For detailed documentation on each command, see:
 | `run` | `r` | Code execution | [ags-run](docs/ags-run.md) |
 | `exec` | `x` | Shell command execution | [ags-exec](docs/ags-exec.md) |
 | `file` | `f`, `fs` | File operations | [ags-file](docs/ags-file.md) |
+| `proxy` | - | Port forwarding | [ags-proxy](docs/ags-proxy.md) |
 | `mobile` | `m` | Mobile sandbox ADB access | [ags-mobile](docs/ags-mobile.md) |
 | `apikey` | `ak`, `key` | API key management | [ags-apikey](docs/ags-apikey.md) |
 

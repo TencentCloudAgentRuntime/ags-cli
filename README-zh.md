@@ -12,6 +12,7 @@ AGS CLI 是一个用于管理腾讯云智能体沙箱（AGS）的命令行工具
 - **Shell 命令执行**：在沙箱中运行 Shell 命令，支持流式输出
 - **文件操作**：在沙箱中上传、下载和管理文件
 - **双后端支持**：同时支持 E2B API 和腾讯云 API
+- **端口转发**：将沙箱端口转发到本地，全面支持 HTTP 和 WebSocket 协议
 - **手机沙箱 ADB 连接**：通过 WebSocket 隧道安全访问远程 Android 沙箱
 - **交互式 REPL**：内置交互模式，支持自动补全
 - **流式输出**：长时间运行代码的实时输出流
@@ -133,6 +134,20 @@ ags file upload local.txt /home/user/remote.txt
 ags file download /home/user/file.txt ./local.txt
 ```
 
+## 端口转发
+
+`ags proxy` 可将远程沙箱端口转发到本地，类似 `kubectl port-forward`，全面支持 HTTP 和 WebSocket 协议。
+
+```bash
+# 将沙箱 8080 端口转发到本地 8080
+ags proxy sandbox-xxx 8080
+
+# 将沙箱 8080 端口转发到本地 3000
+ags proxy sandbox-xxx 3000:8080
+```
+
+> **注意**：使用前需先在沙箱控制台中将远程端口配置为可访问状态。
+
 ## 手机沙箱（ADB 连接）
 
 对于 **mobile（手机）** 类型的沙箱（Android），AGS CLI 提供了通过 WebSocket 隧道安全访问 ADB 的功能。这允许您使用标准的 `adb` 命令与远程 Android 沙箱实例进行交互。
@@ -187,6 +202,7 @@ ags mobile disconnect --all
 | `run` | `r` | 代码执行 | [ags-run](docs/ags-run-zh.md) |
 | `exec` | `x` | Shell 命令执行 | [ags-exec](docs/ags-exec-zh.md) |
 | `file` | `f`, `fs` | 文件操作 | [ags-file](docs/ags-file-zh.md) |
+| `proxy` | - | 端口转发 | [ags-proxy](docs/ags-proxy-zh.md) |
 | `mobile` | `m` | 手机沙箱 ADB 连接 | [ags-mobile](docs/ags-mobile-zh.md) |
 | `apikey` | `ak`, `key` | API 密钥管理 | [ags-apikey](docs/ags-apikey-zh.md) |
 
