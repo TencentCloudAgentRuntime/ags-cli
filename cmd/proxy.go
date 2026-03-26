@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/signal"
 	"strconv"
 	"strings"
@@ -114,6 +115,13 @@ func runProxy(cmd *cobra.Command, args []string) error {
 	address, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return fmt.Errorf("failed to get address flag: %w", err)
+	}
+
+	// Warn when binding to a non-loopback address: the proxy automatically
+	// injects the sandbox access token, so any host that can reach this
+	// address will have full access to the sandbox service.
+	if address != "127.0.0.1" && address != "localhost" {
+		fmt.Fprintf(os.Stderr, "Warning: binding to %s exposes the proxy (and the sandbox access token) to the network.\n", address)
 	}
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {

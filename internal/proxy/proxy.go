@@ -26,9 +26,9 @@ import (
 
 // Options defines configuration for the port-forward proxy.
 type Options struct {
-	InstanceID    string      // e.g. "sandbox-xxx"
-	Domain        string      // e.g. "ap-guangzhou.tencentags.com" (region-qualified)
-	RemotePort    int         // Port on the remote sandbox to proxy to
+	InstanceID string // e.g. "sandbox-xxx"
+	Domain     string // e.g. "ap-guangzhou.tencentags.com" (region-qualified)
+	RemotePort int    // Port on the remote sandbox to proxy to
 	// Token is the access token for the sandbox. Its lifetime is bound to the
 	// sandbox instance lifecycle — it stays valid as long as the instance is
 	// running, so no refresh or 401-retry logic is required.
@@ -103,9 +103,10 @@ func (p *Proxy) Start() (string, error) {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
-		MaxIdleConns:        100,
-		IdleConnTimeout:     90 * time.Second,
-		TLSHandshakeTimeout: 10 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
 	}
 
 	// Customize the Director to inject token and fix Host header
@@ -145,7 +146,8 @@ func (p *Proxy) Start() (string, error) {
 	})
 
 	p.server = &http.Server{
-		Handler: mux,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 		BaseContext: func(_ net.Listener) context.Context {
 			return p.ctx
 		},
@@ -209,6 +211,10 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	}
 
 	upstreamConn, upstreamResp, err := dialer.DialContext(p.ctx, upstreamURL, upstreamHeaders)
+	// Close the HTTP response body if present (dial failure with a non-101 HTTP response).
+	if upstreamResp != nil && upstreamResp.Body != nil {
+		defer func() { _ = upstreamResp.Body.Close() }()
+	}
 	if err != nil {
 		p.logger.Printf("[ERROR] WebSocket upstream dial failed: %v", err)
 		http.Error(w, fmt.Sprintf("WebSocket upstream connection failed: %v", err), http.StatusBadGateway)
@@ -234,9 +240,22 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 
 	p.logger.Printf("[WS] WebSocket connection established: %s", r.URL.Path)
 
-	// Bridge the two WebSocket connections bidirectionally
+	// Bridge the two WebSocket connections bidirectionally.
+	// When the proxy is stopped (p.ctx cancelled), force-unblock any pending
+	// ReadMessage calls by setting an immediate read deadline on both sides.
 	var wg sync.WaitGroup
 	wg.Add(2)
+
+	stopCh := make(chan struct{})
+	go func() {
+		select {
+		case <-p.ctx.Done():
+			// Proxy is shutting down: unblock bridgeWebSocket goroutines immediately.
+			_ = clientConn.SetReadDeadline(time.Now())
+			_ = upstreamConn.SetReadDeadline(time.Now())
+		case <-stopCh:
+		}
+	}()
 
 	// Client -> Upstream
 	go func() {
@@ -253,6 +272,7 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	}()
 
 	wg.Wait()
+	close(stopCh) // both bridges finished; stop the deadline-setter goroutine
 	p.logger.Printf("[WS] WebSocket connection closed: %s", r.URL.Path)
 }
 
