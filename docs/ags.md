@@ -24,6 +24,8 @@ When invoked without arguments, AGS enters interactive REPL mode with auto-compl
 | [run](ags-run.md) | `r` | Execute code in sandbox |
 | [exec](ags-exec.md) | `x` | Execute shell commands in sandbox |
 | [file](ags-file.md) | `f`, `fs` | File operations in sandbox |
+| [proxy](ags-proxy.md) | - | Forward a sandbox port to localhost |
+| [mobile](ags-mobile.md) | `m` | Mobile sandbox ADB access |
 | [apikey](ags-apikey.md) | `ak`, `key` | API key management (cloud backend only) |
 | `completion` | - | Generate shell completion scripts |
 | `help` | - | Help about any command |
@@ -99,4 +101,6 @@ ags --backend cloud tool list
 - [ags-run](ags-run.md) - Code execution
 - [ags-exec](ags-exec.md) - Shell command execution
 - [ags-file](ags-file.md) - File operations
+- [ags-proxy](ags-proxy.md) - Port forwarding
+- [ags-mobile](ags-mobile.md) - Mobile sandbox ADB access
 - [ags-apikey](ags-apikey.md) - API key management

@@ -96,6 +96,7 @@ func executeREPLCommand(args []string) error {
 	addFileCommand(newRoot)
 	addBrowserCommand(newRoot)
 	addMobileCommand(newRoot)
+	addProxyCommand(newRoot)
 
 	newRoot.SetArgs(args)
 	return newRoot.Execute()

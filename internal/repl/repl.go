@@ -122,6 +122,9 @@ var (
 		{Text: "m list", Description: "List active mobile connections"},
 		{Text: "m adb", Description: "Execute adb command by sandbox ID"},
 
+		// Proxy commands
+		{Text: "proxy", Description: "Forward a sandbox port to localhost"},
+
 		// Other commands
 		{Text: "help", Description: "Show help"},
 		{Text: "history", Description: "Show command history"},
@@ -299,6 +302,12 @@ var (
 	// Browser command
 	browserSubcommands = []prompt.Suggest{
 		{Text: "vnc", Description: "Show VNC URL for browser sandbox"},
+	}
+
+	// Proxy command
+	proxyFlags = []prompt.Suggest{
+		{Text: "--address", Description: "Local address to bind to (default: 127.0.0.1)"},
+		{Text: "--verbose", Description: "Enable verbose request logging"},
 	}
 
 	browserVNCFlags = []prompt.Suggest{
@@ -695,6 +704,27 @@ func completer(d prompt.Document) []prompt.Suggest {
 				return browserVNCFlags
 			}
 		}
+
+	case "proxy":
+		lastWord := words[len(words)-1]
+		if strings.HasPrefix(lastWord, "-") && !strings.HasSuffix(text, " ") {
+			return prompt.FilterHasPrefix(proxyFlags, lastWord, true)
+		}
+		if strings.HasSuffix(text, " ") {
+			switch len(words) {
+			case 1:
+				// Position 1: expecting <sandbox_id>
+				return []prompt.Suggest{{Text: "<sandbox-id>", Description: "Sandbox instance ID to forward"}}
+			case 2:
+				// Position 2: expecting [local_port:]<remote_port>
+				return []prompt.Suggest{
+					{Text: "<port>", Description: "Remote port, e.g. 8080"},
+					{Text: "<local>:<remote>", Description: "Map local to remote port, e.g. 3000:8080"},
+				}
+			default:
+				return proxyFlags
+			}
+		}
 	}
 
 	// Default: filter from all commands
@@ -965,6 +995,19 @@ Mobile Sandbox:
     mobile adb sandbox-aaa shell ls /sdcard # Run adb command by ID
     mobile disconnect sandbox-aaa           # Disconnect from sandbox
     mobile disconnect --all                 # Disconnect all
+
+Port Forwarding:
+  proxy <id> <port>                 Forward sandbox port to same local port
+  proxy <id> <local>:<remote>       Forward sandbox remote port to local port
+
+  Options:
+    --address <addr>                Local address to bind to (default: 127.0.0.1)
+    --verbose                       Enable verbose request logging
+
+  Examples:
+    proxy sandbox-xxx 8080                  # Forward port 8080 to localhost:8080
+    proxy sandbox-xxx 3000:8080             # Forward port 8080 to localhost:3000
+    proxy sandbox-xxx 8080 --address 0.0.0.0  # Bind to all interfaces
 
 Global Flags:
   --backend <e2b|cloud>       API backend to use
