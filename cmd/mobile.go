@@ -180,11 +180,19 @@ func runMobileTunnel(_ *cobra.Command, args []string) error {
 		Insecure:      false,
 	})
 	if err != nil {
+		if daemonFlag {
+			errMsg := readyMessage{Status: "error", Message: fmt.Sprintf("failed to create tunnel: %v", err)}
+			_ = json.NewEncoder(os.Stdout).Encode(errMsg)
+		}
 		return exitError(1, fmt.Errorf("failed to create tunnel: %w", err))
 	}
 
 	addr, err := tunnel.Start()
 	if err != nil {
+		if daemonFlag {
+			errMsg := readyMessage{Status: "error", Message: fmt.Sprintf("failed to start tunnel: %v", err)}
+			_ = json.NewEncoder(os.Stdout).Encode(errMsg)
+		}
 		return exitError(3, fmt.Errorf("failed to start tunnel: %w", err))
 	}
 
@@ -193,7 +201,7 @@ func runMobileTunnel(_ *cobra.Command, args []string) error {
 		tunnel.Stop()
 		if daemonFlag {
 			errMsg := readyMessage{Status: "error", Message: err.Error()}
-			_ = json.NewEncoder(os.Stderr).Encode(errMsg)
+			_ = json.NewEncoder(os.Stdout).Encode(errMsg)
 		}
 		return exitError(2, fmt.Errorf("upstream probe failed: %w", err))
 	}

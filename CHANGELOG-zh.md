@@ -4,6 +4,9 @@
 
 ## [未发布]
 
+### 修复
+- 修复 `mobile connect` 仅显示通用错误 "tunnel process exited without ready message" 而非实际错误信息的问题；daemon 子进程现在通过 stdout 发送错误详情，使父进程能向用户展示真实错误原因
+
 ## [0.3.1] - 2026-03-18
 
 ### 修复
