@@ -216,6 +216,7 @@ var (
 		{Text: "--no-browser", Description: "Don't open browser automatically"},
 		{Text: "--ttyd-binary", Description: "Path to custom ttyd binary file to upload"},
 		{Text: "--user", Description: "User to run terminal as"},
+		{Text: "--no-auth", Description: "Skip access-token acquisition and omit the token header / URL parameter"},
 		{Text: "--time", Description: "Print elapsed time to stderr"},
 	}
 

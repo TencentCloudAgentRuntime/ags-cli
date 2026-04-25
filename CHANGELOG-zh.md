@@ -4,6 +4,9 @@
 
 ## [未发布]
 
+### 新增
+- 为 `instance login` 命令添加 `--no-auth` 参数，用于跳过 access token 获取并省略 token 请求头 / URL 参数，适用于数据面无需 access token 的部署环境
+
 ### 修复
 - 修复 `mobile connect` 仅显示通用错误 "tunnel process exited without ready message" 而非实际错误信息的问题；daemon 子进程现在通过 stdout 发送错误详情，使父进程能向用户展示真实错误原因
 

@@ -81,7 +81,12 @@ func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
 			},
 		},
 	})
-	startReq.Header().Set("X-Access-Token", s.accessToken)
+	// Only set the access-token header when a token is available. When the
+	// caller opts into --no-auth, s.accessToken is empty and we intentionally
+	// leave the header unset.
+	if s.accessToken != "" {
+		startReq.Header().Set("X-Access-Token", s.accessToken)
+	}
 	// Basic auth header selects the user inside the sandbox (same convention as the SDK)
 	startReq.Header().Set(
 		"Authorization",
@@ -264,6 +269,7 @@ func newProcessClient(envdHost string) processconnect.ProcessClient {
 }
 
 // sendPTYInput sends PTY keyboard data to a running process via the SendInput RPC.
+// When accessToken is empty, the X-Access-Token header is omitted.
 func sendPTYInput(ctx context.Context, cli processconnect.ProcessClient, pid uint32, data []byte, accessToken string) {
 	req := connect.NewRequest(&process.SendInputRequest{
 		Process: &process.ProcessSelector{
@@ -273,11 +279,14 @@ func sendPTYInput(ctx context.Context, cli processconnect.ProcessClient, pid uin
 			Input: &process.ProcessInput_Pty{Pty: data},
 		},
 	})
-	req.Header().Set("X-Access-Token", accessToken)
+	if accessToken != "" {
+		req.Header().Set("X-Access-Token", accessToken)
+	}
 	_, _ = cli.SendInput(ctx, req)
 }
 
 // resizePTY sends a PTY resize request for the given process.
+// When accessToken is empty, the X-Access-Token header is omitted.
 func resizePTY(ctx context.Context, cli processconnect.ProcessClient, pid uint32, cols, rows uint32, accessToken string) {
 	req := connect.NewRequest(&process.UpdateRequest{
 		Process: &process.ProcessSelector{
@@ -290,7 +299,9 @@ func resizePTY(ctx context.Context, cli processconnect.ProcessClient, pid uint32
 			},
 		},
 	})
-	req.Header().Set("X-Access-Token", accessToken)
+	if accessToken != "" {
+		req.Header().Set("X-Access-Token", accessToken)
+	}
 	_, _ = cli.Update(ctx, req)
 }
 

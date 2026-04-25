@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Add `--no-auth` flag to `instance login` command to skip access-token acquisition and omit the token header / URL parameter, for environments where the data plane does not require an access token
+
 ### Fixed
 - Fix `mobile connect` showing generic "tunnel process exited without ready message" instead of the actual error; daemon subprocess now sends error details via stdout so the parent process can display them to the user
 

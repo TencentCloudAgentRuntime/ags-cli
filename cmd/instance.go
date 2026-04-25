@@ -36,6 +36,7 @@ var (
 	instanceLoginNoBrowser  bool
 	instanceLoginTTYDBinary string
 	instanceLoginUser       string
+	instanceLoginNoAuth     bool
 )
 
 // instanceCreateCmd represents the instance create command
@@ -574,7 +575,14 @@ Webshell mode (--mode webshell):
 
   ags instance login abc123 --mode webshell
   ags instance login abc123 --mode webshell --no-browser
-  ags instance login abc123 --mode webshell --ttyd-binary /path/to/ttyd`,
+  ags instance login abc123 --mode webshell --ttyd-binary /path/to/ttyd
+
+Use --no-auth to skip access-token acquisition and omit the token header / URL
+parameter. This is intended for environments where the data plane does not
+require an access token (e.g., a private deployment with authentication
+disabled).
+
+  ags instance login abc123 --no-auth`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
@@ -618,10 +626,16 @@ Webshell mode (--mode webshell):
 			}
 		}
 
-		// Get access token from cache or acquire new one
-		accessToken, err := GetCachedTokenOrAcquire(ctx, instanceID)
-		if err != nil {
-			return fmt.Errorf("failed to get access token: %w", err)
+		// Get access token from cache or acquire new one.
+		// When --no-auth is set, skip token acquisition entirely and use an
+		// empty token; downstream components will then avoid setting the
+		// X-Access-Token header / access_token URL parameter.
+		var accessToken string
+		if !instanceLoginNoAuth {
+			accessToken, err = GetCachedTokenOrAcquire(ctx, instanceID)
+			if err != nil {
+				return fmt.Errorf("failed to get access token: %w", err)
+			}
 		}
 
 		// Determine data plane domain
@@ -767,11 +781,16 @@ Webshell mode (--mode webshell):
 	},
 }
 
-// buildWebshellURL builds webshell access URL
+// buildWebshellURL builds webshell access URL.
 // Format: https://{port}-{instance_id}.{region}.{domain}/?access_token={token}
+// When accessToken is empty (e.g., --no-auth), the access_token query
+// parameter is omitted.
 func buildWebshellURL(instanceID, accessToken string) string {
 	cfg := config.Get()
 	host := fmt.Sprintf("8080-%s.%s.%s", instanceID, cfg.Region, cfg.DataPlaneDomain())
+	if accessToken == "" {
+		return fmt.Sprintf("https://%s/", host)
+	}
 	return fmt.Sprintf("https://%s/?access_token=%s", host, accessToken)
 }
 
@@ -878,6 +897,7 @@ func addInstanceCommand(parent *cobra.Command) {
 	loginCmd.Flags().BoolVar(&instanceLoginNoBrowser, "no-browser", false, "Don't open browser automatically (webshell mode)")
 	loginCmd.Flags().StringVar(&instanceLoginTTYDBinary, "ttyd-binary", "", "Path to custom ttyd binary file to upload (webshell mode)")
 	loginCmd.Flags().StringVar(&instanceLoginUser, "user", "", "User to run terminal as (default: \"user\")")
+	loginCmd.Flags().BoolVar(&instanceLoginNoAuth, "no-auth", false, "Skip access-token acquisition and omit the token header / URL parameter")
 	loginCmd.Flags().BoolVar(&instanceTime, "time", false, "Print elapsed time")
 	cmd.AddCommand(loginCmd)
 

@@ -154,6 +154,7 @@ ags i login <instance-id> [选项]
 | `--no-browser` | bool | `false` | 不自动打开浏览器（webshell 模式） |
 | `--ttyd-binary` | string | - | 要上传的自定义 ttyd 二进制文件路径（webshell 模式） |
 | `--user` | string | `user` | 运行终端的用户身份 |
+| `--no-auth` | bool | `false` | 跳过 access token 获取，并省略 token 请求头 / URL 参数 |
 | `--time` | bool | `false` | 显示耗时 |
 
 ### 支持的实例类型
@@ -182,6 +183,9 @@ ags i login sbi-xxxxxxxx --mode webshell --no-browser
 
 # Webshell 模式：使用自定义 ttyd 二进制文件（适用于网络受限环境）
 ags instance login sbi-xxxxxxxx --mode webshell --ttyd-binary /path/to/ttyd
+
+# 无鉴权模式：跳过 access token（适用于数据面无需 token 的部署）
+ags instance login sbi-xxxxxxxx --no-auth
 
 # 登录并显示耗时信息
 ags instance login sbi-xxxxxxxx --time

@@ -154,6 +154,7 @@ Two modes are available:
 | `--no-browser` | bool | `false` | Don't open browser automatically (webshell mode) |
 | `--ttyd-binary` | string | - | Path to custom ttyd binary file to upload (webshell mode) |
 | `--user` | string | `user` | User to run terminal as |
+| `--no-auth` | bool | `false` | Skip access-token acquisition and omit the token header / URL parameter |
 | `--time` | bool | `false` | Print elapsed time |
 
 ### Supported Instance Types
@@ -182,6 +183,9 @@ ags i login sbi-xxxxxxxx --no-browser
 
 # Webshell mode: custom ttyd binary (for network-restricted environments)
 ags instance login sbi-xxxxxxxx --ttyd-binary /path/to/ttyd
+
+# No-auth mode: skip access token (for data planes that don't require one)
+ags instance login sbi-xxxxxxxx --no-auth
 
 # Login with timing information
 ags instance login sbi-xxxxxxxx --time
