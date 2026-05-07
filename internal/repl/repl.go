@@ -8,6 +8,7 @@ import (
 
 	"github.com/c-bata/go-prompt"
 	fileCompleter "github.com/c-bata/go-prompt/completer"
+	"golang.org/x/term"
 )
 
 var (
@@ -744,6 +745,13 @@ func Start() error {
 	fmt.Println("Type 'help' for available commands, 'exit' to quit")
 	fmt.Println()
 
+	// Save current terminal state before prompt takes over
+	oldState, err := term.GetState(int(os.Stdin.Fd()))
+	if err != nil {
+		// Continue anyway, terminal might not be a tty
+		oldState = nil
+	}
+
 	p := prompt.New(
 		executor,
 		completer,
@@ -761,9 +769,26 @@ func Start() error {
 			},
 		}),
 		prompt.OptionCompletionWordSeparator(fileCompleter.FilePathCompletionSeparator),
+		prompt.OptionSetExitCheckerOnInput(exitChecker),
 	)
 	p.Run()
+
+	// Restore terminal after prompt exits
+	if oldState != nil {
+		term.Restore(int(os.Stdin.Fd()), oldState)
+	}
+
 	return nil
+}
+
+// exitChecker handles exit/quit commands
+// Only exit when user presses Enter (breakLine=true), not during input completion
+func exitChecker(in string, breakLine bool) bool {
+	if breakLine && (in == "exit" || in == "quit") {
+		fmt.Println("Goodbye!")
+		return true
+	}
+	return false
 }
 
 func executor(input string) {
@@ -779,7 +804,7 @@ func executor(input string) {
 	switch input {
 	case "exit", "quit":
 		fmt.Println("Goodbye!")
-		os.Exit(0)
+		return
 	case "help":
 		printHelp()
 		return

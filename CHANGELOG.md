@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-05-06
+
+### Added
+- Add `--all` flag to `ags instance list` for automatically fetching all paginated instances (Cloud backend supports max 100 per request, use `--all` to iterate through offsets)
+
+### Fixed
+- Fix REPL exit leaving terminal in raw mode (unable to type after typing `exit` or `quit`)
+  - Save terminal state with `term.GetState()` before REPL starts
+  - Use `prompt.OptionSetExitCheckerOnInput` to handle exit/quit gracefully
+  - Only exit when user presses Enter (breakLine=true), not during input completion
+  - Restore terminal state with `term.Restore()` after REPL exits
+
 ## [0.4.0] - 2026-04-28
 
 ### Added
