@@ -252,7 +252,7 @@ type ListInstancesOptions struct {
 	InstanceIDs      []string // Specific instance IDs to query (max 100)
 	ToolID           string   // Filter by tool ID
 	Offset           int      // Pagination offset (ignored when InstanceIDs specified)
-	Limit            int      // Pagination limit, default 20, max 100 (ignored when InstanceIDs specified)
+	Limit            int      // Pagination limit, default 40, max 100 (ignored when InstanceIDs specified)
 	Status           string   // Filter by status: STARTING, RUNNING, FAILED, STOPPING, STOPPED, STARTING_FAILED, STOPPING_FAILED
 	CreatedSince     string   // Relative time filter, e.g., "5s", "2m", "3h"
 	CreatedSinceTime string   // Absolute time filter (RFC3339), e.g., "2024-01-15T10:30:00Z"

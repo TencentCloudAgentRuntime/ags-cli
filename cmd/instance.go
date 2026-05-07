@@ -31,6 +31,8 @@ var (
 	instanceListNoHeader bool
 	instanceListOffset   int
 	instanceListLimit    int
+	instanceListAll      bool // Fetch all instances using pagination
+	// instanceListNoAll    bool // Explicit flag to disable --all
 
 	// login command flags
 	instanceLoginMode       string
@@ -250,9 +252,21 @@ Examples:
 			Limit:  instanceListLimit,
 		}
 
-		result, err := apiClient.ListInstances(ctx, opts)
-		if err != nil {
-			return fmt.Errorf("failed to list instances: %w", err)
+		var result *client.ListInstancesResult
+
+		// If --all flag is set, fetch all instances using pagination
+		// Note: This only works with Cloud backend where the API supports
+		// pagination. E2B backend will return partial results if limit is hit.
+		if instanceListAll {
+			result, err = fetchAllInstances(ctx, apiClient, opts)
+			if err != nil {
+				return fmt.Errorf("failed to list all instances: %w", err)
+			}
+		} else {
+			result, err = apiClient.ListInstances(ctx, opts)
+			if err != nil {
+				return fmt.Errorf("failed to list instances: %w", err)
+			}
 		}
 
 		totalDuration := time.Since(start)
@@ -342,6 +356,48 @@ Examples:
 
 		return nil
 	},
+}
+
+// fetchAllInstances fetches all instances using pagination.
+// It loops with offset until all instances are retrieved.
+func fetchAllInstances(ctx context.Context, apiClient client.ControlPlaneClient, opts *client.ListInstancesOptions) (*client.ListInstancesResult, error) {
+	const maxPageSize = 100 // Cloud API max limit
+
+	allInstances := make([]client.Instance, 0, 64)
+	offset := opts.Offset
+
+	for {
+		// Update offset for this page
+		opts.Offset = offset
+		opts.Limit = maxPageSize
+
+		// Fetch one page
+		page, err := apiClient.ListInstances(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		// Append instances to the result
+		allInstances = append(allInstances, page.Instances...)
+
+		// Check if we have all data
+		// If returned count is less than maxPageSize, we're done
+		// Also check TotalCount if available
+		if len(page.Instances) < maxPageSize {
+			break
+		}
+		if page.TotalCount > 0 && offset+len(page.Instances) >= page.TotalCount {
+			break
+		}
+
+		// Next page
+		offset += maxPageSize
+	}
+
+	return &client.ListInstancesResult{
+		Instances:  allInstances,
+		TotalCount: len(allInstances),
+	}, nil
 }
 
 // formatTimeout formats timeout seconds to human readable format
@@ -857,7 +913,8 @@ func addInstanceCommand(parent *cobra.Command) {
 	listCmd.Flags().BoolVar(&instanceListShort, "short", false, "Only show instance IDs")
 	listCmd.Flags().BoolVar(&instanceListNoHeader, "no-header", false, "Hide table header")
 	listCmd.Flags().IntVar(&instanceListOffset, "offset", 0, "Pagination offset")
-	listCmd.Flags().IntVar(&instanceListLimit, "limit", 20, "Pagination limit (max 100)")
+	listCmd.Flags().IntVar(&instanceListLimit, "limit", 40, "Pagination limit (max 100)")
+	listCmd.Flags().BoolVar(&instanceListAll, "all", false, "Fetch all instances using pagination (ignores --limit, --offset)")
 	listCmd.Flags().BoolVar(&instanceTime, "time", false, "Print elapsed time")
 	cmd.AddCommand(listCmd)
 
