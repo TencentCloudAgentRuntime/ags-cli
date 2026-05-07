@@ -774,8 +774,8 @@ func Start() error {
 	p.Run()
 
 	// Restore terminal after prompt exits
-	if oldState != nil {
-		term.Restore(int(os.Stdin.Fd()), oldState)
+	if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
+		fmt.Println("Failed to restore terminal:", err)
 	}
 
 	return nil

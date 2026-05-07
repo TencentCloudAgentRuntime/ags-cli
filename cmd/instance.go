@@ -32,7 +32,7 @@ var (
 	instanceListOffset   int
 	instanceListLimit    int
 	instanceListAll      bool // Fetch all instances using pagination
-	instanceListNoAll    bool // Explicit flag to disable --all
+	// instanceListNoAll    bool // Explicit flag to disable --all
 
 	// login command flags
 	instanceLoginMode       string
