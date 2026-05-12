@@ -2,6 +2,33 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.5.0] - 2026-05-12
+
+### 破坏性变更
+- **退出码现在反映远程执行失败**：`ags run` 之前在远程代码执行失败时仍返回退出码 0，现在返回退出码 1。多任务模式在部分失败时返回退出码 1，全部失败时返回退出码 2。`ags exec` 也改为通过 `exitCodeError` 返回正确的退出码，而非直接调用 `os.Exit()`（此前会跳过 defer 清理逻辑）。
+- **stderr/stdout 分离**：远程 stderr 输出、错误堆栈追踪以及文件操作提示（如 `✓ Uploaded ...`）现在写入本地 **stderr** 而非 stdout。依赖 stdout 解析这些消息的脚本需要相应修改。这意味着 `ags run ... | jq .` 现在可以正确工作，stdout 上不再有非 JSON 内容。
+- **无效的 `--backend` 值现在被拒绝**：之前未知的 `--backend` 值（如 `--backend foo`）会静默回退到 E2B 后端，现在将返回错误：`invalid backend: foo (must be 'e2b' or 'cloud')`。
+- **无效的 `--output` 值现在被提前拒绝**：`--output yaml` 或任何非 `text`/`json` 的值在任何命令执行前即被拒绝（通过 `PersistentPreRunE` 中的 `ValidateBasics()` 实现）。
+- **非 TTY stdin 不再进入 REPL**：向 `ags` 管道输入（如 `echo test | ags`）现在会打印帮助信息并退出，而不是进入 REPL 模式（此前会导致 `go-prompt` panic）。
+- **根命令启用 `SilenceUsage` / `SilenceErrors`**：运行时错误不再打印完整的 usage/help 文本，仅向 stderr 输出错误信息。
+
+### 新增
+- `E2B_API_KEY` 环境变量现在与 `AGS_E2B_API_KEY` 一同被识别（通过 `viper.BindEnv` 实现），兼容 E2B 工具链
+- 配置文件权限告警：当 `~/.ags/config.toml` 包含凭证且对 group 或 others 可读时，向 stderr 输出警告（建议执行 `chmod 600`）
+- 在网络调用前进行输入校验：`run` 校验 `--language`、`--repeat`、`--max-parallel`、`--instance`/`--tool` 互斥性；`mobile` 校验端口范围 [0–65535] 和 `--all`/device 互斥性；`browser` 校验 `--timeout > 0`；`instance create` 校验 `--timeout > 0`
+- 新增 `cmd/sandbox_helper.go` 中的 `GetOrCreateSandboxForDataPlane()`：为所有数据面命令（`run`、`exec`、`file`）提供统一的控制面实例创建路径，与 `ags instance create` 行为一致
+- 统一 token 缓存连接层：`ConnectWithToken()` 和 `ConnectSandboxWithCache()` 确保 token 被缓存和复用
+- 更丰富的 E2B 错误格式：`e2bHTTPError()` 解析 JSON 错误负载中的 code/message 字段，不再输出原始 HTTP body
+- 测试：`cmd/run_test.go`（5 个 `validateRunFlags` 测试用例）、`internal/client/interface_test.go`（编译期接口一致性检查）、`internal/config/config_test.go`（4 个 `ValidateBasics` 测试用例、5 个 `configFileContainsCredentials` 测试用例）
+
+### 变更
+- 数据面命令（`run`、`exec`、`file`）现在通过配置的控制面后端创建临时实例，而非直接调用 cloud SDK；修复了 E2B 后端下 `ags run -c "print('hello')"` 意外请求 Cloud API 导致签名失败的问题
+- `file list --depth` 参数现在实际传递给 SDK 的 `filesystem.ListConfig{Depth: ...}`（之前声明了该参数但未实际使用）
+- E2B 后端的 `instance list --limit/--offset` 现在执行客户端截断（E2B API 不支持服务端分页）
+- 帮助文本：根命令示例从 `ags tool list`（在默认 E2B 后端下会失败）改为 `ags --backend cloud tool list`
+- 文档修复：`docs/ags-file.md` / `docs/ags-file-zh.md` 参数说明更正；`docs/ags.md` / `docs/ags-zh.md` 示例更新；`docs/ags-config.md` / `docs/ags-config-zh.md` 新增 `sandbox.default_user` 和 `E2B_API_KEY` 文档
+- 破坏性操作命令（`apikey delete`、`instance delete/stop`、`tool delete`）的 `--help` 中现在注明会立即执行，不会提示确认
+
 ## [0.4.0] - 2026-04-28
 
 ### 新增

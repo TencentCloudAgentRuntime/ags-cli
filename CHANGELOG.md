@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-05-12
+
+### Breaking Changes
+- **Exit codes now reflect remote execution failures**: `ags run` previously returned exit code 0 even when remote code execution failed; it now returns exit code 1. Multi-task mode returns exit code 1 for partial failures, exit code 2 when all tasks fail. `ags exec` also returns proper exit codes via `exitCodeError` instead of calling `os.Exit()` directly (which bypassed deferred cleanup).
+- **stderr/stdout separation**: Remote stderr output, error tracebacks, and file operation diagnostics (e.g. `✓ Uploaded ...`) are now written to local **stderr** instead of stdout. Scripts that parsed stdout for these messages will need updating. This means `ags run ... | jq .` now works correctly without non-JSON noise on stdout.
+- **Invalid `--backend` values are now rejected**: Previously, an unrecognized `--backend` value (e.g. `--backend foo`) silently fell back to E2B. It now returns an error: `invalid backend: foo (must be 'e2b' or 'cloud')`.
+- **Invalid `--output` values are now rejected early**: `--output yaml` or any value other than `text`/`json` is rejected before any command runs, via `ValidateBasics()` in `PersistentPreRunE`.
+- **Non-TTY stdin no longer enters REPL**: Piping input to `ags` (e.g. `echo test | ags`) now prints help and exits instead of entering REPL mode (which previously caused a `go-prompt` panic).
+- **`SilenceUsage` / `SilenceErrors` enabled on root command**: Runtime errors no longer print the full usage/help text — only the error message is shown to stderr.
+
+### Added
+- `E2B_API_KEY` environment variable is now recognized alongside `AGS_E2B_API_KEY` via `viper.BindEnv` for compatibility with E2B tooling
+- Config file permission warning: a stderr warning is printed when `~/.ags/config.toml` contains credentials and is readable by group or others (recommends `chmod 600`)
+- Input validation before network calls: `run` validates `--language`, `--repeat`, `--max-parallel`, `--instance`/`--tool` mutual exclusivity; `mobile` validates port range [0–65535] and `--all`/device mutual exclusivity; `browser` validates `--timeout > 0`; `instance create` validates `--timeout > 0`
+- New `cmd/sandbox_helper.go`: `GetOrCreateSandboxForDataPlane()` provides a unified path for all data-plane commands (`run`, `exec`, `file`) to create temporary instances through the control-plane client, consistent with `ags instance create`
+- Unified token-caching connection layer: `ConnectWithToken()` and `ConnectSandboxWithCache()` ensure tokens are cached and reused for data-plane operations
+- Richer E2B error formatting: `e2bHTTPError()` parses JSON error payloads with code/message fields instead of dumping raw HTTP bodies
+- Tests: `cmd/run_test.go` (5 cases for `validateRunFlags`), `internal/client/interface_test.go` (compile-time interface conformance), `internal/config/config_test.go` (4 cases for `ValidateBasics`, 5 cases for `configFileContainsCredentials`)
+
+### Changed
+- Data-plane commands (`run`, `exec`, `file`) now create temporary instances through the configured control-plane backend instead of directly calling the cloud SDK, fixing an issue where `ags run -c "print('hello')"` on E2B backend accidentally hit the Cloud API with a signature failure
+- `file list --depth` flag is now actually passed to the SDK's `filesystem.ListConfig{Depth: ...}` (was declared but silently ignored)
+- `instance list --limit/--offset` on E2B backend now applies client-side truncation since the E2B API does not support server-side pagination
+- Help text: root command example changed from `ags tool list` (fails on default E2B backend) to `ags --backend cloud tool list`
+- Documentation fixes: `docs/ags-file.md` / `docs/ags-file-zh.md` flag description corrected; `docs/ags.md` / `docs/ags-zh.md` examples updated; `docs/ags-config.md` / `docs/ags-config-zh.md` now document `sandbox.default_user` and `E2B_API_KEY`
+- Destructive commands (`apikey delete`, `instance delete/stop`, `tool delete`) now document in `--help` that they execute immediately without confirmation
+
+## [0.5.0] - 2026-05-12
+
+### Breaking Changes
+- **Exit codes now reflect remote execution failures**: `ags run` previously returned exit code 0 even when remote code execution failed; it now returns exit code 1. Multi-task mode returns exit code 1 for partial failures, exit code 2 when all tasks fail. `ags exec` also returns proper exit codes via `exitCodeError` instead of calling `os.Exit()` directly (which bypassed deferred cleanup).
+- **stderr/stdout separation**: Remote stderr output, error tracebacks, and file operation diagnostics (e.g. `✓ Uploaded ...`) are now written to local **stderr** instead of stdout. Scripts that parsed stdout for these messages will need updating. This means `ags run ... | jq .` now works correctly without non-JSON noise on stdout.
+- **Invalid `--backend` values are now rejected**: Previously, an unrecognized `--backend` value (e.g. `--backend foo`) silently fell back to E2B. It now returns an error: `invalid backend: foo (must be 'e2b' or 'cloud')`.
+- **Invalid `--output` values are now rejected early**: `--output yaml` or any value other than `text`/`json` is rejected before any command runs, via `ValidateBasics()` in `PersistentPreRunE`.
+- **Non-TTY stdin no longer enters REPL**: Piping input to `ags` (e.g. `echo test | ags`) now prints help and exits instead of entering REPL mode (which previously caused a `go-prompt` panic).
+- **`SilenceUsage` / `SilenceErrors` enabled on root command**: Runtime errors no longer print the full usage/help text — only the error message is shown to stderr.
+
+### Added
+- `E2B_API_KEY` environment variable is now recognized alongside `AGS_E2B_API_KEY` via `viper.BindEnv` for compatibility with E2B tooling
+- Config file permission warning: a stderr warning is printed when `~/.ags/config.toml` contains credentials and is readable by group or others (recommends `chmod 600`)
+- Input validation before network calls: `run` validates `--language`, `--repeat`, `--max-parallel`, `--instance`/`--tool` mutual exclusivity; `mobile` validates port range [0–65535] and `--all`/device mutual exclusivity; `browser` validates `--timeout > 0`; `instance create` validates `--timeout > 0`
+- New `cmd/sandbox_helper.go`: `GetOrCreateSandboxForDataPlane()` provides a unified path for all data-plane commands (`run`, `exec`, `file`) to create temporary instances through the control-plane client, consistent with `ags instance create`
+- Unified token-caching connection layer: `ConnectWithToken()` and `ConnectSandboxWithCache()` ensure tokens are cached and reused for data-plane operations
+- Richer E2B error formatting: `e2bHTTPError()` parses JSON error payloads with code/message fields instead of dumping raw HTTP bodies
+- Tests: `cmd/run_test.go` (5 cases for `validateRunFlags`), `internal/client/interface_test.go` (compile-time interface conformance), `internal/config/config_test.go` (4 cases for `ValidateBasics`, 5 cases for `configFileContainsCredentials`)
+
+### Changed
+- Data-plane commands (`run`, `exec`, `file`) now create temporary instances through the configured control-plane backend instead of directly calling the cloud SDK, fixing an issue where `ags run -c "print('hello')"` on E2B backend accidentally hit the Cloud API with a signature failure
+- `file list --depth` flag is now actually passed to the SDK's `filesystem.ListConfig{Depth: ...}` (was declared but silently ignored)
+- `instance list --limit/--offset` on E2B backend now applies client-side truncation since the E2B API does not support server-side pagination
+- Help text: root command example changed from `ags tool list` (fails on default E2B backend) to `ags --backend cloud tool list`
+- Documentation fixes: `docs/ags-file.md` / `docs/ags-file-zh.md` flag description corrected; `docs/ags.md` / `docs/ags-zh.md` examples updated; `docs/ags-config.md` / `docs/ags-config-zh.md` now document `sandbox.default_user` and `E2B_API_KEY`
+- Destructive commands (`apikey delete`, `instance delete/stop`, `tool delete`) now document in `--help` that they execute immediately without confirmation
+
 ## [0.4.0] - 2026-04-28
 
 ### Added
