@@ -79,10 +79,6 @@ func browserVNCCommand(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	start := time.Now()
 
-	if err := config.Validate(); err != nil {
-		return err
-	}
-
 	// Validate parameters
 	if browserInstance != "" && (browserTool != "" || browserToolID != "") {
 		return fmt.Errorf("cannot specify both --instance and tool parameters")
@@ -92,6 +88,13 @@ func browserVNCCommand(cmd *cobra.Command, args []string) error {
 	}
 	if browserTool != "" && browserToolID != "" {
 		return fmt.Errorf("cannot specify both --tool-name/--tool and --tool-id")
+	}
+	if browserTimeout <= 0 {
+		return fmt.Errorf("--timeout must be greater than 0")
+	}
+
+	if err := config.Validate(); err != nil {
+		return err
 	}
 
 	apiClient, err := client.NewControlPlaneClient(config.GetBackend())

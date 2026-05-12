@@ -517,3 +517,65 @@ func TestValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateBasics(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  Config
+		wantErr bool
+	}{
+		{
+			name:   "valid e2b without credentials",
+			config: Config{Backend: "e2b", Output: "text"},
+		},
+		{
+			name:   "valid cloud without credentials",
+			config: Config{Backend: "cloud", Output: "json"},
+		},
+		{
+			name:    "invalid backend",
+			config:  Config{Backend: "bad", Output: "text"},
+			wantErr: true,
+		},
+		{
+			name:    "invalid output",
+			config:  Config{Backend: "e2b", Output: "yaml"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetGlobals()
+			cfg = &tt.config
+			err := ValidateBasics()
+			if tt.wantErr && err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestConfigContainsCredentials(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  Config
+		want bool
+	}{
+		{name: "empty", cfg: Config{}, want: false},
+		{name: "e2b api key", cfg: Config{E2B: E2BConfig{APIKey: "key"}}, want: true},
+		{name: "cloud secret id", cfg: Config{Cloud: CloudConfig{SecretID: "sid"}}, want: true},
+		{name: "cloud secret key", cfg: Config{Cloud: CloudConfig{SecretKey: "skey"}}, want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := configContainsCredentials(&tt.cfg); got != tt.want {
+				t.Fatalf("configContainsCredentials() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

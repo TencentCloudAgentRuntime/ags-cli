@@ -726,7 +726,7 @@ Examples:
 		Use:     "delete <tool-id> [tool-id...]",
 		Aliases: []string{"rm", "del"},
 		Short:   "Delete sandbox tools",
-		Long:    `Delete one or more sandbox tools by ID.`,
+		Long:    `Delete one or more sandbox tools by ID. This operation executes immediately and does not prompt for confirmation.`,
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()

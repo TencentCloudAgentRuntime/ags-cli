@@ -6,8 +6,10 @@ import (
 	"os"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/repl"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var (
@@ -28,12 +30,15 @@ var (
 	cloudSecretKey string
 	cloudRegion    string // Deprecated: use --region
 	cloudInternal  bool   // Deprecated: use --internal
+	configInitErr  error
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "ags",
-	Short: "AGS CLI - Agent Sandbox Command Line Interface",
+	Use:           "ags",
+	Short:         "AGS CLI - Agent Sandbox Command Line Interface",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	Long: `AGS CLI is a command line tool for managing Agent Sandbox tools and instances.
 
 It supports both E2B API and Tencent Cloud API backends, allowing you to:
@@ -43,8 +48,8 @@ It supports both E2B API and Tencent Cloud API backends, allowing you to:
   - Interactive REPL mode for management commands
 
 Examples:
-  # List available tools
-  ags tool list
+  # List cloud-managed tools (requires cloud backend credentials)
+  ags --backend cloud tool list
 
   # Create/start a new instance
   ags instance create --tool code-interpreter-v1
@@ -68,7 +73,24 @@ Examples:
 	},
 }
 
-func runREPL(_ *cobra.Command, _ []string) {
+func init() {
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if shouldSkipConfigPreflight(cmd) {
+			return nil
+		}
+		if configInitErr != nil {
+			return configInitErr
+		}
+		return config.ValidateBasics()
+	}
+}
+
+func runREPL(cmd *cobra.Command, _ []string) {
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		_ = cmd.Help()
+		return
+	}
+
 	// Set up REPL command executor
 	repl.ExecuteCommand = executeREPLCommand
 
@@ -105,6 +127,8 @@ func executeREPLCommand(args []string) error {
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
+		printCommandError(err)
+
 		// Respect custom exit codes from exitCodeError (used by mobile tunnel daemon)
 		var exitErr *exitCodeError
 		if errors.As(err, &exitErr) {
@@ -112,6 +136,24 @@ func Execute() {
 		}
 		os.Exit(1)
 	}
+}
+
+func printCommandError(err error) {
+	if config.GetOutput() == "json" {
+		output.PrintError(err)
+		return
+	}
+	fmt.Fprintln(os.Stderr, "Error:", err)
+}
+
+func shouldSkipConfigPreflight(cmd *cobra.Command) bool {
+	for c := cmd; c != nil; c = c.Parent() {
+		switch c.Name() {
+		case "help", "version", "completion", "docs":
+			return true
+		}
+	}
+	return false
 }
 
 func init() {
@@ -149,6 +191,8 @@ func init() {
 }
 
 func initConfig() {
+	configInitErr = nil
+
 	// Set config file if provided
 	if cfgFile != "" {
 		config.SetConfigFile(cfgFile)
@@ -156,7 +200,7 @@ func initConfig() {
 
 	// Initialize config
 	if err := config.Init(); err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: failed to load config:", err)
+		configInitErr = err
 	}
 
 	// Apply command line overrides

@@ -80,8 +80,8 @@ For full configuration reference including environment variables, internal netwo
 # Enter REPL mode
 ags
 
-# List tools
-ags tool list
+# List cloud-managed tools
+ags --backend cloud tool list
 
 # Execute Python code
 ags run -c "print('Hello')"
@@ -89,8 +89,8 @@ ags run -c "print('Hello')"
 # Execute shell command
 ags exec "ls -la"
 
-# Use cloud backend
-ags --backend cloud tool list
+# List instances on the default backend
+ags instance list
 ```
 
 ## See Also

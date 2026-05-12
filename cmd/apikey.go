@@ -105,7 +105,7 @@ var apikeyDeleteCmd = &cobra.Command{
 	Use:     "delete <key-id>",
 	Aliases: []string{"rm", "del"},
 	Short:   "Delete an API key",
-	Long:    `Delete an API key by its ID.`,
+	Long:    `Delete an API key by its ID. This operation executes immediately and does not prompt for confirmation.`,
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
@@ -177,7 +177,7 @@ Make sure to save it securely.`,
 		Use:     "delete <key-id>",
 		Aliases: []string{"rm", "del"},
 		Short:   "Delete an API key",
-		Long:    `Delete an API key by its ID.`,
+		Long:    `Delete an API key by its ID. This operation executes immediately and does not prompt for confirmation.`,
 		Args:    cobra.ExactArgs(1),
 		RunE:    apikeyDeleteCmd.RunE,
 	})

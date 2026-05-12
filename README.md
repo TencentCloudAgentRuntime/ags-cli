@@ -72,6 +72,8 @@ Or use environment variables:
 
 ```bash
 export AGS_E2B_API_KEY="your-api-key"
+# E2B_API_KEY is also recognized for compatibility with E2B tooling.
+# export E2B_API_KEY="your-api-key"
 export AGS_CLOUD_SECRET_ID="your-secret-id"
 export AGS_CLOUD_SECRET_KEY="your-secret-key"
 ```
@@ -104,7 +106,7 @@ AGS CLI separates operations into two layers:
 - **Data Plane**: Code execution, shell commands, file operations
   - Both backends use the same E2B-compatible data plane gateway with Access Token
 
-The `backend` configuration only affects control plane operations. Data plane operations always use the E2B protocol via `ags-go-sdk`.
+The `backend` configuration controls instance lifecycle operations. Data plane operations (code, shell, files) use the E2B-compatible data plane protocol after an instance is created or selected.
 
 Access tokens are automatically cached in `~/.ags/tokens.json` during instance creation and used for subsequent data plane operations
 
@@ -114,8 +116,8 @@ Access tokens are automatically cached in `~/.ags/tokens.json` during instance c
 # Enter REPL mode
 ags
 
-# List available tools
-ags tool list
+# Optional: list cloud-managed tools (requires cloud backend credentials)
+ags --backend cloud tool list
 
 # Create an instance
 ags instance create -t code-interpreter-v1

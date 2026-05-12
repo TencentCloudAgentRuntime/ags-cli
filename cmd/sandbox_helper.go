@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-go-sdk/connection"
 	"github.com/TencentCloudAgentRuntime/ags-go-sdk/constant"
@@ -12,7 +13,9 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-go-sdk/tool/command"
 	"github.com/TencentCloudAgentRuntime/ags-go-sdk/tool/filesystem"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/client"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/token"
 )
 
@@ -151,4 +154,86 @@ func ConnectSandboxWithCache(ctx context.Context, instanceID string) (*code.Sand
 	}
 
 	return ConnectWithToken(ctx, instanceID, accessToken)
+}
+
+// GetOrCreateSandboxForDataPlane returns an existing sandbox or creates one via
+// the configured control-plane backend. It keeps run/exec/file aligned with
+// `ags instance create` instead of bypassing config through the cloud SDK.
+func GetOrCreateSandboxForDataPlane(ctx context.Context, instanceID, tool string, keepAlive bool) (*code.Sandbox, func(), time.Duration, error) {
+	if instanceID != "" {
+		sandbox, err := ConnectSandboxWithCache(ctx, instanceID)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failed to connect to instance %s: %w", instanceID, err)
+		}
+		return sandbox, func() {}, 0, nil
+	}
+
+	createStart := time.Now()
+	apiClient, err := client.NewControlPlaneClient(config.GetBackend())
+	if err != nil {
+		return nil, nil, 0, fmt.Errorf("failed to create API client: %w", err)
+	}
+
+	if tool == "" {
+		tool = "code-interpreter-v1"
+	}
+	instance, err := apiClient.CreateInstance(ctx, &client.CreateInstanceOptions{
+		ToolName: tool,
+		Timeout:  300,
+	})
+	createDuration := time.Since(createStart)
+	if err != nil {
+		return nil, nil, createDuration, fmt.Errorf("failed to create instance: %w", err)
+	}
+
+	accessToken, err := accessTokenForInstance(ctx, apiClient, instance)
+	if err != nil {
+		_ = apiClient.DeleteInstance(ctx, instance.ID)
+		return nil, nil, createDuration, err
+	}
+
+	sandbox, err := ConnectWithToken(ctx, instance.ID, accessToken)
+	if err != nil {
+		_ = apiClient.DeleteInstance(ctx, instance.ID)
+		return nil, nil, createDuration, fmt.Errorf("failed to connect to created instance %s: %w", instance.ID, err)
+	}
+
+	if keepAlive {
+		output.PrintInfo(fmt.Sprintf("Created instance: %s (kept alive)", instance.ID))
+		return sandbox, func() {}, createDuration, nil
+	}
+
+	cleanup := func() {
+		_ = apiClient.DeleteInstance(ctx, instance.ID)
+		if tokenCache, err := token.NewCache(); err == nil {
+			_ = tokenCache.Delete(instance.ID)
+		}
+	}
+
+	return sandbox, cleanup, createDuration, nil
+}
+
+func accessTokenForInstance(ctx context.Context, apiClient client.ControlPlaneClient, instance *client.Instance) (string, error) {
+	if instance == nil {
+		return "", fmt.Errorf("created instance is nil")
+	}
+
+	var accessToken string
+	var err error
+	if instance.AccessToken != "" {
+		accessToken = instance.AccessToken
+	} else if instance.Secure {
+		accessToken, err = apiClient.AcquireToken(ctx, instance.ID)
+		if err != nil {
+			return "", fmt.Errorf("failed to acquire token: %w", err)
+		}
+	}
+
+	if accessToken != "" {
+		if tokenCache, cacheErr := token.NewCache(); cacheErr == nil {
+			_ = tokenCache.Set(instance.ID, accessToken)
+		}
+	}
+
+	return accessToken, nil
 }

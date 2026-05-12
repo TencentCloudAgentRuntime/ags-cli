@@ -32,7 +32,7 @@ ags fs <子命令> [选项]
 
 | 选项 | 类型 | 默认值 | 描述 |
 |------|------|--------|------|
-| `--instance` | string | - | 要使用的实例 ID（未指定工具时必需） |
+| `--instance` | string | - | 要使用的已有实例 ID；如省略，则使用 `--tool` 创建临时实例 |
 | `-t, --tool` | string | `code-interpreter-v1` | 临时实例使用的工具 |
 | `--keep-alive` | bool | `false` | 保持临时实例存活 |
 | `--time` | bool | `false` | 显示耗时 |

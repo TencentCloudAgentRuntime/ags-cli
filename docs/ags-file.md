@@ -32,7 +32,7 @@ These options apply to all subcommands:
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--instance` | string | - | Instance ID to use (required if no tool) |
+| `--instance` | string | - | Existing instance ID to use; if omitted, a temporary instance is created with `--tool` |
 | `-t, --tool` | string | `code-interpreter-v1` | Tool for temporary instance |
 | `--keep-alive` | bool | `false` | Keep temporary instance alive |
 | `--time` | bool | `false` | Print elapsed time |

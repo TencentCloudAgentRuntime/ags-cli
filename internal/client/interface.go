@@ -1,6 +1,9 @@
 package client
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // ControlPlaneClient defines the interface for control plane operations.
 // Control plane handles instance lifecycle management, tool management, and API key management.
@@ -45,6 +48,6 @@ func NewControlPlaneClient(backend string) (ControlPlaneClient, error) {
 	case "cloud":
 		return NewCloudControlPlane()
 	default:
-		return NewE2BControlPlane()
+		return nil, fmt.Errorf("invalid backend: %s (must be 'e2b' or 'cloud')", backend)
 	}
 }

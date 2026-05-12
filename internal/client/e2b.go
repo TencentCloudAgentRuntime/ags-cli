@@ -139,8 +139,7 @@ func (c *E2BControlPlane) CreateInstance(ctx context.Context, opts *CreateInstan
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("failed to create instance: %s - %s", resp.Status, string(body))
+		return nil, e2bHTTPError(resp)
 	}
 
 	var result struct {
@@ -186,8 +185,7 @@ func (c *E2BControlPlane) ListInstances(ctx context.Context, opts *ListInstances
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("failed to list instances: %s - %s", resp.Status, string(body))
+		return nil, e2bHTTPError(resp)
 	}
 
 	var sandboxes []struct {
@@ -240,8 +238,7 @@ func (c *E2BControlPlane) GetInstance(ctx context.Context, id string) (*Instance
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("failed to get instance: %s - %s", resp.Status, string(body))
+		return nil, e2bHTTPError(resp)
 	}
 
 	var result struct {
@@ -280,8 +277,7 @@ func (c *E2BControlPlane) DeleteInstance(ctx context.Context, id string) error {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to delete instance: %s - %s", resp.Status, string(body))
+		return e2bHTTPError(resp)
 	}
 
 	return nil
@@ -298,6 +294,24 @@ func (c *E2BControlPlane) AcquireToken(ctx context.Context, instanceID string) (
 		return "", fmt.Errorf("no access token returned for instance %s", instanceID)
 	}
 	return inst.AccessToken, nil
+}
+
+func e2bHTTPError(resp *http.Response) error {
+	body, _ := io.ReadAll(resp.Body)
+	var payload struct {
+		Code    any    `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &payload); err == nil && payload.Message != "" {
+		if payload.Code != nil {
+			return fmt.Errorf("E2B API returned %s: %s (code: %v)", resp.Status, payload.Message, payload.Code)
+		}
+		return fmt.Errorf("E2B API returned %s: %s", resp.Status, payload.Message)
+	}
+	if len(body) > 0 {
+		return fmt.Errorf("E2B API returned %s: %s", resp.Status, string(body))
+	}
+	return fmt.Errorf("E2B API returned %s", resp.Status)
 }
 
 // ========== API Key Operations (not supported by E2B) ==========

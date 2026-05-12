@@ -133,7 +133,7 @@ func Init() error {
 	_ = viper.BindEnv("internal", "AGS_INTERNAL")
 
 	// Legacy environment variable bindings (for backward compatibility)
-	_ = viper.BindEnv("e2b.api_key", "AGS_E2B_API_KEY")
+	_ = viper.BindEnv("e2b.api_key", "AGS_E2B_API_KEY", "E2B_API_KEY")
 	_ = viper.BindEnv("e2b.domain", "AGS_E2B_DOMAIN")
 	_ = viper.BindEnv("e2b.region", "AGS_E2B_REGION")
 	_ = viper.BindEnv("cloud.secret_id", "AGS_CLOUD_SECRET_ID")
@@ -156,8 +156,27 @@ func Init() error {
 
 	// Resolve unified fields from legacy fields with deprecation warnings
 	resolveDeprecatedFields(cfg)
+	warnIfCredentialConfigIsTooPermissive(cfg)
 
 	return nil
+}
+
+func warnIfCredentialConfigIsTooPermissive(c *Config) {
+	path := viper.ConfigFileUsed()
+	if path == "" || !configContainsCredentials(c) {
+		return
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if info.Mode().Perm()&0o077 != 0 {
+		fmt.Fprintf(os.Stderr, "Warning: config file %q contains credentials and is readable by group or others; consider chmod 600.\n", path)
+	}
+}
+
+func configContainsCredentials(c *Config) bool {
+	return c.E2B.APIKey != "" || c.Cloud.SecretID != "" || c.Cloud.SecretKey != ""
 }
 
 // resolveDeprecatedFields merges deprecated [e2b]/[cloud] fields into top-level unified fields.
@@ -380,18 +399,15 @@ func SetSandboxUser(user string) {
 
 // Validate validates the configuration
 func Validate() error {
-	c := Get()
-	if c.Backend != "e2b" && c.Backend != "cloud" {
-		return fmt.Errorf("invalid backend: %s (must be 'e2b' or 'cloud')", c.Backend)
-	}
-	if c.Output != "text" && c.Output != "json" {
-		return fmt.Errorf("invalid output format: %s (must be 'text' or 'json')", c.Output)
+	if err := ValidateBasics(); err != nil {
+		return err
 	}
 
+	c := Get()
 	switch c.Backend {
 	case "e2b":
 		if c.E2B.APIKey == "" {
-			return fmt.Errorf("E2B API key is required (set AGS_E2B_API_KEY or e2b.api_key in config)")
+			return fmt.Errorf("E2B API key is required (set AGS_E2B_API_KEY, E2B_API_KEY, or e2b.api_key in config)")
 		}
 	case "cloud":
 		if c.Cloud.SecretID == "" || c.Cloud.SecretKey == "" {
@@ -399,5 +415,18 @@ func Validate() error {
 		}
 	}
 
+	return nil
+}
+
+// ValidateBasics validates configuration that should be checked for every command
+// without requiring credentials. Commands that contact AGS should call Validate().
+func ValidateBasics() error {
+	c := Get()
+	if c.Backend != "e2b" && c.Backend != "cloud" {
+		return fmt.Errorf("invalid backend: %s (must be 'e2b' or 'cloud')", c.Backend)
+	}
+	if c.Output != "text" && c.Output != "json" {
+		return fmt.Errorf("invalid output format: %s (must be 'text' or 'json')", c.Output)
+	}
 	return nil
 }

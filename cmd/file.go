@@ -59,7 +59,7 @@ Examples:
 	}
 
 	// Common flags for all subcommands
-	cmd.PersistentFlags().StringVarP(&fileInstance, "instance", "i", "", "Instance ID to use (required)")
+	cmd.PersistentFlags().StringVarP(&fileInstance, "instance", "i", "", "Existing instance ID to use (if omitted, a temporary instance is created)")
 	cmd.PersistentFlags().StringVarP(&fileTool, "tool-name", "t", "code-interpreter-v1", "Tool for temporary instance (if --instance not specified)")
 	cmd.PersistentFlags().StringVar(&fileTool, "tool", "code-interpreter-v1", "Tool for temporary instance (alias for --tool-name)")
 	cmd.PersistentFlags().BoolVar(&fileKeepAlive, "keep-alive", false, "Keep temporary instance alive")
@@ -145,31 +145,7 @@ func getSandboxForFile(ctx context.Context) (*code.Sandbox, func(), time.Duratio
 		return nil, nil, 0, fmt.Errorf("cannot specify both --instance and --tool-name/--tool")
 	}
 
-	if fileInstance != "" {
-		sandbox, err := ConnectSandboxWithCache(ctx, fileInstance)
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("failed to connect to instance %s: %w", fileInstance, err)
-		}
-		return sandbox, func() {}, 0, nil
-	}
-
-	createStart := time.Now()
-	sandbox, err := code.Create(ctx, fileTool, getCreateOptions()...)
-	createDuration := time.Since(createStart)
-	if err != nil {
-		return nil, nil, 0, fmt.Errorf("failed to create sandbox: %w", err)
-	}
-
-	cleanup := func() {}
-	if fileKeepAlive {
-		output.PrintInfo(fmt.Sprintf("Created instance: %s (kept alive)", sandbox.SandboxId))
-	} else {
-		cleanup = func() {
-			_ = sandbox.Kill(ctx)
-		}
-	}
-
-	return sandbox, cleanup, createDuration, nil
+	return GetOrCreateSandboxForDataPlane(ctx, fileInstance, fileTool, fileKeepAlive)
 }
 
 func fileListCommand(cmd *cobra.Command, args []string) error {

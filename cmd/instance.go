@@ -76,6 +76,9 @@ Examples:
 		if instanceTool == "" && instanceToolID == "" {
 			return fmt.Errorf("must specify either --tool-name/--tool or --tool-id")
 		}
+		if instanceTimeout <= 0 {
+			return fmt.Errorf("--timeout must be greater than 0")
+		}
 
 		if err := config.Validate(); err != nil {
 			return err
@@ -497,7 +500,7 @@ var instanceDeleteCmd = &cobra.Command{
 	Use:     "delete <instance-id> [instance-id...]",
 	Aliases: []string{"rm", "del"},
 	Short:   "Delete instances",
-	Long:    `Delete one or more sandbox instances.`,
+	Long:    `Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation.`,
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
@@ -875,7 +878,7 @@ func addInstanceCommand(parent *cobra.Command) {
 		Use:     "delete <instance-id> [instance-id...]",
 		Aliases: []string{"rm", "del"},
 		Short:   "Delete instances",
-		Long:    `Delete one or more sandbox instances.`,
+		Long:    `Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation.`,
 		Args:    cobra.MinimumNArgs(1),
 		RunE:    instanceDeleteCmd.RunE,
 	}
@@ -886,7 +889,7 @@ func addInstanceCommand(parent *cobra.Command) {
 	stopCmd := &cobra.Command{
 		Use:   "stop <instance-id> [instance-id...]",
 		Short: "Stop instances (alias for delete)",
-		Long:  `Stop one or more sandbox instances. This is an alias for 'delete'.`,
+		Long:  `Stop one or more sandbox instances. This is an alias for 'delete' and executes immediately without prompting for confirmation.`,
 		Args:  cobra.MinimumNArgs(1),
 		RunE:  instanceDeleteCmd.RunE,
 	}

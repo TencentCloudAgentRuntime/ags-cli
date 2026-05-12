@@ -86,6 +86,7 @@ All configuration fields can be set via environment variables with the `AGS_` pr
 | `AGS_DOMAIN` | `domain` | Base domain |
 | `AGS_INTERNAL` | `internal` | Use internal endpoints |
 | `AGS_E2B_API_KEY` | `e2b.api_key` | E2B API key |
+| `E2B_API_KEY` | `e2b.api_key` | E2B API key compatibility alias |
 | `AGS_CLOUD_SECRET_ID` | `cloud.secret_id` | Tencent Cloud SecretID |
 | `AGS_CLOUD_SECRET_KEY` | `cloud.secret_key` | Tencent Cloud SecretKey |
 | `AGS_SANDBOX_DEFAULT_USER` | `sandbox.default_user` | Default sandbox user |

@@ -80,8 +80,8 @@ secret_key = "your-secret-key"
 # 进入 REPL 模式
 ags
 
-# 列出工具
-ags tool list
+# 列出云端管理的工具
+ags --backend cloud tool list
 
 # 执行 Python 代码
 ags run -c "print('Hello')"
@@ -89,8 +89,8 @@ ags run -c "print('Hello')"
 # 执行 Shell 命令
 ags exec "ls -la"
 
-# 使用云端后端
-ags --backend cloud tool list
+# 使用默认后端列出实例
+ags instance list
 ```
 
 ## 另请参阅

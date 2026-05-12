@@ -155,6 +155,10 @@ type readyMessage struct {
 func runMobileTunnel(_ *cobra.Command, args []string) error {
 	sandboxID := args[0]
 
+	if portFlag < 0 || portFlag > 65535 {
+		return exitError(2, fmt.Errorf("--port must be between 0 and 65535"))
+	}
+
 	if err := config.Validate(); err != nil {
 		return exitError(1, err)
 	}
@@ -412,6 +416,10 @@ func runMobileConnect(_ *cobra.Command, args []string) error {
 
 // runMobileDisconnect stops a tunnel and runs adb disconnect.
 func runMobileDisconnect(_ *cobra.Command, args []string) error {
+	if disconnectAll && len(args) > 0 {
+		return fmt.Errorf("--all cannot be used with a sandbox_id")
+	}
+
 	store, err := tunnelstore.NewStore()
 	if err != nil {
 		return fmt.Errorf("failed to initialize tunnel store: %w", err)
@@ -533,7 +541,11 @@ func runMobileList(_ *cobra.Command, _ []string) error {
 }
 
 // runMobileAdb executes an adb command targeting a specific sandbox by ID.
-func runMobileAdb(_ *cobra.Command, args []string) error {
+func runMobileAdb(cobraCmd *cobra.Command, args []string) error {
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
+		return cobraCmd.Help()
+	}
+
 	sandboxID := args[0]
 	adbArgs := args[1:]
 
@@ -559,12 +571,12 @@ func runMobileAdb(_ *cobra.Command, args []string) error {
 
 	// Build adb command: adb -s <addr> <user_args...>
 	fullArgs := append([]string{"-s", adbAddr}, adbArgs...)
-	cmd := exec.Command(adbPath, fullArgs...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	adbCmd := exec.Command(adbPath, fullArgs...)
+	adbCmd.Stdin = os.Stdin
+	adbCmd.Stdout = os.Stdout
+	adbCmd.Stderr = os.Stderr
 
-	return cmd.Run()
+	return adbCmd.Run()
 }
 
 // requireAdb finds the adb binary, checking ADB_PATH env var first, then PATH.

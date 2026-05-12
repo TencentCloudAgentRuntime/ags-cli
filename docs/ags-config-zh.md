@@ -86,6 +86,7 @@ default_user = "user"
 | `AGS_DOMAIN` | `domain` | 基础域名 |
 | `AGS_INTERNAL` | `internal` | 使用内网端点 |
 | `AGS_E2B_API_KEY` | `e2b.api_key` | E2B API 密钥 |
+| `E2B_API_KEY` | `e2b.api_key` | E2B API 密钥兼容别名 |
 | `AGS_CLOUD_SECRET_ID` | `cloud.secret_id` | 腾讯云 SecretID |
 | `AGS_CLOUD_SECRET_KEY` | `cloud.secret_key` | 腾讯云 SecretKey |
 | `AGS_SANDBOX_DEFAULT_USER` | `sandbox.default_user` | 默认沙箱用户 |
