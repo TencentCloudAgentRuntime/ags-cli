@@ -225,6 +225,22 @@ man ags-tool
 man ags-instance
 ```
 
+## Troubleshooting
+
+If you encounter errors, see the [Troubleshooting Guide](docs/troubleshooting.md) ([中文版](docs/troubleshooting-zh.md)) for solutions to common issues including:
+- Authentication failures (API Key / AKSK)
+- Backend capability mismatches ("not supported" errors)
+- Network and region issues
+- Port forwarding problems
+
+## Troubleshooting
+
+If you encounter errors, see the [Troubleshooting Guide](docs/troubleshooting.md) ([中文版](docs/troubleshooting-zh.md)) for solutions to common issues including:
+- Authentication failures (API Key / AKSK)
+- Backend capability mismatches ("not supported" errors)
+- Network and region issues
+- Port forwarding problems
+
 ## Shell Completion
 
 ```bash
