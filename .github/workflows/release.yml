@@ -79,6 +79,7 @@ jobs:
             rm -rf "$work"
           done
           (cd dist && shasum -a 256 * > checksums.txt)
+          cp install.sh dist/install.sh
 
       - name: Install smoke test
         env:
