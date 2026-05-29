@@ -9,7 +9,7 @@ AGR CLI manages Tencent Cloud Agent Runtime instances, tools, API keys, and data
 ### One-line install (macOS / Linux)
 
 ```bash
-curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/TencentCloudAgentRuntime/ags-cli/main/install.sh | sh
 ```
 
 ### Manual binary download

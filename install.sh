@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # install.sh — one-line installer for AGR CLI
-# Usage: curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/download/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/TencentCloudAgentRuntime/ags-cli/main/install.sh | sh
 set -eu
 
 REPO="TencentCloudAgentRuntime/ags-cli"
