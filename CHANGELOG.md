@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2026-05-29
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add a one-line installer script (`install.sh`) and include it in release
+  artifacts.
+
+### Bug Fixes
+- This release has no Bug Fixes.
+
+### Docs
+- Add per-platform installation instructions for Linux, macOS, and Windows.
+
 ## [0.5.0] - 2026-05-22
 
 ### Breaking Changes
