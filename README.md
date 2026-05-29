@@ -6,6 +6,70 @@ AGR CLI manages Tencent Cloud Agent Runtime instances, tools, API keys, and data
 
 ## Installation
 
+### One-line install (macOS / Linux)
+
+```bash
+curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/download/install.sh | sh
+```
+
+### Manual binary download
+
+Download the latest release from [GitHub Releases](https://github.com/TencentCloudAgentRuntime/ags-cli/releases) and install manually.
+
+**macOS (Apple Silicon)**
+
+```bash
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-darwin-arm64.tar.gz
+tar xzf agr-0.5.0-darwin-arm64.tar.gz
+sudo mv agr /usr/local/bin/agr
+rm agr-0.5.0-darwin-arm64.tar.gz
+```
+
+**macOS (Intel)**
+
+```bash
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-darwin-amd64.tar.gz
+tar xzf agr-0.5.0-darwin-amd64.tar.gz
+sudo mv agr /usr/local/bin/agr
+rm agr-0.5.0-darwin-amd64.tar.gz
+```
+
+**Linux (x86_64)**
+
+```bash
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-linux-amd64.tar.gz
+tar xzf agr-0.5.0-linux-amd64.tar.gz
+sudo mv agr /usr/local/bin/agr
+rm agr-0.5.0-linux-amd64.tar.gz
+```
+
+**Linux (ARM64)**
+
+```bash
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-linux-arm64.tar.gz
+tar xzf agr-0.5.0-linux-arm64.tar.gz
+sudo mv agr /usr/local/bin/agr
+rm agr-0.5.0-linux-arm64.tar.gz
+```
+
+**Windows (x86_64) — PowerShell**
+
+```powershell
+Invoke-WebRequest -Uri https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-windows-amd64.zip -OutFile agr-0.5.0-windows-amd64.zip
+Expand-Archive agr-0.5.0-windows-amd64.zip -DestinationPath .
+Move-Item agr.exe "$env:USERPROFILE\bin\agr.exe"
+Remove-Item agr-0.5.0-windows-amd64.zip
+```
+
+> Make sure `$env:USERPROFILE\bin` is in your `PATH`.
+
+### Verify checksums
+
+```bash
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/checksums.txt
+shasum -a 256 -c checksums.txt --ignore-missing
+```
+
 ### From source
 
 ```bash
@@ -19,6 +83,12 @@ sudo cp agr /usr/local/bin/agr
 
 ```bash
 go install github.com/TencentCloudAgentRuntime/ags-cli/cmd/agr@latest
+```
+
+### Verify installation
+
+```bash
+agr version
 ```
 
 The installed command name is `agr`.
