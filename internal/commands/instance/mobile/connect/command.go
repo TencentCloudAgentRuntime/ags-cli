@@ -43,7 +43,7 @@ type RuntimeDeps struct {
 	ValidateConfig func() error
 	NewStore       func() (Store, error)
 	DisconnectADB  func(adbPath, addr string) error
-	StartTunnel    func(ctx context.Context, instanceID string) (TunnelReady, error)
+	StartTunnel    func(ctx context.Context, instanceID string, port int) (TunnelReady, error)
 	ConnectADB     func(adbPath, addr string, maxRetries int, out io.Writer) error
 }
 
@@ -62,6 +62,7 @@ func Module() command.Module {
 		Use:          "connect <instance-id>",
 		Short:        "Connect to mobile instance (background tunnel + adb connect)",
 		Args:         []command.ArgSpec{{Name: "instance-id", Required: true}},
+		Flags:        []command.FlagSpec{{Name: "port", Shorthand: "p", Usage: "Local port to listen on (0 = auto-assign)", Type: command.FlagInt, Default: 0}},
 		SupportsJSON: true,
 		Output:       command.OutputSpec{DataType: "MobileConnection"},
 	})
@@ -137,6 +138,11 @@ func runConnect(ctx context.Context, req command.Request, deps command.Deps, rt 
 		instanceID = req.Args[0]
 	}
 
+	port := intFlag(req, "port")
+	if port < 0 || port > 65535 {
+		return nil, output.NewUsageError("INVALID_PORT", "--port must be between 0 and 65535", "Use a valid port number (1-65535) or 0 for auto-assign.")
+	}
+
 	adbPath, err := rt.RequireADB()
 	if err != nil {
 		return nil, output.NewUsageError("ADB_NOT_FOUND", err.Error(), "Install Android SDK Platform-Tools or set ADB_PATH to a valid adb binary.")
@@ -158,7 +164,7 @@ func runConnect(ctx context.Context, req command.Request, deps command.Deps, rt 
 		fmt.Fprintf(deps.IO.ErrOut, "Warning: failed to cleanup existing tunnel: %v\n", err)
 	}
 
-	ready, err := rt.StartTunnel(ctx, instanceID)
+	ready, err := rt.StartTunnel(ctx, instanceID, port)
 	if err != nil {
 		return nil, err
 	}
@@ -198,13 +204,13 @@ func runConnect(ctx context.Context, req command.Request, deps command.Deps, rt 
 	}}, nil
 }
 
-func startTunnelDaemon(_ context.Context, instanceID string) (TunnelReady, error) {
+func startTunnelDaemon(_ context.Context, instanceID string, port int) (TunnelReady, error) {
 	selfPath, err := os.Executable()
 	if err != nil {
 		return TunnelReady{}, fmt.Errorf("failed to get executable path: %w", err)
 	}
 
-	tunnelArgs := []string{"instance", "mobile", "tunnel", instanceID, "--daemon", "--port=0"}
+	tunnelArgs := []string{"instance", "mobile", "tunnel", instanceID, "--daemon", fmt.Sprintf("--port=%d", port)}
 	if cli.CfgFile() != "" {
 		tunnelArgs = append(tunnelArgs, "--config", cli.CfgFile())
 	}
@@ -315,6 +321,14 @@ func tunnelEnv() []string {
 		env = append(env, "TENCENTCLOUD_SECRET_KEY="+cfg.Auth.SecretKey)
 	}
 	return env
+}
+
+func intFlag(req command.Request, name string) int {
+	flag, ok := req.Flags[name]
+	if !ok {
+		return 0
+	}
+	return flag.Int
 }
 
 func closeIfOpen(file *os.File) error {
