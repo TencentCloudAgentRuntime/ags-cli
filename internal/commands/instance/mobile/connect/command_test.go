@@ -95,7 +95,7 @@ func buildRuntime(t *testing.T, store *fakeStore, stderr *bytes.Buffer, adbConne
 				store.disconnected = addr
 				return nil
 			},
-			StartTunnel: func(context.Context, string) (TunnelReady, error) {
+			StartTunnel: func(_ context.Context, _ string, _ int) (TunnelReady, error) {
 				return TunnelReady{Port: 5555, PID: 123, ExePath: "/agr", LogPath: "/tmp/tunnel.log"}, nil
 			},
 			ConnectADB: func(_ string, _ string, _ int, _ io.Writer) error {
