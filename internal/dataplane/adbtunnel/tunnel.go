@@ -3,7 +3,8 @@
 // It bridges local TCP connections (from adb clients) to a remote adb-websockify
 // server via WebSocket, enabling secure ADB access through SandPortal's TLS-encrypted
 // gateway. The tunnel supports automatic reconnection with exponential backoff,
-// token refresh on reconnect, and graceful handling of server-side preemption.
+// token refresh on reconnect, graceful handling of server-side preemption, and
+// degraded mode with automatic recovery probing.
 package adbtunnel
 
 import (
@@ -18,6 +19,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -32,13 +34,44 @@ const (
 	maxBackoff = 30 * time.Second
 
 	// maxDialFailures is the maximum number of consecutive WebSocket dial failures
-	// (e.g., bad handshake due to deleted sandbox or invalid token) before giving up.
-	// Transient network errors that occur after a successful connection do not count.
+	// (e.g., bad handshake due to deleted sandbox or invalid token) before entering
+	// degraded mode. Transient network errors that occur after a successful connection
+	// do not count.
 	maxDialFailures = 5
 
 	// probeTimeout is the maximum time allowed for a Probe() handshake.
 	probeTimeout = 10 * time.Second
+
+	// probeBaseDelay is the initial delay between recovery probes in degraded mode.
+	probeBaseDelay = 5 * time.Second
+
+	// probeMaxDelay is the maximum delay between recovery probes in degraded mode.
+	probeMaxDelay = 30 * time.Second
 )
+
+// TunnelState represents the health state of the tunnel.
+type TunnelState int32
+
+const (
+	// StateHealthy means the tunnel is operational and bridging data.
+	StateHealthy TunnelState = iota
+	// StateDegraded means the WebSocket upstream is unreachable. The TCP listener
+	// remains active but incoming connections are immediately closed (causing ADB
+	// to report the device as "offline"). Background probing attempts recovery.
+	StateDegraded
+)
+
+// String returns a human-readable label for the tunnel state.
+func (s TunnelState) String() string {
+	switch s {
+	case StateHealthy:
+		return "connected"
+	case StateDegraded:
+		return "unreachable"
+	default:
+		return "unknown"
+	}
+}
 
 // TunnelOptions defines configuration for the ADB WebSocket tunnel.
 type TunnelOptions struct {
@@ -49,6 +82,11 @@ type TunnelOptions struct {
 	Insecure      bool                   // Skip TLS verification
 	ListenAddress string                 // e.g. "127.0.0.1:0" for random port
 	Logger        *log.Logger            // Optional logger; defaults to log.Default()
+
+	// OnStateChange is called when the tunnel transitions between states.
+	// It is called from a background goroutine; the callback must be safe for
+	// concurrent use. If nil, state changes are only logged.
+	OnStateChange func(state TunnelState)
 }
 
 // Tunnel manages an active bridging service between local ADB clients and
@@ -62,6 +100,14 @@ type Tunnel struct {
 	wsURL    string
 	e2bHost  string
 	logger   *log.Logger
+
+	// state tracks the current health state (StateHealthy or StateDegraded).
+	state      atomic.Int32
+	degradedMu sync.Mutex
+	degradedAt time.Time
+
+	// probing guards against launching multiple recovery probes concurrently.
+	probing atomic.Bool
 }
 
 // New creates and initializes a new ADB tunnel but does not start accepting connections.
@@ -97,6 +143,19 @@ func New(opts TunnelOptions) (*Tunnel, error) {
 		e2bHost: e2bHost,
 		logger:  logger,
 	}, nil
+}
+
+// State returns the current tunnel state.
+func (t *Tunnel) State() TunnelState {
+	return TunnelState(t.state.Load())
+}
+
+// DegradedAt returns the time when the tunnel entered degraded mode.
+// Returns zero time if the tunnel is healthy.
+func (t *Tunnel) DegradedAt() time.Time {
+	t.degradedMu.Lock()
+	defer t.degradedMu.Unlock()
+	return t.degradedAt
 }
 
 // Start binds to the local address and begins accepting TCP connections in the background.
@@ -179,6 +238,29 @@ func (t *Tunnel) newDialer() *websocket.Dialer {
 	return dialer
 }
 
+// setState transitions the tunnel to the given state and fires the callback.
+// The degradedMu lock serialises transitions so concurrent callers cannot
+// interleave state-swap and callback invocations.
+func (t *Tunnel) setState(newState TunnelState) {
+	t.degradedMu.Lock()
+	defer t.degradedMu.Unlock()
+
+	old := TunnelState(t.state.Swap(int32(newState)))
+	if old == newState {
+		return // no-op
+	}
+	if newState == StateDegraded {
+		t.degradedAt = time.Now()
+		t.logger.Printf("[WARN] Tunnel entering degraded mode (upstream unreachable)")
+	} else {
+		t.degradedAt = time.Time{}
+		t.logger.Printf("[INFO] Tunnel recovered from degraded mode")
+	}
+	if t.options.OnStateChange != nil {
+		t.options.OnStateChange(newState)
+	}
+}
+
 func (t *Tunnel) acceptLoop() {
 	defer t.wg.Done()
 
@@ -194,6 +276,14 @@ func (t *Tunnel) acceptLoop() {
 			}
 		}
 
+		// In degraded mode, accept TCP connections but close immediately.
+		// This causes ADB to mark the device as "offline" rather than "device",
+		// giving accurate status visibility via `adb devices`.
+		if t.State() == StateDegraded {
+			_ = conn.Close()
+			continue
+		}
+
 		t.wg.Add(1)
 		go func(c net.Conn) {
 			defer t.wg.Done()
@@ -205,8 +295,8 @@ func (t *Tunnel) acceptLoop() {
 // handleConnectionWithReconnect wraps handleConnection with automatic reconnection.
 // On WebSocket disconnection (except preemption), it re-establishes the WS connection
 // while keeping the local TCP connection alive, so the adb client doesn't need to reconnect.
-// It gives up after maxDialFailures consecutive dial failures (e.g., sandbox deleted),
-// but resets the counter whenever a connection is successfully established.
+// After maxDialFailures consecutive dial failures, it enters degraded mode and closes
+// the local connection (new connections will be rejected by acceptLoop).
 func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 	defer func() { _ = localConn.Close() }()
 
@@ -236,8 +326,10 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 		}
 
 		if consecutiveDialFailures >= maxDialFailures {
-			t.logger.Printf("[ERROR] %d consecutive connection failures. Sandbox may be deleted or token expired. Giving up.", consecutiveDialFailures)
-			return
+			t.logger.Printf("[ERROR] %d consecutive connection failures. Entering degraded mode.", consecutiveDialFailures)
+			t.setState(StateDegraded)
+			t.startRecoveryProbe()
+			return // Close this local connection; acceptLoop will reject new ones
 		}
 
 		// Check if context is cancelled (shutdown)
@@ -270,6 +362,62 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 	}
 }
 
+// startRecoveryProbe launches a background goroutine that periodically probes
+// the upstream WebSocket endpoint. When a probe succeeds, the tunnel transitions
+// back to StateHealthy and subsequent ADB connections will be bridged normally.
+// Only one probe goroutine can be active at a time (guarded by t.probing).
+func (t *Tunnel) startRecoveryProbe() {
+	// Ensure only one recovery probe runs at a time. If another goroutine
+	// already started one, this is a no-op.
+	if !t.probing.CompareAndSwap(false, true) {
+		return
+	}
+	t.wg.Add(1)
+	go func() {
+		defer t.wg.Done()
+		defer t.probing.Store(false)
+
+		attempt := 0
+		for {
+			select {
+			case <-t.ctx.Done():
+				return
+			default:
+			}
+
+			// Exponential backoff for probe: 5s, 10s, 20s, 30s cap
+			attempt++
+			delay := time.Duration(math.Min(
+				float64(probeBaseDelay)*math.Pow(2, float64(attempt-1)),
+				float64(probeMaxDelay),
+			))
+
+			t.logger.Printf("[INFO] Recovery probe scheduled in %v (attempt %d)", delay, attempt)
+
+			select {
+			case <-t.ctx.Done():
+				return
+			case <-time.After(delay):
+			}
+
+			// Already recovered (another goroutine may have triggered recovery)
+			if t.State() != StateDegraded {
+				return
+			}
+
+			if err := t.Probe(); err != nil {
+				t.logger.Printf("[WARN] Recovery probe failed: %v", err)
+				continue
+			}
+
+			// Probe succeeded — recover
+			t.setState(StateHealthy)
+			t.logger.Printf("[INFO] Recovery probe succeeded. Tunnel is healthy again.")
+			return
+		}
+	}()
+}
+
 // handleConnection bridges a single local TCP connection to a WebSocket upstream.
 // Returns (preempted, error) where preempted=true means server sent close code 4001.
 func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error) {
@@ -291,6 +439,12 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 	}
 
 	t.logger.Printf("[INFO] WebSocket connected to %s", t.wsURL)
+
+	// If we were in degraded mode and got here (shouldn't normally happen, but
+	// guard against races), transition back to healthy.
+	if t.State() == StateDegraded {
+		t.setState(StateHealthy)
+	}
 
 	var wsMu sync.Mutex
 	pingInterval := 30 * time.Second
@@ -350,8 +504,10 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 				return
 			}
 
-			// Reset deadline on valid read (in addition to PongHandler)
-			_ = wsConn.SetReadDeadline(time.Now().Add(readTimeout))
+			// ReadDeadline renewal is handled exclusively by PongHandler.
+			// Do NOT renew on data frames — this ensures we detect Pong loss
+			// even when the server keeps sending data (prevents "half-dead"
+			// connections from staying alive indefinitely).
 
 			if msgType == websocket.BinaryMessage || msgType == websocket.TextMessage {
 				if _, copyErr := io.Copy(localConn, reader); copyErr != nil {

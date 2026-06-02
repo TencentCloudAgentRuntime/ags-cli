@@ -110,6 +110,10 @@ func (f fakeStore) List() (map[string]tunnelstore.TunnelEntry, error) {
 	return f.entries, f.err
 }
 
+func (f fakeStore) Cleanup(sandboxID string) error {
+	return nil
+}
+
 type ioDiscard struct{}
 
 func (ioDiscard) Write(p []byte) (int, error) { return len(p), nil }

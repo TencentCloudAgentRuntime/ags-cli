@@ -35,6 +35,12 @@ type TunnelEntry struct {
 	Port      int       `json:"port"`
 	CreatedAt time.Time `json:"created_at"`
 	ExePath   string    `json:"exe_path,omitempty"` // Executable path for PID reuse protection
+
+	// Status is the tunnel health state: "connected" (default/empty) or "unreachable".
+	// Updated by the tunnel daemon when entering/exiting degraded mode.
+	Status string `json:"status,omitempty"`
+	// DegradedAt records when the tunnel entered degraded mode. Zero/nil when healthy.
+	DegradedAt *time.Time `json:"degraded_at,omitempty"`
 }
 
 // Store manages the tunnel registry file with cross-process locking.
@@ -193,6 +199,35 @@ func (s *Store) Cleanup(sandboxID string) error {
 	}
 
 	return nil
+}
+
+// UpdateStatus updates the Status and DegradedAt fields of an existing tunnel entry.
+// Only modifies these fields; PID, Port, CreatedAt, ExePath are preserved.
+// This is called by the tunnel daemon when entering or exiting degraded mode.
+func (s *Store) UpdateStatus(sandboxID string, status string, degradedAt *time.Time) error {
+	fl := flock.New(s.lockPath)
+	ctx, cancel := context.WithTimeout(context.Background(), lockTimeout)
+	defer cancel()
+	locked, err := fl.TryLockContext(ctx, lockRetryDelay)
+	if err != nil || !locked {
+		return fmt.Errorf("failed to acquire store lock: %w", err)
+	}
+	defer func() { _ = fl.Unlock() }()
+
+	entries, err := s.loadLocked()
+	if err != nil {
+		return err
+	}
+
+	entry, ok := entries[sandboxID]
+	if !ok {
+		return nil // Entry doesn't exist (possibly already cleaned up)
+	}
+
+	entry.Status = status
+	entry.DegradedAt = degradedAt
+	entries[sandboxID] = entry
+	return s.saveLocked(entries)
 }
 
 // CleanupAll kills all tunnel processes and clears the store.
