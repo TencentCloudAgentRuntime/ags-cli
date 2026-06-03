@@ -105,6 +105,10 @@ type Tunnel struct {
 
 	// probing guards against launching multiple recovery probes concurrently.
 	probing atomic.Bool
+
+	// dialFailures tracks consecutive dial failures across connections for degraded mode detection.
+	dialFailuresMu sync.Mutex
+	dialFailures   int
 }
 
 // New creates and initializes a new ADB tunnel but does not start accepting connections.
@@ -258,6 +262,30 @@ func (t *Tunnel) setState(newState TunnelState) {
 	}
 }
 
+// trackDialFailure increments the struct-level dial failure counter.
+// Returns true if degraded mode was entered (caller should return).
+func (t *Tunnel) trackDialFailure() bool {
+	t.dialFailuresMu.Lock()
+	t.dialFailures++
+	count := t.dialFailures
+	t.dialFailuresMu.Unlock()
+
+	if count >= maxDialFailures {
+		t.logger.Printf("[ERROR] %d consecutive connection failures. Entering degraded mode.", count)
+		t.setState(StateDegraded)
+		t.startRecoveryProbe()
+		return true
+	}
+	return false
+}
+
+// resetDialFailures resets the dial failure counter (called on successful connection).
+func (t *Tunnel) resetDialFailures() {
+	t.dialFailuresMu.Lock()
+	t.dialFailures = 0
+	t.dialFailuresMu.Unlock()
+}
+
 func (t *Tunnel) acceptLoop() {
 	defer t.wg.Done()
 
@@ -290,74 +318,40 @@ func (t *Tunnel) acceptLoop() {
 }
 
 // handleConnectionWithReconnect bridges a single ADB client connection.
-// On WebSocket disconnection (except preemption), it allows at most 1 reconnect
-// attempt on the same local TCP — and only if the previous connection was stable
-// (lasted > 30s, suggesting a transient network blip rather than adbd restart).
-// Otherwise it closes the local TCP so ADB can reconnect fresh via acceptLoop,
-// re-establishing protocol handshake with the (possibly restarted) remote adbd.
-// After maxDialFailures consecutive dial failures, it enters degraded mode.
+// When the WebSocket drops, it always closes the local TCP connection so ADB
+// reconnects fresh via acceptLoop with a clean protocol handshake.
+// Dial failures are tracked: after maxDialFailures consecutive failures, the
+// tunnel enters degraded mode.
 func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 	defer func() { _ = localConn.Close() }()
 
-	consecutiveDialFailures := 0
-	retriedOnce := false
-
-	for {
-		connStart := time.Now()
-		preempted, err := t.handleConnection(localConn)
-		if err == nil {
-			// Normal close (context cancelled or clean shutdown)
-			return
-		}
-
-		// If preempted by server (close code 4001), do NOT reconnect
-		if preempted {
-			t.logger.Printf("[WARN] Connection preempted by new client. Not reconnecting.")
-			return
-		}
-
-		// Track consecutive dial failures (connection never established).
-		// A dial failure means the error occurred instantly (< 1s), indicating
-		// the server rejected us (bad handshake, sandbox deleted, token invalid).
-		if time.Since(connStart) < time.Second {
-			consecutiveDialFailures++
-		} else {
-			consecutiveDialFailures = 0
-		}
-
-		if consecutiveDialFailures >= maxDialFailures {
-			t.logger.Printf("[ERROR] %d consecutive connection failures. Entering degraded mode.", consecutiveDialFailures)
-			t.setState(StateDegraded)
-			t.startRecoveryProbe()
-			return // Close this local connection; acceptLoop will reject new ones
-		}
-
-		// Check if context is cancelled (shutdown)
-		select {
-		case <-t.ctx.Done():
-			return
-		default:
-		}
-
-		// Only allow 1 reconnect attempt per TCP, and only if connection was stable (>30s).
-		// Short-lived or already-retried connections close TCP to force fresh ADB handshake.
-		// This prevents stale ADB protocol state when remote adbd restarts.
-		if retriedOnce || time.Since(connStart) < 30*time.Second {
-			t.logger.Printf("[INFO] Closing local TCP for fresh ADB reconnect (duration=%v, retried=%v).",
-				time.Since(connStart).Round(time.Second), retriedOnce)
-			return
-		}
-
-		retriedOnce = true
-		delay := time.Second
-		t.logger.Printf("[WARN] WebSocket lost: %v. Retrying once in %v...", err, delay)
-
-		select {
-		case <-t.ctx.Done():
-			return
-		case <-time.After(delay):
-		}
+	connStart := time.Now()
+	preempted, err := t.handleConnection(localConn)
+	if err == nil {
+		// Normal close (context cancelled or clean shutdown)
+		return
 	}
+
+	// If preempted by server (close code 4001), do NOT reconnect
+	if preempted {
+		t.logger.Printf("[WARN] Connection preempted by new client. Not reconnecting.")
+		return
+	}
+
+	// Track consecutive dial failures (connection never established).
+	// A dial failure means the error occurred instantly (< 1s), indicating
+	// the server rejected us (bad handshake, sandbox deleted, token invalid).
+	if time.Since(connStart) < time.Second {
+		if t.trackDialFailure() {
+			return // Entered degraded mode
+		}
+	} else {
+		t.resetDialFailures()
+	}
+
+	// Always close local TCP on WS drop. ADB will reconnect fresh via acceptLoop
+	// with a new protocol handshake, avoiding stale state after network disruption.
+	t.logger.Printf("[INFO] WebSocket lost: %v. Closing local TCP for fresh ADB reconnect.", err)
 }
 
 // startRecoveryProbe launches a background goroutine that periodically probes
@@ -437,6 +431,9 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 	}
 
 	t.logger.Printf("[INFO] WebSocket connected to %s", t.wsURL)
+
+	// Successful connection resets dial failure counter.
+	t.resetDialFailures()
 
 	// If we were in degraded mode and got here (shouldn't normally happen, but
 	// guard against races), transition back to healthy.
@@ -526,6 +523,7 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 		transferWg.Wait()
 	}()
 
+	lastPingAt := time.Now()
 	for {
 		select {
 		case <-t.ctx.Done():
@@ -551,9 +549,22 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 			}
 			return false, nil
 		case <-pingTicker.C:
+			// Detect system sleep/wake: if time since last ping is much larger than
+			// the expected interval, the system likely slept. The underlying TCP/TLS
+			// connection is almost certainly dead after a sleep, so force a reconnect.
+			elapsed := time.Since(lastPingAt)
+			if elapsed > pingInterval*3 {
+				t.logger.Printf("[WARN] Clock jump detected (%v since last ping, expected ~%v). Forcing reconnect.", elapsed.Round(time.Second), pingInterval)
+				return false, fmt.Errorf("clock jump detected (system sleep): %v since last ping", elapsed.Round(time.Second))
+			}
+			lastPingAt = time.Now()
 			wsMu.Lock()
-			_ = wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second))
+			pingErr := wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second))
 			wsMu.Unlock()
+			if pingErr != nil {
+				t.logger.Printf("[WARN] Ping write failed: %v", pingErr)
+				return false, fmt.Errorf("ping write failed: %w", pingErr)
+			}
 		}
 	}
 }
