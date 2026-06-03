@@ -30,9 +30,6 @@ const (
 	// adb-websockify when a new connection preempts the current one.
 	closeCodePreempted = 4001
 
-	// maxBackoff is the upper bound for reconnection delay.
-	maxBackoff = 30 * time.Second
-
 	// maxDialFailures is the maximum number of consecutive WebSocket dial failures
 	// (e.g., bad handshake due to deleted sandbox or invalid token) before entering
 	// degraded mode. Transient network errors that occur after a successful connection
@@ -292,16 +289,19 @@ func (t *Tunnel) acceptLoop() {
 	}
 }
 
-// handleConnectionWithReconnect wraps handleConnection with automatic reconnection.
-// On WebSocket disconnection (except preemption), it re-establishes the WS connection
-// while keeping the local TCP connection alive, so the adb client doesn't need to reconnect.
-// After maxDialFailures consecutive dial failures, it enters degraded mode and closes
-// the local connection (new connections will be rejected by acceptLoop).
+// handleConnectionWithReconnect bridges a single ADB client connection.
+// On WebSocket disconnection (except preemption), it allows at most 1 reconnect
+// attempt on the same local TCP — and only if the previous connection was stable
+// (lasted > 30s, suggesting a transient network blip rather than adbd restart).
+// Otherwise it closes the local TCP so ADB can reconnect fresh via acceptLoop,
+// re-establishing protocol handshake with the (possibly restarted) remote adbd.
+// After maxDialFailures consecutive dial failures, it enters degraded mode.
 func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 	defer func() { _ = localConn.Close() }()
 
-	attempt := 0
 	consecutiveDialFailures := 0
+	retriedOnce := false
+
 	for {
 		connStart := time.Now()
 		preempted, err := t.handleConnection(localConn)
@@ -339,20 +339,18 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 		default:
 		}
 
-		// Reset backoff if the connection was stable (lasted > 30s),
-		// so transient blips after a long session start fresh at 1s.
-		if time.Since(connStart) > 30*time.Second {
-			attempt = 0
+		// Only allow 1 reconnect attempt per TCP, and only if connection was stable (>30s).
+		// Short-lived or already-retried connections close TCP to force fresh ADB handshake.
+		// This prevents stale ADB protocol state when remote adbd restarts.
+		if retriedOnce || time.Since(connStart) < 30*time.Second {
+			t.logger.Printf("[INFO] Closing local TCP for fresh ADB reconnect (duration=%v, retried=%v).",
+				time.Since(connStart).Round(time.Second), retriedOnce)
+			return
 		}
 
-		// Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s cap
-		attempt++
-		delay := time.Duration(math.Min(
-			float64(time.Second)*math.Pow(2, float64(attempt-1)),
-			float64(maxBackoff),
-		))
-
-		t.logger.Printf("[WARN] WebSocket connection lost: %v. Reconnecting in %v... (attempt %d)", err, delay, attempt)
+		retriedOnce = true
+		delay := time.Second
+		t.logger.Printf("[WARN] WebSocket lost: %v. Retrying once in %v...", err, delay)
 
 		select {
 		case <-t.ctx.Done():
