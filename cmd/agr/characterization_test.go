@@ -48,6 +48,16 @@ func TestCharacterization_PublicCommandSurface(t *testing.T) {
 			"metadata": {typ: "string"},
 			"request":  {typ: "string"},
 		}},
+		{command: "instance.debug", use: "debug", flags: map[string]flagExpectation{
+			"tool-id":              {typ: "string"},
+			"tool-name":            {typ: "string", shorthand: "t"},
+			"timeout":              {typ: "string", def: "1h"},
+			"auth-mode":            {typ: "string"},
+			"mount-options":        {typ: "string"},
+			"custom-configuration": {typ: "string"},
+			"metadata":             {typ: "string"},
+			"client-token":         {typ: "string"},
+		}},
 		{command: "instance.delete", aliases: []string{"rm", "del"}, use: "delete <instance-id> [instance-id...]", flags: map[string]flagExpectation{
 			"ignore-not-found": {typ: "bool", def: "false"},
 			"request":          {typ: "string"},
@@ -178,9 +188,22 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			contains: []string{
 				"Create a new sandbox tool",
 				"--network-configuration string",
+				"Format:",
+				"NetworkMode",
 				"--tags string",
 				"--storage-mounts string",
+				"agr tool create -n my-tool -t custom --network-configuration",
 				"--persistent",
+			},
+		},
+		{
+			command: "instance.list",
+			contains: []string{
+				"List sandbox instances with optional filters.",
+				"--filters string",
+				"Format:",
+				`[{"Name":"<field>","Values":["<value1>","<value2>"]}]`,
+				"Status: STARTING, RUNNING, STOPPING, STOPPED, STOP_FAILED, FAILED",
 			},
 		},
 		{
@@ -189,6 +212,16 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"Update a sandbox tool",
 				"--network-configuration string",
 				"--tags string",
+			},
+		},
+		{
+			command: "instance.debug",
+			contains: []string{
+				"Create a temporary debug tool from an existing tool",
+				"--tool-id string",
+				"--auth-mode string",
+				"--timeout string",
+				"--client-token string",
 			},
 		},
 		{
@@ -339,6 +372,19 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			},
 		},
 		{
+			command: "instance.debug",
+			want: map[string]schemaFlagExpectation{
+				"tool-id":              {typ: "string"},
+				"tool-name":            {typ: "string"},
+				"timeout":              {typ: "string"},
+				"auth-mode":            {typ: "string"},
+				"mount-options":        {typ: "string"},
+				"custom-configuration": {typ: "string"},
+				"metadata":             {typ: "string"},
+				"client-token":         {typ: "string"},
+			},
+		},
+		{
 			command: "api.call",
 			want: map[string]schemaFlagExpectation{
 				"request": {typ: "string"},
@@ -369,6 +415,13 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			schema := schemaForCommand(t, tc.command)
 			if tc.command == "instance.create" {
 				requirePropertyType(t, schema, "AuthMode", "enum")
+				if !containsString(schema.Examples, "agr instance create --tool-id sdt-xxxx") {
+					t.Fatalf("schema %s examples %v missing tool-id example", tc.command, schema.Examples)
+				}
+				flag := schema.Flags["mount-options"]
+				if flag.Type != "json" || len(flag.Examples) == 0 {
+					t.Fatalf("schema %s mount-options metadata incomplete: %#v", tc.command, flag)
+				}
 			}
 			if tc.command == "pre-cache-image-task.create" {
 				if !schema.RequiresAuth {
@@ -570,10 +623,13 @@ type commandSchemaSnapshot struct {
 	Failures []string
 	Flags    map[string]struct {
 		Type             string
+		Format           string
+		Examples         []string
 		Values           []string
 		IncompatibleWith []string
 		AllowsOutput     []string
 	}
+	Examples []string
 }
 
 func commandHelp(t *testing.T, cmd *cobra.Command) string {
@@ -590,6 +646,20 @@ func commandHelp(t *testing.T, cmd *cobra.Command) string {
 		t.Fatalf("help failed: %v", err)
 	}
 	return buf.String()
+}
+
+func TestCharacterization_LeafHelpIncludesGroupedExamples(t *testing.T) {
+	root := contractRoot()
+	for _, commandID := range leafCommandIDs(root) {
+		cmd, ok := findCobraCommand(root, commandID)
+		if !ok {
+			t.Fatalf("command %s not found", commandID)
+		}
+		help := commandHelp(t, cmd)
+		if !strings.Contains(help, "Example - ") {
+			t.Fatalf("help for %s missing grouped examples:\n%s", commandID, help)
+		}
+	}
 }
 
 func schemaForCommand(t *testing.T, command string) commandSchemaSnapshot {
@@ -631,10 +701,13 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 			Flags    []struct {
 				Name             string   `json:"Name"`
 				Type             string   `json:"Type"`
+				Format           string   `json:"Format"`
+				Examples         []string `json:"Examples"`
 				Values           []string `json:"Values"`
 				IncompatibleWith []string `json:"IncompatibleWith"`
 				AllowsOutput     []string `json:"AllowsOutput"`
 			} `json:"Flags"`
+			Examples []string `json:"Examples"`
 		} `json:"Data"`
 	}
 	jsonStart := strings.Index(output, "{")
@@ -662,8 +735,11 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 			CliFlag *string
 		}{},
 		Failures: env.Data.Failures,
+		Examples: append([]string(nil), env.Data.Examples...),
 		Flags: map[string]struct {
 			Type             string
+			Format           string
+			Examples         []string
 			Values           []string
 			IncompatibleWith []string
 			AllowsOutput     []string
@@ -684,11 +760,15 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 	for _, flag := range env.Data.Flags {
 		snapshot.Flags[flag.Name] = struct {
 			Type             string
+			Format           string
+			Examples         []string
 			Values           []string
 			IncompatibleWith []string
 			AllowsOutput     []string
 		}{
 			Type:             flag.Type,
+			Format:           flag.Format,
+			Examples:         append([]string(nil), flag.Examples...),
 			Values:           flag.Values,
 			IncompatibleWith: flag.IncompatibleWith,
 			AllowsOutput:     flag.AllowsOutput,

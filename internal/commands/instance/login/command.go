@@ -2,9 +2,11 @@ package login
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"connectrpc.com/connect"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
@@ -20,8 +22,13 @@ type ControlPlane interface {
 }
 
 // Session is the interactive PTY connection opened against a sandbox instance.
+//
+// Connect blocks until the remote shell exits. Its first return value is the
+// remote shell's exit code (0 for a clean `exit`); its second return value is
+// non-nil only when the data-plane session itself fails (transport, auth,
+// envd RPC) and never just because the remote shell returned non-zero.
 type Session interface {
-	Connect(ctx context.Context, instanceID, user string) error
+	Connect(ctx context.Context, instanceID, user string) (int, error)
 }
 
 // RuntimeDeps contains data-plane and terminal dependencies that tests can
@@ -45,8 +52,8 @@ func Module() command.Module {
 Connects a terminal session directly in your current console.
 
 Examples:
-  agr instance login <id>
-  agr instance login <id> --user root`,
+  agr instance login ins-xxxx
+  agr instance login ins-xxxx --user root`,
 		Args:  []command.ArgSpec{{Name: "instance-id", Required: true}},
 		Flags: []command.FlagSpec{{Name: "user", Usage: "User to run terminal as (default: \"user\")", Type: command.FlagString}},
 	}
@@ -133,10 +140,40 @@ func runLogin(ctx context.Context, req command.Request, cp ControlPlane, rt Runt
 	}
 	cfg := config.Get()
 	session := rt.NewSession(accessToken, cfg.DataPlaneRegionDomain())
-	if err := session.Connect(ctx, instanceID, resolveUser(stringFlag(req, "user"))); err != nil {
-		return nil, err
+	exitCode, err := session.Connect(ctx, instanceID, resolveUser(stringFlag(req, "user")))
+	if err != nil {
+		return nil, classifySessionError(err)
 	}
-	return &command.Result{StreamDone: true}, nil
+	// A clean remote shell exit (typed `exit`, possibly inheriting 130 from a
+	// Ctrl-C'd command) is not a CLI error: propagate the exit code as the
+	// process exit status without rendering an error envelope, mirroring how
+	// `ssh` reports the remote shell's status.
+	return &command.Result{StreamDone: true, ExitCode: exitCode}, nil
+}
+
+func classifySessionError(err error) error {
+	if err == nil {
+		return nil
+	}
+	msg := err.Error()
+
+	var connectErr *connect.Error
+	if errors.As(err, &connectErr) {
+		code := strings.ToUpper(strings.ReplaceAll(connectErr.Code().String(), " ", "_"))
+		return output.NewCLIError(&output.Failure{
+			Code:    "DATA_PLANE_" + code,
+			Kind:    output.KindGenericError,
+			Message: "data-plane PTY session failed: " + connectErr.Error(),
+			Hint:    "This error came from the envd data-plane session. Rerun with --debug and share stderr diagnostics if it persists.",
+		})
+	}
+
+	return output.NewCLIError(&output.Failure{
+		Code:    "DATA_PLANE_SESSION_ERROR",
+		Kind:    output.KindGenericError,
+		Message: "data-plane PTY session failed: " + msg,
+		Hint:    "Rerun with --debug and share stderr diagnostics if the problem persists.",
+	})
 }
 
 func validateRunning(instanceID string, instance *ags.SandboxInstance) error {

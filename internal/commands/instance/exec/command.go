@@ -29,11 +29,11 @@ temporary sandbox for this single execution.
 Use '--' to separate flags from the remote command.
 
 Examples:
-  agr instance exec <id> -- ls -la
-  agr instance exec <id> -s -- ping -c 5 localhost
-  agr instance exec <id> --env FOO=bar -- echo $FOO
+  agr instance exec ins-xxxx -- ls -la
+  agr instance exec ins-xxxx -s -- ping -c 5 localhost
+  agr instance exec ins-xxxx --env FOO=bar -- echo $FOO
   # Create the tool first, then reuse its name or id here.
-  agr instance exec --create-temp-instance --tool-name <existing-tool-name> -- python -V
+  agr instance exec --create-temp-instance --tool-name my-tool -- python -V
   agr instance exec --create-temp-instance --tool-id sdt-xxxx --cleanup never -- bash`,
 		Args: []cmdcore.ArgSpec{
 			{Name: "args", Repeatable: true, Description: "Optional instance id followed by remote command arguments."},

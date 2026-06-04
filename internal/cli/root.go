@@ -5,6 +5,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -23,6 +24,7 @@ var (
 	cloudEndpoint    string
 	secretID         string
 	secretKey        string
+	tokenFlag        string
 	jqExpr           string
 	nonInteractive   bool
 	noColor          bool
@@ -41,17 +43,16 @@ var rootCmd = &cobra.Command{
 	Long: `AGR CLI is the command-line interface for Tencent Cloud Agent Runtime (AGR).
 
 Create sandbox instances, execute code, manage tools and API keys.
-Run 'agr doctor' to diagnose configuration issues.
-
-Examples:
-  tool_id=$(agr tool create --tool-name "quickstart-code-$(date +%s)-$$" --tool-type code-interpreter --network-configuration '{"NetworkMode":"SANDBOX"}' -o json --jq '.Data.ToolId')
-  instance_id=$(agr instance create --tool-id "$tool_id" -o json --jq '.Data.InstanceId')
-  agr instance code run "$instance_id" -c "print('Hello, World!')"
-  agr instance delete "$instance_id" --ignore-not-found
-  agr tool delete "$tool_id"
-
-  agr status
-  agr doctor`,
+Run 'agr doctor' to diagnose configuration issues.`,
+	Example: exampleBlocks(
+		`tool_id=$(agr tool create --tool-name "quickstart-code-$(date +%s)-$$" --tool-type code-interpreter --network-configuration '{"NetworkMode":"SANDBOX"}' -o json --jq '.Data.ToolId')
+instance_id=$(agr instance create --tool-id "$tool_id" -o json --jq '.Data.InstanceId')
+agr instance code run "$instance_id" -c "print('Hello, World!')"
+agr instance delete "$instance_id" --ignore-not-found
+agr tool delete "$tool_id"`,
+		"agr status",
+		"agr doctor",
+	),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if showVersion {
 			return Wrap("version", versionFn)(cmd, args)
@@ -83,6 +84,7 @@ func init() {
 			fmt.Fprintln(os.Stderr, "Error: -o ndjson is not supported with --help")
 			os.Exit(output.ExitUsage)
 		}
+
 		if wantJSON {
 			cmdID := canonicalCommandID(cmd)
 			if cmdID == "" {
@@ -137,6 +139,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cloudEndpoint, "cloud-endpoint", "", "Control-plane API endpoint (default: ags.tencentcloudapi.com)")
 	rootCmd.PersistentFlags().StringVar(&secretID, "secret-id", "", "Tencent Cloud SecretID")
 	rootCmd.PersistentFlags().StringVar(&secretKey, "secret-key", "", "Tencent Cloud SecretKey")
+	rootCmd.PersistentFlags().StringVar(&tokenFlag, "token", "", "Tencent Cloud STS session token")
 	rootCmd.PersistentFlags().StringVar(&jqExpr, "jq", "", "jq expression (only with -o json)")
 	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "Disable interactive behaviors")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable ANSI color output")
@@ -146,10 +149,11 @@ func init() {
 
 func newHelpCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "help [command]",
-		Short: "Help about any command",
-		Long:  "Help provides help for any command in the application.",
-		Args:  cobra.ArbitraryArgs,
+		Use:     "help [command]",
+		Short:   "Help about any command",
+		Long:    "Help provides help for any command in the application.",
+		Example: exampleBlocks("agr help instance create", "agr help schema"),
+		Args:    cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return cmd.Root().Help()
@@ -250,7 +254,7 @@ func extractHelpTopics(args []string) []string {
 			break
 		}
 		switch arg {
-		case "-o", "--output", "--config", "--secret-id", "--secret-key", "--region", "--domain", "--cloud-endpoint", "--jq":
+		case "-o", "--output", "--config", "--secret-id", "--secret-key", "--token", "--region", "--domain", "--cloud-endpoint", "--jq":
 			skipNext = true
 			continue
 		case "--no-color", "--non-interactive", "-h", "--help":
@@ -258,7 +262,7 @@ func extractHelpTopics(args []string) []string {
 		}
 		if strings.HasPrefix(arg, "-o") || strings.HasPrefix(arg, "--output=") ||
 			strings.HasPrefix(arg, "--config=") || strings.HasPrefix(arg, "--secret-id=") ||
-			strings.HasPrefix(arg, "--secret-key=") || strings.HasPrefix(arg, "--region=") ||
+			strings.HasPrefix(arg, "--secret-key=") || strings.HasPrefix(arg, "--token=") || strings.HasPrefix(arg, "--region=") ||
 			strings.HasPrefix(arg, "--domain=") || strings.HasPrefix(arg, "--cloud-endpoint=") || strings.HasPrefix(arg, "--jq=") {
 			continue
 		}
@@ -278,12 +282,37 @@ func classifyCLIError(err error) *output.CLIError {
 	return cliErr
 }
 
+// commandSpecificUsageHint returns a tailored hint for unknown-flag style usage
+// errors on commands where the generic --help pointer is too vague to be
+// actionable. Returns "" when no command-specific hint applies.
+func commandSpecificUsageHint(cmd *cobra.Command, err error) string {
+	if cmd == nil || err == nil {
+		return ""
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "unknown flag") && !strings.Contains(msg, "unknown shorthand") {
+		return ""
+	}
+	switch canonicalCommandID(cmd) {
+	case "instance.file.upload":
+		return "upload uses positional paths; use: agr instance file upload <instance-id> <local-path|-> <remote-path>"
+	case "instance.file.download":
+		return "download uses positional paths; use: agr instance file download <instance-id> <remote-path> <local-path|->"
+	}
+	return ""
+}
+
 func renderExecuteError(cmd *cobra.Command, err error) {
 	var envDone *envelopeAlreadyWritten
 	if errors.As(err, &envDone) {
 		os.Exit(envDone.code)
 	}
 	cliErr := classifyCLIError(err)
+	if cliErr != nil && cliErr.Failure != nil && cliErr.Failure.Code == "INVALID_USAGE" {
+		if hint := commandSpecificUsageHint(cmd, err); hint != "" {
+			cliErr.Failure.Hint = hint
+		}
+	}
 	debugf("Debug: error=%T: %v\n", err, err)
 	if isJSON() || hasRawOutputFlag("json") {
 		cmdID := commandIDForJSONError(cmd, os.Args[1:])
@@ -301,14 +330,42 @@ func renderExecuteError(cmd *cobra.Command, err error) {
 		os.Exit(cliErr.ExitCode)
 	}
 	failure := withIdempotencyHint(commandIDForJSONError(cmd, os.Args[1:]), cliErr.Failure)
-	fmt.Fprintf(ios.ErrOut, "Error: %s (%s)\n", failure.Message, failure.Code)
+	writeFailureText(ios.ErrOut, failure)
+	os.Exit(cliErr.ExitCode)
+}
+
+// writeFailureText renders a Failure to a human-readable, line-per-field
+// stderr block. Code/Message/RequestId are surfaced uniformly so all three
+// service-side identifiers needed for a TencentCloud support handoff appear
+// on their own labeled line. Hint and Retryable follow when present.
+func writeFailureText(w io.Writer, failure *output.Failure) {
+	if failure == nil {
+		return
+	}
+	fmt.Fprintf(w, "Error: %s\n", failure.Message)
+	if failure.Code != "" {
+		fmt.Fprintf(w, "Code: %s\n", failure.Code)
+	}
+	if requestID := failureRequestID(failure); requestID != "" {
+		fmt.Fprintf(w, "RequestId: %s\n", requestID)
+	}
 	if failure.Hint != "" {
-		fmt.Fprintf(ios.ErrOut, "Hint: %s\n", failure.Hint)
+		fmt.Fprintf(w, "Hint: %s\n", failure.Hint)
 	}
 	if failure.Retryable {
-		fmt.Fprintln(ios.ErrOut, "Retryable: yes")
+		fmt.Fprintln(w, "Retryable: yes")
 	}
-	os.Exit(cliErr.ExitCode)
+}
+
+func failureRequestID(failure *output.Failure) string {
+	if failure == nil || failure.Details == nil {
+		return ""
+	}
+	requestID, ok := failure.Details["RequestId"].(string)
+	if !ok {
+		return ""
+	}
+	return requestID
 }
 
 func renderJSONSchemaEnvelope(commandID string, cmd *cobra.Command, args []string) error {
@@ -396,7 +453,7 @@ func extractCommandTokens(args []string) []string {
 			break
 		}
 		switch arg {
-		case "-o", "--output", "--config", "--secret-id", "--secret-key", "--region", "--domain", "--cloud-endpoint", "--jq":
+		case "-o", "--output", "--config", "--secret-id", "--secret-key", "--token", "--region", "--domain", "--cloud-endpoint", "--jq":
 			skipNext = true
 			continue
 		case "--no-color", "--non-interactive", "-h", "--help", "--version", "-v":
@@ -404,7 +461,7 @@ func extractCommandTokens(args []string) []string {
 		}
 		if strings.HasPrefix(arg, "-o") || strings.HasPrefix(arg, "--output=") ||
 			strings.HasPrefix(arg, "--config=") || strings.HasPrefix(arg, "--secret-id=") ||
-			strings.HasPrefix(arg, "--secret-key=") || strings.HasPrefix(arg, "--region=") ||
+			strings.HasPrefix(arg, "--secret-key=") || strings.HasPrefix(arg, "--token=") || strings.HasPrefix(arg, "--region=") ||
 			strings.HasPrefix(arg, "--domain=") || strings.HasPrefix(arg, "--cloud-endpoint=") || strings.HasPrefix(arg, "--jq=") {
 			continue
 		}
@@ -512,6 +569,11 @@ func applyRawGlobalArgs(args []string) {
 			i++
 		case strings.HasPrefix(arg, "--secret-key="):
 			secretKey = strings.TrimPrefix(arg, "--secret-key=")
+		case arg == "--token" && i+1 < len(args):
+			tokenFlag = args[i+1]
+			i++
+		case strings.HasPrefix(arg, "--token="):
+			tokenFlag = strings.TrimPrefix(arg, "--token=")
 		case arg == "--region" && i+1 < len(args):
 			region = args[i+1]
 			i++
@@ -632,6 +694,9 @@ func initConfig() {
 	}
 	if secretKey != "" {
 		config.SetSecretKey(secretKey)
+	}
+	if tokenFlag != "" {
+		config.SetToken(tokenFlag)
 	}
 	if region != "" {
 		config.SetRegion(region)

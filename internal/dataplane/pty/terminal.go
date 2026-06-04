@@ -46,11 +46,27 @@ func NewSession(accessToken, domain string) *Session {
 	}
 }
 
+// sessionOutcome carries the remote PTY end state to the foreground goroutine.
+// exitCode is the remote shell's final exit status (0 for a clean `exit`).
+// err is non-nil only for transport-level failures (envd RPC, broken stream).
+// The two are independent: a non-zero exitCode with err == nil is a routine
+// remote exit (e.g. user pressed Ctrl-C then typed `exit`, leaving bash with
+// status 130) and must be propagated without being rendered as a CLI error.
+type sessionOutcome struct {
+	exitCode int
+	err      error
+}
+
 // Connect opens an interactive PTY session in the given sandbox instance.
 // It puts the local terminal into raw mode, forwards all stdin to the remote PTY,
 // streams remote output to stdout, and propagates terminal resize events (SIGWINCH).
 // The function blocks until the remote session ends or ctx is cancelled.
-func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
+//
+// The first return value is the remote shell's exit code (0 on a clean exit).
+// The second return value is non-nil only for transport-level failures, never
+// for a non-zero remote exit. Callers should propagate the exit code as the
+// CLI process exit code without rendering an error envelope.
+func (s *Session) Connect(ctx context.Context, instanceID, user string) (int, error) {
 	envdHost := s.envdHost(instanceID)
 
 	// Build the process RPC client that speaks to envd
@@ -63,7 +79,7 @@ func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
 	// all keystrokes (including Ctrl-C, arrows, etc.) are forwarded verbatim.
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		return fmt.Errorf("failed to set terminal to raw mode: %w", err)
+		return 0, fmt.Errorf("failed to set terminal to raw mode: %w", err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState) //nolint:errcheck
 
@@ -92,28 +108,28 @@ func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
 
 	stream, err := rpcClient.Start(cancelCtx, startReq)
 	if err != nil {
-		return fmt.Errorf("failed to start PTY process: %w", err)
+		return 0, fmt.Errorf("failed to start PTY process: %w", err)
 	}
 
 	// First event must be a StartEvent that gives us the PID
 	if !stream.Receive() {
 		if err := stream.Err(); err != nil {
-			return fmt.Errorf("PTY stream error on start: %w", err)
+			return 0, fmt.Errorf("PTY stream error on start: %w", err)
 		}
-		return fmt.Errorf("PTY stream closed before start event")
+		return 0, fmt.Errorf("PTY stream closed before start event")
 	}
 	startMsg := stream.Msg()
 	if startMsg == nil || startMsg.Event == nil {
-		return fmt.Errorf("unexpected nil start message from PTY stream")
+		return 0, fmt.Errorf("unexpected nil start message from PTY stream")
 	}
 	startEv := startMsg.Event.GetStart()
 	if startEv == nil {
-		return fmt.Errorf("first PTY event is not a start event")
+		return 0, fmt.Errorf("first PTY event is not a start event")
 	}
 	pid := startEv.GetPid()
 
 	// --- Goroutine: stream remote PTY output → local stdout ---
-	sessionDone := make(chan error, 1)
+	sessionDone := make(chan sessionOutcome, 1)
 	go func() {
 		for stream.Receive() {
 			msg := stream.Msg()
@@ -130,22 +146,22 @@ func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
 					}
 				}
 			case *process.ProcessEvent_End:
-				exitCode := int32(0)
+				var exitCode int32
 				if ev.End != nil {
 					exitCode = ev.End.GetExitCode()
 				}
-				if exitCode != 0 {
-					sessionDone <- fmt.Errorf("PTY session exited with code %d", exitCode)
-				} else {
-					sessionDone <- nil
-				}
+				// A remote shell exit is a clean session end regardless of
+				// the exit code: the user typed `exit` (possibly inheriting
+				// 130 from a Ctrl-C'd command). Propagate the code without
+				// flagging this as a CLI error.
+				sessionDone <- sessionOutcome{exitCode: int(exitCode)}
 				return
 			}
 		}
 		if err := stream.Err(); err != nil {
-			sessionDone <- err
+			sessionDone <- sessionOutcome{err: err}
 		} else {
-			sessionDone <- nil
+			sessionDone <- sessionOutcome{}
 		}
 	}()
 
@@ -207,11 +223,11 @@ func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
 	resizeDone := startResizeWatcher(cancelCtx, rpcClient, pid, s.accessToken)
 
 	// Wait for the PTY session to finish
-	var sessionErr error
+	var outcome sessionOutcome
 	select {
-	case sessionErr = <-sessionDone:
+	case outcome = <-sessionDone:
 	case <-ctx.Done():
-		sessionErr = ctx.Err()
+		outcome = sessionOutcome{err: ctx.Err()}
 	}
 
 	// Signal all goroutines to stop
@@ -224,7 +240,7 @@ func (s *Session) Connect(ctx context.Context, instanceID, user string) error {
 	// Print a newline so the shell prompt appears on a fresh line after restore
 	fmt.Println()
 
-	return sessionErr
+	return outcome.exitCode, outcome.err
 }
 
 // envdHost returns the envd hostname for the given instance.

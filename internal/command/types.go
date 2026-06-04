@@ -115,6 +115,12 @@ type FlagSpec struct {
 	Generated   bool
 	Deprecated  string
 	Annotations map[string][]string
+	// Format describes the expected shape for complex flag values.
+	Format string
+	// Examples lists concrete invocations for complex flag values.
+	Examples []string
+	// Values lists supported values for enum-like flags.
+	Values []string
 }
 
 // OutputSpec describes the canonical data shape and effects a command returns.

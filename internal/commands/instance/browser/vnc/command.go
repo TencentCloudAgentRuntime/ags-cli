@@ -27,8 +27,8 @@ func Module() command.Module {
 		Long: `Show the VNC URL for accessing a browser sandbox instance.
 
 Examples:
-  agr instance browser vnc <id>
-  agr instance browser vnc <id> --port 9000`,
+  agr instance browser vnc ins-xxxx
+  agr instance browser vnc ins-xxxx --port 9000`,
 		Args: []command.ArgSpec{
 			{Name: "instance-id", Required: true},
 		},

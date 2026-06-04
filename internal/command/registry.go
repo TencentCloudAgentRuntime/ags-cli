@@ -190,6 +190,8 @@ func cloneSpec(in Spec) Spec {
 	for i, flag := range in.Flags {
 		out.Flags[i] = flag
 		out.Flags[i].Aliases = append([]string(nil), flag.Aliases...)
+		out.Flags[i].Examples = append([]string(nil), flag.Examples...)
+		out.Flags[i].Values = append([]string(nil), flag.Values...)
 		if flag.Annotations != nil {
 			out.Flags[i].Annotations = map[string][]string{}
 			for key, values := range flag.Annotations {

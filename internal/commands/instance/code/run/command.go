@@ -27,17 +27,16 @@ func Module() cmdcore.Module {
 Provide an instance id, or use --create-temp-instance to spin up a
 temporary sandbox for this single execution.
 
-Code can be provided in three ways:
-  1. Direct string: agr instance code run <id> -c "print('Hello')"
-  2. From file: agr instance code run <id> -f script.py
-  3. From pipe: echo "print('Hello')" | agr instance code run <id>
-
-Temporary sandbox examples:
-  # Create the tool first, then reuse its name or id here.
-  agr instance code run --create-temp-instance --tool-name <existing-tool-name> -c "print('hello')"
-  agr instance code run --create-temp-instance --tool-id sdt-xxxx -f script.py --cleanup never
+Code can be provided as a direct string, from a file, or from stdin.
 
 Supported languages: python (default), javascript, typescript, r, java, bash`,
+		Examples: []string{
+			`agr instance code run ins-xxxx -c "print('Hello')"`,
+			"agr instance code run ins-xxxx -f script.py",
+			`echo "print('Hello')" | agr instance code run ins-xxxx`,
+			`agr instance code run --create-temp-instance --tool-name my-tool -c "print('hello')"`,
+			"agr instance code run --create-temp-instance --tool-id sdt-xxxx -f script.py --cleanup never",
+		},
 		Args: []cmdcore.ArgSpec{
 			{Name: "instance-id", Description: "Sandbox instance ID."},
 		},

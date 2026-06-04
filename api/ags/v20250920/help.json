@@ -1,424 +1,518 @@
 {
-  "api_version": "v20250920",
-  "commands": {
-    "instance.create": {
-      "short": "Create a new sandbox instance",
-      "long": "Create a new sandbox instance from a tool template.\n\nThe referenced tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
-      "examples": [
-        "agr instance create --tool-id sdt-xxxx",
-        "agr instance create --tool-name my-tool",
-        "agr instance create -t my-tool --timeout 5m",
-        "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'",
-        "agr instance create -t my-tool --auth-mode NONE"
-      ],
-      "fields": {
-        "ToolName": {
-          "description": "Tool name.",
-          "inputs": {
-            "tool-name": {
-              "usage": "Tool name"
+    "api_version": "v20250920",
+    "commands": {
+        "instance.create": {
+            "short": "Create a new sandbox instance",
+            "long": "Create a new sandbox instance from a tool template.\n\nThe referenced tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
+            "examples": [
+                "agr instance create --tool-id sdt-xxxx",
+                "agr instance create --tool-name my-tool",
+                "agr instance create -t my-tool --timeout 5m",
+                "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'",
+                "agr instance create -t my-tool --auth-mode NONE"
+            ],
+            "fields": {
+                "ToolName": {
+                    "description": "Tool name.",
+                    "inputs": {
+                        "tool-name": {
+                            "usage": "Tool name"
+                        }
+                    }
+                },
+                "ToolId": {
+                    "description": "Tool ID.",
+                    "inputs": {
+                        "tool-id": {
+                            "usage": "Tool ID"
+                        }
+                    }
+                },
+                "Timeout": {
+                    "description": "Instance timeout.",
+                    "inputs": {
+                        "timeout": {
+                            "usage": "Instance timeout as accepted by the API, for example 5m, 300s, or 1h"
+                        }
+                    }
+                },
+                "MountOptions": {
+                    "description": "Storage mount options for the instance.",
+                    "inputs": {
+                        "mount-options": {
+                            "usage": "MountOptions as JSON array, @file, or - for stdin",
+                            "format": "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\"}]",
+                            "examples": [
+                                "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'",
+                                "agr instance create --tool-id sdt-xxxx --mount-options @mounts.json"
+                            ]
+                        }
+                    }
+                },
+                "CustomConfiguration": {
+                    "description": "Custom configuration for the sandbox instance.",
+                    "inputs": {
+                        "custom-configuration": {
+                            "usage": "CustomConfiguration JSON object, @file, or - for stdin",
+                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}]}",
+                            "examples": [
+                                "agr instance create --tool-id sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"hello\"}]}'"
+                            ]
+                        }
+                    }
+                },
+                "Metadata": {
+                    "description": "Instance metadata.",
+                    "inputs": {
+                        "metadata": {
+                            "usage": "Metadata as JSON array, @file, or - for stdin",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "examples": [
+                                "agr instance create --tool-id sdt-xxxx --metadata '[{\"Key\":\"env\",\"Value\":\"test\"}]'"
+                            ]
+                        }
+                    }
+                },
+                "AuthMode": {
+                    "description": "Sandbox access authentication mode.",
+                    "inputs": {
+                        "auth-mode": {
+                            "usage": "Auth mode: DEFAULT, TOKEN, NONE, PUBLIC",
+                            "values": [
+                                "DEFAULT",
+                                "TOKEN",
+                                "NONE",
+                                "PUBLIC"
+                            ]
+                        }
+                    }
+                },
+                "ClientToken": {
+                    "description": "Client token for duplicate creation protection.",
+                    "inputs": {
+                        "client-token": {
+                            "usage": "Client token for duplicate creation protection"
+                        }
+                    }
+                }
             }
-          }
         },
-        "ToolId": {
-          "description": "Tool ID.",
-          "inputs": {
-            "tool-id": {
-              "usage": "Tool ID"
+        "instance.list": {
+            "short": "List instances",
+            "long": "List sandbox instances with optional filters.",
+            "examples": [
+                "agr instance list",
+                "agr instance list --tool-id sdt-xxxx",
+                "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'",
+                "agr instance list --offset 0 --limit 50"
+            ],
+            "fields": {
+                "ToolId": {
+                    "description": "Filter by tool ID.",
+                    "inputs": {
+                        "tool-id": {
+                            "usage": "Filter by tool ID"
+                        }
+                    }
+                },
+                "InstanceIds": {
+                    "description": "Filter by instance IDs.",
+                    "inputs": {
+                        "instance-ids": {
+                            "usage": "Filter by instance IDs",
+                            "format": "--instance-ids <id1> --instance-ids <id2>",
+                            "examples": [
+                                "agr instance list --instance-ids ins-xxxx",
+                                "agr instance list --instance-ids ins-xxxx --instance-ids ins-yyyy"
+                            ]
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Additional list filters.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Additional filters as JSON array, @file, or - for stdin",
+                            "format": "[{\"Name\":\"<field>\",\"Values\":[\"<value1>\",\"<value2>\"]}]",
+                            "values": [
+                                "Status: STARTING, RUNNING, STOPPING, STOPPED, STOP_FAILED, FAILED",
+                                "ToolName: tool name used to create the instance",
+                                "ToolId: tool ID"
+                            ],
+                            "examples": [
+                                "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'",
+                                "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\",\"STARTING\"]}]'",
+                                "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]},{\"Name\":\"ToolName\",\"Values\":[\"my-tool\"]}]'"
+                            ]
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset"
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Pagination limit.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Pagination limit (max 100)"
+                        }
+                    }
+                }
             }
-          }
         },
-        "Timeout": {
-          "description": "Instance timeout.",
-          "inputs": {
-            "timeout": {
-              "usage": "Instance timeout as accepted by the API, for example 5m, 300s, or 1h"
+        "instance.update": {
+            "short": "Update instance",
+            "fields": {
+                "Timeout": {
+                    "description": "New timeout.",
+                    "inputs": {
+                        "timeout": {
+                            "usage": "New timeout such as 10m or 300s"
+                        }
+                    }
+                },
+                "Metadata": {
+                    "description": "Instance metadata.",
+                    "inputs": {
+                        "metadata": {
+                            "usage": "Metadata as JSON array, @file, or - for stdin",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "examples": [
+                                "agr instance update <id> --metadata '[{\"Key\":\"env\",\"Value\":\"prod\"}]'"
+                            ]
+                        }
+                    }
+                }
             }
-          }
         },
-        "MountOptions": {
-          "description": "Storage mount options for the instance.",
-          "inputs": {
-            "mount-options": {
-              "usage": "MountOptions as JSON array, @file, or - for stdin"
-            }
-          }
+        "instance.pause": {
+            "short": "Pause instance"
         },
-        "CustomConfiguration": {
-          "description": "Custom configuration for the sandbox instance.",
-          "inputs": {
-            "custom-configuration": {
-              "usage": "CustomConfiguration JSON object, @file, or - for stdin"
-            }
-          }
+        "instance.resume": {
+            "short": "Resume instance"
         },
-        "Metadata": {
-          "description": "Instance metadata.",
-          "inputs": {
-            "metadata": {
-              "usage": "Metadata as JSON array, @file, or - for stdin"
-            }
-          }
+        "instance.delete": {
+            "short": "Delete instances",
+            "long": "Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation."
         },
-        "AuthMode": {
-          "description": "Sandbox access authentication mode.",
-          "inputs": {
-            "auth-mode": {
-              "usage": "Auth mode: DEFAULT, TOKEN, NONE, PUBLIC",
-              "values": [
-                "DEFAULT",
-                "TOKEN",
-                "NONE",
-                "PUBLIC"
-              ]
+        "tool.create": {
+            "short": "Create a new sandbox tool",
+            "long": "Create a new sandbox tool template.\n\nTool names must be unique within the current AppId.\n\nFor a minimal code-interpreter tool, provide a unique name, `--tool-type code-interpreter`, and a network configuration such as `{\"NetworkMode\":\"SANDBOX\"}`.",
+            "examples": [
+                "tool_name=\"my-tool-$(date +%s)-$$\"",
+                "agr tool create --tool-name \"$tool_name\" --tool-type code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}'",
+                "agr tool create --tool-name \"$tool_name\" --tool-type code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' -o json --jq '.Data.ToolId'"
+            ],
+            "fields": {
+                "ToolName": {
+                    "description": "Tool name.",
+                    "inputs": {
+                        "tool-name": {
+                            "usage": "Tool name (required)"
+                        }
+                    }
+                },
+                "ToolType": {
+                    "description": "Tool type.",
+                    "inputs": {
+                        "tool-type": {
+                            "usage": "Tool type (required)"
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Tool description.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Tool description"
+                        }
+                    }
+                },
+                "DefaultTimeout": {
+                    "description": "Default timeout.",
+                    "inputs": {
+                        "default-timeout": {
+                            "usage": "Default timeout as accepted by the API, for example 5m, 300s, or 1h"
+                        }
+                    }
+                },
+                "NetworkConfiguration": {
+                    "description": "Network configuration.",
+                    "inputs": {
+                        "network-configuration": {
+                            "usage": "NetworkConfiguration as JSON object, @file, or - for stdin",
+                            "format": "{\"NetworkMode\":\"<mode>\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}",
+                            "values": [
+                                "SANDBOX: no external network access",
+                                "PUBLIC: public internet access",
+                                "VPC: VPC network access; requires VpcConfig"
+                            ],
+                            "examples": [
+                                "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}'",
+                                "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"PUBLIC\"}'",
+                                "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"VPC\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}'"
+                            ]
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Tags as JSON array, @file, or - for stdin",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "examples": [
+                                "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --tags '[{\"Key\":\"team\",\"Value\":\"platform\"},{\"Key\":\"env\",\"Value\":\"staging\"}]'"
+                            ]
+                        }
+                    }
+                },
+                "RoleArn": {
+                    "description": "Role ARN for COS access.",
+                    "inputs": {
+                        "role-arn": {
+                            "usage": "Role ARN for COS access"
+                        }
+                    }
+                },
+                "StorageMounts": {
+                    "description": "Storage mount configuration.",
+                    "inputs": {
+                        "storage-mounts": {
+                            "usage": "StorageMounts as JSON array, @file, or - for stdin",
+                            "format": "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":false,\"StorageSource\":{\"Cos\":{...}}}]",
+                            "values": [
+                                "Cos: Tencent Cloud Object Storage source",
+                                "Image: container image volume source",
+                                "Cfs: Cloud File Storage source"
+                            ],
+                            "examples": [
+                                "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --role-arn qcs::cam::uin/100000:roleName/my-role --storage-mounts '[{\"Name\":\"data\",\"MountPath\":\"/data\",\"StorageSource\":{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"my-bucket\",\"BucketPath\":\"/workspace\"}}}]'"
+                            ]
+                        }
+                    }
+                },
+                "CustomConfiguration": {
+                    "description": "Custom configuration.",
+                    "inputs": {
+                        "custom-configuration": {
+                            "usage": "CustomConfiguration JSON object, @file, or - for stdin",
+                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/bin/sh\"],\"Args\":[\"-c\",\"sleep 3600\"],\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}",
+                            "examples": [
+                                "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}'"
+                            ]
+                        }
+                    }
+                },
+                "LogConfiguration": {
+                    "description": "Log configuration.",
+                    "inputs": {
+                        "log-configuration": {
+                            "usage": "LogConfiguration JSON object, @file, or - for stdin",
+                            "format": "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"}}",
+                            "examples": [
+                                "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"xxxxx-xxxx-xxxx\"}}'"
+                            ]
+                        }
+                    }
+                },
+                "Persistent": {
+                    "description": "Whether the sandbox tool creates persistent sandboxes.",
+                    "inputs": {
+                        "persistent": {
+                            "usage": "Whether the sandbox tool creates persistent sandboxes"
+                        }
+                    }
+                },
+                "ClientToken": {
+                    "description": "Client token for duplicate creation protection.",
+                    "inputs": {
+                        "client-token": {
+                            "usage": "Client token for duplicate creation protection"
+                        }
+                    }
+                }
             }
-          }
         },
-        "ClientToken": {
-          "description": "Client token for duplicate creation protection.",
-          "inputs": {
-            "client-token": {
-              "usage": "Client token for duplicate creation protection"
+        "tool.list": {
+            "short": "List available tools",
+            "fields": {
+                "ToolIds": {
+                    "description": "Filter by tool IDs.",
+                    "inputs": {
+                        "tool-ids": {
+                            "usage": "Filter by tool IDs",
+                            "format": "--tool-ids <id1> --tool-ids <id2>",
+                            "examples": [
+                                "agr tool list --tool-ids sdt-xxxx",
+                                "agr tool list --tool-ids sdt-xxxx --tool-ids sdt-yyyy"
+                            ]
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Additional list filters.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Additional filters as JSON array, @file, or - for stdin",
+                            "format": "[{\"Name\":\"<field>\",\"Values\":[\"<value1>\",\"<value2>\"]}]",
+                            "values": [
+                                "ToolName: exact tool name",
+                                "ToolType: browser, code-interpreter, custom, computer, mobile",
+                                "Status: CREATING, ACTIVE, DELETING, FAILED"
+                            ],
+                            "examples": [
+                                "agr tool list --filters '[{\"Name\":\"ToolType\",\"Values\":[\"code-interpreter\"]}]'",
+                                "agr tool list --filters '[{\"Name\":\"Status\",\"Values\":[\"ACTIVE\"]}]'",
+                                "agr tool list --filters '[{\"Name\":\"ToolType\",\"Values\":[\"browser\"]},{\"Name\":\"Status\",\"Values\":[\"ACTIVE\"]}]'"
+                            ]
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset"
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Pagination limit.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Pagination limit"
+                        }
+                    }
+                }
             }
-          }
+        },
+        "tool.update": {
+            "short": "Update a sandbox tool",
+            "fields": {
+                "Description": {
+                    "description": "Tool description.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Tool description"
+                        }
+                    }
+                },
+                "NetworkConfiguration": {
+                    "description": "Network configuration.",
+                    "inputs": {
+                        "network-configuration": {
+                            "usage": "NetworkConfiguration as JSON object, @file, or - for stdin",
+                            "format": "{\"NetworkMode\":\"<mode>\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}",
+                            "examples": [
+                                "agr tool update sdt-xxxx --network-configuration '{\"NetworkMode\":\"PUBLIC\"}'",
+                                "agr tool update sdt-xxxx --network-configuration '{\"NetworkMode\":\"VPC\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}'"
+                            ]
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Tags as JSON array, @file, or - for stdin",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "examples": [
+                                "agr tool update sdt-xxxx --tags '[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"platform\"}]'"
+                            ]
+                        }
+                    }
+                },
+                "CustomConfiguration": {
+                    "description": "Custom configuration.",
+                    "inputs": {
+                        "custom-configuration": {
+                            "usage": "CustomConfiguration JSON object, @file, or - for stdin",
+                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}]}",
+                            "examples": [
+                                "agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}]}'"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "tool.delete": {
+            "short": "Delete sandbox tools"
+        },
+        "apikey.create": {
+            "short": "Create a new API key",
+            "fields": {
+                "Name": {
+                    "description": "Name for the API key.",
+                    "inputs": {
+                        "name": {
+                            "usage": "Name for the API key (required)"
+                        }
+                    }
+                }
+            }
+        },
+        "apikey.list": {
+            "short": "List API keys"
+        },
+        "apikey.delete": {
+            "short": "Delete an API key"
+        },
+        "pre-cache-image-task.create": {
+            "short": "Create an image pre-cache task",
+            "fields": {
+                "Image": {
+                    "description": "Image reference.",
+                    "inputs": {
+                        "image": {
+                            "usage": "Image reference (required)"
+                        }
+                    }
+                },
+                "ImageRegistryType": {
+                    "description": "Image registry type.",
+                    "inputs": {
+                        "image-registry-type": {
+                            "usage": "Image registry type: enterprise or personal (required)"
+                        }
+                    }
+                }
+            }
+        },
+        "pre-cache-image-task.get": {
+            "short": "Describe an image pre-cache task",
+            "fields": {
+                "Image": {
+                    "description": "Image reference.",
+                    "inputs": {
+                        "image": {
+                            "usage": "Image reference (required)"
+                        }
+                    }
+                },
+                "ImageDigest": {
+                    "description": "Image digest.",
+                    "inputs": {
+                        "image-digest": {
+                            "usage": "Image digest"
+                        }
+                    }
+                },
+                "ImageRegistryType": {
+                    "description": "Image registry type.",
+                    "inputs": {
+                        "image-registry-type": {
+                            "usage": "Image registry type: enterprise or personal (required)"
+                        }
+                    }
+                }
+            }
         }
-      }
-    },
-    "instance.list": {
-      "short": "List instances",
-      "long": "List sandbox instances with optional filters.",
-      "examples": [
-        "agr instance list",
-        "agr instance list --tool-id sdt-xxx",
-        "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'",
-        "agr instance list --offset 0 --limit 50"
-      ],
-      "fields": {
-        "ToolId": {
-          "description": "Filter by tool ID.",
-          "inputs": {
-            "tool-id": {
-              "usage": "Filter by tool ID"
-            }
-          }
-        },
-        "InstanceIds": {
-          "description": "Filter by instance IDs.",
-          "inputs": {
-            "instance-ids": {
-              "usage": "Filter by instance IDs"
-            }
-          }
-        },
-        "Filters": {
-          "description": "Additional list filters.",
-          "inputs": {
-            "filters": {
-              "usage": "Additional filters as JSON array, @file, or - for stdin"
-            }
-          }
-        },
-        "Offset": {
-          "description": "Pagination offset.",
-          "inputs": {
-            "offset": {
-              "usage": "Pagination offset"
-            }
-          }
-        },
-        "Limit": {
-          "description": "Pagination limit.",
-          "inputs": {
-            "limit": {
-              "usage": "Pagination limit (max 100)"
-            }
-          }
-        }
-      }
-    },
-    "instance.update": {
-      "short": "Update instance",
-      "fields": {
-        "Timeout": {
-          "description": "New timeout.",
-          "inputs": {
-            "timeout": {
-              "usage": "New timeout such as 10m or 300s"
-            }
-          }
-        },
-        "Metadata": {
-          "description": "Instance metadata.",
-          "inputs": {
-            "metadata": {
-              "usage": "Metadata as JSON array, @file, or - for stdin"
-            }
-          }
-        }
-      }
-    },
-    "instance.pause": {
-      "short": "Pause instance"
-    },
-    "instance.resume": {
-      "short": "Resume instance"
-    },
-    "instance.delete": {
-      "short": "Delete instances",
-      "long": "Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation."
-    },
-    "tool.create": {
-      "short": "Create a new sandbox tool",
-      "long": "Create a new sandbox tool template.\n\nTool names must be unique within the current AppId.\n\nFor a minimal code-interpreter tool, provide a unique name, `--tool-type code-interpreter`, and a network configuration such as `{\"NetworkMode\":\"SANDBOX\"}`.",
-      "examples": [
-        "tool_name=\"my-tool-$(date +%s)-$$\"",
-        "agr tool create --tool-name \"$tool_name\" --tool-type code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}'",
-        "agr tool create --tool-name \"$tool_name\" --tool-type code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' -o json --jq '.Data.ToolId'"
-      ],
-      "fields": {
-        "ToolName": {
-          "description": "Tool name.",
-          "inputs": {
-            "tool-name": {
-              "usage": "Tool name (required)"
-            }
-          }
-        },
-        "ToolType": {
-          "description": "Tool type.",
-          "inputs": {
-            "tool-type": {
-              "usage": "Tool type (required)"
-            }
-          }
-        },
-        "Description": {
-          "description": "Tool description.",
-          "inputs": {
-            "description": {
-              "usage": "Tool description"
-            }
-          }
-        },
-        "DefaultTimeout": {
-          "description": "Default timeout.",
-          "inputs": {
-            "default-timeout": {
-              "usage": "Default timeout as accepted by the API, for example 5m, 300s, or 1h"
-            }
-          }
-        },
-        "NetworkConfiguration": {
-          "description": "Network configuration.",
-          "inputs": {
-            "network-configuration": {
-              "usage": "NetworkConfiguration as JSON object, @file, or - for stdin"
-            }
-          }
-        },
-        "Tags": {
-          "description": "Tags.",
-          "inputs": {
-            "tags": {
-              "usage": "Tags as JSON array, @file, or - for stdin"
-            }
-          }
-        },
-        "RoleArn": {
-          "description": "Role ARN for COS access.",
-          "inputs": {
-            "role-arn": {
-              "usage": "Role ARN for COS access"
-            }
-          }
-        },
-        "StorageMounts": {
-          "description": "Storage mount configuration.",
-          "inputs": {
-            "storage-mounts": {
-              "usage": "StorageMounts as JSON array, @file, or - for stdin"
-            }
-          }
-        },
-        "CustomConfiguration": {
-          "description": "Custom configuration.",
-          "inputs": {
-            "custom-configuration": {
-              "usage": "CustomConfiguration JSON object, @file, or - for stdin"
-            }
-          }
-        },
-        "LogConfiguration": {
-          "description": "Log configuration.",
-          "inputs": {
-            "log-configuration": {
-              "usage": "LogConfiguration JSON object, @file, or - for stdin"
-            }
-          }
-        },
-        "Persistent": {
-          "description": "Whether the sandbox tool creates persistent sandboxes.",
-          "inputs": {
-            "persistent": {
-              "usage": "Whether the sandbox tool creates persistent sandboxes"
-            }
-          }
-        },
-        "ClientToken": {
-          "description": "Client token for duplicate creation protection.",
-          "inputs": {
-            "client-token": {
-              "usage": "Client token for duplicate creation protection"
-            }
-          }
-        }
-      }
-    },
-    "tool.list": {
-      "short": "List available tools",
-      "fields": {
-        "ToolIds": {
-          "description": "Filter by tool IDs.",
-          "inputs": {
-            "tool-ids": {
-              "usage": "Filter by tool IDs (generated ToolIds flag)"
-            }
-          }
-        },
-        "Filters": {
-          "description": "Additional list filters.",
-          "inputs": {
-            "filters": {
-              "usage": "Additional filters as JSON array, @file, or - for stdin"
-            }
-          }
-        },
-        "Offset": {
-          "description": "Pagination offset.",
-          "inputs": {
-            "offset": {
-              "usage": "Pagination offset"
-            }
-          }
-        },
-        "Limit": {
-          "description": "Pagination limit.",
-          "inputs": {
-            "limit": {
-              "usage": "Pagination limit"
-            }
-          }
-        }
-      }
-    },
-    "tool.update": {
-      "short": "Update a sandbox tool",
-      "fields": {
-        "Description": {
-          "description": "Tool description.",
-          "inputs": {
-            "description": {
-              "usage": "Tool description"
-            }
-          }
-        },
-        "NetworkConfiguration": {
-          "description": "Network configuration.",
-          "inputs": {
-            "network-configuration": {
-              "usage": "NetworkConfiguration as JSON object, @file, or - for stdin"
-            }
-          }
-        },
-        "Tags": {
-          "description": "Tags.",
-          "inputs": {
-            "tags": {
-              "usage": "Tags as JSON array, @file, or - for stdin"
-            }
-          }
-        },
-        "CustomConfiguration": {
-          "description": "Custom configuration.",
-          "inputs": {
-            "custom-configuration": {
-              "usage": "CustomConfiguration JSON object, @file, or - for stdin"
-            }
-          }
-        }
-      }
-    },
-    "tool.delete": {
-      "short": "Delete sandbox tools"
-    },
-    "apikey.create": {
-      "short": "Create a new API key",
-      "fields": {
-        "Name": {
-          "description": "Name for the API key.",
-          "inputs": {
-            "name": {
-              "usage": "Name for the API key (required)"
-            }
-          }
-        }
-      }
-    },
-    "apikey.list": {
-      "short": "List API keys"
-    },
-    "apikey.delete": {
-      "short": "Delete an API key"
-    },
-    "pre-cache-image-task.create": {
-      "short": "Create an image pre-cache task",
-      "fields": {
-        "Image": {
-          "description": "Image reference.",
-          "inputs": {
-            "image": {
-              "usage": "Image reference (required)"
-            }
-          }
-        },
-        "ImageRegistryType": {
-          "description": "Image registry type.",
-          "inputs": {
-            "image-registry-type": {
-              "usage": "Image registry type: enterprise or personal (required)"
-            }
-          }
-        }
-      }
-    },
-    "pre-cache-image-task.get": {
-      "short": "Describe an image pre-cache task",
-      "fields": {
-        "Image": {
-          "description": "Image reference.",
-          "inputs": {
-            "image": {
-              "usage": "Image reference (required)"
-            }
-          }
-        },
-        "ImageDigest": {
-          "description": "Image digest.",
-          "inputs": {
-            "image-digest": {
-              "usage": "Image digest"
-            }
-          }
-        },
-        "ImageRegistryType": {
-          "description": "Image registry type.",
-          "inputs": {
-            "image-registry-type": {
-              "usage": "Image registry type: enterprise or personal (required)"
-            }
-          }
-        }
-      }
     }
-  }
 }

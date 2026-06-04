@@ -14,7 +14,11 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-var statusCmd = &cobra.Command{Use: "status", Short: "Show current CLI configuration status"}
+var statusCmd = &cobra.Command{
+	Use:     "status",
+	Short:   "Show current CLI configuration status",
+	Example: exampleBlocks("agr status", "agr status -o json"),
+}
 
 func statusFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 	permWarning := config.CheckConfigFilePermissions()
@@ -30,6 +34,7 @@ func statusFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 	cfg := config.Get()
 	secretIDPresent, secretIDSource := detectAuthSource("secret_id")
 	secretKeyPresent, secretKeySource := detectAuthSource("secret_key")
+	tokenPresent, tokenSource := detectAuthSource("token")
 	configLoaded := config.ConfigFileLoaded() && statusErr == nil
 
 	data := map[string]any{
@@ -42,6 +47,7 @@ func statusFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 		"Auth": map[string]any{
 			"SecretId":  map[string]any{"Present": secretIDPresent, "Source": secretIDSource},
 			"SecretKey": map[string]any{"Present": secretKeyPresent, "Source": secretKeySource},
+			"Token":     map[string]any{"Present": tokenPresent, "Source": tokenSource},
 		},
 	}
 	if statusErr == nil {
@@ -69,6 +75,7 @@ func statusFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 		fmt.Fprintln(w, "\nAuth:")
 		fmt.Fprintf(w, "  Secret ID:  %s\n", formatAuthStatus(secretIDPresent, secretIDSource))
 		fmt.Fprintf(w, "  Secret Key: %s\n", formatAuthStatus(secretKeyPresent, secretKeySource))
+		fmt.Fprintf(w, "  Token:      %s\n", formatSensitiveAuthStatus(tokenPresent, tokenSource, config.GetToken()))
 		if permWarning != "" {
 			fmt.Fprintf(ios.ErrOut, "\nWarning: %s\n", permWarning)
 		}
@@ -92,6 +99,10 @@ func detectAuthSource(field string) (bool, string) {
 		if cfg.Auth.SecretKey != "" {
 			return true, config.GetSource("secret_key")
 		}
+	case "token":
+		if cfg.Auth.Token != "" {
+			return true, config.GetSource("token")
+		}
 	}
 	return false, ""
 }
@@ -101,4 +112,24 @@ func formatAuthStatus(present bool, source string) string {
 		return "not configured"
 	}
 	return fmt.Sprintf("configured (source: %s)", source)
+}
+
+func formatSensitiveAuthStatus(present bool, source, value string) string {
+	if !present {
+		return "not configured"
+	}
+	if source == "" {
+		return fmt.Sprintf("configured (%s)", maskCredential(value))
+	}
+	return fmt.Sprintf("configured (%s, source: %s)", maskCredential(value), source)
+}
+
+func maskCredential(value string) string {
+	if value == "" {
+		return ""
+	}
+	if len(value) <= 8 {
+		return "****"
+	}
+	return value[:4] + "..." + value[len(value)-4:]
 }

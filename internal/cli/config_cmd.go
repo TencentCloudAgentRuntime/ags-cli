@@ -24,10 +24,20 @@ var configCmd = &cobra.Command{
 }
 
 var configShowCmd = &cobra.Command{Use: "show", Short: "Show current configuration values and sources"}
-var configSetCmd = &cobra.Command{Use: "set <key> <value>", Short: "Set a configuration value", Args: cobra.ExactArgs(2)}
-var configPathCmd = &cobra.Command{Use: "path", Short: "Print the configuration file path"}
+var configSetCmd = &cobra.Command{
+	Use:     "set <key> <value>",
+	Short:   "Set a configuration value",
+	Example: exampleBlocks("agr config set region ap-guangzhou", "agr config set output json"),
+	Args:    cobra.RangeArgs(0, 2),
+}
+var configPathCmd = &cobra.Command{
+	Use:     "path",
+	Short:   "Print the configuration file path",
+	Example: exampleBlocks("agr config path", "agr config path -o json"),
+}
 
 func init() {
+	configShowCmd.Example = exampleBlocks("agr config show", "agr config show -o json")
 	configShowCmd.RunE = Wrap("config.show", configShowFn)
 	configSetCmd.RunE = Wrap("config.set", configSetFn)
 	configPathCmd.RunE = Wrap("config.path", configPathFn)
@@ -52,6 +62,7 @@ func configShowFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 	cfg := config.Get()
 	secretIDPresent, secretIDSource := detectAuthSource("secret_id")
 	secretKeyPresent, secretKeySource := detectAuthSource("secret_key")
+	tokenPresent, tokenSource := detectAuthSource("token")
 
 	data := map[string]any{
 		"ConfigFile": config.ConfigFilePath(),
@@ -63,6 +74,7 @@ func configShowFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 			"cloud_endpoint": map[string]any{"Value": cfg.ControlPlaneEndpoint(), "Source": config.GetSource("cloud_endpoint")},
 			"secret_id":      map[string]any{"Present": secretIDPresent, "Source": secretIDSource},
 			"secret_key":     map[string]any{"Present": secretKeyPresent, "Source": secretKeySource},
+			"token":          map[string]any{"Present": tokenPresent, "Source": tokenSource, "Value": maskCredential(config.GetToken())},
 			"default_user":   map[string]any{"Value": cfg.Sandbox.DefaultUser, "Source": config.GetSource("default_user")},
 		},
 	}
@@ -75,6 +87,7 @@ func configShowFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 			{Key: "cloud_endpoint", Value: fmtSourced(cfg.ControlPlaneEndpoint(), config.GetSource("cloud_endpoint"))},
 			{Key: "secret_id", Value: formatAuthStatus(secretIDPresent, secretIDSource)},
 			{Key: "secret_key", Value: formatAuthStatus(secretKeyPresent, secretKeySource)},
+			{Key: "token", Value: formatSensitiveAuthStatus(tokenPresent, tokenSource, config.GetToken())},
 			{Key: "default_user", Value: fmtSourced(cfg.Sandbox.DefaultUser, config.GetSource("default_user"))},
 		}
 		printKV(w, pairs)
@@ -82,8 +95,10 @@ func configShowFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 }
 
 func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
-	key := args[0]
-	value := args[1]
+	key, value, err := parseConfigSetArgs(cmd, args)
+	if err != nil {
+		return nil, err
+	}
 
 	validKeys := map[string]string{
 		"output":         "output",
@@ -92,6 +107,7 @@ func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 		"cloud_endpoint": "cloud_endpoint",
 		"secret_id":      "auth.secret_id",
 		"secret_key":     "auth.secret_key",
+		"token":          "auth.token",
 		"default_user":   "sandbox.default_user",
 	}
 	if _, ok := validKeys[key]; !ok {
@@ -136,6 +152,8 @@ func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 		cfg.Auth.SecretID = value
 	case "secret_key":
 		cfg.Auth.SecretKey = value
+	case "token":
+		cfg.Auth.Token = value
 	case "default_user":
 		cfg.Sandbox.DefaultUser = value
 	}
@@ -148,6 +166,7 @@ func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 		Auth: config.AuthConfig{
 			SecretID:  cfg.Auth.SecretID,
 			SecretKey: cfg.Auth.SecretKey,
+			Token:     cfg.Auth.Token,
 		},
 		Sandbox: config.SandboxConfig{
 			DefaultUser: cfg.Sandbox.DefaultUser,
@@ -169,11 +188,32 @@ func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 		return nil, output.NewUsageError("CONFIG_WRITE_FAILED", err.Error(), "Check file permissions.")
 	}
 
-	data := map[string]any{"Key": key, "Value": value, "Path": path}
+	data := map[string]any{"Key": key, "Value": configSetDisplayValue(key, value), "Path": path}
 	return OK(data, func(w io.Writer) {
-		fmt.Fprintf(w, "Set %s = %s\n", key, value)
+		fmt.Fprintf(w, "Set %s = %s\n", key, configSetDisplayValue(key, value))
 		fmt.Fprintf(w, "Written to %s\n", path)
 	}), nil
+}
+
+func parseConfigSetArgs(_ *cobra.Command, args []string) (string, string, error) {
+	if tokenFlag != "" && len(args) == 0 {
+		return "token", tokenFlag, nil
+	}
+	if tokenFlag != "" && len(args) != 0 {
+		return "", "", output.NewUsageError("INVALID_USAGE", "--token cannot be combined with positional config set arguments", "Run: agr config set --token <token>")
+	}
+	switch len(args) {
+	case 1:
+		key, value, ok := strings.Cut(args[0], "=")
+		if !ok || key == "" {
+			return "", "", output.NewUsageError("INVALID_USAGE", "config set requires <key> <value> or <key>=<value>", "Run: agr config set token=<token>")
+		}
+		return key, value, nil
+	case 2:
+		return args[0], args[1], nil
+	default:
+		return "", "", output.NewUsageError("INVALID_USAGE", "config set requires <key> <value> or <key>=<value>", "Run: agr config set secret_id <id>")
+	}
 }
 
 // configFile mirrors the TOML structure for marshal/unmarshal.
@@ -189,6 +229,7 @@ type configFile struct {
 type configFileAuth struct {
 	SecretID  string `toml:"secret_id,omitempty"`
 	SecretKey string `toml:"secret_key,omitempty"`
+	Token     string `toml:"token,omitempty"`
 }
 
 type configFileSandbox struct {
@@ -200,4 +241,13 @@ func fmtSourced(value, source string) string {
 		return value + " (default)"
 	}
 	return fmt.Sprintf("%s (source: %s)", value, source)
+}
+
+func configSetDisplayValue(key, value string) string {
+	switch key {
+	case "secret_id", "secret_key", "token":
+		return maskCredential(value)
+	default:
+		return value
+	}
 }

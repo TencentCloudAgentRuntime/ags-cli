@@ -11,20 +11,13 @@ func init() {
 	completionCmd := &cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",
 		Short: "Generate shell completion script",
-		Long: `Generate shell completion scripts for agr.
-
-Examples:
-  # Bash (add to ~/.bashrc)
-  agr completion bash > /etc/bash_completion.d/agr
-
-  # Zsh (add to ~/.zshrc)
-  agr completion zsh > "${fpath[1]}/_agr"
-
-  # Fish
-  agr completion fish > ~/.config/fish/completions/agr.fish
-
-  # PowerShell
-  agr completion powershell > agr.ps1`,
+		Long:  "Generate shell completion scripts for agr.",
+		Example: exampleBlocks(
+			"agr completion bash > /etc/bash_completion.d/agr",
+			`agr completion zsh > "${fpath[1]}/_agr"`,
+			"agr completion fish > ~/.config/fish/completions/agr.fish",
+			"agr completion powershell > agr.ps1",
+		),
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
 	}

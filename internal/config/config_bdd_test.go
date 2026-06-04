@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -15,7 +17,11 @@ func TestConfigBDD(t *testing.T) {
 }
 
 var _ = Describe("Config", func() {
-	BeforeEach(func() { cfg = nil; sources = nil })
+	BeforeEach(func() {
+		cfg = nil
+		sources = nil
+		cfgFile = ""
+	})
 
 	It("defaults to cloud-compatible region, domain and text output", func() {
 		c := Get()
@@ -30,8 +36,27 @@ var _ = Describe("Config", func() {
 		Expect(GetOutput()).To(Equal("json"))
 		SetSecretID("sid")
 		SetSecretKey("skey")
+		SetToken("tok")
 		Expect(GetSecretID()).To(Equal("sid"))
 		Expect(GetSecretKey()).To(Equal("skey"))
+		Expect(GetToken()).To(Equal("tok"))
+	})
+
+	It("resolves STS token from environment before config file", func() {
+		tmpDir := GinkgoT().TempDir()
+		cfgPath := filepath.Join(tmpDir, "config.toml")
+		Expect(os.WriteFile(cfgPath, []byte("[auth]\ntoken = \"config-token\"\n"), 0o600)).To(Succeed())
+		SetConfigFile(cfgPath)
+		Expect(os.Setenv("TENCENTCLOUD_TOKEN", "env-token")).To(Succeed())
+		defer func() {
+			Expect(os.Unsetenv("TENCENTCLOUD_TOKEN")).To(Succeed())
+			SetConfigFile("")
+		}()
+
+		Expect(Init()).To(Succeed())
+
+		Expect(GetToken()).To(Equal("env-token"))
+		Expect(GetSource("token")).To(Equal("TENCENTCLOUD_TOKEN"))
 	})
 
 	It("validates output, region and domain", func() {
