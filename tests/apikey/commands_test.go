@@ -38,6 +38,12 @@ var _ = Describe("apikey commands", Ordered, func() {
 
 	It("executes agr apikey create", func() {
 		result := cli.Run(context.Background(), "--output", "json", "apikey", "create", "--name", "agr-live-apikey")
+		if result.ExitCode != 0 {
+			env := result.Envelope()
+			if env.Failure != nil && env.Failure.Code == "LimitExceeded.APIKeyQuota" {
+				Skip("API key quota exhausted for this live-test account")
+			}
+		}
 		result.ExpectSuccess()
 		env := result.Envelope()
 		Expect(env.Command).To(Equal("apikey.create"))
@@ -45,6 +51,9 @@ var _ = Describe("apikey commands", Ordered, func() {
 	})
 
 	It("executes agr apikey delete", func() {
+		if keyID == "" {
+			Skip("API key was not created")
+		}
 		result := cli.Run(context.Background(), "--output", "json", "apikey", "delete", keyID)
 		result.ExpectSuccess()
 		Expect(result.Envelope().Command).To(Equal("apikey.delete"))

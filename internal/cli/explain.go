@@ -24,9 +24,10 @@ type ExplainData struct {
 }
 
 var explainCmd = &cobra.Command{
-	Use:   "explain <CODE|exit-codes>",
-	Short: "Explain an AGR error code or exit codes",
-	Args:  cobra.ExactArgs(1),
+	Use:     "explain <CODE|exit-codes>",
+	Short:   "Explain an AGR error code or exit codes",
+	Example: exampleBlocks("agr explain MISSING_CLOUD_CREDENTIALS", "agr explain exit-codes"),
+	Args:    cobra.ExactArgs(1),
 }
 
 func init() {

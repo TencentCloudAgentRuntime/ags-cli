@@ -28,20 +28,26 @@ func inputsFor(m apimeta.Member, fm *apimeta.FieldMapping) []apimeta.InputMappin
 	return []apimeta.InputMapping{in}
 }
 
-func inputHelp(h *apimeta.Help, commandID, fieldName, flagName, fallback string) string {
+func inputHelp(h *apimeta.Help, commandID, fieldName, flagName, fallback string) apimeta.InputHelp {
 	if h != nil {
 		if ch, ok := h.Commands[commandID]; ok {
 			if fh, ok := ch.Fields[fieldName]; ok {
-				if ih, ok := fh.Inputs[flagName]; ok && ih.Usage != "" {
-					return ih.Usage
+				if ih, ok := fh.Inputs[flagName]; ok {
+					if ih.Usage == "" {
+						ih.Usage = fh.Description
+					}
+					if ih.Usage == "" {
+						ih.Usage = fallback
+					}
+					return ih
 				}
 				if fh.Description != "" {
-					return fh.Description
+					return apimeta.InputHelp{Usage: fh.Description}
 				}
 			}
 		}
 	}
-	return fallback
+	return apimeta.InputHelp{Usage: fallback}
 }
 
 func commandShortFromHelp(help *apimeta.Help, commandID string) string {

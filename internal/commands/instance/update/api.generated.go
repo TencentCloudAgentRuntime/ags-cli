@@ -51,7 +51,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Metadata",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "metadata", Flag: "metadata", Usage: "Metadata as JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "metadata", Flag: "metadata", Usage: "Metadata as JSON array, @file, or - for stdin", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Examples: []string{"agr instance update <id> --metadata '[{\"Key\":\"env\",\"Value\":\"prod\"}]'"}, Type: command.FlagString},
 				},
 			},
 		},

@@ -283,6 +283,9 @@ type FieldFlag struct {
 	Type        string   `json:"Type"`
 	Form        string   `json:"Form,omitempty"`
 	Default     string   `json:"Default,omitempty"`
+	Format      string   `json:"Format,omitempty"`
+	Examples    []string `json:"Examples,omitempty"`
+	Values      []string `json:"Values,omitempty"`
 	NestedType  string   `json:"NestedType,omitempty"`
 	Required    bool     `json:"Required"`
 	Description string   `json:"Description"`
@@ -328,7 +331,8 @@ func buildRequestFlags(spec *Spec, mapping *Mapping) *FlagsReport {
 					source = "mapping-override"
 				}
 				desc := FieldDescription(a.Command, m.Name, stripTags(m.Document))
-				usage := InputHelpFor(a.Command, m.Name, in.Flag, desc).Usage
+				inputHelp := InputHelpFor(a.Command, m.Name, in.Flag, desc)
+				usage := inputHelp.Usage
 				if usage == "" {
 					usage = desc
 				}
@@ -342,6 +346,9 @@ func buildRequestFlags(spec *Spec, mapping *Mapping) *FlagsReport {
 					Type:        schemaInputType(m, in),
 					Form:        in.Form,
 					Default:     in.Default,
+					Format:      inputHelp.Format,
+					Examples:    append([]string(nil), inputHelp.Examples...),
+					Values:      append([]string(nil), inputHelp.Values...),
 					NestedType:  m.Member,
 					Required:    m.Required,
 					Description: usage,

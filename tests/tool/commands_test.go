@@ -2,7 +2,9 @@ package tool_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/tests/testutil"
 	. "github.com/onsi/ginkgo/v2"
@@ -17,13 +19,19 @@ var _ = AfterSuite(testutil.CleanupSuite)
 var _ = Describe("tool commands", Ordered, func() {
 	var cli *testutil.CLI
 	var toolID string
+	var forkedToolID string
+	var nameSuffix string
 
 	BeforeAll(func() {
 		cli = testutil.NewCLI()
 		cli.InitConfig()
+		nameSuffix = fmt.Sprintf("%d", time.Now().UnixNano())
 	})
 
 	AfterAll(func() {
+		if forkedToolID != "" && !testutil.State().Config.KeepResources {
+			_ = cli.Run(context.Background(), "--output", "json", "tool", "delete", forkedToolID)
+		}
 		if toolID != "" && !testutil.State().Config.KeepResources {
 			_ = cli.Run(context.Background(), "--output", "json", "tool", "delete", toolID)
 		}
@@ -37,7 +45,7 @@ var _ = Describe("tool commands", Ordered, func() {
 	})
 
 	It("executes agr tool create", func() {
-		name := "agr-live-tool-command"
+		name := "agr-live-tool-command-" + nameSuffix
 		result := cli.Run(context.Background(), "--output", "json", "tool", "create",
 			"--tool-name", name,
 			"--tool-type", "code-interpreter",
@@ -57,6 +65,20 @@ var _ = Describe("tool commands", Ordered, func() {
 		result := cli.Run(context.Background(), "--output", "json", "tool", "get", toolID)
 		result.ExpectSuccess()
 		Expect(result.Envelope().Command).To(Equal("tool.get"))
+	})
+
+	It("executes agr tool fork", func() {
+		name := "agr-live-tool-command-fork-" + nameSuffix
+		result := cli.Run(context.Background(), "--output", "json", "tool", "fork", toolID,
+			"--tool-name", name,
+			"--description", "AGR live command fork test",
+			"--persistent=false",
+		)
+		result.ExpectSuccess()
+		env := result.Envelope()
+		Expect(env.Command).To(Equal("tool.fork"))
+		forkedToolID = testutil.StringField(env.Data, "ToolId")
+		Expect(forkedToolID).NotTo(BeEmpty())
 	})
 
 	It("executes agr tool update", func() {

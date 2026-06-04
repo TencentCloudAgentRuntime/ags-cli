@@ -210,11 +210,12 @@ func BuildModuleCommand(module command.Module, deps command.Deps) (*cobra.Comman
 		return nil, err
 	}
 	use := defaultString(spec.Use, spec.Path[len(spec.Path)-1])
+	long, examples := commandHelpText(spec)
 	cmd := &cobra.Command{
 		Use:         use,
 		Short:       spec.Short,
-		Long:        spec.Long,
-		Example:     strings.Join(spec.Examples, "\n"),
+		Long:        long,
+		Example:     formatExampleBlocks(examples),
 		Aliases:     spec.Aliases,
 		Hidden:      spec.Hidden,
 		Args:        argsValidator(spec),
@@ -262,6 +263,125 @@ func BuildModuleCommand(module command.Module, deps command.Deps) (*cobra.Comman
 		return nil, err
 	}
 	return cmd, nil
+}
+
+func commandHelpText(spec command.Spec) (string, []string) {
+	long, extracted := splitLongExamples(spec.Long)
+	examples := append([]string(nil), spec.Examples...)
+	examples = append(examples, extracted...)
+	if len(examples) == 0 {
+		examples = []string{defaultExample(spec)}
+	}
+	return long, examples
+}
+
+func splitLongExamples(long string) (string, []string) {
+	const marker = "\n\nExamples:\n"
+	idx := strings.Index(long, marker)
+	if idx < 0 {
+		return long, nil
+	}
+	prefix := strings.TrimRight(long[:idx], "\n")
+	block := strings.TrimSpace(long[idx+len(marker):])
+	if block == "" {
+		return prefix, nil
+	}
+	var examples []string
+	for _, line := range strings.Split(block, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		examples = append(examples, line)
+	}
+	return prefix, examples
+}
+
+func formatExampleBlocks(examples []string) string {
+	var blocks []string
+	for i, example := range examples {
+		example = strings.TrimSpace(example)
+		if example == "" {
+			continue
+		}
+		if strings.HasPrefix(example, "Example - ") {
+			blocks = append(blocks, example)
+			continue
+		}
+		blocks = append(blocks, fmt.Sprintf("Example - %s:\n%s", exampleTitle(i), indentExample(example)))
+	}
+	return strings.Join(blocks, "\n\n")
+}
+
+func exampleTitle(index int) string {
+	switch index {
+	case 0:
+		return "Basic usage"
+	case 1:
+		return "Common option"
+	case 2:
+		return "JSON output"
+	default:
+		return "Advanced usage"
+	}
+}
+
+func indentExample(example string) string {
+	var lines []string
+	for _, line := range strings.Split(example, "\n") {
+		if strings.TrimSpace(line) == "" {
+			lines = append(lines, "")
+			continue
+		}
+		lines = append(lines, "  "+strings.TrimRight(line, " "))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func defaultExample(spec command.Spec) string {
+	parts := append([]string{"agr"}, spec.Path...)
+	for _, arg := range spec.Args {
+		if arg.Required {
+			parts = append(parts, placeholderForArg(arg.Name))
+		}
+	}
+	for _, flag := range spec.Flags {
+		if flag.Hidden || !flag.Required {
+			continue
+		}
+		parts = append(parts, "--"+flag.Name, placeholderForFlag(flag))
+	}
+	return strings.Join(parts, " ")
+}
+
+func placeholderForArg(name string) string {
+	switch strings.ToLower(strings.ReplaceAll(name, "-", "")) {
+	case "instanceid":
+		return "ins-xxxx"
+	case "toolid", "sourcetoolid":
+		return "sdt-xxxx"
+	case "keyid":
+		return "key-xxxx"
+	case "imagedigest":
+		return "sha256:..."
+	case "action":
+		return "DescribeSandboxInstanceList"
+	default:
+		return "<" + strings.ToLower(name) + ">"
+	}
+}
+
+func placeholderForFlag(flag command.FlagSpec) string {
+	switch flag.Type {
+	case command.FlagBool:
+		return "true"
+	case command.FlagInt:
+		return "1"
+	case command.FlagStringArray:
+		return "<value>"
+	default:
+		return "<value>"
+	}
 }
 
 func validateSpec(spec command.Spec) error {
@@ -396,27 +516,28 @@ func registerFlags(flags *pflag.FlagSet, specs []command.FlagSpec) error {
 		if spec.Type == "" {
 			spec.Type = command.FlagString
 		}
+		usage := flagUsage(spec)
 		names := append([]string{spec.Name}, spec.Aliases...)
 		switch spec.Type {
 		case command.FlagString:
 			value := stringDefault(spec.Default)
 			for _, name := range names {
-				flags.StringP(name, shorthandFor(name, spec), value, spec.Usage)
+				flags.StringP(name, shorthandFor(name, spec), value, usage)
 			}
 		case command.FlagBool:
 			value := boolDefault(spec.Default)
 			for _, name := range names {
-				flags.BoolP(name, shorthandFor(name, spec), value, spec.Usage)
+				flags.BoolP(name, shorthandFor(name, spec), value, usage)
 			}
 		case command.FlagInt:
 			value := intDefault(spec.Default)
 			for _, name := range names {
-				flags.IntP(name, shorthandFor(name, spec), value, spec.Usage)
+				flags.IntP(name, shorthandFor(name, spec), value, usage)
 			}
 		case command.FlagStringArray:
 			value := stringArrayDefault(spec.Default)
 			for _, name := range names {
-				flags.StringArrayP(name, shorthandFor(name, spec), value, spec.Usage)
+				flags.StringArrayP(name, shorthandFor(name, spec), value, usage)
 			}
 		default:
 			return fmt.Errorf("flag --%s has unsupported type %q", spec.Name, spec.Type)
@@ -432,6 +553,27 @@ func registerFlags(flags *pflag.FlagSet, specs []command.FlagSpec) error {
 		}
 	}
 	return nil
+}
+
+func flagUsage(spec command.FlagSpec) string {
+	usage := strings.TrimSpace(spec.Usage)
+	var sections []string
+	if spec.Format != "" {
+		sections = append(sections, "Format:\n  "+strings.TrimSpace(spec.Format))
+	}
+	if len(spec.Values) > 0 {
+		sections = append(sections, "Values:\n  "+strings.Join(spec.Values, "\n  "))
+	}
+	if len(spec.Examples) > 0 {
+		sections = append(sections, "Examples:\n  "+strings.Join(spec.Examples, "\n  "))
+	}
+	if len(sections) == 0 {
+		return usage
+	}
+	if usage == "" {
+		return strings.Join(sections, "\n\n")
+	}
+	return usage + "\n\n" + strings.Join(sections, "\n\n")
 }
 
 // BuildRequest converts Cobra args and flags into the normalized command

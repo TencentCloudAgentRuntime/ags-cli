@@ -54,6 +54,11 @@ var _ = Describe("doctorFailure", func() {
 		Expect(err).To(BeNil())
 	})
 
+	It("keeps STS token doctor checks informational", func() {
+		err := doctorFailure([]DoctorCheck{{Name: "Token", Status: "ok", Message: "Session token is configured (using STS credentials)"}})
+		Expect(err).To(BeNil())
+	})
+
 	It("returns auth failure when credentials are missing", func() {
 		err := doctorFailure([]DoctorCheck{{
 			Name:    "SecretId",

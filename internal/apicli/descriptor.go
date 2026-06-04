@@ -45,6 +45,9 @@ type InputSpec struct {
 	Shorthand  string
 	Aliases    []string
 	Usage      string
+	Format     string
+	Examples   []string
+	Values     []string
 	Type       command.FlagType
 	Default    any
 	Positional bool
@@ -69,6 +72,9 @@ func (d APIDescriptor) CommandSpec() command.Spec {
 				Shorthand: input.Shorthand,
 				Aliases:   input.Aliases,
 				Usage:     input.Usage,
+				Format:    input.Format,
+				Examples:  append([]string(nil), input.Examples...),
+				Values:    append([]string(nil), input.Values...),
 				Type:      input.Type,
 				Default:   input.Default,
 				Generated: true,
