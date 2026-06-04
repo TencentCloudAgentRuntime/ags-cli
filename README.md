@@ -79,6 +79,12 @@ make build
 sudo cp agr /usr/local/bin/agr
 ```
 
+Or install to `$GOPATH/bin` with version metadata:
+
+```bash
+make go-install
+```
+
 ### Using `go install`
 
 ```bash
@@ -93,11 +99,17 @@ agr version
 
 The installed command name is `agr`.
 
+> **Note:** Binaries installed via `go install @tag` show
+> `commit: n/a (go install)` and `built: n/a (go install)` in `agr version`
+> output — Go does not stamp VCS metadata for module-cache builds. Use
+> `make build` or download a pre-built release binary for the full commit
+> hash and build timestamp.
+
 ## Prerequisites
 
 1. A [Tencent Cloud](https://cloud.tencent.com/) account
 2. AGR (Agent Runtime) service enabled
-3. API credentials (SecretID / SecretKey) — obtain from [CAM Console](https://console.cloud.tencent.com/cam/capi)
+3. API credentials (SecretID / SecretKey) — obtain long-term credentials from [CAM Console](https://console.cloud.tencent.com/cam/capi), or use temporary STS credentials with a session token.
 
 ## Initialize CLI credentials
 
@@ -111,6 +123,21 @@ agr init \
 ```
 
 `agr init` only writes local CLI configuration under `~/.agr/config.toml`; it does not create remote resources or modify the current project directory.
+
+For temporary STS credentials, provide the full TmpSecretId, TmpSecretKey,
+and token triplet. Prefer environment variables in CI/CD so the short-lived
+token is not written to disk:
+
+```bash
+export TENCENTCLOUD_SECRET_ID="tmp-secret-id"
+export TENCENTCLOUD_SECRET_KEY="tmp-secret-key"
+export TENCENTCLOUD_TOKEN="tmp-session-token"
+```
+
+You can also pass `--token` on any command or persist it with
+`agr config set token=<token>` / `agr init --token <token>`. Expired
+tokens are reported as authentication failures; refresh the token outside
+the CLI and retry.
 
 ## Quick Start
 
@@ -169,6 +196,24 @@ The JSON output of these commands includes
 `Data.ExecutionContext.TemporarySandboxInstance` and
 `Data.ExecutionContext.Cleanup` so scripts can inspect the workflow.
 
+## Debug instance creation
+
+Use `agr instance debug <tool-id>` to create a debug instance for an existing
+tool. The command creates a temporary debug tool that keeps the source tool
+configuration, changes the startup command to `/envd`, mounts
+`ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` from `/usr/bin/envd` to
+`/envd`, waits for that tool to be ready, then starts an instance from it.
+The source tool must have `RoleArn` configured because image storage mounts
+require it. `--timeout` controls the created instance lifetime and defaults
+to `1h`; readiness waits use the command's internal workflow timeout.
+
+```bash
+debug_instance_id=$(agr instance debug "$tool_id" \
+  --debug-tool-name "my-tool-debug" \
+  --timeout 30m \
+  -o json --jq '.Data.InstanceId')
+```
+
 ## Cloud endpoint vs data-plane domain
 
 | Flag                         | Default                  | Controls                         |
@@ -209,6 +254,7 @@ agr instance update <id>         Update timeout/metadata
 agr instance pause <id>          Pause an instance
 agr instance resume <id>         Resume an instance
 agr instance delete <id>         Delete instance(s)
+agr instance debug <tool-id>     Create a debug instance from a tool
 
 agr instance code run <id>       Execute code in an existing instance
 agr instance exec <id> -- CMD    Execute shell command in an existing instance
@@ -219,7 +265,7 @@ agr instance browser vnc <id>    Show VNC URL
 agr instance proxy <id> PORT     Forward instance port to localhost
 agr instance mobile ...          Mobile ADB operations
 
-agr tool list/create/get/update/delete
+agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|get
 agr completion bash|zsh|fish|powershell
@@ -288,12 +334,13 @@ See `agr schema -o json --jq '.Data.ExitCodes'` for the full list.
 --domain          Data-plane domain (default: tencentags.com)
 --secret-id       Tencent Cloud SecretID
 --secret-key      Tencent Cloud SecretKey
+--token           Tencent Cloud STS session token
 --non-interactive Disable interactive behavior
 --no-color        Disable ANSI color
 --debug           Write debug diagnostics to stderr
 ```
 
-Environment variables: `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`, `AGR_OUTPUT`, `AGR_REGION`, `AGR_CLOUD_ENDPOINT`, `AGR_DOMAIN`, `AGR_NON_INTERACTIVE`, `AGR_DEBUG`, `NO_COLOR`.
+Environment variables: `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`, `TENCENTCLOUD_TOKEN`, `AGR_OUTPUT`, `AGR_REGION`, `AGR_CLOUD_ENDPOINT`, `AGR_DOMAIN`, `AGR_NON_INTERACTIVE`, `AGR_DEBUG`, `NO_COLOR`.
 
 `AGR_OUTPUT` is intended for default `text` or `json` output. For streaming, pass `-o ndjson` explicitly with `agr instance code run --stream` or `agr instance exec --stream`.
 

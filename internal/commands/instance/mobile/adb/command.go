@@ -39,9 +39,9 @@ func Module() command.Module {
 Use '--' to separate from adb arguments.
 
 Examples:
-  agr instance mobile adb <id> -- shell ls /sdcard
-  agr instance mobile adb <id> -- install app.apk
-  agr instance mobile adb <id> -- logcat`,
+  agr instance mobile adb ins-xxxx -- shell ls /sdcard
+  agr instance mobile adb ins-xxxx -- install app.apk
+  agr instance mobile adb ins-xxxx -- logcat`,
 		Args: []command.ArgSpec{{Name: "args", Required: true, Repeatable: true}},
 		Output: command.OutputSpec{
 			DataType: "MobileADBResult",

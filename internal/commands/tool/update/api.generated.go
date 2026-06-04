@@ -51,21 +51,21 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "NetworkConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "network-configuration", Flag: "network-configuration", Usage: "NetworkConfiguration as JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "network-configuration", Flag: "network-configuration", Usage: "NetworkConfiguration as JSON object, @file, or - for stdin", Format: "{\"NetworkMode\":\"<mode>\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}", Examples: []string{"agr tool update sdt-xxxx --network-configuration '{\"NetworkMode\":\"PUBLIC\"}'", "agr tool update sdt-xxxx --network-configuration '{\"NetworkMode\":\"VPC\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}'"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "Tags",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "tags", Flag: "tags", Usage: "Tags as JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "tags", Flag: "tags", Usage: "Tags as JSON array, @file, or - for stdin", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Examples: []string{"agr tool update sdt-xxxx --tags '[{\"Key\":\"env\",\"Value\":\"prod\"},{\"Key\":\"team\",\"Value\":\"platform\"}]'"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "CustomConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}]}", Examples: []string{"agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}]}'"}, Type: command.FlagString},
 				},
 			},
 		},

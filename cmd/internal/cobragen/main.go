@@ -58,6 +58,9 @@ type inputModel struct {
 	Default   string
 	Shorthand string
 	Usage     string
+	Format    string
+	Examples  []string
+	Values    []string
 	Aliases   []string
 }
 
@@ -250,12 +253,12 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 						continue
 					}
 					ih := inputHelp(help, a.Command, m.Name, in.Flag, strip(m.Document))
-					if field.Required && !strings.Contains(strings.ToLower(ih), "required") {
-						ih = strings.TrimSpace(ih)
-						if ih == "" {
-							ih = in.Flag
+					if field.Required && !strings.Contains(strings.ToLower(ih.Usage), "required") {
+						ih.Usage = strings.TrimSpace(ih.Usage)
+						if ih.Usage == "" {
+							ih.Usage = in.Flag
 						}
-						ih += " (required)"
+						ih.Usage += " (required)"
 					}
 					field.Inputs = append(field.Inputs, inputModel{
 						Field:     m.Name,
@@ -264,7 +267,10 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 						CobraType: cobraTypeForInput(in.Type),
 						Default:   in.Default,
 						Shorthand: in.Shorthand,
-						Usage:     ih,
+						Usage:     ih.Usage,
+						Format:    ih.Format,
+						Examples:  append([]string(nil), ih.Examples...),
+						Values:    append([]string(nil), ih.Values...),
 						Aliases:   append([]string(nil), in.Aliases...),
 					})
 				}
@@ -376,6 +382,15 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 					}
 					if input.Usage != "" && !isPositionalInput(field, input) {
 						fmt.Fprintf(&b, ", Usage: %s", quote(input.Usage))
+					}
+					if input.Format != "" && !isPositionalInput(field, input) {
+						fmt.Fprintf(&b, ", Format: %s", quote(input.Format))
+					}
+					if len(input.Examples) > 0 && !isPositionalInput(field, input) {
+						fmt.Fprintf(&b, ", Examples: []string{%s}", quotedList(input.Examples))
+					}
+					if len(input.Values) > 0 && !isPositionalInput(field, input) {
+						fmt.Fprintf(&b, ", Values: []string{%s}", quotedList(input.Values))
 					}
 					if !isPositionalInput(field, input) {
 						fmt.Fprintf(&b, ", Type: %s", commandFlagType(input.CobraType))
@@ -609,6 +624,7 @@ func staticWorkflowModules() []registryModule {
 		"api.call",
 		"instance.browser.vnc",
 		"instance.code.run",
+		"instance.debug",
 		"instance.exec",
 		"instance.file.download",
 		"instance.file.upload",
@@ -621,6 +637,7 @@ func staticWorkflowModules() []registryModule {
 		"instance.mobile.tunnel",
 		"instance.proxy",
 		"tool.get",
+		"tool.fork",
 	}
 	modules := make([]registryModule, 0, len(ids))
 	for _, id := range ids {

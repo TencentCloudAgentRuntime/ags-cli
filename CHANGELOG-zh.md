@@ -2,6 +2,32 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.6.0] - 2026-06-04
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新增
+- 支持通过 `--port` 为 `agr instance mobile connect` 指定 ADB 隧道的本地端口。
+- 在常规命令帮助中展示更完整的复杂参数说明，包括格式、可选值、示例和 schema 元数据。
+- 新增 `agr instance list --all`，可拉取当前配置地域下的全部实例分页。
+- 新增 `agr instance debug`，可基于已有沙箱工具创建调试工具并启动调试实例。
+- 新增 `agr tool fork`，可复制已有沙箱工具的可创建配置，并支持显式覆盖参数。
+- 支持腾讯云 STS session token，用于临时凭证认证。
+- 在帮助输出中展示分组命令示例，并通过 `agr schema` 暴露示例元数据。
+
+### 修复
+- 在独立错误行中展示腾讯云服务侧的 `Code`、`Message` 和 `RequestId`，方便转交支持排查。
+- 更清晰地报告 `agr instance login` 数据面会话失败，并像 `ssh` 一样传递远端 shell 退出状态。
+- 修复通过 `go install @latest` 或 `go install @tag` 安装的二进制在 `agr version` 中缺少 commit 和构建时间信息的问题。
+- 当 `agr instance file upload` 或 `agr instance file download` 收到 flag 形式的路径参数时，展示对应命令的位置参数用法提示。
+- 克隆工具或生成调试工具时过滤内部 `qcs` 标签。
+- 在 `agr schema` 中为带资源 effect 的命令正确标记创建、变更和认证元数据。
+- 等待调试工具和调试实例就绪，在失败时清理调试资源，并为生成的调试工具配置健康检查。
+
+### 文档
+- 更新安装文档，推荐使用 release 二进制，并说明 `go install` 场景下的版本元数据行为。
+
 ## [0.5.1] - 2026-05-29
 
 ### 破坏性变更

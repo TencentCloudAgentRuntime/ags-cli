@@ -12,7 +12,7 @@ import (
 // NewCloudClient creates the cloud-only Tencent Cloud AGS SDK client.
 func NewCloudClient() (*ags.Client, error) {
 	cfg := config.Get()
-	credential := common.NewCredential(config.GetSecretID(), config.GetSecretKey())
+	credential := newTencentCloudCredential()
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = cfg.ControlPlaneEndpoint()
 
@@ -21,4 +21,11 @@ func NewCloudClient() (*ags.Client, error) {
 		return nil, fmt.Errorf("failed to create AGS client: %w", err)
 	}
 	return sdk, nil
+}
+
+func newTencentCloudCredential() *common.Credential {
+	if token := config.GetToken(); token != "" {
+		return common.NewTokenCredential(config.GetSecretID(), config.GetSecretKey(), token)
+	}
+	return common.NewCredential(config.GetSecretID(), config.GetSecretKey())
 }

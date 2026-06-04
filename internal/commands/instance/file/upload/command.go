@@ -54,10 +54,10 @@ func module(spec command.Spec) command.Module {
 					Long: `Upload and download files in a sandbox instance.
 
 Examples:
-  agr instance file upload <id> local.txt /home/user/remote.txt
-  agr instance file download <id> /home/user/remote.txt local.txt
-  echo "data" | agr instance file upload <id> - /home/user/data.txt
-  agr instance file download <id> /home/user/data.txt -`,
+  agr instance file upload ins-xxxx local.txt /home/user/remote.txt
+  agr instance file download ins-xxxx /home/user/remote.txt local.txt
+  echo "data" | agr instance file upload ins-xxxx - /home/user/data.txt
+  agr instance file download ins-xxxx /home/user/data.txt -`,
 				},
 			},
 			Source: "workflow",

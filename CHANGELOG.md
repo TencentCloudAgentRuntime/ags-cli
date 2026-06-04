@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-06-04
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Allow `agr instance mobile connect` to bind the ADB tunnel to a chosen
+  local port with `--port`.
+- Show richer complex-flag help in normal command output, including
+  formats, allowed values, examples, and schema metadata.
+- Add `agr instance list --all` to fetch every instance page in the
+  configured region.
+- Add `agr instance debug` to create a debug tool and start a debug
+  instance from an existing sandbox tool.
+- Add `agr tool fork` to clone create-capable settings from an existing
+  sandbox tool while still allowing explicit overrides.
+- Support Tencent Cloud STS session tokens for temporary credential
+  authentication.
+- Show grouped command examples in help output and expose example metadata
+  through `agr schema`.
+
+### Bug Fixes
+- Show TencentCloud service `Code`, `Message`, and `RequestId` on
+  dedicated error lines for easier support handoff.
+- Report `agr instance login` data-plane session failures clearly and
+  propagate remote shell exits like `ssh`.
+- Resolve missing commit and build metadata in `agr version` output for
+  binaries installed with `go install @latest` or `go install @tag`.
+- Show command-specific positional usage hints when
+  `agr instance file upload` or `agr instance file download` receives
+  flag-style path arguments.
+- Exclude internal `qcs` tags when cloning tools or generating debug
+  tools.
+- Mark create, mutation, and auth metadata correctly in `agr schema` for
+  commands with resource effects.
+- Wait for debug tool and debug instance readiness, clean up failed debug
+  resources, and configure generated debug tools with health checks.
+
+### Docs
+- Update installation docs to recommend release binaries and explain
+  `go install` version metadata behavior.
+
 ## [0.5.1] - 2026-05-29
 
 ### Breaking Changes

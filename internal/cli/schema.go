@@ -37,6 +37,7 @@ type CommandSchema struct {
 	RequestSchema   *RequestSchema `json:"RequestSchema"`
 	Args            []ArgSchema    `json:"Args,omitempty"`
 	Flags           []FlagSchema   `json:"Flags,omitempty"`
+	Examples        []string       `json:"Examples,omitempty"`
 	Output          string         `json:"Output,omitempty"`
 	Failures        []string       `json:"Failures,omitempty"`
 }
@@ -94,12 +95,12 @@ var schemaCmd = &cobra.Command{
 	Long: `Show the schema of commands for machine consumption.
 
 Without arguments, shows all command schemas.
-With a command name (dot-separated), shows that command's schema.
-
-Examples:
-  agr schema -o json
-  agr schema instance.code.run -o json
-  agr schema instance.create -o json`,
+With a command name (dot-separated), shows that command's schema.`,
+	Example: exampleBlocks(
+		"agr schema -o json",
+		"agr schema instance.code.run -o json",
+		"agr schema instance.create -o json",
+	),
 	Args: cobra.MaximumNArgs(1),
 }
 
@@ -404,25 +405,44 @@ func registeredSchemaSeeds() []CommandSchema {
 
 func schemaFromDescriptor(desc command.Descriptor) CommandSchema {
 	spec := desc.Spec
+	mutation, createsResource, requiresAuth := schemaEffects(spec.Output.Effects)
 	return CommandSchema{
 		Name:            spec.ID,
 		Kind:            "command",
 		Summary:         spec.Short,
 		Aliases:         append([]string(nil), spec.Aliases...),
-		Mutation:        false,
-		CreatesResource: false,
+		Mutation:        mutation,
+		CreatesResource: createsResource,
 		Idempotency:     "none",
 		SupportsDryRun:  false,
 		Interactive:     !spec.SupportsJSON && !spec.SupportsNDJSON,
-		RequiresAuth:    false,
+		RequiresAuth:    requiresAuth,
 		SupportsJson:    spec.SupportsJSON,
 		SupportsNdjson:  spec.SupportsNDJSON,
 		SupportsJq:      spec.SupportsJSON || spec.SupportsNDJSON,
 		SupportsRequest: false,
 		Args:            commandArgsToSchema(spec.Args),
 		Flags:           commandFlagsToSchema(spec.Flags),
+		Examples:        append([]string(nil), spec.Examples...),
 		Output:          spec.Output.DataType,
 	}
+}
+
+func schemaEffects(effects []string) (mutation, createsResource, requiresAuth bool) {
+	if len(effects) > 0 {
+		requiresAuth = true
+	}
+	for _, effect := range effects {
+		kind, _, _ := strings.Cut(effect, ":")
+		switch kind {
+		case "create":
+			mutation = true
+			createsResource = true
+		case "delete":
+			mutation = true
+		}
+	}
+	return mutation, createsResource, requiresAuth
 }
 
 func commandArgsToSchema(args []command.ArgSpec) []ArgSchema {
@@ -465,6 +485,9 @@ func commandFlagsToSchema(flags []command.FlagSpec) []FlagSchema {
 			Shorthand:   flag.Shorthand,
 			Type:        schemaFlagType(flag.Type),
 			Description: flag.Usage,
+			Format:      flag.Format,
+			Examples:    append([]string(nil), flag.Examples...),
+			Values:      append([]string(nil), flag.Values...),
 		}
 		if flag.Default != nil {
 			schema.Default = fmt.Sprint(flag.Default)
@@ -543,6 +566,9 @@ func mergeCommandSchema(base, override CommandSchema) CommandSchema {
 	if len(override.Flags) > 0 {
 		merged.Flags = mergeFlagSchemas(merged.Flags, override.Flags)
 	}
+	if len(override.Examples) > 0 {
+		merged.Examples = append([]string(nil), override.Examples...)
+	}
 	if override.Output != "" {
 		merged.Output = override.Output
 	}
@@ -605,6 +631,7 @@ func cloneCommandSchema(in CommandSchema) CommandSchema {
 	out.Subcommands = append([]string(nil), in.Subcommands...)
 	out.Args = cloneArgSchemas(in.Args)
 	out.Flags = append([]FlagSchema(nil), in.Flags...)
+	out.Examples = append([]string(nil), in.Examples...)
 	out.Failures = append([]string(nil), in.Failures...)
 	out.RequestSchema = cloneRequestSchema(in.RequestSchema)
 	return out
@@ -690,6 +717,9 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 					Shorthand:   gf.Shorthand,
 					Type:        gf.Type,
 					Description: gf.Description,
+					Format:      gf.Format,
+					Examples:    append([]string(nil), gf.Examples...),
+					Values:      append([]string(nil), gf.Values...),
 				}
 				if found {
 					prev := schema.Flags[idx]
@@ -700,11 +730,17 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 						fl.Shorthand = prev.Shorthand
 					}
 					fl.Default = prev.Default
-					fl.Examples = prev.Examples
-					fl.Values = prev.Values
+					if len(fl.Examples) == 0 {
+						fl.Examples = prev.Examples
+					}
+					if len(fl.Values) == 0 {
+						fl.Values = prev.Values
+					}
 					fl.IncompatibleWith = prev.IncompatibleWith
 					fl.AllowsOutput = prev.AllowsOutput
-					fl.Format = prev.Format
+					if fl.Format == "" {
+						fl.Format = prev.Format
+					}
 					schema.Flags[idx] = fl
 					continue
 				}
@@ -1125,6 +1161,48 @@ func buildHandwrittenSchemas() []CommandSchema {
 				{Name: "generate-skeleton", Type: "bool"},
 			},
 			Output: "Tool", Failures: []string{"CLIENT_TOKEN_CONFLICT", "MISSING_REQUIRED_FLAG"},
+		},
+		{
+			Name: "tool.fork", Summary: "Fork a sandbox tool",
+			Mutation: true, CreatesResource: true,
+			Idempotency: "client_token", SupportsDryRun: false, Interactive: false,
+			RequiresAuth: true, SupportsJson: true, SupportsNdjson: false, SupportsJq: true,
+			SupportsRequest: false,
+			RequestSchema: &RequestSchema{
+				Type: "object", AdditionalProperties: false,
+				Required: []string{"ToolName"},
+				Properties: map[string]PropertySchema{
+					"ToolName":             {Type: "string", CliFlag: cliFlag("tool-name")},
+					"ToolType":             {Type: "string", CliFlag: cliFlag("tool-type")},
+					"Description":          {Type: "string", CliFlag: cliFlag("description")},
+					"NetworkConfiguration": {Type: "object", CliFlag: cliFlag("network-configuration")},
+					"Tags":                 {Type: "array", CliFlag: cliFlag("tags")},
+					"StorageMounts":        {Type: "array", CliFlag: cliFlag("storage-mounts")},
+					"CustomConfiguration":  {Type: "object", CliFlag: cliFlag("custom-configuration")},
+					"LogConfiguration":     {Type: "object", CliFlag: cliFlag("log-configuration")},
+					"Persistent":           {Type: "bool", CliFlag: cliFlag("persistent")},
+					"ClientToken":          {Type: "string", CliFlag: cliFlag("client-token")},
+					"DefaultTimeout":       {Type: "string", CliFlag: cliFlag("default-timeout")},
+					"RoleArn":              {Type: "string", CliFlag: cliFlag("role-arn")},
+				},
+			},
+			Args: []ArgSchema{{Name: "SourceToolId", Type: "string", Required: true}},
+			Flags: []FlagSchema{
+				{Name: "tool-name", Shorthand: "n", Type: "string"},
+				{Name: "tool-type", Shorthand: "t", Type: "string"},
+				{Name: "description", Shorthand: "d", Type: "string"},
+				{Name: "default-timeout", Type: "string"},
+				{Name: "network-configuration", Type: "json"},
+				{Name: "tags", Type: "json"},
+				{Name: "role-arn", Type: "string"},
+				{Name: "storage-mounts", Type: "json"},
+				{Name: "custom-configuration", Type: "json"},
+				{Name: "log-configuration", Type: "json"},
+				{Name: "persistent", Type: "bool"},
+				{Name: "client-token", Type: "string"},
+			},
+			Output:   "Tool",
+			Failures: []string{"CLIENT_TOKEN_CONFLICT", "MISSING_REQUIRED_ARG", "MISSING_REQUIRED_FLAG", "TOOL_NOT_FOUND"},
 		},
 		{
 			Name: "tool.list", Summary: "List sandbox tools",

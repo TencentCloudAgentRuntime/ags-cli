@@ -28,6 +28,7 @@ type Config struct {
 type AuthConfig struct {
 	SecretID  string `mapstructure:"secret_id"`
 	SecretKey string `mapstructure:"secret_key"`
+	Token     string `mapstructure:"token"`
 }
 
 // SandboxConfig holds sandbox command defaults.
@@ -101,6 +102,7 @@ func Init() error {
 	_ = viper.BindEnv("cloud_endpoint", "AGR_CLOUD_ENDPOINT")
 	_ = viper.BindEnv("auth.secret_id", "TENCENTCLOUD_SECRET_ID")
 	_ = viper.BindEnv("auth.secret_key", "TENCENTCLOUD_SECRET_KEY")
+	_ = viper.BindEnv("auth.token", "TENCENTCLOUD_TOKEN")
 	_ = viper.BindEnv("sandbox.default_user", "AGR_SANDBOX_DEFAULT_USER")
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -129,6 +131,7 @@ func initSources() {
 		"cloud_endpoint": "default",
 		"secret_id":      "",
 		"secret_key":     "",
+		"token":          "",
 		"default_user":   "default",
 	}
 	assignSource("output", []string{"AGR_OUTPUT"}, "output")
@@ -137,6 +140,7 @@ func initSources() {
 	assignSource("cloud_endpoint", []string{"AGR_CLOUD_ENDPOINT"}, "cloud_endpoint")
 	assignSource("secret_id", []string{"TENCENTCLOUD_SECRET_ID"}, "auth.secret_id")
 	assignSource("secret_key", []string{"TENCENTCLOUD_SECRET_KEY"}, "auth.secret_key")
+	assignSource("token", []string{"TENCENTCLOUD_TOKEN"}, "auth.token")
 	assignSource("default_user", []string{"AGR_SANDBOX_DEFAULT_USER"}, "sandbox.default_user")
 }
 
@@ -153,6 +157,9 @@ func assignSource(key string, envVars []string, configKey string) {
 }
 
 func applyDefaults(c *Config) {
+	if c.Output == "" {
+		c.Output = "text"
+	}
 	if c.Region == "" {
 		c.Region = defaultRegion
 	}
@@ -178,7 +185,7 @@ func CheckConfigFilePermissions() string {
 }
 
 func configFileContainsCredentials() bool {
-	return viper.InConfig("auth.secret_id") || viper.InConfig("auth.secret_key")
+	return viper.InConfig("auth.secret_id") || viper.InConfig("auth.secret_key") || viper.InConfig("auth.token")
 }
 
 // ConfigFilePath returns the active or default config file path.
@@ -260,6 +267,20 @@ func GetSecretKey() string { return Get().Auth.SecretKey }
 
 // SetSecretKey sets the TencentCloud secret key.
 func SetSecretKey(k string) { Get().Auth.SecretKey = k; setSource("secret_key", "flag") }
+
+// GetToken returns the optional TencentCloud STS session token.
+func GetToken() string {
+	if GetSource("token") == "flag" {
+		return Get().Auth.Token
+	}
+	if token := os.Getenv("TENCENTCLOUD_TOKEN"); token != "" {
+		return token
+	}
+	return Get().Auth.Token
+}
+
+// SetToken sets the optional TencentCloud STS session token.
+func SetToken(token string) { Get().Auth.Token = token; setSource("token", "flag") }
 
 // GetSandboxUser returns the default sandbox user.
 func GetSandboxUser() string { return Get().Sandbox.DefaultUser }

@@ -334,3 +334,108 @@ func buildSingle(module command.Module) error {
 }
 
 var _ apicli.ControlPlane = (*fakeControlPlane)(nil)
+
+func TestBuildModuleCommand_FlagUsageIncludesStructuredHelp(t *testing.T) {
+	module := command.Module{
+		Descriptor: command.Descriptor{
+			Spec: command.Spec{
+				ID:   "test.cmd",
+				Path: []string{"test", "cmd"},
+				Flags: []command.FlagSpec{
+					{
+						Name:     "filters",
+						Type:     command.FlagString,
+						Usage:    "Filter results",
+						Format:   `[{"Name":"<field>","Values":["<value>"]}]`,
+						Values:   []string{"Status: RUNNING, STOPPED"},
+						Examples: []string{`agr test cmd --filters '[{"Name":"Status","Values":["RUNNING"]}]'`},
+					},
+					{Name: "offset", Type: command.FlagInt, Usage: "Offset"},
+				},
+			},
+			Groups: []command.GroupSpec{{Path: []string{"test"}, Use: "test", Short: "Test"}},
+		},
+		Build: func(command.Deps) (command.Runtime, error) {
+			return command.Runtime{
+				Handler: command.HandlerFunc(func(context.Context, command.Request) (*command.Result, error) {
+					return &command.Result{}, nil
+				}),
+			}, nil
+		},
+	}
+
+	cmd, err := BuildModuleCommand(module, command.Deps{})
+	if err != nil {
+		t.Fatalf("BuildModuleCommand: %v", err)
+	}
+
+	f := cmd.Flags().Lookup("filters")
+	if f == nil {
+		t.Fatal("--filters flag not found")
+	}
+	for _, want := range []string{
+		"Filter results",
+		"Format:",
+		`[{"Name":"<field>","Values":["<value>"]}]`,
+		"Values:",
+		"Status: RUNNING, STOPPED",
+		"Examples:",
+		`agr test cmd --filters '[{"Name":"Status","Values":["RUNNING"]}]'`,
+	} {
+		if !strings.Contains(f.Usage, want) {
+			t.Fatalf("--filters usage missing %q:\n%s", want, f.Usage)
+		}
+	}
+
+	f2 := cmd.Flags().Lookup("offset")
+	if f2 == nil {
+		t.Fatal("--offset flag not found")
+	}
+	if f2.Usage != "Offset" {
+		t.Fatalf("--offset usage = %q, want Offset", f2.Usage)
+	}
+}
+
+func TestBuildModuleCommand_FlagUsagePreservesExistingAnnotations(t *testing.T) {
+	module := command.Module{
+		Descriptor: command.Descriptor{
+			Spec: command.Spec{
+				ID:   "test.ann",
+				Path: []string{"test", "ann"},
+				Flags: []command.FlagSpec{
+					{
+						Name:        "config",
+						Type:        command.FlagString,
+						Usage:       "Config file",
+						Format:      "@file or -",
+						Annotations: map[string][]string{"custom.key": {"custom-value"}},
+					},
+				},
+			},
+			Groups: []command.GroupSpec{{Path: []string{"test"}, Use: "test", Short: "Test"}},
+		},
+		Build: func(command.Deps) (command.Runtime, error) {
+			return command.Runtime{
+				Handler: command.HandlerFunc(func(context.Context, command.Request) (*command.Result, error) {
+					return &command.Result{}, nil
+				}),
+			}, nil
+		},
+	}
+
+	cmd, err := BuildModuleCommand(module, command.Deps{})
+	if err != nil {
+		t.Fatalf("BuildModuleCommand: %v", err)
+	}
+
+	f := cmd.Flags().Lookup("config")
+	if f == nil {
+		t.Fatal("--config flag not found")
+	}
+	if ann, ok := f.Annotations["custom.key"]; !ok || ann[0] != "custom-value" {
+		t.Fatalf("missing or wrong custom.key: %v", f.Annotations)
+	}
+	if !strings.Contains(f.Usage, "Format:\n  @file or -") {
+		t.Fatalf("--config usage missing format:\n%s", f.Usage)
+	}
+}

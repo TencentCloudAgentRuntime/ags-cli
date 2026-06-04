@@ -58,7 +58,7 @@ func SetupSuite() {
 	}
 	binaryPath := filepath.Join(buildDir, binaryName)
 
-	cmd := exec.Command("go", "build", "-o", binaryPath, "./cmd/agr")
+	cmd := buildCLIBinaryCommand(binaryPath)
 	cmd.Dir = repoRoot
 	cmd.Env = append(os.Environ(), "GOWORK=off")
 	var stdout, stderr bytes.Buffer
@@ -71,6 +71,10 @@ func SetupSuite() {
 
 	state = &SuiteState{BinaryPath: binaryPath, BuildDir: buildDir, Config: cfg, sdk: sdk}
 	ginkgo.GinkgoWriter.Printf("AGR live tests initialized: binary=%s region=%s\n", binaryPath, cfg.Region)
+}
+
+func buildCLIBinaryCommand(binaryPath string) *exec.Cmd {
+	return exec.Command("go", "build", "-buildvcs=false", "-o", binaryPath, "./cmd/agr")
 }
 
 // CleanupSuite removes test-created tools and the temporary binary directory

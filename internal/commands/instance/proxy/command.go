@@ -44,9 +44,9 @@ Port Syntax:
   <local_port>:<remote_port>   Forward remote port to a specific local port
 
 Examples:
-  agr instance proxy <id> 8080
-  agr instance proxy <id> 3000:8080
-  agr instance proxy <id> 3000:8080 --address 0.0.0.0`,
+  agr instance proxy ins-xxxx 8080
+  agr instance proxy ins-xxxx 3000:8080
+  agr instance proxy ins-xxxx 3000:8080 --address 0.0.0.0`,
 		Args: []command.ArgSpec{
 			{Name: "instance-id", Required: true},
 			{Name: "port", Required: true},

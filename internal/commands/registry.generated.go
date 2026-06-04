@@ -11,6 +11,7 @@ import (
 	instancebrowservnc "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/browser/vnc"
 	instancecoderun "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/code/run"
 	instancecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/create"
+	instancedebug "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/debug"
 	instancedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/delete"
 	instanceexec "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/exec"
 	instancefiledownload "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/file/download"
@@ -31,6 +32,7 @@ import (
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
 	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	tooldelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/delete"
+	toolfork "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/fork"
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	toollist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/list"
 	toolupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/update"
@@ -46,6 +48,7 @@ func Registry() (*command.Registry, error) {
 		instancebrowservnc.Module(),
 		instancecoderun.Module(),
 		instancecreate.Module(),
+		instancedebug.Module(),
 		instancedelete.Module(),
 		instanceexec.Module(),
 		instancefiledownload.Module(),
@@ -66,6 +69,7 @@ func Registry() (*command.Registry, error) {
 		precacheimagetaskget.Module(),
 		toolcreate.Module(),
 		tooldelete.Module(),
+		toolfork.Module(),
 		toolget.Module(),
 		toollist.Module(),
 		toolupdate.Module(),

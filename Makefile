@@ -1,4 +1,4 @@
-.PHONY: build install clean test lint fmt help man install-man e2e
+.PHONY: build install go-install clean test lint fmt help man install-man e2e
 
 # Binary name
 BINARY_NAME=agr
@@ -63,6 +63,13 @@ install: build
 	@echo "Installing $(BINARY_NAME) to /usr/local/bin..."
 	@sudo cp $(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
 	@echo "Done."
+
+## go-install: Install via go install with version metadata injected
+go-install:
+	@echo "Installing $(BINARY_NAME) via go install with version info..."
+	@mkdir -p $(GOCACHE_DIR) $(GOTMPDIR_DIR)
+	$(GO_RUN_ENV) $(GOCMD) install $(LDFLAGS) ./cmd/agr
+	@echo "Done. Binary installed to $$(go env GOPATH)/bin/$(BINARY_NAME)"
 
 ## uninstall: Remove the binary from /usr/local/bin
 uninstall:

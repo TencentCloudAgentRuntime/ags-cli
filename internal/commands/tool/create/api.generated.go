@@ -53,7 +53,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "network-configuration", Flag: "network-configuration", Usage: "NetworkConfiguration as JSON object, @file, or - for stdin (required)", Type: command.FlagString},
+					{Name: "network-configuration", Flag: "network-configuration", Usage: "NetworkConfiguration as JSON object, @file, or - for stdin (required)", Format: "{\"NetworkMode\":\"<mode>\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}", Examples: []string{"agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}'", "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"PUBLIC\"}'", "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"VPC\",\"VpcConfig\":{\"SubnetIds\":[\"subnet-xxx\"],\"SecurityGroupIds\":[\"sg-xxx\"]}}'"}, Values: []string{"SANDBOX: no external network access", "PUBLIC: public internet access", "VPC: VPC network access; requires VpcConfig"}, Type: command.FlagString},
 				},
 			},
 			{
@@ -74,7 +74,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Tags",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "tags", Flag: "tags", Usage: "Tags as JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "tags", Flag: "tags", Usage: "Tags as JSON array, @file, or - for stdin", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Examples: []string{"agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --tags '[{\"Key\":\"team\",\"Value\":\"platform\"},{\"Key\":\"env\",\"Value\":\"staging\"}]'"}, Type: command.FlagString},
 				},
 			},
 			{
@@ -95,21 +95,21 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "StorageMounts",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage-mounts", Flag: "storage-mounts", Usage: "StorageMounts as JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "storage-mounts", Flag: "storage-mounts", Usage: "StorageMounts as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":false,\"StorageSource\":{\"Cos\":{...}}}]", Examples: []string{"agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --role-arn qcs::cam::uin/100000:roleName/my-role --storage-mounts '[{\"Name\":\"data\",\"MountPath\":\"/data\",\"StorageSource\":{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"my-bucket\",\"BucketPath\":\"/workspace\"}}}]'"}, Values: []string{"Cos: Tencent Cloud Object Storage source", "Image: container image volume source", "Cfs: Cloud File Storage source"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "CustomConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/bin/sh\"],\"Args\":[\"-c\",\"sleep 3600\"],\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}", Examples: []string{"agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}'"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "LogConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "log-configuration", Flag: "log-configuration", Usage: "LogConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "log-configuration", Flag: "log-configuration", Usage: "LogConfiguration JSON object, @file, or - for stdin", Format: "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"}}", Examples: []string{"agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"xxxxx-xxxx-xxxx\"}}'"}, Type: command.FlagString},
 				},
 			},
 			{

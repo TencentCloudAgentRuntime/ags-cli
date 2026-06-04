@@ -9,6 +9,7 @@
 [auth]
 secret_id = ""    # Required
 secret_key = ""   # Required
+# token = ""       # Optional STS session token; prefer TENCENTCLOUD_TOKEN in CI/CD
 
 # [sandbox]
 # default_user = "user"   # Optional (default: user)

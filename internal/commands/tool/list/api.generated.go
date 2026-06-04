@@ -34,7 +34,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "ToolIds",
 				Parser: "common.default_string_array",
 				Inputs: []apicli.InputSpec{
-					{Name: "tool-ids", Flag: "tool-ids", Usage: "Filter by tool IDs (generated ToolIds flag)", Type: command.FlagStringArray},
+					{Name: "tool-ids", Flag: "tool-ids", Usage: "Filter by tool IDs", Format: "--tool-ids <id1> --tool-ids <id2>", Examples: []string{"agr tool list --tool-ids sdt-xxxx", "agr tool list --tool-ids sdt-xxxx --tool-ids sdt-yyyy"}, Type: command.FlagStringArray},
 				},
 			},
 			{
@@ -55,7 +55,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Filters",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "filters", Flag: "filters", Usage: "Additional filters as JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "filters", Flag: "filters", Usage: "Additional filters as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"<field>\",\"Values\":[\"<value1>\",\"<value2>\"]}]", Examples: []string{"agr tool list --filters '[{\"Name\":\"ToolType\",\"Values\":[\"code-interpreter\"]}]'", "agr tool list --filters '[{\"Name\":\"Status\",\"Values\":[\"ACTIVE\"]}]'", "agr tool list --filters '[{\"Name\":\"ToolType\",\"Values\":[\"browser\"]},{\"Name\":\"Status\",\"Values\":[\"ACTIVE\"]}]'"}, Values: []string{"ToolName: exact tool name", "ToolType: browser, code-interpreter, custom, computer, mobile", "Status: CREATING, ACTIVE, DELETING, FAILED"}, Type: command.FlagString},
 				},
 			},
 		},
