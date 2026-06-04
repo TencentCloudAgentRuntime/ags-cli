@@ -19,7 +19,7 @@ curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/d
 **macOS（Apple Silicon）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-darwin-arm64.tar.gz
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-darwin-arm64.tar.gz
 tar xzf agr-0.5.0-darwin-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
 rm agr-0.5.0-darwin-arm64.tar.gz
@@ -28,7 +28,7 @@ rm agr-0.5.0-darwin-arm64.tar.gz
 **macOS（Intel）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-darwin-amd64.tar.gz
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-darwin-amd64.tar.gz
 tar xzf agr-0.5.0-darwin-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
 rm agr-0.5.0-darwin-amd64.tar.gz
@@ -37,7 +37,7 @@ rm agr-0.5.0-darwin-amd64.tar.gz
 **Linux（x86_64）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-linux-amd64.tar.gz
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-linux-amd64.tar.gz
 tar xzf agr-0.5.0-linux-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
 rm agr-0.5.0-linux-amd64.tar.gz
@@ -46,7 +46,7 @@ rm agr-0.5.0-linux-amd64.tar.gz
 **Linux（ARM64）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-linux-arm64.tar.gz
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-linux-arm64.tar.gz
 tar xzf agr-0.5.0-linux-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
 rm agr-0.5.0-linux-arm64.tar.gz
@@ -55,10 +55,10 @@ rm agr-0.5.0-linux-arm64.tar.gz
 **Windows（x86_64）— PowerShell**
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/agr-0.5.0-windows-amd64.zip -OutFile agr-0.5.0-windows-amd64.zip
-Expand-Archive agr-0.5.0-windows-amd64.zip -DestinationPath .
+Invoke-WebRequest -Uri https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-windows-amd64.zip -OutFile agr-0.6.0-windows-amd64.zip
+Expand-Archive agr-0.6.0-windows-amd64.zip -DestinationPath .
 Move-Item agr.exe "$env:USERPROFILE\bin\agr.exe"
-Remove-Item agr-0.5.0-windows-amd64.zip
+Remove-Item agr-0.6.0-windows-amd64.zip
 ```
 
 > 请确保 `$env:USERPROFILE\bin` 在 `PATH` 中。
@@ -66,7 +66,7 @@ Remove-Item agr-0.5.0-windows-amd64.zip
 ### 校验下载文件
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.5.0/checksums.txt
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/checksums.txt
 shasum -a 256 -c checksums.txt --ignore-missing
 ```
 
@@ -77,6 +77,12 @@ git clone https://github.com/TencentCloudAgentRuntime/ags-cli.git
 cd ags-cli
 make build
 sudo cp agr /usr/local/bin/agr
+```
+
+或安装到 `$GOPATH/bin`（带版本元信息）：
+
+```bash
+make go-install
 ```
 
 ### 使用 `go install`
@@ -92,6 +98,11 @@ agr version
 ```
 
 安装后的命令名为 `agr`。
+
+> **注意：** 通过 `go install @tag` 安装的二进制在 `agr version` 中会显示
+> `commit: n/a (go install)` 和 `built: n/a (go install)`：Go 不会为模块缓存
+> 构建注入 VCS 元数据。若需完整 commit 哈希和构建时间，请使用 `make build`
+> 或下载预编译发布包。
 
 ## 前置条件
 
@@ -167,6 +178,20 @@ agr instance exec \
 `Data.ExecutionContext.TemporarySandboxInstance` 与
 `Data.ExecutionContext.Cleanup`，方便脚本检查工作流。
 
+## Debug Tool 创建
+
+使用 `agr instance debug <tool-id>` 基于现有工具创建一份 Debug
+Tool。新工具会保留源工具配置，把启动命令改为 `/envd`，并将
+`ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` 镜像内的
+`/usr/bin/envd` 挂载到 `/envd`。源工具必须配置 `RoleArn`，因为
+镜像类型的存储挂载依赖该角色。
+
+```bash
+debug_tool_id=$(agr instance debug "$tool_id" \
+  --debug-tool-name "my-tool-debug" \
+  -o json --jq '.Data.ToolId')
+```
+
 ## 控制面端点与数据面域名
 
 | Flag | 默认值 | 作用对象 |
@@ -208,6 +233,7 @@ agr instance update <id>         更新 timeout / metadata
 agr instance pause <id>          暂停实例
 agr instance resume <id>         恢复实例
 agr instance delete <id>         删除实例
+agr instance debug <tool-id>     基于工具创建 Debug Tool
 
 agr instance code run <id>       在实例中执行代码
 agr instance exec <id> -- CMD    在实例中执行 shell 命令
@@ -218,7 +244,7 @@ agr instance browser vnc <id>    显示 VNC URL
 agr instance proxy <id> PORT     端口转发到 localhost
 agr instance mobile ...          Mobile ADB 操作
 
-agr tool list/create/get/update/delete
+agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|get
 agr completion bash|zsh|fish|powershell
