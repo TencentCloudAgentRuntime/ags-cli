@@ -2,6 +2,49 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.6.1] - 2026-06-05
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 本次发布无新功能。
+
+### Bug 修复
+- 修复 `agr instance debug` JSON flags（`--mount-options`、`--metadata`、`--custom-configuration`）现在正确支持 `@file` 和 `-`（标准输入）。
+- 修复 `agr instance debug` 文本输出中 `ToolID` 字段显示错误（显示输入的 flag 值而非新建的 debug tool ID）。
+- 修复 `agr instance debug --tool-name` 使用了错误的 API 字段名，现在正确使用 `Filters` 查询。
+- 修复 `agr instance debug` 传入无效 JSON 时显示 `internal error`，现在显示 `INVALID_JSON_FLAG` 并附带明确提示。
+- 修复 `agr instance login` 传入不存在的实例 ID 时显示 `internal error`，现在正确显示 `INSTANCE_NOT_FOUND`。
+- 修复 README 手动安装命令中文件名版本号错误（`agr-0.5.0-*` 应为 `agr-0.6.1-*`）。
+
+### 文档
+- 更新 README 中 `agr instance debug` 示例，使用 `--tool-id`/`--tool-name` flag 并移除不存在的 `--debug-tool-name` flag。
+
+## [0.6.0] - 2026-06-02
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 通过 `--token`、`TENCENTCLOUD_TOKEN` 和 `[auth].token` 支持腾讯云 STS 临时凭证认证。
+- `agr instance debug --tool-id <id>` — 基于现有沙箱工具创建临时 Debug Tool，自动挂载 envd 镜像并等待就绪后启动实例。
+- `agr tool fork <source-tool-id> --tool-name <new-name>` — 通过复制现有工具的可创建配置来新建工具，支持 flag 覆盖。
+- `agr instance list --all` — 自动翻页获取当前 region 的所有实例，输出中包含 region 信息。
+- 复杂 flag（`--filters`、`--tags`、`--network-configuration`、`--storage-mounts` 等）在 help 中新增 Format、Values 和 Examples 说明。
+- 命令 help 新增分组 `Example - ...:` 示例区块，`agr schema` 也暴露命令示例及复杂 flag 的格式/示例/取值元数据。
+
+### Bug 修复
+- 服务端错误现在在 CLI 输出中同时显示 `RequestId`、`Code` 和 `Message`，便于联系腾讯云支持时快速定位问题。
+- `agr instance login` 现在明确报告 PTY/envd 数据面会话失败，不再将其折叠为通用内部错误；用户输入 `exit` 时命令会透传远端 shell 的退出码，不再渲染错误信息（与 `ssh` 行为一致）。
+- `agr version` 现在能从 Go module 伪版本中提取 commit hash 和构建时间（适用于 `go install @latest` 安装的二进制），并对 `go install <module>@<tag>` 构建的二进制显示 `n/a (go install)` 而非 `unknown`。
+- `agr instance file upload`/`download` 收到 flag 格式路径参数时，错误提示改为具体的 positional 用法说明。
+- `agr tool fork` 和 `agr instance debug` 在复制工具时过滤掉 `qcs` 前缀的内部标签。
+- `agr schema instance.debug` 的元数据（`Mutation`、`CreatesResource`、`RequiresAuth`）现在正确返回 `true`。
+
+### 文档
+- 更新安装文档，推荐使用预编译 release 二进制，并说明 `go install` 构建的版本元数据行为。
+
 ## [0.5.1] - 2026-05-29
 
 ### 破坏性变更
