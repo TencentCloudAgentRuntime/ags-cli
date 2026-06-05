@@ -2,7 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [0.6.1] - 2026-06-05
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- This release has no new features.
+
+### Bug Fixes
+- Fix `agr instance debug` JSON flags (`--mount-options`, `--metadata`, `--custom-configuration`) now correctly support `@file` and `-` (stdin) as documented.
+- Fix `agr instance debug` text output showing wrong `ToolID` (showed input flag value instead of the created debug tool ID).
+- Fix `agr instance debug --tool-name` lookup using wrong API field; now uses `Filters` correctly.
+- Fix `agr instance debug` invalid JSON input showing `internal error`; now shows `INVALID_JSON_FLAG` with a clear hint.
+- Fix `agr instance login` with a non-existent instance ID showing `internal error` instead of `INSTANCE_NOT_FOUND`.
+- Fix README manual install commands referencing wrong filename version (`agr-0.5.0-*` instead of `agr-0.6.1-*`).
+
+### Docs
+- Update `agr instance debug` examples in README to use `--tool-id`/`--tool-name` flags and remove non-existent `--debug-tool-name` flag.
 
 ## [0.6.0] - 2026-06-02
 
@@ -13,7 +30,7 @@ All notable changes to this project will be documented in this file.
 - Tencent Cloud STS session tokens are now supported via `--token`,
   `TENCENTCLOUD_TOKEN`, and `[auth].token` for temporary AK/SK
   credentials. (Upstream-Issue: 15)
-- `agr instance debug <tool-id>` creates a debug tool from an existing
+- `agr instance debug --tool-id <id>` creates a debug tool from an existing
   sandbox tool by switching the startup command to `/envd` and adding
   the envd image mount. (Upstream-Issue: 3)
 - `agr tool fork <source-tool-id> --tool-name <new-tool-name>` creates a
@@ -53,10 +70,6 @@ All notable changes to this project will be documented in this file.
   `go install <module>@<tag>` (Go does not stamp VCS metadata for
   module-cache builds). Pseudo-version installs and ldflags-stamped
   release binaries are unchanged. (Upstream-Issue: 6)
-- `--jq` expressions now operate on the `Data` payload directly instead
-  of the wrapping envelope, consistent with `gh --jq` and `aws --query`
-  behavior (e.g. `.InstanceId` instead of `.Data.InstanceId`).
-  (Upstream-Issue: 10)
 - Live test binary builds now disable Go VCS stamping so race-test gate
   runs do not fail in worktrees where Git metadata cannot be inspected.
 - CI gofmt and changelog-gate failures resolved by formatting

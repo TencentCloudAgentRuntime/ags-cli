@@ -16,49 +16,56 @@ curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/d
 
 从 [GitHub Releases](https://github.com/TencentCloudAgentRuntime/ags-cli/releases) 下载最新版本并手动安装。
 
+将 `VERSION` 设置为目标版本号（如 `0.6.1`）：
+
 **macOS（Apple Silicon）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-darwin-arm64.tar.gz
-tar xzf agr-0.5.0-darwin-arm64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-darwin-arm64.tar.gz
+tar xzf agr-${VERSION}-darwin-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-darwin-arm64.tar.gz
+rm agr-${VERSION}-darwin-arm64.tar.gz
 ```
 
 **macOS（Intel）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-darwin-amd64.tar.gz
-tar xzf agr-0.5.0-darwin-amd64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-darwin-amd64.tar.gz
+tar xzf agr-${VERSION}-darwin-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-darwin-amd64.tar.gz
+rm agr-${VERSION}-darwin-amd64.tar.gz
 ```
 
 **Linux（x86_64）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-linux-amd64.tar.gz
-tar xzf agr-0.5.0-linux-amd64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-linux-amd64.tar.gz
+tar xzf agr-${VERSION}-linux-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-linux-amd64.tar.gz
+rm agr-${VERSION}-linux-amd64.tar.gz
 ```
 
 **Linux（ARM64）**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-linux-arm64.tar.gz
-tar xzf agr-0.5.0-linux-arm64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-linux-arm64.tar.gz
+tar xzf agr-${VERSION}-linux-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-linux-arm64.tar.gz
+rm agr-${VERSION}-linux-arm64.tar.gz
 ```
 
 **Windows（x86_64）— PowerShell**
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-windows-amd64.zip -OutFile agr-0.6.0-windows-amd64.zip
-Expand-Archive agr-0.6.0-windows-amd64.zip -DestinationPath .
+$VERSION = "0.6.1"
+Invoke-WebRequest -Uri "https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-windows-amd64.zip" -OutFile "agr-${VERSION}-windows-amd64.zip"
+Expand-Archive "agr-${VERSION}-windows-amd64.zip" -DestinationPath .
 Move-Item agr.exe "$env:USERPROFILE\bin\agr.exe"
-Remove-Item agr-0.6.0-windows-amd64.zip
+Remove-Item "agr-${VERSION}-windows-amd64.zip"
 ```
 
 > 请确保 `$env:USERPROFILE\bin` 在 `PATH` 中。
@@ -66,7 +73,8 @@ Remove-Item agr-0.6.0-windows-amd64.zip
 ### 校验下载文件
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/checksums.txt
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/checksums.txt
 shasum -a 256 -c checksums.txt --ignore-missing
 ```
 
@@ -180,16 +188,16 @@ agr instance exec \
 
 ## Debug Tool 创建
 
-使用 `agr instance debug <tool-id>` 基于现有工具创建一份 Debug
-Tool。新工具会保留源工具配置，把启动命令改为 `/envd`，并将
+使用 `agr instance debug --tool-id` 或 `--tool-name` 基于现有工具创建一份
+Debug Tool。新工具会保留源工具配置，把启动命令改为 `/envd`，并将
 `ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` 镜像内的
 `/usr/bin/envd` 挂载到 `/envd`。源工具必须配置 `RoleArn`，因为
 镜像类型的存储挂载依赖该角色。
 
 ```bash
-debug_tool_id=$(agr instance debug "$tool_id" \
-  --debug-tool-name "my-tool-debug" \
-  -o json --jq '.Data.ToolId')
+debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
+  --timeout 30m \
+  -o json --jq '.Data.InstanceId')
 ```
 
 ## 控制面端点与数据面域名
@@ -233,7 +241,7 @@ agr instance update <id>         更新 timeout / metadata
 agr instance pause <id>          暂停实例
 agr instance resume <id>         恢复实例
 agr instance delete <id>         删除实例
-agr instance debug <tool-id>     基于工具创建 Debug Tool
+agr instance debug --tool-id <id>  基于工具创建 Debug 实例
 
 agr instance code run <id>       在实例中执行代码
 agr instance exec <id> -- CMD    在实例中执行 shell 命令

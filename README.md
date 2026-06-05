@@ -16,49 +16,56 @@ curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/d
 
 Download the latest release from [GitHub Releases](https://github.com/TencentCloudAgentRuntime/ags-cli/releases) and install manually.
 
+Set `VERSION` to the release you want (e.g. `0.6.1`):
+
 **macOS (Apple Silicon)**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-darwin-arm64.tar.gz
-tar xzf agr-0.5.0-darwin-arm64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-darwin-arm64.tar.gz
+tar xzf agr-${VERSION}-darwin-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-darwin-arm64.tar.gz
+rm agr-${VERSION}-darwin-arm64.tar.gz
 ```
 
 **macOS (Intel)**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-darwin-amd64.tar.gz
-tar xzf agr-0.5.0-darwin-amd64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-darwin-amd64.tar.gz
+tar xzf agr-${VERSION}-darwin-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-darwin-amd64.tar.gz
+rm agr-${VERSION}-darwin-amd64.tar.gz
 ```
 
 **Linux (x86_64)**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-linux-amd64.tar.gz
-tar xzf agr-0.5.0-linux-amd64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-linux-amd64.tar.gz
+tar xzf agr-${VERSION}-linux-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-linux-amd64.tar.gz
+rm agr-${VERSION}-linux-amd64.tar.gz
 ```
 
 **Linux (ARM64)**
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-linux-arm64.tar.gz
-tar xzf agr-0.5.0-linux-arm64.tar.gz
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-linux-arm64.tar.gz
+tar xzf agr-${VERSION}-linux-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
-rm agr-0.5.0-linux-arm64.tar.gz
+rm agr-${VERSION}-linux-arm64.tar.gz
 ```
 
 **Windows (x86_64) — PowerShell**
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/agr-0.6.0-windows-amd64.zip -OutFile agr-0.6.0-windows-amd64.zip
-Expand-Archive agr-0.6.0-windows-amd64.zip -DestinationPath .
+$VERSION = "0.6.1"
+Invoke-WebRequest -Uri "https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-windows-amd64.zip" -OutFile "agr-${VERSION}-windows-amd64.zip"
+Expand-Archive "agr-${VERSION}-windows-amd64.zip" -DestinationPath .
 Move-Item agr.exe "$env:USERPROFILE\bin\agr.exe"
-Remove-Item agr-0.6.0-windows-amd64.zip
+Remove-Item "agr-${VERSION}-windows-amd64.zip"
 ```
 
 > Make sure `$env:USERPROFILE\bin` is in your `PATH`.
@@ -66,7 +73,8 @@ Remove-Item agr-0.6.0-windows-amd64.zip
 ### Verify checksums
 
 ```bash
-curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.6.0/checksums.txt
+VERSION=0.6.1
+curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/checksums.txt
 shasum -a 256 -c checksums.txt --ignore-missing
 ```
 
@@ -198,18 +206,17 @@ The JSON output of these commands includes
 
 ## Debug instance creation
 
-Use `agr instance debug <tool-id>` to create a debug instance for an existing
-tool. The command creates a temporary debug tool that keeps the source tool
-configuration, changes the startup command to `/envd`, mounts
-`ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` from `/usr/bin/envd` to
-`/envd`, waits for that tool to be ready, then starts an instance from it.
+Use `agr instance debug` with `--tool-id` or `--tool-name` to create a debug
+instance for an existing tool. The command creates a temporary debug tool that
+keeps the source tool configuration, changes the startup command to `/envd`,
+mounts `ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` from `/usr/bin/envd`
+to `/envd`, waits for that tool to be ready, then starts an instance from it.
 The source tool must have `RoleArn` configured because image storage mounts
 require it. `--timeout` controls the created instance lifetime and defaults
 to `1h`; readiness waits use the command's internal workflow timeout.
 
 ```bash
-debug_instance_id=$(agr instance debug "$tool_id" \
-  --debug-tool-name "my-tool-debug" \
+debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
   --timeout 30m \
   -o json --jq '.Data.InstanceId')
 ```
@@ -254,7 +261,7 @@ agr instance update <id>         Update timeout/metadata
 agr instance pause <id>          Pause an instance
 agr instance resume <id>         Resume an instance
 agr instance delete <id>         Delete instance(s)
-agr instance debug <tool-id>     Create a debug instance from a tool
+agr instance debug --tool-id <id>  Create a debug instance from a tool
 
 agr instance code run <id>       Execute code in an existing instance
 agr instance exec <id> -- CMD    Execute shell command in an existing instance
