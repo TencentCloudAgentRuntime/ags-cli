@@ -119,13 +119,7 @@ func runLogin(ctx context.Context, req command.Request, cp ControlPlane, rt Runt
 	}
 	instance, err := cp.GetInstance(ctx, instanceID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, fmt.Errorf("instance %s not found. Please check the instance ID and try again", instanceID)
-		}
-		if strings.Contains(err.Error(), "permission") || strings.Contains(err.Error(), "access") {
-			return nil, fmt.Errorf("access denied to instance %s. Please check your permissions", instanceID)
-		}
-		return nil, fmt.Errorf("failed to get instance %s: %w", instanceID, err)
+		return nil, err
 	}
 	if err := validateRunning(instanceID, instance); err != nil {
 		return nil, err

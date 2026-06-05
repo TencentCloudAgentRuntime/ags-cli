@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/tooltags"
@@ -128,7 +129,11 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	// Resolve tool-name to tool-id via DescribeSandboxToolList.
 	sourceToolID := toolID
 	if toolName != "" {
-		resp, err := cp.Call(ctx, "DescribeSandboxToolList", map[string]any{"ToolNames": []string{toolName}})
+		resp, err := cp.Call(ctx, "DescribeSandboxToolList", map[string]any{
+			"Filters": []map[string]any{
+				{"Name": "ToolName", "Values": []string{toolName}},
+			},
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -164,26 +169,29 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	if v := stringFlag(req, "auth-mode"); v != "" {
 		extraInstanceParams["AuthMode"] = v
 	}
-	if v := stringFlag(req, "mount-options"); v != "" {
-		var parsed any
-		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
-			return nil, fmt.Errorf("invalid JSON for --mount-options: %w", err)
+	for _, flagDef := range []struct {
+		flag string
+		key  string
+	}{
+		{"mount-options", "MountOptions"},
+		{"custom-configuration", "CustomConfiguration"},
+		{"metadata", "Metadata"},
+	} {
+		if v := stringFlag(req, flagDef.flag); v != "" {
+			data, err := request.ReadFlagFrom(v, deps.IO.In)
+			if err != nil {
+				return nil, err
+			}
+			var parsed any
+			if err := json.Unmarshal(data, &parsed); err != nil {
+				return nil, output.NewUsageError(
+					"INVALID_JSON_FLAG",
+					fmt.Sprintf("invalid JSON for --%s: %v", flagDef.flag, err),
+					fmt.Sprintf("Provide a valid JSON value for --%s, @file, or - for stdin.", flagDef.flag),
+				)
+			}
+			extraInstanceParams[flagDef.key] = parsed
 		}
-		extraInstanceParams["MountOptions"] = parsed
-	}
-	if v := stringFlag(req, "custom-configuration"); v != "" {
-		var parsed any
-		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
-			return nil, fmt.Errorf("invalid JSON for --custom-configuration: %w", err)
-		}
-		extraInstanceParams["CustomConfiguration"] = parsed
-	}
-	if v := stringFlag(req, "metadata"); v != "" {
-		var parsed any
-		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
-			return nil, fmt.Errorf("invalid JSON for --metadata: %w", err)
-		}
-		extraInstanceParams["Metadata"] = parsed
 	}
 
 	debugToolName := defaultDebugToolName(derefString(sourceTool.ToolName), sourceToolID, deps.Now())
@@ -258,7 +266,7 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 			instanceview.PrintKV(w, []instanceview.KeyValue{
 				{Key: "InstanceID", Value: instanceID},
 				{Key: "Status", Value: derefString(instance.Status)},
-				{Key: "ToolID", Value: toolID},
+				{Key: "ToolID", Value: debugToolID},
 				{Key: "ToolName", Value: debugToolName},
 				{Key: "SourceToolID", Value: sourceToolID},
 				{Key: "Timeout", Value: instanceTimeout},
