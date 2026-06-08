@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/dataplane/adbtunnel"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/dataplane/tunnelstore"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
@@ -129,6 +131,7 @@ func runTunnel(ctx context.Context, req command.Request, deps command.Deps, rt R
 		},
 		ListenAddress: listenAddr,
 		Insecure:      false,
+		OnStateChange: makeStateChangeHandler(instanceID),
 	})
 	if err != nil {
 		writeReadyError(deps.IO.Out, daemon, fmt.Sprintf("failed to create tunnel: %v", err))
@@ -234,5 +237,31 @@ func kindFromExitCode(code int) string {
 		return output.KindRemoteExecFailed
 	default:
 		return output.KindGenericError
+	}
+}
+
+// makeStateChangeHandler returns an OnStateChange callback that updates the
+// tunnel's status in the persistent tunnel store. This allows `mobile list`
+// to display the real health state without probing each tunnel.
+func makeStateChangeHandler(instanceID string) func(adbtunnel.TunnelState) {
+	return func(state adbtunnel.TunnelState) {
+		store, err := tunnelstore.NewStore()
+		if err != nil {
+			log.Printf("[WARN] Failed to open tunnel store for status update: %v", err)
+			return
+		}
+		var status string
+		var degradedAt *time.Time
+		switch state {
+		case adbtunnel.StateDegraded:
+			status = "unreachable"
+			now := time.Now()
+			degradedAt = &now
+		default:
+			status = "connected"
+		}
+		if err := store.UpdateStatus(instanceID, status, degradedAt); err != nil {
+			log.Printf("[WARN] Failed to update tunnel status in store: %v", err)
+		}
 	}
 }

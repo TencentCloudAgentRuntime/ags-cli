@@ -10,18 +10,22 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/dataplane/mobileadb"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/dataplane/tunnelstore"
 )
 
 // Store is the tunnel registry reader used to list active mobile connections.
 type Store interface {
 	List() (map[string]tunnelstore.TunnelEntry, error)
+	Cleanup(sandboxID string) error
 }
 
 // RuntimeDeps contains the tunnel store factory so tests can provide in-memory
 // tunnel state.
 type RuntimeDeps struct {
-	NewStore func() (Store, error)
+	NewStore   func() (Store, error)
+	RequireADB func() (string, error)
+	RunADB     func(adbPath string, args ...string) error
 }
 
 // Module returns this package's command module.
@@ -32,6 +36,7 @@ func Module() command.Module {
 		Use:          "list",
 		Short:        "List active mobile instance connections",
 		SupportsJSON: true,
+		Flags:        []command.FlagSpec{{Name: "prune", Usage: "Remove unreachable connections (kill tunnel, adb disconnect)", Type: command.FlagBool}},
 		Output:       command.OutputSpec{DataType: "MobileConnectionList"},
 	}
 	return command.Module{
@@ -53,7 +58,11 @@ Examples:
 			deps = deps.WithDefaults()
 			rt := runtimeDeps(deps.DataPlane)
 			return command.Runtime{Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
-				return runList(ctx, deps, rt)
+				prune := false
+				if flag, ok := req.Flags["prune"]; ok {
+					prune = flag.Bool
+				}
+				return runList(ctx, deps, rt, prune)
 			})}, nil
 		},
 	}
@@ -64,10 +73,25 @@ func runtimeDeps(injected any) RuntimeDeps {
 	if rt.NewStore == nil {
 		rt.NewStore = func() (Store, error) { return tunnelstore.NewStore() }
 	}
+	if rt.RequireADB == nil {
+		rt.RequireADB = mobileadb.Require
+	}
+	if rt.RunADB == nil {
+		rt.RunADB = mobileadb.Run
+	}
 	return rt
 }
 
-func runList(_ context.Context, deps command.Deps, rt RuntimeDeps) (*command.Result, error) {
+// entryStatus returns the display status for a tunnel entry.
+// Empty Status field (from older tunnel daemons) defaults to "connected".
+func entryStatus(entry tunnelstore.TunnelEntry) string {
+	if entry.Status == "" {
+		return "connected"
+	}
+	return entry.Status
+}
+
+func runList(_ context.Context, deps command.Deps, rt RuntimeDeps, prune bool) (*command.Result, error) {
 	store, err := rt.NewStore()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize tunnel store: %w", err)
@@ -88,16 +112,28 @@ func runList(_ context.Context, deps command.Deps, rt RuntimeDeps) (*command.Res
 		}
 		return nil, fmt.Errorf("failed to list tunnels: %w", err)
 	}
+
+	// --prune: clean up unreachable entries
+	if prune {
+		pruneUnreachable(deps, rt, store, entries)
+		// Re-read entries after pruning
+		entries, err = store.List()
+		if err != nil {
+			return nil, fmt.Errorf("failed to re-read tunnel store after prune: %w", err)
+		}
+	}
+
 	items := make([]map[string]any, 0, len(entries))
 	for id, entry := range entries {
 		addr := fmt.Sprintf("127.0.0.1:%d", entry.Port)
+		status := entryStatus(entry)
 		items = append(items, map[string]any{
 			"InstanceId": id,
 			"AdbAddress": addr,
 			"Port":       entry.Port,
 			"Pid":        entry.PID,
 			"CreatedAt":  entry.CreatedAt.Format(time.RFC3339),
-			"Status":     "connected",
+			"Status":     status,
 		})
 	}
 	data := map[string]any{"Items": items, "Total": len(items)}
@@ -111,10 +147,32 @@ func runList(_ context.Context, deps command.Deps, rt RuntimeDeps) (*command.Res
 		rows := make([][]string, 0, len(entries))
 		for id, entry := range entries {
 			addr := fmt.Sprintf("127.0.0.1:%d", entry.Port)
-			rows = append(rows, []string{id, addr, "connected"})
+			rows = append(rows, []string{id, addr, entryStatus(entry)})
 		}
 		printTable(w, headers, rows)
 	}}, nil
+}
+
+// pruneUnreachable removes entries marked as "unreachable" by killing the tunnel
+// process, disconnecting ADB, and removing the store entry.
+func pruneUnreachable(deps command.Deps, rt RuntimeDeps, store Store, entries map[string]tunnelstore.TunnelEntry) {
+	adbPath, _ := rt.RequireADB()
+	for id, entry := range entries {
+		if entryStatus(entry) != "unreachable" {
+			continue
+		}
+		// Disconnect ADB first (best-effort)
+		if adbPath != "" {
+			addr := fmt.Sprintf("127.0.0.1:%d", entry.Port)
+			_ = rt.RunADB(adbPath, "disconnect", addr)
+		}
+		// Kill tunnel process and remove store entry
+		if err := store.Cleanup(id); err != nil {
+			fmt.Fprintf(deps.IO.ErrOut, "Warning: failed to cleanup %s: %v\n", id, err)
+		} else {
+			fmt.Fprintf(deps.IO.ErrOut, "Pruned unreachable tunnel: %s\n", id)
+		}
+	}
 }
 
 func printTable(w io.Writer, headers []string, rows [][]string) {
