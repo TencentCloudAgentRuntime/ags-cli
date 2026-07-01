@@ -42,8 +42,8 @@ build-linux:
 	@echo "Building for Linux..."
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(GOCACHE_DIR) $(GOTMPDIR_DIR)
-	$(GO_RUN_ENV) GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/agr
-	$(GO_RUN_ENV) GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 ./cmd/agr
+	$(GO_RUN_ENV) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/agr
+	$(GO_RUN_ENV) CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 ./cmd/agr
 
 build-darwin:
 	@echo "Building for macOS..."
