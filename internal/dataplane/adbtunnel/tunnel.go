@@ -10,7 +10,6 @@ package adbtunnel
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -26,8 +25,16 @@ import (
 )
 
 const (
-	// closeCodePreempted is the custom WebSocket close code (4001) sent by
-	// adb-websockify when a new connection preempts the current one.
+	// closeCodePreempted (4001) was the legacy WebSocket close code sent by the
+	// old single-client adb-websockify when a new connection preempted the current
+	// one. The current multiplexing adb-websockify never sends this code, but we
+	// retain the constant and handling for compatibility with older server versions
+	// that may still be deployed during a rolling upgrade.
+	//
+	// Behaviour change: we now reconnect normally on 4001 instead of giving up.
+	// With the mux server, 4001 is never sent; with an old server, reconnecting
+	// is the correct action (the preemption loop concern no longer applies because
+	// the new server accepts concurrent connections).
 	closeCodePreempted = 4001
 
 	// maxDialFailures is the maximum number of consecutive WebSocket dial failures
@@ -326,15 +333,9 @@ func (t *Tunnel) handleConnectionWithReconnect(localConn net.Conn) {
 	defer func() { _ = localConn.Close() }()
 
 	connStart := time.Now()
-	preempted, err := t.handleConnection(localConn)
+	err := t.handleConnection(localConn)
 	if err == nil {
 		// Normal close (context cancelled or clean shutdown)
-		return
-	}
-
-	// If preempted by server (close code 4001), do NOT reconnect
-	if preempted {
-		t.logger.Printf("[WARN] Connection preempted by new client. Not reconnecting.")
 		return
 	}
 
@@ -411,14 +412,14 @@ func (t *Tunnel) startRecoveryProbe() {
 }
 
 // handleConnection bridges a single local TCP connection to a WebSocket upstream.
-// Returns (preempted, error) where preempted=true means server sent close code 4001.
-func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error) {
+// Returns an error if the connection ended abnormally, nil on clean shutdown.
+func (t *Tunnel) handleConnection(localConn net.Conn) error {
 	dialer := t.newDialer()
 
 	headers := http.Header{}
 	token, tokenErr := t.options.TokenProvider()
 	if tokenErr != nil {
-		return false, fmt.Errorf("token provider failed: %w", tokenErr)
+		return fmt.Errorf("token provider failed: %w", tokenErr)
 	}
 	headers.Add("Authorization", "Bearer "+token)
 	if t.options.Endpoint != "" {
@@ -427,7 +428,7 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 
 	wsConn, _, dialErr := dialer.DialContext(t.ctx, t.wsURL, headers)
 	if dialErr != nil {
-		return false, fmt.Errorf("WebSocket dial failed: %w", dialErr)
+		return fmt.Errorf("WebSocket dial failed: %w", dialErr)
 	}
 
 	t.logger.Printf("[INFO] WebSocket connected to %s", t.wsURL)
@@ -535,19 +536,18 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 				time.Now().Add(3*time.Second),
 			)
 			wsMu.Unlock()
-			return false, nil
+			return nil
 		case <-doneRead:
 			// Local TCP closed (adb client disconnected) — normal, no reconnect
-			return false, nil
+			return nil
 		case wsCloseErr = <-doneWrite:
-			// WebSocket read goroutine exited — check if preempted
-			if isPreemptionError(wsCloseErr) {
-				return true, wsCloseErr
-			}
+			// WebSocket read goroutine exited.
+			// 4001 (legacy preemption code) is now treated like any other close:
+			// the caller closes local TCP and ADB reconnects fresh.
 			if wsCloseErr != nil {
-				return false, wsCloseErr
+				return wsCloseErr
 			}
-			return false, nil
+			return nil
 		case <-pingTicker.C:
 			// Detect system sleep/wake: if time since last ping is much larger than
 			// the expected interval, the system likely slept. The underlying TCP/TLS
@@ -555,7 +555,7 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 			elapsed := time.Since(lastPingAt)
 			if elapsed > pingInterval*3 {
 				t.logger.Printf("[WARN] Clock jump detected (%v since last ping, expected ~%v). Forcing reconnect.", elapsed.Round(time.Second), pingInterval)
-				return false, fmt.Errorf("clock jump detected (system sleep): %v since last ping", elapsed.Round(time.Second))
+				return fmt.Errorf("clock jump detected (system sleep): %v since last ping", elapsed.Round(time.Second))
 			}
 			lastPingAt = time.Now()
 			wsMu.Lock()
@@ -563,20 +563,8 @@ func (t *Tunnel) handleConnection(localConn net.Conn) (preempted bool, err error
 			wsMu.Unlock()
 			if pingErr != nil {
 				t.logger.Printf("[WARN] Ping write failed: %v", pingErr)
-				return false, fmt.Errorf("ping write failed: %w", pingErr)
+				return fmt.Errorf("ping write failed: %w", pingErr)
 			}
 		}
 	}
-}
-
-// isPreemptionError checks if a WebSocket error indicates server-side preemption (close code 4001).
-func isPreemptionError(err error) bool {
-	if err == nil {
-		return false
-	}
-	var closeErr *websocket.CloseError
-	if errors.As(err, &closeErr) {
-		return closeErr.Code == closeCodePreempted
-	}
-	return false
 }
