@@ -30,7 +30,7 @@ func mockWSServer(handler func(conn *websocket.Conn)) *httptest.Server {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		handler(conn)
 	}))
 }
@@ -110,13 +110,13 @@ var _ = Describe("ADB tunnel", func() {
 
 		// Wait for WS #1 to close (4001 round-trip + local TCP close).
 		time.Sleep(500 * time.Millisecond)
-		adbConn1.Close()
+		_ = adbConn1.Close()
 
 		// Second ADB connect — simulates `adb connect` after device went offline.
 		// This should produce WS #2.
 		adbConn2, err := net.Dial("tcp", localAddr)
 		Expect(err).NotTo(HaveOccurred())
-		defer adbConn2.Close()
+		defer func() { _ = adbConn2.Close() }()
 
 		// Give tunnel time to establish WS #2.
 		time.Sleep(500 * time.Millisecond)
@@ -151,7 +151,7 @@ var _ = Describe("ADB tunnel", func() {
 		Expect(err).NotTo(HaveOccurred())
 		_, _ = adbConn.Write([]byte("hello"))
 		time.Sleep(100 * time.Millisecond)
-		adbConn.Close() // local disconnect
+		_ = adbConn.Close() // local disconnect
 
 		// Wait long enough that a reconnect would have occurred if buggy.
 		time.Sleep(2 * time.Second)
