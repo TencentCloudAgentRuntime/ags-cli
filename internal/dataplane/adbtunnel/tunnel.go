@@ -433,6 +433,11 @@ func (t *Tunnel) handleConnection(localConn net.Conn) error {
 
 	t.logger.Printf("[INFO] WebSocket connected to %s", t.wsURL)
 
+	// SetReadLimit must be at least maxAdbPayload (1 MiB) so that large WRTE
+	// messages from adbd (e.g. SYNC DATA packets during adb pull) are not
+	// rejected by gorilla/websocket's default read limit of 32 KiB.
+	wsConn.SetReadLimit(4 * 1024 * 1024)
+
 	// Successful connection resets dial failure counter.
 	t.resetDialFailures()
 
