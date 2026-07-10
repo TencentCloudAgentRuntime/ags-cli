@@ -81,9 +81,6 @@ jobs:
           done
           (cd dist && shasum -a 256 * > checksums.txt)
           cp install.sh dist/install.sh
-          mkdir -p release_meta/latest
-          cp install.sh release_meta/latest/install.sh
-          printf 'v%s\n' "$VERSION" > release_meta/latest/VERSION
 
       - name: Install smoke test
         env:
@@ -109,8 +106,6 @@ jobs:
             test -f "dist/${ARTIFACT}"
             grep -q "  ${ARTIFACT}$" dist/checksums.txt
           done
-          test -f release_meta/latest/install.sh
-          test -f release_meta/latest/VERSION
 
       - name: Create GitHub Release and upload artifacts
         uses: softprops/action-gh-release@v2
@@ -120,25 +115,3 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: |
             dist/*
-
-      - name: Upload version artifacts to Tencent Cloud COS
-        uses: TencentCloud/cos-action@v1
-        with:
-          secret_id: ${{ secrets.COS_RELEASE_SECRET_ID }}
-          secret_key: ${{ secrets.COS_RELEASE_SECRET_KEY }}
-          cos_bucket: ${{ secrets.COS_RELEASE_BUCKET }}
-          cos_region: ${{ secrets.COS_RELEASE_REGION }}
-          local_path: dist
-          remote_path: agr-cli/${{ steps.version.outputs.tag }}
-          clean: false
-
-      - name: Upload latest installer to Tencent Cloud COS
-        uses: TencentCloud/cos-action@v1
-        with:
-          secret_id: ${{ secrets.COS_RELEASE_SECRET_ID }}
-          secret_key: ${{ secrets.COS_RELEASE_SECRET_KEY }}
-          cos_bucket: ${{ secrets.COS_RELEASE_BUCKET }}
-          cos_region: ${{ secrets.COS_RELEASE_REGION }}
-          local_path: release_meta/latest
-          remote_path: agr-cli/latest
-          clean: false
