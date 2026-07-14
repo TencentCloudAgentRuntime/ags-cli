@@ -71,7 +71,7 @@ jobs:
             if [ "$GOOS" = "windows" ]; then ext=".zip"; bin="agr.exe"; fi
             work="dist/agr-${VERSION}-${GOOS}-${GOARCH}"
             mkdir -p "$work"
-            GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags "$LDFLAGS" -o "$work/$bin" ./cmd/agr
+            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags "$LDFLAGS" -o "$work/$bin" ./cmd/agr
             if [ "$GOOS" = "windows" ]; then
               (cd "$work" && zip -q "../agr-${VERSION}-${GOOS}-${GOARCH}${ext}" "$bin")
             else
@@ -91,6 +91,9 @@ jobs:
           /tmp/agr version
           /tmp/agr version -o json | tee /tmp/agr-version.json
           grep -q "\"Version\":\"${VERSION}\"" /tmp/agr-version.json
+          # Guard against dynamic glibc linkage regressing on release binaries
+          # (see fix for GLIBC_2.34 not found on older Linux distros).
+          file /tmp/agr | grep -q 'statically linked'
           # `agr api list-actions` was removed in §9.4 in favour of
           # `agr schema` for user-facing introspection; smoke a known
           # mapped command instead.
