@@ -277,6 +277,7 @@ func getAllSchemas() []CommandSchema {
 }
 
 func buildSchemaCatalog(root *cobra.Command) schemaCatalog {
+	root.InitDefaultHelpCmd()
 	schemas := getAllSchemas()
 	seededByName := map[string]CommandSchema{}
 	for _, schema := range schemas {
@@ -285,7 +286,7 @@ func buildSchemaCatalog(root *cobra.Command) schemaCatalog {
 
 	catalog := schemaCatalog{byName: map[string]CommandSchema{}}
 	seen := map[string]bool{}
-	walkPublicCommands(root, func(cmd *cobra.Command) {
+	addCommand := func(cmd *cobra.Command) {
 		commandID := canonicalCommandID(cmd)
 		if commandID == "" || seen[commandID] {
 			return
@@ -301,6 +302,9 @@ func buildSchemaCatalog(root *cobra.Command) schemaCatalog {
 			schema.Summary = cmd.Short
 		}
 		schema.Aliases = append([]string(nil), cmd.Aliases...)
+		if examples := exampleCommands(cmd.Example); len(examples) > 0 {
+			schema.Examples = examples
+		}
 		schema.Subcommands = publicSubcommandIDs(cmd)
 		if len(schema.Subcommands) > 0 {
 			schema.Kind = "group"
@@ -311,7 +315,11 @@ func buildSchemaCatalog(root *cobra.Command) schemaCatalog {
 		schema = finalizeSchema(schema)
 		catalog.Ordered = append(catalog.Ordered, schema)
 		catalog.byName[schema.Name] = schema
-	})
+	}
+	walkPublicCommands(root, addCommand)
+	if helpCmd, _, err := root.Find([]string{"help"}); err == nil && helpCmd != root {
+		addCommand(helpCmd)
+	}
 
 	for _, schema := range schemas {
 		if seen[schema.Name] {

@@ -21,6 +21,36 @@ func exampleBlocks(examples ...string) string {
 	return strings.Join(blocks, "\n\n")
 }
 
+func exampleCommands(blocks string) []string {
+	var examples []string
+	var lines []string
+	inExample := false
+	flush := func() {
+		example := strings.TrimSpace(strings.Join(lines, "\n"))
+		if example != "" {
+			examples = append(examples, example)
+		}
+		lines = nil
+	}
+
+	for _, line := range strings.Split(blocks, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "Example - ") {
+			if inExample {
+				flush()
+			}
+			inExample = true
+			continue
+		}
+		if inExample {
+			lines = append(lines, strings.TrimPrefix(line, "  "))
+		}
+	}
+	if inExample {
+		flush()
+	}
+	return examples
+}
+
 func builtinExampleTitle(index int) string {
 	switch index {
 	case 0:
