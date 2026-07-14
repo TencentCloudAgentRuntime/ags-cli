@@ -112,8 +112,8 @@ jobs:
           tmpman="$(mktemp -d)"
           go run ./cmd/internal/docgen markdown --dir "$tmpdocs"
           go run ./cmd/internal/docgen man --dir "$tmpman"
-          test "$(ls -1 "$tmpdocs" | wc -l)" -gt 0
-          test "$(ls -1 "$tmpman" | wc -l)" -gt 0
+          test -n "$(find "$tmpdocs" -mindepth 1 -maxdepth 1 -type f -print -quit)"
+          test -n "$(find "$tmpman" -mindepth 1 -maxdepth 1 -type f -print -quit)"
 
   overlay-smoke:
     name: CLI Overlay Smoke
