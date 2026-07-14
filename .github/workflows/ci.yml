@@ -160,3 +160,23 @@ jobs:
           # api list-actions / coverage are maintainer-only (NextPlan §9.4);
           # smoke a known mapped resource command via `agr schema` instead.
           ./agr-smoke schema instance.create -o json | grep -q '"Name":"instance.create"'
+
+  # Keep this display name stable: the default-branch ruleset requires it.
+  ci-gate:
+    name: CI Gate
+    if: ${{ always() }}
+    needs:
+      - workflow-lint
+      - fmt
+      - test
+      - lint
+      - changelog-gate
+      - generator-gate
+      - overlay-smoke
+      - release-ready
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all required CI jobs succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"

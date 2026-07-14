@@ -188,7 +188,7 @@ docs(readme): update installation instructions
 
 ## Review Process
 
-1. **Automated Checks**: All PRs must pass CI checks
+1. **Automated Checks**: The required status checks are `CI Gate` and `gitleaks`. `CI Gate` aggregates workflow validation, formatting, tests, linting, changelog and generated-output validation, overlay smoke tests, and release-readiness validation.
 2. **Code Review**: At least one maintainer approval required
 3. **Testing**: Adequate test coverage expected
 4. **Documentation**: Update docs if needed
