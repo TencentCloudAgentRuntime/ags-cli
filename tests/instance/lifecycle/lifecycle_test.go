@@ -65,6 +65,7 @@ var _ = Describe("instance lifecycle commands", Ordered, func() {
 		result := cli.Run(context.Background(), "--output", "json", "instance", "pause", instanceID)
 		result.ExpectSuccess()
 		Expect(result.Envelope().Command).To(Equal("instance.pause"))
+		testutil.WaitForInstanceStatus(context.Background(), instanceID, "PAUSED")
 	})
 
 	It("executes agr instance resume", func() {
