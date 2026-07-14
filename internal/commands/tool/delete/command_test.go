@@ -178,3 +178,58 @@ func TestResultFromSummaryWritesSuccessToStdoutAndWarningsToStderr(t *testing.T)
 		t.Fatalf("stderr = %q", got)
 	}
 }
+
+func TestModuleDryRunDoesNotDelete(t *testing.T) {
+	cp := &fakeControlPlane{}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args:      []string{"sdt-a", "sdt-b"},
+		ArgValues: map[string]string{"tool-id": "sdt-a"},
+		Flags: map[string]command.FlagValue{
+			"dry-run": {Name: "dry-run", Type: command.FlagBool, Bool: true, Changed: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	// No actual deletion should have occurred.
+	if len(cp.deleted) != 0 {
+		t.Fatalf("dry-run should not delete, got deleted = %#v", cp.deleted)
+	}
+	data := result.Data.(map[string]any)
+	if data["DryRun"] != true {
+		t.Fatalf("expected DryRun=true, got %#v", data)
+	}
+	wouldDelete := data["WouldDelete"].([]string)
+	if len(wouldDelete) != 2 || wouldDelete[0] != "sdt-a" || wouldDelete[1] != "sdt-b" {
+		t.Fatalf("WouldDelete = %#v", wouldDelete)
+	}
+}
+
+func TestModuleYesSkipsConfirmation(t *testing.T) {
+	cp := &fakeControlPlane{}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args:      []string{"sdt-a"},
+		ArgValues: map[string]string{"tool-id": "sdt-a"},
+		Flags: map[string]command.FlagValue{
+			"yes": {Name: "yes", Type: command.FlagBool, Bool: true, Changed: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if len(cp.deleted) != 1 || cp.deleted[0] != "sdt-a" {
+		t.Fatalf("expected deletion with --yes, got deleted = %#v", cp.deleted)
+	}
+	summary := result.Data.(map[string]any)
+	if summary["Deleted"] != 1 {
+		t.Fatalf("summary = %#v", summary)
+	}
+}
