@@ -115,3 +115,25 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: |
             dist/*
+
+      - name: Create Homebrew Tap app token
+        if: ${{ !contains(steps.version.outputs.version, '-') }}
+        id: homebrew-tap-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.HOMEBREW_TAP_APP_ID }}
+          private-key: ${{ secrets.HOMEBREW_TAP_APP_PRIVATE_KEY }}
+          owner: TencentCloudAgentRuntime
+          repositories: homebrew-tap
+          permission-actions: write
+
+      - name: Trigger Homebrew Tap update
+        if: ${{ !contains(steps.version.outputs.version, '-') }}
+        env:
+          GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh workflow run update-agr-cli.yml \
+            --repo TencentCloudAgentRuntime/homebrew-tap \
+            --ref main \
+            --field version="$TAG"
