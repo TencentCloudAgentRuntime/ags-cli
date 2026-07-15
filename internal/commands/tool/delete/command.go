@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
@@ -43,6 +44,21 @@ func Module() command.Module {
 	spec.Args = []command.ArgSpec{
 		{Name: "tool-id", Required: true, Repeatable: true, Description: "Sandbox tool ID."},
 	}
+	spec.Flags = append(spec.Flags,
+		command.FlagSpec{
+			Name:     "dry-run",
+			Usage:    "List resources that would be deleted without actually executing the deletion",
+			Type:     command.FlagBool,
+			Workflow: true,
+		},
+		command.FlagSpec{
+			Name:      "yes",
+			Shorthand: "y",
+			Usage:     "Skip confirmation prompt",
+			Type:      command.FlagBool,
+			Workflow:  true,
+		},
+	)
 	spec.Output = command.OutputSpec{
 		DataType:    "DeleteData",
 		Description: "Delete result with multi-tool handling.",
@@ -70,6 +86,10 @@ func Module() command.Module {
 			builder := apicli.NewRequestBuilder(api)
 			return command.Runtime{
 				Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
+					dryRun := isDryRun(req)
+					skipConfirm := isYes(req)
+
+					// --request mode: single tool, error propagates directly.
 					if requestFlag(req) {
 						if len(req.Args) > 1 {
 							return nil, output.NewUsageError("REQUEST_FLAG_CONFLICT", "--request only supports a single tool id", "Use --request for one ToolId at a time, or pass multiple positional arguments without --request.")
@@ -82,15 +102,42 @@ func Module() command.Module {
 						if strings.TrimSpace(toolID) == "" {
 							return nil, output.NewUsageError("MISSING_REQUIRED_ARG", "missing tool id", "Provide <tool-id>.")
 						}
+						if dryRun {
+							return dryRunResult([]string{toolID}, deps.IO.ErrOut), nil
+						}
 						if err := cp.DeleteTool(ctx, toolID); err != nil {
 							return nil, err
 						}
 						return resultFromSummary(Summary{Deleted: 1, DeletedIDs: []string{toolID}}, nil, deps.IO.ErrOut), nil
 					}
 
+					ids := req.Args
+
+					// --dry-run: preview only, no actual deletion.
+					if dryRun {
+						return dryRunResult(ids, deps.IO.ErrOut), nil
+					}
+
+					// Confirmation prompt (unless --yes, --non-interactive, or non-TTY stdin).
+					if !skipConfirm && !cli.NonInteractive() && deps.IO != nil && deps.IO.IsStdinTTY() {
+						fmt.Fprintf(deps.IO.ErrOut, "The following tools will be deleted:\n")
+						for _, id := range ids {
+							fmt.Fprintf(deps.IO.ErrOut, "  - %s\n", id)
+						}
+						fmt.Fprintf(deps.IO.ErrOut, "\nProceed? [y/N] ")
+						var answer string
+						if _, err := fmt.Fscanln(deps.IO.In, &answer); err != nil || (answer != "y" && answer != "Y") {
+							return &command.Result{
+								Data: map[string]any{"Cancelled": true},
+								Text: func(w io.Writer) { fmt.Fprintln(w, "Cancelled.") },
+							}, nil
+						}
+					}
+
+					// Execute deletion.
 					summary := Summary{}
 					var warnings []string
-					for _, toolID := range req.Args {
+					for _, toolID := range ids {
 						if err := cp.DeleteTool(ctx, toolID); err != nil {
 							summary.Failed++
 							summary.FailedIDs = append(summary.FailedIDs, toolID)
@@ -135,4 +182,30 @@ func resultFromSummary(summary Summary, warnings []string, errOut io.Writer) *co
 func requestFlag(req command.Request) bool {
 	flag, ok := req.Flags["request"]
 	return ok && flag.Changed && strings.TrimSpace(flag.String) != ""
+}
+
+func isDryRun(req command.Request) bool {
+	flag, ok := req.Flags["dry-run"]
+	return ok && flag.Changed && flag.Bool
+}
+
+func isYes(req command.Request) bool {
+	flag, ok := req.Flags["yes"]
+	return ok && flag.Changed && flag.Bool
+}
+
+func dryRunResult(ids []string, errOut io.Writer) *command.Result {
+	return &command.Result{
+		Data: map[string]any{
+			"DryRun":      true,
+			"WouldDelete": ids,
+		},
+		Text: func(w io.Writer) {
+			fmt.Fprintln(w, "Dry run — the following tools would be deleted:")
+			for _, id := range ids {
+				fmt.Fprintf(w, "  - %s\n", id)
+			}
+			fmt.Fprintln(w, "\nNo changes were made.")
+		},
+	}
 }
