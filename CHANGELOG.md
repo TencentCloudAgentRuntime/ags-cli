@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2026-07-15
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add deletion safeguards to `agr instance delete` and `agr tool delete`:
+  interactive terminals now show the target resources and request confirmation,
+  `--dry-run` previews deletions, and `--yes`/`-y` skips confirmation. Existing
+  non-interactive workflows continue without prompts.
+- Add official Homebrew Tap support through
+  `brew install TencentCloudAgentRuntime/tap/agr-cli`, with stable releases
+  automatically triggering Formula validation and updates.
+- Strengthen CI with GitHub Actions workflow linting, an aggregate `CI Gate`,
+  and unit tests on both Linux and macOS.
+
+### Bug Fixes
+- Build fully static Linux release binaries to prevent `GLIBC_2.34 not found`
+  failures on older distributions such as Tencent Linux and CentOS 7/8.
+- Remove duplicate direct COS uploads from the release workflow and leave COS
+  synchronization to the GitHub release webhook, preventing a successful
+  GitHub Release from being reported as failed by a later duplicate upload.
+- Wait for live lifecycle instances to reach `PAUSED` before resuming them,
+  removing a pause/resume race from the lifecycle smoke tests.
+
+### Docs
+- Document the official Homebrew Tap installation command in README and
+  README-zh.
+- Document `CI Gate` and `gitleaks` as the required status checks in both
+  contribution guides.
+
 ## [0.6.2] - 2026-06-12
 
 ### Breaking Changes

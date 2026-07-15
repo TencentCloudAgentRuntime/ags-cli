@@ -2,6 +2,25 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.6.3] - 2026-07-15
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 为 `agr instance delete` 和 `agr tool delete` 增加删除保护：交互式终端现在会先列出目标资源并请求确认，新增 `--dry-run` 预览删除内容，以及 `--yes`/`-y` 跳过确认；现有非交互流程仍无需确认。
+- 支持通过 `brew install TencentCloudAgentRuntime/tap/agr-cli` 使用官方 Homebrew Tap，正式版本发布后会自动触发 Formula 校验和更新。
+- 强化 CI：增加 GitHub Actions workflow lint、聚合 `CI Gate`，并在 Linux 和 macOS 上运行单元测试。
+
+### Bug 修复
+- 构建完全静态链接的 Linux release 二进制，避免在 Tencent Linux、CentOS 7/8 等较旧发行版上出现 `GLIBC_2.34 not found`。
+- 移除 release 流水线中重复的 COS 直传步骤，统一由 GitHub release webhook 同步 COS，避免 GitHub Release 已成功但后续重复上传失败导致流水线整体报错。
+- 在 live 生命周期测试中等待实例真正进入 `PAUSED` 后再执行恢复，消除 pause/resume 竞态。
+
+### 文档
+- 在 README 和 README-zh 中补充官方 Homebrew Tap 安装命令。
+- 在中英文贡献指南中说明 `CI Gate` 和 `gitleaks` 是必需状态检查。
+
 ## [0.6.2] - 2026-06-12
 
 ### 破坏性变更
