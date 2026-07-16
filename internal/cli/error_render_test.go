@@ -41,7 +41,8 @@ var _ = Describe("error rendering", func() {
 				"Error: backend failed\n" +
 					"Code: InternalError.Backend\n" +
 					"RequestId: req-123\n" +
-					"Hint: Run 'agr doctor'.\n",
+					"Hint: Run 'agr doctor'.\n" +
+					"\n  → Use \"agr explain InternalError.Backend\" for fix suggestions.\n",
 			))
 		})
 
@@ -49,10 +50,12 @@ var _ = Describe("error rendering", func() {
 			var buf bytes.Buffer
 			writeFailureText(&buf, &output.Failure{
 				Code:    "INVALID_USAGE",
+				Kind:    output.KindUsage,
 				Message: "bad flag",
 				Hint:    "Run 'agr --help'.",
 			})
 
+			// Usage errors do not get the "agr explain" suggestion.
 			Expect(buf.String()).To(Equal(
 				"Error: bad flag\n" +
 					"Code: INVALID_USAGE\n" +
@@ -73,6 +76,7 @@ var _ = Describe("error rendering", func() {
 			var buf bytes.Buffer
 			writeFailureText(&buf, &output.Failure{
 				Code:      "RequestLimitExceeded",
+				Kind:      output.KindRateLimit,
 				Message:   "throttled",
 				Retryable: true,
 				Details:   map[string]any{"RequestId": "req-xyz"},
@@ -82,7 +86,8 @@ var _ = Describe("error rendering", func() {
 				"Error: throttled\n" +
 					"Code: RequestLimitExceeded\n" +
 					"RequestId: req-xyz\n" +
-					"Retryable: yes\n",
+					"Retryable: yes\n" +
+					"\n  → Use \"agr explain RequestLimitExceeded\" for fix suggestions.\n",
 			))
 		})
 
