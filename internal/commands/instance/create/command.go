@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/progress"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -36,6 +38,7 @@ func Module() command.Module {
 			Source: "mixed-api",
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
+			deps = deps.WithDefaults()
 			builder := apicli.NewRequestBuilder(api)
 			executor := apicli.NewExecutor(api, deps.ControlPlane)
 			return command.Runtime{Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
@@ -48,15 +51,24 @@ func Module() command.Module {
 				if err != nil {
 					return nil, err
 				}
+
+				// Show spinner for interactive text mode only.
+				sp := progress.NewForCLI(deps.IO.ErrOut, cli.IsJSONOutput(), cli.NonInteractive(), deps.IO.IsStderrTTY(), cli.NoColor())
+				sp.Start("Creating instance...")
+
 				result, err := executor.Execute(ctx, apiReq)
 				if err != nil {
+					sp.Stop("✗", "Failed to create instance")
 					return nil, err
 				}
 				response, ok := result.Data.(*ags.StartSandboxInstanceResponseParams)
 				if !ok {
+					// Response type mismatch — we cannot confirm creation succeeded.
+					sp.Cleanup()
 					return result, nil
 				}
 				if response.Instance == nil {
+					sp.Stop("✗", "Failed to create instance")
 					return nil, output.NewCLIError(&output.Failure{
 						Code:    "INTERNAL_ERROR",
 						Kind:    output.KindGenericError,
@@ -64,6 +76,7 @@ func Module() command.Module {
 						Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
 					})
 				}
+				sp.Stop("✓", "Instance created")
 				return instanceCreateResult(response, result), nil
 			})}, nil
 		},
