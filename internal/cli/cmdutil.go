@@ -158,6 +158,11 @@ func Wrap(commandID string, fn CmdFunc) func(*cobra.Command, []string) error {
 			return nil
 		}
 
+		// Ensure Fix field is populated for result-path failures too.
+		if result.Failure != nil {
+			client.AttachFix(result.Failure)
+		}
+
 		status := "succeeded"
 		if result.ExitCode == output.ExitPartialSuccess || (result.Failure != nil && result.Failure.Kind == output.KindPartialSuccess) {
 			status = "partial"

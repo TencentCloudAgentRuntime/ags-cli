@@ -18,6 +18,7 @@ type Failure struct {
 	Kind      string         `json:"Kind"`
 	Message   string         `json:"Message"`
 	Hint      string         `json:"Hint,omitempty"`
+	Fix       string         `json:"Fix,omitempty"`
 	Retryable bool           `json:"Retryable"`
 	Details   map[string]any `json:"Details,omitempty"`
 }

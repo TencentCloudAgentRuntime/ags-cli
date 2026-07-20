@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/client"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/spf13/cobra"
@@ -275,7 +276,10 @@ func extractHelpTopics(args []string) []string {
 }
 
 func classifyCLIError(err error) *output.CLIError {
-	cliErr := output.ClassifyError(err)
+	cliErr := client.ClassifyError(err)
+	if cliErr == nil {
+		return output.ClassifyError(err)
+	}
 	if cliErr.ExitCode == output.ExitGenericError && isCobraUsageError(err) {
 		cliErr = output.NewUsageError("INVALID_USAGE", err.Error(), "Run 'agr --help' or 'agr schema -o json' to inspect valid commands and flags.")
 	}
@@ -352,8 +356,15 @@ func writeFailureText(w io.Writer, failure *output.Failure) {
 	if failure.Hint != "" {
 		fmt.Fprintf(w, "Hint: %s\n", failure.Hint)
 	}
+	if failure.Fix != "" {
+		fmt.Fprintf(w, "Fix: %s\n", failure.Fix)
+	}
 	if failure.Retryable {
 		fmt.Fprintln(w, "Retryable: yes")
+	}
+	// Auto-suggest "agr explain" for non-usage errors with a known code.
+	if failure.Code != "" && failure.Kind != output.KindUsage {
+		fmt.Fprintf(w, "\n  → Use \"agr explain %s\" for fix suggestions.\n", failure.Code)
 	}
 }
 
