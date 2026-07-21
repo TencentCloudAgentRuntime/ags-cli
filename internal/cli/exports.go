@@ -69,6 +69,12 @@ func NewCloudClient() (*ags.Client, error) {
 // disabled by global flags.
 func NonInteractive() bool { return nonInteractive }
 
+// IsJSONOutput reports whether the resolved output format is JSON or NDJSON.
+func IsJSONOutput() bool { return isJSON() || isNDJSON() }
+
+// NoColor reports whether ANSI color/escape output is disabled.
+func NoColor() bool { return noColor }
+
 // CfgFile returns the config file path supplied on the command line.
 func CfgFile() string { return cfgFile }
 

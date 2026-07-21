@@ -20,6 +20,7 @@ type IOStreams struct {
 
 	isStdoutTTY bool
 	isStdinTTY  bool
+	isStderrTTY bool
 }
 
 // System returns an IOStreams connected to the real terminal.
@@ -30,6 +31,7 @@ func System() *IOStreams {
 		ErrOut:      os.Stderr,
 		isStdoutTTY: term.IsTerminal(int(os.Stdout.Fd())),
 		isStdinTTY:  term.IsTerminal(int(os.Stdin.Fd())),
+		isStderrTTY: term.IsTerminal(int(os.Stderr.Fd())),
 	}
 }
 
@@ -54,8 +56,14 @@ func (s *IOStreams) IsStdoutTTY() bool { return s.isStdoutTTY }
 // IsStdinTTY reports whether stdin was detected or forced to be a terminal.
 func (s *IOStreams) IsStdinTTY() bool { return s.isStdinTTY }
 
+// IsStderrTTY reports whether stderr was detected or forced to be a terminal.
+func (s *IOStreams) IsStderrTTY() bool { return s.isStderrTTY }
+
 // SetStdoutTTY overrides TTY detection (for tests).
 func (s *IOStreams) SetStdoutTTY(v bool) { s.isStdoutTTY = v }
 
 // SetStdinTTY overrides stdin TTY detection (for tests).
 func (s *IOStreams) SetStdinTTY(v bool) { s.isStdinTTY = v }
+
+// SetStderrTTY overrides stderr TTY detection (for tests).
+func (s *IOStreams) SetStderrTTY(v bool) { s.isStderrTTY = v }

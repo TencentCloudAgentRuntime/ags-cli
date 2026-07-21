@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/progress"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -30,6 +32,7 @@ func Module() command.Module {
 			Source: "mixed-api",
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
+			deps = deps.WithDefaults()
 			builder := apicli.NewRequestBuilder(api)
 			executor := apicli.NewExecutor(api, deps.ControlPlane)
 			return command.Runtime{
@@ -43,11 +46,23 @@ func Module() command.Module {
 							return nil, err
 						}
 					}
+
+					// Show spinner for interactive text mode only.
+					sp := progress.NewForCLI(deps.IO.ErrOut, cli.IsJSONOutput(), cli.NonInteractive(), deps.IO.IsStderrTTY(), cli.NoColor())
+					sp.Start("Creating tool...")
+
 					result, err := executor.Execute(ctx, apiReq)
 					if err != nil {
+						sp.Stop("✗", "Failed to create tool")
 						return nil, err
 					}
-					applyCreateResultText(result, req)
+
+					if applyCreateResultText(result, req) {
+						sp.Stop("✓", "Tool created")
+					} else {
+						// Response type mismatch or missing ToolId — cannot confirm success.
+						sp.Cleanup()
+					}
 					return result, nil
 				}),
 			}, nil
@@ -55,15 +70,21 @@ func Module() command.Module {
 	}
 }
 
-func applyCreateResultText(result *command.Result, req command.Request) {
+// applyCreateResultText enriches the command result with text rendering and
+// effects when the response is a valid CreateSandboxToolResponseParams with a
+// non-empty ToolId. Returns true if the response was confirmed valid.
+func applyCreateResultText(result *command.Result, req command.Request) bool {
 	if result == nil {
-		return
+		return false
 	}
 	response, ok := result.Data.(*ags.CreateSandboxToolResponseParams)
 	if !ok {
-		return
+		return false
 	}
 	toolID := derefString(response.ToolId)
+	if toolID == "" {
+		return false
+	}
 	result.Effects = append(result.Effects, output.Effect{Kind: "create", Resource: "tool", Id: toolID})
 	result.Text = func(w io.Writer) {
 		fmt.Fprintf(w, "Tool created: %s\n", toolID)
@@ -77,6 +98,7 @@ func applyCreateResultText(result *command.Result, req command.Request) {
 			{key: "Description", value: stringFlag(req, "description")},
 		})
 	}
+	return true
 }
 
 type kv struct {
