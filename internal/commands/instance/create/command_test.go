@@ -6,8 +6,10 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -16,18 +18,27 @@ import (
 // fakeMixedControlPlane implements apicli.ControlPlane for testing the full
 // create flow (parameter validation → request build → executor → response render).
 type fakeMixedControlPlane struct {
-	action  string
-	request map[string]any
-	resp    *ags.StartSandboxInstanceResponseParams
+	action        string
+	request       map[string]any
+	resp          *ags.StartSandboxInstanceResponseParams
+	calls         int
+	getCalls      int
+	finalInstance *ags.SandboxInstance
 }
 
 func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
 	f.action = action
 	f.request = request
+	f.calls++
 	if f.resp != nil {
 		return f.resp, nil
 	}
 	return map[string]any{"ok": true}, nil
+}
+
+func (f *fakeMixedControlPlane) GetInstance(_ context.Context, _ string) (*ags.SandboxInstance, error) {
+	f.getCalls++
+	return f.finalInstance, nil
 }
 
 // allInstanceCreateFlags returns a complete flag set mimicking what Cobra registers
@@ -157,6 +168,34 @@ func TestModuleCreatesInstanceAndRendersText(t *testing.T) {
 	}
 	if !strings.Contains(text, "RUNNING") {
 		t.Fatalf("text output missing status: %s", text)
+	}
+}
+
+func TestModuleWaitsAfterCreatingExactlyOnce(t *testing.T) {
+	id := "ins-created"
+	starting := "STARTING"
+	running := "RUNNING"
+	cp := &fakeMixedControlPlane{
+		resp:          &ags.StartSandboxInstanceResponseParams{Instance: &ags.SandboxInstance{InstanceId: &id, Status: &starting}},
+		finalInstance: &ags.SandboxInstance{InstanceId: &id, Status: &running},
+	}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	flags := withChanged(allInstanceCreateFlags(), "tool-name", "tool-name")
+	flags["wait"] = command.FlagValue{Name: "wait", Type: command.FlagBool, Bool: true}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{Flags: flags})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if cp.calls != 1 || cp.getCalls != 1 {
+		t.Fatalf("Call = %d, GetInstance = %d", cp.calls, cp.getCalls)
+	}
+	if result.Data.(map[string]any)["Status"] != running || len(result.Effects) != 1 {
+		t.Fatalf("result = %#v", result)
 	}
 }
 

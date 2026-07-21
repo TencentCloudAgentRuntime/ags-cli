@@ -9,7 +9,9 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	instanceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/get"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/progress"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -19,6 +21,7 @@ import (
 func Module() command.Module {
 	api := APIDescriptor()
 	spec := api.CommandSpec()
+	spec.Flags = append(spec.Flags, resourcewait.Flag())
 	spec.Output = command.OutputSpec{
 		DataType:    "InstanceCreateData",
 		Description: "Instance create result with normalized instance data.",
@@ -77,10 +80,35 @@ func Module() command.Module {
 					})
 				}
 				sp.Stop("✓", "Instance created")
-				return instanceCreateResult(response, result), nil
+				mutationResult := instanceCreateResult(response, result)
+				if !resourcewait.Requested(req) {
+					return mutationResult, nil
+				}
+				getter, ok := deps.ControlPlane.(resourcewait.InstanceGetter)
+				if !ok {
+					return nil, fmt.Errorf("instance.create --wait requires GetInstance support")
+				}
+				instanceID := instanceview.DerefString(response.Instance.InstanceId)
+				if instanceID == "" {
+					return nil, missingInstanceIDError()
+				}
+				finalInstance, err := resourcewait.WaitForInstance(ctx, instanceID, getter.GetInstance, resourcewait.OptionsFromDeps(deps))
+				if err != nil {
+					return nil, err
+				}
+				return resourcewait.PreserveMutationMetadata(instanceget.Result(finalInstance), mutationResult), nil
 			})}, nil
 		},
 	}
+}
+
+func missingInstanceIDError() error {
+	return output.NewCLIError(&output.Failure{
+		Code:    "INTERNAL_ERROR",
+		Kind:    output.KindGenericError,
+		Message: "cannot wait because the create response did not include an instance id",
+		Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
+	})
 }
 
 func validateToolSelection(req command.Request) error {

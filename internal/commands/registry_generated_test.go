@@ -1,6 +1,10 @@
 package commands
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+)
 
 func TestRegistryIncludesAllKnownCommandModules(t *testing.T) {
 	registry, err := Registry()
@@ -49,4 +53,52 @@ func TestRegistryIncludesAllKnownCommandModules(t *testing.T) {
 	if got := len(registry.Modules()); got != len(want) {
 		t.Fatalf("module count = %d, want %d", got, len(want))
 	}
+}
+
+func TestWaitFlagScope(t *testing.T) {
+	registry, err := Registry()
+	if err != nil {
+		t.Fatalf("Registry returned error: %v", err)
+	}
+	wantWait := []string{
+		"instance.create",
+		"instance.get",
+		"instance.pause",
+		"instance.resume",
+		"instance.update",
+		"tool.create",
+		"tool.fork",
+		"tool.get",
+		"tool.update",
+	}
+	for _, id := range wantWait {
+		module, ok := registry.Lookup(id)
+		if !ok {
+			t.Fatalf("registry missing %s", id)
+		}
+		flag, ok := findFlag(module.Descriptor.Spec.Flags, "wait")
+		if !ok || flag.Type != command.FlagBool || !flag.Workflow {
+			t.Errorf("%s --wait = %#v, present = %v", id, flag, ok)
+		}
+		if module.Descriptor.Generated != nil {
+			if flag, ok := findFlag(module.Descriptor.Generated.Spec.Flags, "wait"); ok {
+				t.Errorf("%s generated API snapshot unexpectedly includes workflow --wait: %#v", id, flag)
+			}
+		}
+	}
+	for _, id := range []string{"instance.delete", "instance.list", "tool.delete", "tool.list"} {
+		module, _ := registry.Lookup(id)
+		if flag, ok := findFlag(module.Descriptor.Spec.Flags, "wait"); ok {
+			t.Errorf("%s unexpectedly exposes --wait: %#v", id, flag)
+		}
+	}
+}
+
+func findFlag(flags []command.FlagSpec, name string) (command.FlagSpec, bool) {
+	for _, flag := range flags {
+		if flag.Name == name {
+			return flag, true
+		}
+	}
+	return command.FlagSpec{}, false
 }

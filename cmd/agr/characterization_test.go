@@ -671,6 +671,32 @@ func schemaForCommand(t *testing.T, command string) commandSchemaSnapshot {
 	return snapshot
 }
 
+func TestCharacterization_WaitFlagSchemaScope(t *testing.T) {
+	for _, commandID := range []string{
+		"instance.create",
+		"instance.get",
+		"instance.pause",
+		"instance.resume",
+		"instance.update",
+		"tool.create",
+		"tool.fork",
+		"tool.get",
+		"tool.update",
+	} {
+		schema := schemaForCommand(t, commandID)
+		flag, ok := schema.Flags["wait"]
+		if !ok || flag.Type != "bool" {
+			t.Errorf("schema %s wait flag = %#v, present = %v", commandID, flag, ok)
+		}
+	}
+	for _, commandID := range []string{"instance.delete", "instance.list", "tool.delete", "tool.list"} {
+		schema := schemaForCommand(t, commandID)
+		if flag, ok := schema.Flags["wait"]; ok {
+			t.Errorf("schema %s unexpectedly includes wait flag: %#v", commandID, flag)
+		}
+	}
+}
+
 func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapshot {
 	t.Helper()
 	output, err := runAGR(t, "schema", command, "-o", "json")

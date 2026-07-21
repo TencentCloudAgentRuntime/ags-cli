@@ -5,9 +5,11 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -19,6 +21,9 @@ func TestModuleDescriptor(t *testing.T) {
 	}
 	if !spec.SupportsJSON {
 		t.Fatalf("get should support JSON")
+	}
+	if !hasFlag(spec.Flags, "wait") {
+		t.Fatalf("flags = %#v, want --wait", spec.Flags)
 	}
 }
 
@@ -106,11 +111,64 @@ func TestModuleRejectsMissingInstanceID(t *testing.T) {
 type fakeControlPlane struct {
 	instanceID string
 	instance   *ags.SandboxInstance
+	instances  []*ags.SandboxInstance
+	calls      int
 }
 
 func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
 	f.instanceID = instanceID
+	f.calls++
+	if len(f.instances) > 0 {
+		index := f.calls - 1
+		if index >= len(f.instances) {
+			index = len(f.instances) - 1
+		}
+		return f.instances[index], nil
+	}
 	return f.instance, nil
+}
+
+func TestModuleWaitsForInstanceTerminalState(t *testing.T) {
+	starting := "STARTING"
+	running := "RUNNING"
+	cp := &fakeControlPlane{instances: []*ags.SandboxInstance{
+		{Status: &starting},
+		{Status: &running},
+	}}
+	runtime, err := Module().Build(command.Deps{
+		ControlPlane: cp,
+		Values: map[string]any{resourcewait.OptionsKey: resourcewait.Options{
+			Interval: time.Millisecond,
+			Timeout:  50 * time.Millisecond,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"ins-unit"},
+		Flags: map[string]command.FlagValue{
+			"wait": {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if cp.calls != 2 {
+		t.Fatalf("GetInstance calls = %d, want 2", cp.calls)
+	}
+	if result.Data.(map[string]any)["Status"] != running {
+		t.Fatalf("data = %#v", result.Data)
+	}
+}
+
+func hasFlag(flags []command.FlagSpec, name string) bool {
+	for _, flag := range flags {
+		if flag.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func TestFormatTimeout(t *testing.T) {

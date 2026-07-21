@@ -158,9 +158,9 @@ func Module() command.Module {
 							warnings = append(warnings, fmt.Sprintf("Failed to delete %s: %v", instanceID, err))
 							continue
 						}
+						summary.AlreadyAbsent = append(summary.AlreadyAbsent, item.AlreadyAbsent...)
 						summary.Deleted += item.Deleted
 						summary.DeletedIDs = append(summary.DeletedIDs, item.DeletedIDs...)
-						summary.AlreadyAbsent = append(summary.AlreadyAbsent, item.AlreadyAbsent...)
 					}
 					return resultFromSummary(summary, warnings, deps.IO.ErrOut), nil
 				}),

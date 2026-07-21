@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
@@ -13,6 +14,14 @@ import (
 type fakeControlPlane struct {
 	deleted []string
 	fail    map[string]error
+}
+
+func TestModuleDoesNotExposeWaitFlag(t *testing.T) {
+	if slices.ContainsFunc(Module().Descriptor.Spec.Flags, func(flag command.FlagSpec) bool {
+		return flag.Name == "wait"
+	}) {
+		t.Fatalf("tool.delete must not expose --wait")
+	}
 }
 
 func (f *fakeControlPlane) DeleteTool(_ context.Context, toolID string) error {

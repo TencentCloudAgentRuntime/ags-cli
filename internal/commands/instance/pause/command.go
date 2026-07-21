@@ -7,17 +7,21 @@ import (
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	instanceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/get"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 )
 
 // Module returns this package's command module.
 func Module() command.Module {
 	api := APIDescriptor()
-	spec := api.CommandSpec()
+	generatedSpec := api.CommandSpec()
+	spec := generatedSpec
+	spec.Flags = append(spec.Flags, resourcewait.Flag())
 	return command.Module{
 		Descriptor: command.Descriptor{
 			Spec: spec,
 			Generated: &command.Descriptor{
-				Spec:   spec,
+				Spec:   generatedSpec,
 				Groups: api.Groups,
 				API:    api,
 				Source: "apicli",
@@ -41,6 +45,17 @@ func Module() command.Module {
 				instanceID := instanceID(req, apiReq)
 				result.Text = func(w io.Writer) {
 					fmt.Fprintf(w, "Instance paused: %s\n", instanceID)
+				}
+				if resourcewait.Requested(req) {
+					getter, ok := deps.ControlPlane.(resourcewait.InstanceGetter)
+					if !ok {
+						return nil, fmt.Errorf("instance.pause --wait requires GetInstance support")
+					}
+					instance, err := resourcewait.WaitForInstance(ctx, instanceID, getter.GetInstance, resourcewait.OptionsFromDeps(deps))
+					if err != nil {
+						return nil, err
+					}
+					return resourcewait.PreserveMutationMetadata(instanceget.Result(instance), result), nil
 				}
 				return result, nil
 			})}, nil

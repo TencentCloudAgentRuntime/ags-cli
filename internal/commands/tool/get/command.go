@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -29,6 +30,7 @@ func Module() command.Module {
 		Args: []command.ArgSpec{
 			{Name: "tool-id", Required: true, Description: "Sandbox tool ID."},
 		},
+		Flags: []command.FlagSpec{resourcewait.Flag()},
 		Output: command.OutputSpec{
 			DataType:    "SandboxTool",
 			Description: "Sandbox tool details.",
@@ -63,18 +65,30 @@ func Module() command.Module {
 					if strings.TrimSpace(toolID) == "" {
 						return nil, output.NewUsageError("MISSING_REQUIRED_ARG", "missing tool id", "Provide <tool-id>.")
 					}
-					tool, err := cp.GetTool(ctx, toolID)
+					var tool *ags.SandboxTool
+					var err error
+					if resourcewait.Requested(req) {
+						tool, err = resourcewait.WaitForTool(ctx, toolID, cp.GetTool, resourcewait.OptionsFromDeps(deps))
+					} else {
+						tool, err = cp.GetTool(ctx, toolID)
+					}
 					if err != nil {
 						return nil, err
 					}
-					return &command.Result{
-						Data: canonicalToolData(tool),
-						Text: func(w io.Writer) {
-							renderToolDetails(w, tool)
-						},
-					}, nil
+					return Result(tool), nil
 				}),
 			}, nil
+		},
+	}
+}
+
+// Result returns the canonical command result for a Tool. Lifecycle mutation
+// commands reuse it after --wait reaches ACTIVE.
+func Result(tool *ags.SandboxTool) *command.Result {
+	return &command.Result{
+		Data: canonicalToolData(tool),
+		Text: func(w io.Writer) {
+			renderToolDetails(w, tool)
 		},
 	}
 }
