@@ -6,23 +6,78 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 type fakeControlPlane struct {
 	toolID string
 	err    error
+	tools  []*ags.SandboxTool
+	calls  int
 }
 
 func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
 	f.toolID = toolID
+	f.calls++
 	if f.err != nil {
 		return nil, f.err
 	}
+	if len(f.tools) > 0 {
+		index := f.calls - 1
+		if index >= len(f.tools) {
+			index = len(f.tools) - 1
+		}
+		return f.tools[index], nil
+	}
 	id := toolID
 	return &ags.SandboxTool{ToolId: &id}, nil
+}
+
+func TestModuleDescriptorIncludesWait(t *testing.T) {
+	for _, flag := range Module().Descriptor.Spec.Flags {
+		if flag.Name == "wait" && flag.Type == command.FlagBool && flag.Workflow {
+			return
+		}
+	}
+	t.Fatal("tool get descriptor does not include workflow --wait")
+}
+
+func TestModuleWaitsForToolTerminalState(t *testing.T) {
+	creating := "CREATING"
+	active := "ACTIVE"
+	cp := &fakeControlPlane{tools: []*ags.SandboxTool{
+		{Status: &creating},
+		{Status: &active},
+	}}
+	runtime, err := Module().Build(command.Deps{
+		ControlPlane: cp,
+		Values: map[string]any{resourcewait.OptionsKey: resourcewait.Options{
+			Interval: time.Millisecond,
+			Timeout:  50 * time.Millisecond,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"sdt-unit"},
+		Flags: map[string]command.FlagValue{
+			"wait": {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if cp.calls != 2 {
+		t.Fatalf("GetTool calls = %d, want 2", cp.calls)
+	}
+	if result.Data.(map[string]any)["Status"] != active {
+		t.Fatalf("data = %#v", result.Data)
+	}
 }
 
 func TestModuleExecutesToolGetter(t *testing.T) {
@@ -149,5 +204,23 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 	data := canonicalToolData(tool)
 	if data["ToolId"] != id || data["Tags"].(map[string]string)["alpha"] != "1" {
 		t.Fatalf("data = %#v", data)
+	}
+}
+
+func TestRenderToolDetailsIncludesFailedStatusReason(t *testing.T) {
+	status := "FAILED"
+	statusReason := "provider image pull failed"
+	tool := &ags.SandboxTool{
+		Status:       &status,
+		StatusReason: &statusReason,
+	}
+
+	var text bytes.Buffer
+	renderToolDetails(&text, tool)
+	got := text.String()
+	for _, want := range []string{"Status:", status, "StatusReason:", statusReason} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("text missing %q: %s", want, got)
+		}
 	}
 }

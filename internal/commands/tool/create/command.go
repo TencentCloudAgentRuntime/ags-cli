@@ -9,6 +9,8 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/progress"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -17,12 +19,14 @@ import (
 // Module returns this package's command module.
 func Module() command.Module {
 	api := APIDescriptor()
-	spec := api.CommandSpec()
+	generatedSpec := api.CommandSpec()
+	spec := generatedSpec
+	spec.Flags = append(spec.Flags, resourcewait.Flag())
 	return command.Module{
 		Descriptor: command.Descriptor{
 			Spec: spec,
 			Generated: &command.Descriptor{
-				Spec:   spec,
+				Spec:   generatedSpec,
 				Groups: api.Groups,
 				API:    api,
 				Source: "apicli",
@@ -63,11 +67,35 @@ func Module() command.Module {
 						// Response type mismatch or missing ToolId — cannot confirm success.
 						sp.Cleanup()
 					}
+					if resourcewait.Requested(req) {
+						response, ok := result.Data.(*ags.CreateSandboxToolResponseParams)
+						if !ok || derefString(response.ToolId) == "" {
+							return nil, missingToolIDError()
+						}
+						getter, ok := deps.ControlPlane.(resourcewait.ToolGetter)
+						if !ok {
+							return nil, fmt.Errorf("tool.create --wait requires GetTool support")
+						}
+						tool, err := resourcewait.WaitForTool(ctx, derefString(response.ToolId), getter.GetTool, resourcewait.OptionsFromDeps(deps))
+						if err != nil {
+							return nil, err
+						}
+						return resourcewait.PreserveMutationMetadata(toolget.Result(tool), result), nil
+					}
 					return result, nil
 				}),
 			}, nil
 		},
 	}
+}
+
+func missingToolIDError() error {
+	return output.NewCLIError(&output.Failure{
+		Code:    "INTERNAL_ERROR",
+		Kind:    output.KindGenericError,
+		Message: "cannot wait because the create response did not include a tool id",
+		Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
+	})
 }
 
 // applyCreateResultText enriches the command result with text rendering and

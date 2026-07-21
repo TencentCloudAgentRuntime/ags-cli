@@ -10,7 +10,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
-func TestModuleKeepsGeneratedAPIDescriptorAndWorkflowFlag(t *testing.T) {
+func TestModuleKeepsGeneratedAPIDescriptorWithoutWaitFlag(t *testing.T) {
 	module := Module()
 	if module.Descriptor.Generated == nil {
 		t.Fatalf("mixed module missing generated descriptor snapshot")
@@ -36,6 +36,9 @@ func TestModuleKeepsGeneratedAPIDescriptorAndWorkflowFlag(t *testing.T) {
 	}
 	if !hasFlag(module.Descriptor.Spec.Flags, "ignore-not-found") {
 		t.Fatalf("final spec missing --ignore-not-found")
+	}
+	if hasFlag(module.Descriptor.Spec.Flags, "wait") {
+		t.Fatalf("instance.delete must not expose --wait")
 	}
 }
 

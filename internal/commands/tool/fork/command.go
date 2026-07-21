@@ -8,7 +8,9 @@ import (
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/tooltags"
+	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -23,6 +25,7 @@ type ControlPlane interface {
 func Module() command.Module {
 	api := forkAPIDescriptor()
 	spec := api.CommandSpec()
+	spec.Flags = append(spec.Flags, resourcewait.Flag())
 	for i := range spec.Flags {
 		if spec.Flags[i].Name == "tool-name" {
 			spec.Flags[i].Required = true
@@ -70,7 +73,24 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					return createResult(result, req), nil
+					mutationResult := createResult(result, req)
+					if !resourcewait.Requested(req) {
+						return mutationResult, nil
+					}
+					toolID := createdToolID(result)
+					if toolID == "" {
+						return nil, output.NewCLIError(&output.Failure{
+							Code:    "INTERNAL_ERROR",
+							Kind:    output.KindGenericError,
+							Message: "cannot wait because the create response did not include a tool id",
+							Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
+						})
+					}
+					tool, err := resourcewait.WaitForTool(ctx, toolID, cp.GetTool, resourcewait.OptionsFromDeps(deps))
+					if err != nil {
+						return nil, err
+					}
+					return resourcewait.PreserveMutationMetadata(toolget.Result(tool), mutationResult), nil
 				}),
 			}, nil
 		},

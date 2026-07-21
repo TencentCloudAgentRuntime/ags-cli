@@ -6,8 +6,10 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -16,18 +18,27 @@ import (
 // fakeMixedControlPlane implements apicli.ControlPlane for testing the full
 // tool create flow (validation → request build → executor → response render).
 type fakeMixedControlPlane struct {
-	action  string
-	request map[string]any
-	resp    *ags.CreateSandboxToolResponseParams
+	action    string
+	request   map[string]any
+	resp      *ags.CreateSandboxToolResponseParams
+	calls     int
+	getCalls  int
+	finalTool *ags.SandboxTool
 }
 
 func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
 	f.action = action
 	f.request = request
+	f.calls++
 	if f.resp != nil {
 		return f.resp, nil
 	}
 	return map[string]any{"ok": true}, nil
+}
+
+func (f *fakeMixedControlPlane) GetTool(_ context.Context, _ string) (*ags.SandboxTool, error) {
+	f.getCalls++
+	return f.finalTool, nil
 }
 
 // allToolCreateFlags returns a complete flag set mimicking what Cobra registers
@@ -224,6 +235,33 @@ func TestModuleCreatesToolAndRendersText(t *testing.T) {
 	}
 	if result.Effects[0].Kind != "create" || result.Effects[0].Resource != "tool" {
 		t.Fatalf("effect = %+v", result.Effects[0])
+	}
+}
+
+func TestModuleWaitsAfterCreatingExactlyOnce(t *testing.T) {
+	toolID := "sdt-new123"
+	active := "ACTIVE"
+	cp := &fakeMixedControlPlane{
+		resp:      &ags.CreateSandboxToolResponseParams{ToolId: &toolID},
+		finalTool: &ags.SandboxTool{ToolId: &toolID, Status: &active},
+	}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	flags := minRequiredFlags()
+	flags["wait"] = command.FlagValue{Name: "wait", Type: command.FlagBool, Bool: true}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{Flags: flags})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if cp.calls != 1 || cp.getCalls != 1 {
+		t.Fatalf("Call = %d, GetTool = %d", cp.calls, cp.getCalls)
+	}
+	if result.Data.(map[string]any)["Status"] != active || len(result.Effects) != 1 {
+		t.Fatalf("result = %#v", result)
 	}
 }
 

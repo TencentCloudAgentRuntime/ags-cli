@@ -7,6 +7,8 @@ import (
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -14,12 +16,14 @@ import (
 // Module returns this package's command module.
 func Module() command.Module {
 	api := APIDescriptor()
-	spec := api.CommandSpec()
+	generatedSpec := api.CommandSpec()
+	spec := generatedSpec
+	spec.Flags = append(spec.Flags, resourcewait.Flag())
 	return command.Module{
 		Descriptor: command.Descriptor{
 			Spec: spec,
 			Generated: &command.Descriptor{
-				Spec:   spec,
+				Spec:   generatedSpec,
 				Groups: api.Groups,
 				API:    api,
 				Source: "apicli",
@@ -45,6 +49,23 @@ func Module() command.Module {
 						return nil, err
 					}
 					applyUpdateResultText(result, req)
+					if resourcewait.Requested(req) {
+						getter, ok := deps.ControlPlane.(resourcewait.ToolGetter)
+						if !ok {
+							return nil, fmt.Errorf("tool.update --wait requires GetTool support")
+						}
+						toolID, err := ToolID(req)
+						if err != nil {
+							return nil, err
+						}
+						options := resourcewait.OptionsFromDeps(deps)
+						options.DelayBeforeFirstPoll = true
+						tool, err := resourcewait.WaitForTool(ctx, toolID, getter.GetTool, options)
+						if err != nil {
+							return nil, err
+						}
+						return resourcewait.PreserveMutationMetadata(toolget.Result(tool), result), nil
+					}
 					return result, nil
 				}),
 			}, nil
