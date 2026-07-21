@@ -12,6 +12,7 @@ import (
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/updatecheck"
 	"github.com/spf13/cobra"
 )
 
@@ -178,7 +179,7 @@ func Execute() {
 	initConfig()
 	rootCmd.SetHelpCommand(newHelpCommand())
 	if err := explicitHelpTopicError(os.Args[1:]); err != nil {
-		renderExecuteError(rootCmd, err)
+		renderExecuteError(rootCmd, err, nil)
 	}
 
 	if hasRawFlag("--help") || hasRawFlag("-h") {
@@ -197,7 +198,7 @@ func Execute() {
 			if cmdID != "" {
 				for _, s := range getAllSchemas() {
 					if s.Name == cmdID && !s.SupportsJson {
-						renderExecuteError(targetCmd, output.NewUsageError("INVALID_USAGE", fmt.Sprintf("%s does not support -o json", cmdID), "Use text help for this command, or run 'agr schema -o json' for machine-readable command metadata."))
+						renderExecuteError(targetCmd, output.NewUsageError("INVALID_USAGE", fmt.Sprintf("%s does not support -o json", cmdID), "Use text help for this command, or run 'agr schema -o json' for machine-readable command metadata."), nil)
 					}
 				}
 			}
@@ -208,15 +209,75 @@ func Execute() {
 				schemaErr = renderJSONSchemaEnvelope("help", rootCmd, []string{cmdID})
 			}
 			if schemaErr != nil {
-				renderExecuteError(targetCmd, schemaErr)
+				renderExecuteError(targetCmd, schemaErr, nil)
 			}
 			return
 		}
 	}
 
-	if cmd, err := rootCmd.ExecuteC(); err != nil {
-		renderExecuteError(cmd, err)
+	// Fire off non-blocking background update check (skip for version/update
+	// commands, non-interactive mode, and JSON output).
+	var updateCh <-chan *updatecheck.Result
+	if shouldRunUpdateCheck(os.Args[1:]) {
+		updateCh = updatecheck.Start(Version)
 	}
+
+	if cmd, err := rootCmd.ExecuteC(); err != nil {
+		renderExecuteError(cmd, err, updateCh)
+	}
+
+	// Print update notice after command finishes (never blocks the command).
+	// Note: renderExecuteError calls os.Exit directly on the error path, so it
+	// prints the notice itself before exiting — this line covers the success
+	// path only.
+	if updateCh != nil && !nonInteractive && !isJSON() {
+		updatecheck.PrintNotice(ios.ErrOut, updateCh)
+	}
+}
+
+// shouldRunUpdateCheck returns false for commands that should not trigger
+// a background update check (to avoid infinite loops or noisy output).
+// It strips leading global flags (--config, -o, etc.) to find the real
+// subcommand token.
+func shouldRunUpdateCheck(args []string) bool {
+	if nonInteractive {
+		return false
+	}
+	// Also skip when JSON output is requested (the notice would never print
+	// anyway, but skipping the goroutine avoids unnecessary network I/O).
+	if hasRawOutputFlag("json") {
+		return false
+	}
+	// Find the first positional token (skip flags and their values).
+	cmd := extractCommandToken(args)
+	switch cmd {
+	case "version", "help", "update":
+		return false
+	}
+	// When no subcommand is found (cmd == ""), the user may have passed
+	// --version/-v/--help/-h which extractCommandToken skips as flags.
+	// Only scan for these flags when there's no positional subcommand to
+	// avoid false positives from subcommand arguments that happen to match.
+	if cmd == "" {
+		for _, arg := range args {
+			switch arg {
+			case "--version", "-v", "--help", "-h":
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// extractCommandToken walks args skipping known global flags and their values
+// to find the first positional argument (the subcommand name). It reuses
+// extractCommandTokens for consistency.
+func extractCommandToken(args []string) string {
+	tokens := extractCommandTokens(args)
+	if len(tokens) > 0 {
+		return tokens[0]
+	}
+	return ""
 }
 
 func explicitHelpTopicError(args []string) error {
@@ -302,9 +363,10 @@ func commandSpecificUsageHint(cmd *cobra.Command, err error) string {
 	return ""
 }
 
-func renderExecuteError(cmd *cobra.Command, err error) {
+func renderExecuteError(cmd *cobra.Command, err error, updateCh <-chan *updatecheck.Result) {
 	var envDone *envelopeAlreadyWritten
 	if errors.As(err, &envDone) {
+		printUpdateNotice(updateCh)
 		os.Exit(envDone.code)
 	}
 	cliErr := classifyCLIError(err)
@@ -325,13 +387,30 @@ func renderExecuteError(cmd *cobra.Command, err error) {
 			jqFailure := output.NewUsageError("INVALID_JQ_EXPRESSION", jqErr.Error(), "Check your --jq expression syntax.")
 			jqEnv := output.NewFailedEnvelope(cmdID, jqFailure.Failure, config.GetBackend(), 0)
 			_ = output.RenderEnvelopeToStdout(jqEnv)
+			// JSON mode: notice is suppressed by printUpdateNotice's isJSON() check.
+			printUpdateNotice(updateCh)
 			os.Exit(output.ExitUsage)
 		}
+		// JSON mode: notice is suppressed by printUpdateNotice's isJSON() check.
+		printUpdateNotice(updateCh)
 		os.Exit(cliErr.ExitCode)
 	}
 	failure := withIdempotencyHint(commandIDForJSONError(cmd, os.Args[1:]), cliErr.Failure)
 	writeFailureText(ios.ErrOut, failure)
+	printUpdateNotice(updateCh)
 	os.Exit(cliErr.ExitCode)
+}
+
+// printUpdateNotice prints the background update notice (if any) before the
+// process exits via os.Exit, which would otherwise skip the deferred print in
+// Execute(). It honors the same suppression rules (non-interactive, JSON) and
+// is a no-op when updateCh is nil (e.g. the pre-command help/config error paths
+// that run before the background check is started).
+func printUpdateNotice(updateCh <-chan *updatecheck.Result) {
+	if updateCh == nil || nonInteractive || isJSON() {
+		return
+	}
+	updatecheck.PrintNotice(ios.ErrOut, updateCh)
 }
 
 // writeFailureText renders a Failure to a human-readable, line-per-field

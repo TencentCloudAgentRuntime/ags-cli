@@ -23,6 +23,10 @@ type CLI struct {
 	Home       string
 	Config     LiveConfig
 	Timeout    time.Duration
+	// ExtraEnv holds additional KEY=VALUE pairs appended to the subprocess
+	// environment. Use this instead of os.Setenv to avoid race conditions
+	// when tests run in parallel.
+	ExtraEnv []string
 }
 
 // CommandResult captures one CLI process execution for assertions.
@@ -154,6 +158,7 @@ func (c *CLI) env() []string {
 	if c.Config.CloudEndpoint != "" {
 		env = append(env, "AGR_CLOUD_ENDPOINT="+c.Config.CloudEndpoint)
 	}
+	env = append(env, c.ExtraEnv...)
 	return env
 }
 
