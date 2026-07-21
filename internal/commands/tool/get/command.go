@@ -106,10 +106,14 @@ func renderToolDetails(w io.Writer, tool *ags.SandboxTool) {
 		{key: "ID", value: derefString(tool.ToolId)},
 		{key: "Name", value: derefString(tool.ToolName)},
 		{key: "Type", value: derefString(tool.ToolType)},
+		{key: "Status", value: derefString(tool.Status)},
 		{key: "NetworkMode", value: networkMode},
 		{key: "Description", value: derefString(tool.Description)},
 		{key: "Tags", value: tagsStr},
 		{key: "Created", value: formatShortTime(derefString(tool.CreateTime))},
+	}
+	if tool.StatusReason != nil && *tool.StatusReason != "" {
+		kvs = append(kvs, keyValue{key: "StatusReason", value: *tool.StatusReason})
 	}
 	if tool.RoleArn != nil && *tool.RoleArn != "" {
 		kvs = append(kvs, keyValue{key: "RoleArn", value: *tool.RoleArn})

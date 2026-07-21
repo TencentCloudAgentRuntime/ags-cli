@@ -206,3 +206,21 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 		t.Fatalf("data = %#v", data)
 	}
 }
+
+func TestRenderToolDetailsIncludesFailedStatusReason(t *testing.T) {
+	status := "FAILED"
+	statusReason := "provider image pull failed"
+	tool := &ags.SandboxTool{
+		Status:       &status,
+		StatusReason: &statusReason,
+	}
+
+	var text bytes.Buffer
+	renderToolDetails(&text, tool)
+	got := text.String()
+	for _, want := range []string{"Status:", status, "StatusReason:", statusReason} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("text missing %q: %s", want, got)
+		}
+	}
+}
