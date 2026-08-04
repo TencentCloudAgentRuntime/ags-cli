@@ -9,6 +9,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
@@ -56,6 +57,7 @@ func Module() command.Module {
 		{Name: "instance-id", Required: true, Repeatable: true, Description: "Sandbox instance ID."},
 	}
 	spec.Flags = append(spec.Flags,
+		resourcewait.Flag(),
 		command.FlagSpec{
 			Name:     "ignore-not-found",
 			Usage:    "Treat a missing instance as a successful delete",
@@ -149,6 +151,17 @@ func Module() command.Module {
 					// Execute deletion.
 					summary := Summary{}
 					var warnings []string
+					waitRequested := resourcewait.Requested(req)
+					var getter resourcewait.InstanceGetter
+					if waitRequested {
+						var ok bool
+						getter, ok = deps.ControlPlane.(resourcewait.InstanceGetter)
+						if !ok {
+							return nil, fmt.Errorf("instance.delete --wait requires GetInstance support")
+						}
+					}
+
+					acceptedIDs := make([]string, 0, len(ids))
 					for _, instanceID := range ids {
 						item, itemWarnings, err := deleteOne(ctx, cp, deps.ControlPlane, instanceID, ignoreNotFound(req))
 						warnings = append(warnings, itemWarnings...)
@@ -159,8 +172,33 @@ func Module() command.Module {
 							continue
 						}
 						summary.AlreadyAbsent = append(summary.AlreadyAbsent, item.AlreadyAbsent...)
+						if item.Deleted > 0 && waitRequested {
+							acceptedIDs = append(acceptedIDs, instanceID)
+							continue
+						}
 						summary.Deleted += item.Deleted
 						summary.DeletedIDs = append(summary.DeletedIDs, item.DeletedIDs...)
+					}
+
+					if waitRequested {
+						options := resourcewait.OptionsFromDeps(deps)
+						for _, instanceID := range acceptedIDs {
+							_, err := resourcewait.WaitForInstanceWithPolicy(
+								ctx,
+								instanceID,
+								getter.GetInstance,
+								resourcewait.InstancePolicy(resourcewait.OperationDelete),
+								options,
+							)
+							if err != nil {
+								summary.Failed++
+								summary.FailedIDs = append(summary.FailedIDs, instanceID)
+								warnings = append(warnings, fmt.Sprintf("Failed waiting for %s to be deleted: %v", instanceID, err))
+								continue
+							}
+							summary.Deleted++
+							summary.DeletedIDs = append(summary.DeletedIDs, instanceID)
+						}
 					}
 					return resultFromSummary(summary, warnings, deps.IO.ErrOut), nil
 				}),

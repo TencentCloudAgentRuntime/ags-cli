@@ -51,9 +51,13 @@ func Module() command.Module {
 					if !ok {
 						return nil, fmt.Errorf("instance.update --wait requires GetInstance support")
 					}
-					options := resourcewait.OptionsFromDeps(deps)
-					options.DelayBeforeFirstPoll = true
-					instance, err := resourcewait.WaitForInstance(ctx, instanceID, getter.GetInstance, options)
+					instance, err := resourcewait.WaitForInstanceWithPolicy(
+						ctx,
+						instanceID,
+						getter.GetInstance,
+						resourcewait.InstancePolicy(resourcewait.OperationUpdate),
+						resourcewait.OptionsFromDeps(deps),
+					)
 					if err != nil {
 						return nil, err
 					}

@@ -6,30 +6,63 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 type fakeControlPlane struct {
-	deleted []string
-	fail    map[string]error
+	deleted       []string
+	fail          map[string]error
+	getErr        map[string]error
+	notFoundOnGet map[string]bool
+	events        []string
 }
 
-func TestModuleDoesNotExposeWaitFlag(t *testing.T) {
-	if slices.ContainsFunc(Module().Descriptor.Spec.Flags, func(flag command.FlagSpec) bool {
+func TestModuleExposesWorkflowWaitWithoutChangingGeneratedDescriptor(t *testing.T) {
+	module := Module()
+	if !slices.ContainsFunc(module.Descriptor.Spec.Flags, func(flag command.FlagSpec) bool {
 		return flag.Name == "wait"
 	}) {
-		t.Fatalf("tool.delete must not expose --wait")
+		t.Fatalf("tool.delete must expose workflow --wait")
+	}
+	if module.Descriptor.Generated == nil {
+		t.Fatal("mixed module missing generated descriptor")
+	}
+	if slices.ContainsFunc(module.Descriptor.Generated.Spec.Flags, func(flag command.FlagSpec) bool {
+		return flag.Name == "wait"
+	}) {
+		t.Fatalf("generated API descriptor must not include workflow --wait")
 	}
 }
 
 func (f *fakeControlPlane) DeleteTool(_ context.Context, toolID string) error {
+	f.events = append(f.events, "delete:"+toolID)
 	if err := f.fail[toolID]; err != nil {
 		return err
 	}
 	f.deleted = append(f.deleted, toolID)
 	return nil
+}
+
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+	f.events = append(f.events, "get:"+toolID)
+	if f.notFoundOnGet[toolID] {
+		return nil, output.NewNotFoundError("TOOL_NOT_FOUND", "missing", "hint")
+	}
+	if err := f.getErr[toolID]; err != nil {
+		return nil, err
+	}
+	status := "DELETING"
+	return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
+}
+
+func (f *fakeControlPlane) IsNotFound(err error) bool {
+	var cliErr *output.CLIError
+	return errors.As(err, &cliErr) && cliErr.Failure != nil && cliErr.Failure.Kind == output.KindNotFound
 }
 
 func TestModuleDeletesMultipleTools(t *testing.T) {
@@ -239,6 +272,76 @@ func TestModuleYesSkipsConfirmation(t *testing.T) {
 	}
 	summary := result.Data.(map[string]any)
 	if summary["Deleted"] != 1 {
+		t.Fatalf("summary = %#v", summary)
+	}
+}
+
+func TestModuleWaitSubmitsAllDeletesBeforePollingForNotFound(t *testing.T) {
+	cp := &fakeControlPlane{notFoundOnGet: map[string]bool{
+		"sdt-a": true,
+		"sdt-b": true,
+	}}
+	runtime, err := Module().Build(command.Deps{
+		ControlPlane: cp,
+		Values: map[string]any{resourcewait.OptionsKey: resourcewait.Options{
+			Interval: time.Millisecond,
+			Timeout:  50 * time.Millisecond,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"sdt-a", "sdt-b"},
+		Flags: map[string]command.FlagValue{
+			"wait": {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	wantEvents := []string{"delete:sdt-a", "delete:sdt-b", "get:sdt-a", "get:sdt-b"}
+	if !slices.Equal(cp.events, wantEvents) {
+		t.Fatalf("events = %#v, want %#v", cp.events, wantEvents)
+	}
+	if len(cp.deleted) != 2 {
+		t.Fatalf("mutations = %#v, want exactly two", cp.deleted)
+	}
+	summary := result.Data.(map[string]any)
+	if summary["Deleted"] != 2 || summary["Failed"] != 0 {
+		t.Fatalf("summary = %#v", summary)
+	}
+}
+
+func TestModuleWaitDoesNotTreatOtherGetErrorsAsDeleted(t *testing.T) {
+	cp := &fakeControlPlane{getErr: map[string]error{"sdt-a": errors.New("network down")}}
+	runtime, err := Module().Build(command.Deps{
+		ControlPlane: cp,
+		Values: map[string]any{resourcewait.OptionsKey: resourcewait.Options{
+			Interval: time.Millisecond,
+			Timeout:  50 * time.Millisecond,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"sdt-a"},
+		Flags: map[string]command.FlagValue{
+			"wait": {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(cp.deleted) != 1 {
+		t.Fatalf("mutations = %#v, want exactly one", cp.deleted)
+	}
+	if result.ExitCode != output.ExitPartialSuccess || result.Failure == nil {
+		t.Fatalf("result = %#v", result)
+	}
+	summary := result.Data.(map[string]any)
+	if summary["Deleted"] != 0 || summary["Failed"] != 1 {
 		t.Fatalf("summary = %#v", summary)
 	}
 }

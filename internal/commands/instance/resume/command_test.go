@@ -3,12 +3,14 @@ package resume
 import (
 	"bytes"
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -76,5 +78,27 @@ func TestModuleWaitsAfterResumingExactlyOnce(t *testing.T) {
 	}
 	if result.Data.(map[string]any)["Status"] != "RUNNING" {
 		t.Fatalf("result = %#v", result.Data)
+	}
+}
+
+func TestModuleWaitReportsConcurrentStopAsPreempted(t *testing.T) {
+	cp := &fakeMixedControlPlane{status: "STOPPED"}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	_, err = runtime.Handler.Run(context.Background(), command.Request{
+		Args:      []string{"ins-unit"},
+		ArgValues: map[string]string{"instance-id": "ins-unit"},
+		Flags:     map[string]command.FlagValue{"wait": {Name: "wait", Type: command.FlagBool, Bool: true}},
+	})
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "WAIT_PREEMPTED" {
+		t.Fatalf("error = %#v, want WAIT_PREEMPTED", err)
+	}
+	if cp.calls != 1 || cp.getCalls != 1 {
+		t.Fatalf("Call = %d, GetInstance = %d", cp.calls, cp.getCalls)
 	}
 }

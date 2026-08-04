@@ -15,6 +15,7 @@ import (
 
 type fakeControlPlane struct {
 	sourceTool *ags.SandboxTool
+	newStatus  string
 	getErr     error
 	callErr    error
 	action     string
@@ -29,7 +30,10 @@ func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.Sandb
 		return nil, f.getErr
 	}
 	if toolID == "sdt-new" {
-		status := "ACTIVE"
+		status := f.newStatus
+		if status == "" {
+			status = "ACTIVE"
+		}
 		return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
 	}
 	if f.sourceTool != nil {
@@ -71,6 +75,30 @@ func TestModuleWaitsForForkedToolWithoutRepeatingCreate(t *testing.T) {
 	}
 	if result.Data.(map[string]any)["Status"] != "ACTIVE" {
 		t.Fatalf("result = %#v", result.Data)
+	}
+}
+
+func TestModuleWaitReportsForkedToolIsolatedAsUnavailable(t *testing.T) {
+	cp := &fakeControlPlane{newStatus: "ISOLATED"}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	_, err = runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"sdt-source"},
+		Flags: map[string]command.FlagValue{
+			"tool-name": {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
+			"wait":      {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "WAIT_PREEMPTED" {
+		t.Fatalf("error = %#v, want WAIT_PREEMPTED", err)
+	}
+	if cp.callCount != 1 {
+		t.Fatalf("Call = %d, want exactly one create mutation", cp.callCount)
 	}
 }
 

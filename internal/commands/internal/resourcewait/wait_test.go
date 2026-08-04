@@ -25,7 +25,7 @@ func TestWaitFlagAndRequested(t *testing.T) {
 	if flag.Name != "wait" || flag.Type != command.FlagBool || !flag.Workflow {
 		t.Fatalf("Flag() = %#v", flag)
 	}
-	if flag.Usage != "Wait until the resource leaves a transitional state" {
+	if flag.Usage != "Wait until the requested operation reaches a final outcome" {
 		t.Fatalf("Flag().Usage = %q", flag.Usage)
 	}
 	if !Requested(command.Request{Flags: map[string]command.FlagValue{
@@ -35,7 +35,7 @@ func TestWaitFlagAndRequested(t *testing.T) {
 	}
 }
 
-func TestWaitForInstancePollsUntilStableState(t *testing.T) {
+func TestWaitForInstanceGetPollsUntilNonFailureTerminalState(t *testing.T) {
 	statuses := []string{"STARTING", "RUNNING"}
 	calls := 0
 	got, err := WaitForInstance(context.Background(), "ins-1", func(context.Context, string) (*ags.SandboxInstance, error) {
@@ -51,7 +51,7 @@ func TestWaitForInstancePollsUntilStableState(t *testing.T) {
 	}
 }
 
-func TestWaitForToolPollsUntilStableState(t *testing.T) {
+func TestWaitForToolGetPollsUntilNonFailureTerminalState(t *testing.T) {
 	statuses := []string{"CREATING", "ACTIVE"}
 	calls := 0
 	got, err := WaitForTool(context.Background(), "tool-1", func(context.Context, string) (*ags.SandboxTool, error) {
@@ -67,112 +67,199 @@ func TestWaitForToolPollsUntilStableState(t *testing.T) {
 	}
 }
 
-func TestWaitForToolCanDelayFirstPoll(t *testing.T) {
-	const interval = 20 * time.Millisecond
-	startedAt := time.Now()
+func TestWaitPollsImmediately(t *testing.T) {
 	status := "ACTIVE"
 	_, err := WaitForTool(context.Background(), "tool-1", func(context.Context, string) (*ags.SandboxTool, error) {
-		if elapsed := time.Since(startedAt); elapsed < interval {
-			t.Fatalf("first poll started after %s, want at least %s", elapsed, interval)
-		}
 		return &ags.SandboxTool{Status: &status}, nil
 	}, Options{
-		Interval:             interval,
-		Timeout:              100 * time.Millisecond,
-		DelayBeforeFirstPoll: true,
+		Interval: 50 * time.Millisecond,
+		Timeout:  10 * time.Millisecond,
 	})
 	if err != nil {
-		t.Fatalf("WaitForTool returned error: %v", err)
+		t.Fatalf("WaitForTool returned error before its immediate first poll: %v", err)
 	}
 }
 
-func TestWaitForInstanceReturnsEveryKnownStableState(t *testing.T) {
-	statuses := []string{
-		"RUNNING", "PAUSED", "STOPPED", "FAILED", "STARTING_FAILED",
-		"STOPPING_FAILED", "PAUSE_FAILED", "RESUME_FAILED",
-	}
-	for _, status := range statuses {
+func TestWaitForInstanceGetReturnsFailureStateAsError(t *testing.T) {
+	for _, status := range []string{
+		"FAILED", "STARTING_FAILED", "STOPPING_FAILED", "STOP_FAILED",
+		"PAUSE_FAILED", "RESUME_FAILED",
+	} {
 		t.Run(status, func(t *testing.T) {
-			calls := 0
-			got, err := WaitForInstance(context.Background(), "ins-1", func(context.Context, string) (*ags.SandboxInstance, error) {
-				calls++
-				return &ags.SandboxInstance{Status: &status}, nil
-			}, testOptions())
-			if err != nil {
-				t.Fatalf("WaitForInstance returned error: %v", err)
-			}
-			if calls != 1 || got == nil || got.Status == nil || *got.Status != status {
-				t.Fatalf("calls = %d, instance = %#v", calls, got)
-			}
+			_, err := WaitForInstance(context.Background(), "ins-1", instanceStatusGetter(status), testOptions())
+			assertWaitError(t, err, "WAIT_FAILED", status, OperationGet)
 		})
 	}
 }
 
-func TestWaitForToolReturnsEveryKnownStableState(t *testing.T) {
-	statuses := []string{"ACTIVE", "FAILED", "ISOLATED"}
-	for _, status := range statuses {
-		t.Run(status, func(t *testing.T) {
-			calls := 0
-			got, err := WaitForTool(context.Background(), "tool-1", func(context.Context, string) (*ags.SandboxTool, error) {
-				calls++
-				return &ags.SandboxTool{Status: &status}, nil
-			}, testOptions())
-			if err != nil {
-				t.Fatalf("WaitForTool returned error: %v", err)
-			}
-			if calls != 1 || got == nil || got.Status == nil || *got.Status != status {
-				t.Fatalf("calls = %d, tool = %#v", calls, got)
-			}
-		})
-	}
+func TestWaitForToolGetReturnsFailedAsError(t *testing.T) {
+	_, err := WaitForTool(context.Background(), "tool-1", toolStatusGetter("FAILED"), testOptions())
+	assertWaitError(t, err, "WAIT_FAILED", "FAILED", OperationGet)
 }
 
-func TestWaitForInstanceRecognizesEveryTransitionalState(t *testing.T) {
-	for _, transitional := range []string{"STARTING", "PAUSING", "STOPPING"} {
-		t.Run(transitional, func(t *testing.T) {
-			statuses := []string{transitional, "RUNNING"}
-			calls := 0
-			_, err := WaitForInstance(context.Background(), "ins-1", func(context.Context, string) (*ags.SandboxInstance, error) {
+func TestWaitForInstancePauseUsesOperationOutcome(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		statuses := []string{"PAUSING", "PAUSED"}
+		calls := 0
+		got, err := WaitForInstanceWithPolicy(
+			context.Background(),
+			"ins-1",
+			func(context.Context, string) (*ags.SandboxInstance, error) {
 				status := statuses[calls]
 				calls++
 				return &ags.SandboxInstance{Status: &status}, nil
-			}, testOptions())
-			if err != nil || calls != 2 {
-				t.Fatalf("calls = %d, error = %v", calls, err)
-			}
+			},
+			InstancePolicy(OperationPause),
+			testOptions(),
+		)
+		if err != nil || calls != 2 || got == nil || got.Status == nil || *got.Status != "PAUSED" {
+			t.Fatalf("calls = %d, instance = %#v, error = %v", calls, got, err)
+		}
+	})
+
+	t.Run("backend rollback to running", func(t *testing.T) {
+		_, err := WaitForInstanceWithPolicy(
+			context.Background(),
+			"ins-1",
+			instanceStatusGetter("RUNNING"),
+			InstancePolicy(OperationPause),
+			testOptions(),
+		)
+		assertWaitError(t, err, "WAIT_FAILED", "RUNNING", OperationPause)
+	})
+
+	t.Run("preempted by stop", func(t *testing.T) {
+		_, err := WaitForInstanceWithPolicy(
+			context.Background(),
+			"ins-1",
+			instanceStatusGetter("STOPPED"),
+			InstancePolicy(OperationPause),
+			testOptions(),
+		)
+		assertWaitError(t, err, "WAIT_PREEMPTED", "STOPPED", OperationPause)
+	})
+}
+
+func TestWaitForInstanceResumeUsesOperationOutcome(t *testing.T) {
+	_, err := WaitForInstanceWithPolicy(
+		context.Background(),
+		"ins-1",
+		instanceStatusGetter("RESUME_FAILED"),
+		InstancePolicy(OperationResume),
+		testOptions(),
+	)
+	assertWaitError(t, err, "WAIT_FAILED", "RESUME_FAILED", OperationResume)
+}
+
+func TestWaitForInstanceDeleteAcceptsBothStopFailureNames(t *testing.T) {
+	for _, status := range []string{"STOPPING_FAILED", "STOP_FAILED"} {
+		t.Run(status, func(t *testing.T) {
+			_, err := WaitForInstanceWithPolicy(
+				context.Background(),
+				"ins-1",
+				instanceStatusGetter(status),
+				InstancePolicy(OperationDelete),
+				testOptions(),
+			)
+			assertWaitError(t, err, "WAIT_FAILED", status, OperationDelete)
 		})
 	}
 }
 
-func TestWaitForToolRecognizesEveryTransitionalState(t *testing.T) {
-	for _, transitional := range []string{"CREATING", "DELETING"} {
-		t.Run(transitional, func(t *testing.T) {
-			statuses := []string{transitional, "ACTIVE"}
-			calls := 0
-			_, err := WaitForTool(context.Background(), "tool-1", func(context.Context, string) (*ags.SandboxTool, error) {
-				status := statuses[calls]
-				calls++
-				return &ags.SandboxTool{Status: &status}, nil
-			}, testOptions())
-			if err != nil || calls != 2 {
-				t.Fatalf("calls = %d, error = %v", calls, err)
-			}
-		})
+func TestWaitForToolCreateTreatsIsolatedAsUnavailable(t *testing.T) {
+	_, err := WaitForToolWithPolicy(
+		context.Background(),
+		"tool-1",
+		toolStatusGetter("ISOLATED"),
+		ToolPolicy(OperationCreate),
+		testOptions(),
+	)
+	assertWaitError(t, err, "WAIT_PREEMPTED", "ISOLATED", OperationCreate)
+}
+
+func TestUnknownStatusKeepsPolling(t *testing.T) {
+	statuses := []string{"NEW_SERVER_STATE", "RUNNING"}
+	calls := 0
+	got, err := WaitForInstanceWithPolicy(
+		context.Background(),
+		"ins-1",
+		func(context.Context, string) (*ags.SandboxInstance, error) {
+			status := statuses[calls]
+			calls++
+			return &ags.SandboxInstance{Status: &status}, nil
+		},
+		InstancePolicy(OperationCreate),
+		testOptions(),
+	)
+	if err != nil || calls != 2 || got == nil || got.Status == nil || *got.Status != "RUNNING" {
+		t.Fatalf("calls = %d, instance = %#v, error = %v", calls, got, err)
 	}
 }
 
-func TestWaitForInstanceRejectsUnknownState(t *testing.T) {
+func TestUnknownStatusTimesOutWithDiagnostics(t *testing.T) {
 	status := "NEW_SERVER_STATE"
-	_, err := WaitForInstance(context.Background(), "ins-1", func(context.Context, string) (*ags.SandboxInstance, error) {
-		return &ags.SandboxInstance{Status: &status}, nil
-	}, testOptions())
+	_, err := WaitForInstanceWithPolicy(
+		context.Background(),
+		"ins-1",
+		instanceStatusGetter(status),
+		InstancePolicy(OperationCreate),
+		Options{Interval: time.Millisecond, Timeout: 5 * time.Millisecond},
+	)
 	var cliErr *output.CLIError
 	if !errors.As(err, &cliErr) {
 		t.Fatalf("error = %T %v, want *output.CLIError", err, err)
 	}
-	if cliErr.Failure.Code != "WAIT_UNKNOWN_STATUS" || cliErr.Failure.Kind != output.KindGenericError || cliErr.Failure.Details["LastStatus"] != status {
+	if cliErr.Failure.Code != "WAIT_TIMEOUT" || cliErr.Failure.Kind != output.KindTimeout {
 		t.Fatalf("failure = %#v", cliErr.Failure)
 	}
+	details := cliErr.Failure.Details
+	if details["LastStatus"] != status || details["Operation"] != string(OperationCreate) {
+		t.Fatalf("details = %#v", details)
+	}
+	attempts, ok := details["Attempts"].(int)
+	if !ok || attempts < 2 {
+		t.Fatalf("Attempts = %#v, want at least 2", details["Attempts"])
+	}
+	if _, ok := details["Elapsed"]; !ok {
+		t.Fatalf("details missing Elapsed: %#v", details)
+	}
+}
+
+func TestWaitForToolDeleteTreatsOnlyNotFoundAsSuccess(t *testing.T) {
+	t.Run("not found", func(t *testing.T) {
+		options := testOptions()
+		options.IsNotFound = isNotFoundError
+		got, err := WaitForToolWithPolicy(
+			context.Background(),
+			"tool-1",
+			func(context.Context, string) (*ags.SandboxTool, error) {
+				return nil, output.NewNotFoundError("TOOL_NOT_FOUND", "missing", "hint")
+			},
+			ToolPolicy(OperationDelete),
+			options,
+		)
+		if err != nil || got != nil {
+			t.Fatalf("tool = %#v, error = %v", got, err)
+		}
+	})
+
+	t.Run("other error", func(t *testing.T) {
+		options := testOptions()
+		options.IsNotFound = isNotFoundError
+		want := errors.New("network down")
+		_, err := WaitForToolWithPolicy(
+			context.Background(),
+			"tool-1",
+			func(context.Context, string) (*ags.SandboxTool, error) {
+				return nil, want
+			},
+			ToolPolicy(OperationDelete),
+			options,
+		)
+		if !errors.Is(err, want) {
+			t.Fatalf("error = %v, want %v", err, want)
+		}
+	})
 }
 
 func TestWaitStopsWhenParentContextIsCanceled(t *testing.T) {
@@ -185,6 +272,37 @@ func TestWaitStopsWhenParentContextIsCanceled(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v, want context.Canceled", err)
 	}
+}
+
+func instanceStatusGetter(status string) func(context.Context, string) (*ags.SandboxInstance, error) {
+	return func(context.Context, string) (*ags.SandboxInstance, error) {
+		return &ags.SandboxInstance{Status: &status}, nil
+	}
+}
+
+func toolStatusGetter(status string) func(context.Context, string) (*ags.SandboxTool, error) {
+	return func(context.Context, string) (*ags.SandboxTool, error) {
+		return &ags.SandboxTool{Status: &status}, nil
+	}
+}
+
+func assertWaitError(t *testing.T, err error, code, status string, operation Operation) {
+	t.Helper()
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) {
+		t.Fatalf("error = %T %v, want *output.CLIError", err, err)
+	}
+	if cliErr.Failure.Code != code || cliErr.Failure.Details["LastStatus"] != status {
+		t.Fatalf("failure = %#v", cliErr.Failure)
+	}
+	if cliErr.Failure.Details["Operation"] != string(operation) {
+		t.Fatalf("operation details = %#v", cliErr.Failure.Details)
+	}
+}
+
+func isNotFoundError(err error) bool {
+	var cliErr *output.CLIError
+	return errors.As(err, &cliErr) && cliErr.Failure != nil && cliErr.Failure.Kind == output.KindNotFound
 }
 
 func testOptions() Options {

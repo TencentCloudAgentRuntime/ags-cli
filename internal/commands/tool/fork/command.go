@@ -86,7 +86,13 @@ func Module() command.Module {
 							Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
 						})
 					}
-					tool, err := resourcewait.WaitForTool(ctx, toolID, cp.GetTool, resourcewait.OptionsFromDeps(deps))
+					tool, err := resourcewait.WaitForToolWithPolicy(
+						ctx,
+						toolID,
+						cp.GetTool,
+						resourcewait.ToolPolicy(resourcewait.OperationFork),
+						resourcewait.OptionsFromDeps(deps),
+					)
 					if err != nil {
 						return nil, err
 					}

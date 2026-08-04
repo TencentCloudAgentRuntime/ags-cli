@@ -92,7 +92,13 @@ func Module() command.Module {
 				if instanceID == "" {
 					return nil, missingInstanceIDError()
 				}
-				finalInstance, err := resourcewait.WaitForInstance(ctx, instanceID, getter.GetInstance, resourcewait.OptionsFromDeps(deps))
+				finalInstance, err := resourcewait.WaitForInstanceWithPolicy(
+					ctx,
+					instanceID,
+					getter.GetInstance,
+					resourcewait.InstancePolicy(resourcewait.OperationCreate),
+					resourcewait.OptionsFromDeps(deps),
+				)
 				if err != nil {
 					return nil, err
 				}

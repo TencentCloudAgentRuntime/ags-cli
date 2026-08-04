@@ -58,9 +58,13 @@ func Module() command.Module {
 						if err != nil {
 							return nil, err
 						}
-						options := resourcewait.OptionsFromDeps(deps)
-						options.DelayBeforeFirstPoll = true
-						tool, err := resourcewait.WaitForTool(ctx, toolID, getter.GetTool, options)
+						tool, err := resourcewait.WaitForToolWithPolicy(
+							ctx,
+							toolID,
+							getter.GetTool,
+							resourcewait.ToolPolicy(resourcewait.OperationUpdate),
+							resourcewait.OptionsFromDeps(deps),
+						)
 						if err != nil {
 							return nil, err
 						}

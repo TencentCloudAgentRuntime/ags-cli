@@ -21,21 +21,41 @@ const (
 	OptionsKey = "resourcewait.options"
 )
 
-var (
-	instanceTransitionalStatuses = statusSet("STARTING", "PAUSING", "STOPPING")
-	instanceStableStatuses       = statusSet(
-		"RUNNING", "PAUSED", "STOPPED", "FAILED", "STARTING_FAILED",
-		"STOPPING_FAILED", "PAUSE_FAILED", "RESUME_FAILED",
-	)
-	toolTransitionalStatuses = statusSet("CREATING", "DELETING")
-	toolStableStatuses       = statusSet("ACTIVE", "FAILED", "ISOLATED")
+// Operation identifies the command whose outcome a waiter is evaluating.
+type Operation string
+
+const (
+	OperationGet    Operation = "get"
+	OperationCreate Operation = "create"
+	OperationUpdate Operation = "update"
+	OperationPause  Operation = "pause"
+	OperationResume Operation = "resume"
+	OperationDelete Operation = "delete"
+	OperationFork   Operation = "fork"
 )
+
+// Decision describes how a policy interprets one observed status.
+type Decision int
+
+const (
+	Continue Decision = iota
+	Success
+	Failed
+	Preempted
+)
+
+// Policy interprets resource statuses for one operation.
+type Policy struct {
+	Operation         Operation
+	Decide            func(string) Decision
+	NotFoundIsSuccess bool
+}
 
 // Options controls one wait operation.
 type Options struct {
-	Interval             time.Duration
-	Timeout              time.Duration
-	DelayBeforeFirstPoll bool
+	Interval   time.Duration
+	Timeout    time.Duration
+	IsNotFound func(error) bool
 }
 
 // InstanceGetter is the control-plane capability needed by Instance waiters.
@@ -52,7 +72,7 @@ type ToolGetter interface {
 func Flag() command.FlagSpec {
 	return command.FlagSpec{
 		Name:     "wait",
-		Usage:    "Wait until the resource leaves a transitional state",
+		Usage:    "Wait until the requested operation reaches a final outcome",
 		Type:     command.FlagBool,
 		Workflow: true,
 	}
@@ -92,16 +112,50 @@ func OptionsFromDeps(deps command.Deps) Options {
 		if configured.Timeout > 0 {
 			options.Timeout = configured.Timeout
 		}
+		options.IsNotFound = configured.IsNotFound
 	}
 	return options
 }
 
-// WaitForInstance polls GetInstance until the instance leaves a transitional
-// state or the operation times out.
+// InstancePolicy returns the backend-aligned status policy for an Instance
+// operation.
+func InstancePolicy(operation Operation) Policy {
+	return Policy{
+		Operation: operation,
+		Decide: func(status string) Decision {
+			return decideInstanceStatus(operation, normalizeStatus(status))
+		},
+	}
+}
+
+// ToolPolicy returns the backend-aligned status policy for a Tool operation.
+func ToolPolicy(operation Operation) Policy {
+	return Policy{
+		Operation: operation,
+		Decide: func(status string) Decision {
+			return decideToolStatus(operation, normalizeStatus(status))
+		},
+		NotFoundIsSuccess: operation == OperationDelete,
+	}
+}
+
+// WaitForInstance waits for an Instance to reach any non-failure terminal
+// state, which is the contract used by instance get --wait.
 func WaitForInstance(
 	ctx context.Context,
 	instanceID string,
 	get func(context.Context, string) (*ags.SandboxInstance, error),
+	options Options,
+) (*ags.SandboxInstance, error) {
+	return WaitForInstanceWithPolicy(ctx, instanceID, get, InstancePolicy(OperationGet), options)
+}
+
+// WaitForInstanceWithPolicy waits for an Instance operation-specific outcome.
+func WaitForInstanceWithPolicy(
+	ctx context.Context,
+	instanceID string,
+	get func(context.Context, string) (*ags.SandboxInstance, error),
+	policy Policy,
 	options Options,
 ) (*ags.SandboxInstance, error) {
 	return waitFor(ctx, "instance", instanceID, get, func(instance *ags.SandboxInstance) string {
@@ -109,15 +163,26 @@ func WaitForInstance(
 			return ""
 		}
 		return *instance.Status
-	}, instanceTransitionalStatuses, instanceStableStatuses, options)
+	}, policy, options)
 }
 
-// WaitForTool polls GetTool until the tool leaves a transitional state or the
-// operation times out.
+// WaitForTool waits for a Tool to reach any non-failure terminal state, which
+// is the contract used by tool get --wait.
 func WaitForTool(
 	ctx context.Context,
 	toolID string,
 	get func(context.Context, string) (*ags.SandboxTool, error),
+	options Options,
+) (*ags.SandboxTool, error) {
+	return WaitForToolWithPolicy(ctx, toolID, get, ToolPolicy(OperationGet), options)
+}
+
+// WaitForToolWithPolicy waits for a Tool operation-specific outcome.
+func WaitForToolWithPolicy(
+	ctx context.Context,
+	toolID string,
+	get func(context.Context, string) (*ags.SandboxTool, error),
+	policy Policy,
 	options Options,
 ) (*ags.SandboxTool, error) {
 	return waitFor(ctx, "tool", toolID, get, func(tool *ags.SandboxTool) string {
@@ -125,7 +190,7 @@ func WaitForTool(
 			return ""
 		}
 		return *tool.Status
-	}, toolTransitionalStatuses, toolStableStatuses, options)
+	}, policy, options)
 }
 
 func waitFor[T any](
@@ -134,8 +199,7 @@ func waitFor[T any](
 	resourceID string,
 	get func(context.Context, string) (T, error),
 	statusOf func(T) string,
-	transitionalStatuses map[string]struct{},
-	stableStatuses map[string]struct{},
+	policy Policy,
 	options Options,
 ) (T, error) {
 	var zero T
@@ -148,51 +212,166 @@ func waitFor[T any](
 
 	waitCtx, cancel := context.WithTimeout(ctx, options.Timeout)
 	defer cancel()
+
+	startedAt := time.Now()
 	lastStatus := ""
-	if options.DelayBeforeFirstPoll {
-		if err := waitForNextPoll(waitCtx, options.Interval); err != nil {
-			return zero, waitContextError(ctx, resourceType, resourceID, lastStatus)
-		}
-	}
+	attempts := 0
 	for {
+		attempts++
 		resource, err := get(waitCtx, resourceID)
 		if err != nil {
 			if waitCtx.Err() != nil {
-				return zero, waitContextError(ctx, resourceType, resourceID, lastStatus)
+				return zero, waitContextError(ctx, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+			}
+			if policy.NotFoundIsSuccess && options.IsNotFound != nil && options.IsNotFound(err) {
+				return zero, nil
 			}
 			return zero, err
 		}
 
 		lastStatus = strings.TrimSpace(statusOf(resource))
-		normalizedStatus := strings.ToUpper(lastStatus)
-		if _, ok := stableStatuses[normalizedStatus]; ok {
+		switch policy.Decide(lastStatus) {
+		case Success:
 			return resource, nil
-		}
-		if _, ok := transitionalStatuses[normalizedStatus]; !ok {
-			return zero, unknownStatusError(resourceType, resourceID, lastStatus)
+		case Failed:
+			return zero, waitStatusError("WAIT_FAILED", output.KindGenericError, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+		case Preempted:
+			return zero, waitStatusError("WAIT_PREEMPTED", output.KindConflict, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+		case Continue:
 		}
 
 		if err := waitForNextPoll(waitCtx, options.Interval); err != nil {
-			return zero, waitContextError(ctx, resourceType, resourceID, lastStatus)
+			return zero, waitContextError(ctx, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
 		}
 	}
 }
 
-func statusSet(statuses ...string) map[string]struct{} {
-	set := make(map[string]struct{}, len(statuses))
-	for _, status := range statuses {
-		set[status] = struct{}{}
+func decideInstanceStatus(operation Operation, status string) Decision {
+	switch operation {
+	case OperationCreate:
+		switch status {
+		case "RUNNING":
+			return Success
+		case "FAILED", "STARTING_FAILED", "STOPPING_FAILED", "STOP_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
+			return Failed
+		case "PAUSED", "STOPPED":
+			return Preempted
+		default:
+			return Continue
+		}
+	case OperationUpdate:
+		switch status {
+		case "RUNNING", "PAUSED", "STOPPED":
+			return Success
+		case "FAILED", "STARTING_FAILED", "STOPPING_FAILED", "STOP_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
+			return Failed
+		default:
+			return Continue
+		}
+	case OperationPause:
+		switch status {
+		case "PAUSED":
+			return Success
+		case "RUNNING", "FAILED", "STARTING_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
+			return Failed
+		case "STOPPED", "STOPPING_FAILED", "STOP_FAILED":
+			return Preempted
+		default:
+			return Continue
+		}
+	case OperationResume:
+		switch status {
+		case "RUNNING":
+			return Success
+		case "FAILED", "STARTING_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
+			return Failed
+		case "STOPPED", "STOPPING_FAILED", "STOP_FAILED":
+			return Preempted
+		default:
+			return Continue
+		}
+	case OperationDelete:
+		switch status {
+		case "STOPPED":
+			return Success
+		case "STOPPING_FAILED", "STOP_FAILED":
+			return Failed
+		default:
+			return Continue
+		}
+	default:
+		switch status {
+		case "RUNNING", "PAUSED", "STOPPED":
+			return Success
+		case "FAILED", "STARTING_FAILED", "STOPPING_FAILED", "STOP_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
+			return Failed
+		default:
+			return Continue
+		}
 	}
-	return set
 }
 
-func unknownStatusError(resourceType, resourceID, status string) error {
+func decideToolStatus(operation Operation, status string) Decision {
+	switch operation {
+	case OperationCreate, OperationFork:
+		switch status {
+		case "ACTIVE":
+			return Success
+		case "FAILED":
+			return Failed
+		case "ISOLATED":
+			return Preempted
+		default:
+			return Continue
+		}
+	case OperationUpdate:
+		switch status {
+		case "ACTIVE", "ISOLATED":
+			return Success
+		case "FAILED":
+			return Failed
+		default:
+			return Continue
+		}
+	case OperationDelete:
+		return Continue
+	default:
+		switch status {
+		case "ACTIVE", "ISOLATED":
+			return Success
+		case "FAILED":
+			return Failed
+		default:
+			return Continue
+		}
+	}
+}
+
+func normalizeStatus(status string) string {
+	return strings.ToUpper(strings.TrimSpace(status))
+}
+
+func waitStatusError(
+	code string,
+	kind string,
+	resourceType string,
+	resourceID string,
+	operation Operation,
+	status string,
+	attempts int,
+	startedAt time.Time,
+) error {
+	message := fmt.Sprintf("%s %s %s finished with status %q", resourceType, resourceID, operation, status)
+	hint := fmt.Sprintf("Inspect the resource with 'agr %s get %s'.", resourceType, resourceID)
+	if code == "WAIT_PREEMPTED" {
+		message = fmt.Sprintf("%s %s %s was preempted; current status is %q", resourceType, resourceID, operation, status)
+	}
 	return output.NewCLIError(&output.Failure{
-		Code:    "WAIT_UNKNOWN_STATUS",
-		Kind:    output.KindGenericError,
-		Message: fmt.Sprintf("%s %s has unknown status %q", resourceType, resourceID, status),
-		Hint:    "Update agr if the service introduced a new resource status.",
-		Details: map[string]any{"ResourceType": resourceType, "ResourceId": resourceID, "LastStatus": status},
+		Code:    code,
+		Kind:    kind,
+		Message: message,
+		Hint:    hint,
+		Details: waitDetails(resourceType, resourceID, operation, status, attempts, startedAt),
 	})
 }
 
@@ -207,16 +386,42 @@ func waitForNextPoll(ctx context.Context, interval time.Duration) error {
 	}
 }
 
-func waitContextError(parent context.Context, resourceType, resourceID, lastStatus string) error {
+func waitContextError(
+	parent context.Context,
+	resourceType string,
+	resourceID string,
+	operation Operation,
+	lastStatus string,
+	attempts int,
+	startedAt time.Time,
+) error {
 	if err := parent.Err(); err != nil {
 		return err
 	}
 	return output.NewCLIError(&output.Failure{
 		Code:      "WAIT_TIMEOUT",
 		Kind:      output.KindTimeout,
-		Message:   fmt.Sprintf("timed out waiting for %s %s", resourceType, resourceID),
+		Message:   fmt.Sprintf("timed out waiting for %s %s %s", resourceType, resourceID, operation),
 		Hint:      fmt.Sprintf("Run 'agr %s get %s --wait' to continue waiting.", resourceType, resourceID),
 		Retryable: true,
-		Details:   map[string]any{"ResourceType": resourceType, "ResourceId": resourceID, "LastStatus": lastStatus},
+		Details:   waitDetails(resourceType, resourceID, operation, lastStatus, attempts, startedAt),
 	})
+}
+
+func waitDetails(
+	resourceType string,
+	resourceID string,
+	operation Operation,
+	lastStatus string,
+	attempts int,
+	startedAt time.Time,
+) map[string]any {
+	return map[string]any{
+		"ResourceType": resourceType,
+		"ResourceId":   resourceID,
+		"Operation":    string(operation),
+		"LastStatus":   lastStatus,
+		"Attempts":     attempts,
+		"Elapsed":      time.Since(startedAt).Round(time.Millisecond).String(),
+	}
 }

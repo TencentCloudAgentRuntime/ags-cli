@@ -14,13 +14,11 @@ import (
 )
 
 type fakeControlPlane struct {
-	action         string
-	request        map[string]any
-	err            error
-	calls          int
-	getCalls       int
-	updateReturned time.Time
-	firstGet       time.Time
+	action   string
+	request  map[string]any
+	err      error
+	calls    int
+	getCalls int
 }
 
 func (f *fakeControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
@@ -30,24 +28,19 @@ func (f *fakeControlPlane) Call(_ context.Context, action string, request map[st
 	if f.err != nil {
 		return nil, f.err
 	}
-	f.updateReturned = time.Now()
 	return map[string]any{"ok": true}, nil
 }
 
 func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
 	f.getCalls++
-	if f.firstGet.IsZero() {
-		f.firstGet = time.Now()
-	}
 	status := "ACTIVE"
 	return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
 }
 
 func TestModuleWaitsAfterUpdatingExactlyOnce(t *testing.T) {
-	const interval = 20 * time.Millisecond
 	cp := &fakeControlPlane{}
 	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
-		resourcewait.OptionsKey: resourcewait.Options{Interval: interval, Timeout: 100 * time.Millisecond},
+		resourcewait.OptionsKey: resourcewait.Options{Interval: 50 * time.Millisecond, Timeout: 10 * time.Millisecond},
 	}})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -66,9 +59,6 @@ func TestModuleWaitsAfterUpdatingExactlyOnce(t *testing.T) {
 	}
 	if cp.calls != 1 || cp.getCalls != 1 {
 		t.Fatalf("Call = %d, GetTool = %d", cp.calls, cp.getCalls)
-	}
-	if elapsed := cp.firstGet.Sub(cp.updateReturned); elapsed < interval {
-		t.Fatalf("first GetTool started %s after update returned, want at least %s", elapsed, interval)
 	}
 	if result.Data.(map[string]any)["Status"] != "ACTIVE" {
 		t.Fatalf("result = %#v", result.Data)

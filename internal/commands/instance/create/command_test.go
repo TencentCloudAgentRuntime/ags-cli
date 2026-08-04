@@ -199,6 +199,32 @@ func TestModuleWaitsAfterCreatingExactlyOnce(t *testing.T) {
 	}
 }
 
+func TestModuleWaitDoesNotTreatStoppedInstanceAsCreated(t *testing.T) {
+	id := "ins-created"
+	starting := "STARTING"
+	stopped := "STOPPED"
+	cp := &fakeMixedControlPlane{
+		resp:          &ags.StartSandboxInstanceResponseParams{Instance: &ags.SandboxInstance{InstanceId: &id, Status: &starting}},
+		finalInstance: &ags.SandboxInstance{InstanceId: &id, Status: &stopped},
+	}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	flags := withChanged(allInstanceCreateFlags(), "tool-name", "tool-name")
+	flags["wait"] = command.FlagValue{Name: "wait", Type: command.FlagBool, Bool: true}
+	_, err = runtime.Handler.Run(context.Background(), command.Request{Flags: flags})
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "WAIT_PREEMPTED" {
+		t.Fatalf("error = %#v, want WAIT_PREEMPTED", err)
+	}
+	if cp.calls != 1 || cp.getCalls != 1 {
+		t.Fatalf("Call = %d, GetInstance = %d", cp.calls, cp.getCalls)
+	}
+}
+
 func TestModuleCreatesInstanceWithToolID(t *testing.T) {
 	id := "ins-byid"
 	toolID := "sdt-abc123"

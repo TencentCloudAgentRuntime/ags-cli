@@ -9,6 +9,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
@@ -16,6 +17,12 @@ import (
 // workflow. It keeps multi-delete behavior testable without a full SDK client.
 type ControlPlane interface {
 	DeleteTool(ctx context.Context, toolID string) error
+}
+
+// NotFoundClassifier lets the delete waiter distinguish deletion completion
+// from other GetTool failures.
+type NotFoundClassifier interface {
+	IsNotFound(error) bool
 }
 
 // Summary aggregates per-tool delete outcomes for text and JSON rendering.
@@ -45,6 +52,7 @@ func Module() command.Module {
 		{Name: "tool-id", Required: true, Repeatable: true, Description: "Sandbox tool ID."},
 	}
 	spec.Flags = append(spec.Flags,
+		resourcewait.Flag(),
 		command.FlagSpec{
 			Name:     "dry-run",
 			Usage:    "List resources that would be deleted without actually executing the deletion",
@@ -89,7 +97,8 @@ func Module() command.Module {
 					dryRun := isDryRun(req)
 					skipConfirm := isYes(req)
 
-					// --request mode: single tool, error propagates directly.
+					requestMode := requestFlag(req)
+					var ids []string
 					if requestFlag(req) {
 						if len(req.Args) > 1 {
 							return nil, output.NewUsageError("REQUEST_FLAG_CONFLICT", "--request only supports a single tool id", "Use --request for one ToolId at a time, or pass multiple positional arguments without --request.")
@@ -102,16 +111,10 @@ func Module() command.Module {
 						if strings.TrimSpace(toolID) == "" {
 							return nil, output.NewUsageError("MISSING_REQUIRED_ARG", "missing tool id", "Provide <tool-id>.")
 						}
-						if dryRun {
-							return dryRunResult([]string{toolID}, deps.IO.ErrOut), nil
-						}
-						if err := cp.DeleteTool(ctx, toolID); err != nil {
-							return nil, err
-						}
-						return resultFromSummary(Summary{Deleted: 1, DeletedIDs: []string{toolID}}, nil, deps.IO.ErrOut), nil
+						ids = []string{toolID}
+					} else {
+						ids = req.Args
 					}
-
-					ids := req.Args
 
 					// --dry-run: preview only, no actual deletion.
 					if dryRun {
@@ -137,15 +140,63 @@ func Module() command.Module {
 					// Execute deletion.
 					summary := Summary{}
 					var warnings []string
+					waitRequested := resourcewait.Requested(req)
+					var getter resourcewait.ToolGetter
+					var classifier NotFoundClassifier
+					if waitRequested {
+						var ok bool
+						getter, ok = deps.ControlPlane.(resourcewait.ToolGetter)
+						if !ok {
+							return nil, fmt.Errorf("tool.delete --wait requires GetTool support")
+						}
+						classifier, ok = deps.ControlPlane.(NotFoundClassifier)
+						if !ok {
+							return nil, fmt.Errorf("tool.delete --wait requires not-found classification support")
+						}
+					}
+
+					acceptedIDs := make([]string, 0, len(ids))
 					for _, toolID := range ids {
 						if err := cp.DeleteTool(ctx, toolID); err != nil {
+							if requestMode {
+								return nil, err
+							}
 							summary.Failed++
 							summary.FailedIDs = append(summary.FailedIDs, toolID)
 							warnings = append(warnings, fmt.Sprintf("failed to delete %s: %v", toolID, err))
 							continue
 						}
+						if waitRequested {
+							acceptedIDs = append(acceptedIDs, toolID)
+							continue
+						}
 						summary.Deleted++
 						summary.DeletedIDs = append(summary.DeletedIDs, toolID)
+					}
+
+					if waitRequested {
+						options := resourcewait.OptionsFromDeps(deps)
+						options.IsNotFound = classifier.IsNotFound
+						for _, toolID := range acceptedIDs {
+							_, err := resourcewait.WaitForToolWithPolicy(
+								ctx,
+								toolID,
+								getter.GetTool,
+								resourcewait.ToolPolicy(resourcewait.OperationDelete),
+								options,
+							)
+							if err != nil {
+								if requestMode {
+									return nil, err
+								}
+								summary.Failed++
+								summary.FailedIDs = append(summary.FailedIDs, toolID)
+								warnings = append(warnings, fmt.Sprintf("failed waiting for %s to be deleted: %v", toolID, err))
+								continue
+							}
+							summary.Deleted++
+							summary.DeletedIDs = append(summary.DeletedIDs, toolID)
+						}
 					}
 					return resultFromSummary(summary, warnings, deps.IO.ErrOut), nil
 				}),

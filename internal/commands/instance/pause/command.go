@@ -51,7 +51,13 @@ func Module() command.Module {
 					if !ok {
 						return nil, fmt.Errorf("instance.pause --wait requires GetInstance support")
 					}
-					instance, err := resourcewait.WaitForInstance(ctx, instanceID, getter.GetInstance, resourcewait.OptionsFromDeps(deps))
+					instance, err := resourcewait.WaitForInstanceWithPolicy(
+						ctx,
+						instanceID,
+						getter.GetInstance,
+						resourcewait.InstancePolicy(resourcewait.OperationPause),
+						resourcewait.OptionsFromDeps(deps),
+					)
 					if err != nil {
 						return nil, err
 					}

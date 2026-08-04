@@ -76,7 +76,13 @@ func Module() command.Module {
 						if !ok {
 							return nil, fmt.Errorf("tool.create --wait requires GetTool support")
 						}
-						tool, err := resourcewait.WaitForTool(ctx, derefString(response.ToolId), getter.GetTool, resourcewait.OptionsFromDeps(deps))
+						tool, err := resourcewait.WaitForToolWithPolicy(
+							ctx,
+							derefString(response.ToolId),
+							getter.GetTool,
+							resourcewait.ToolPolicy(resourcewait.OperationCreate),
+							resourcewait.OptionsFromDeps(deps),
+						)
 						if err != nil {
 							return nil, err
 						}

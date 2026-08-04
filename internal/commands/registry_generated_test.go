@@ -62,11 +62,13 @@ func TestWaitFlagScope(t *testing.T) {
 	}
 	wantWait := []string{
 		"instance.create",
+		"instance.delete",
 		"instance.get",
 		"instance.pause",
 		"instance.resume",
 		"instance.update",
 		"tool.create",
+		"tool.delete",
 		"tool.fork",
 		"tool.get",
 		"tool.update",
@@ -86,7 +88,7 @@ func TestWaitFlagScope(t *testing.T) {
 			}
 		}
 	}
-	for _, id := range []string{"instance.delete", "instance.list", "tool.delete", "tool.list"} {
+	for _, id := range []string{"instance.list", "tool.list"} {
 		module, _ := registry.Lookup(id)
 		if flag, ok := findFlag(module.Descriptor.Spec.Flags, "wait"); ok {
 			t.Errorf("%s unexpectedly exposes --wait: %#v", id, flag)
