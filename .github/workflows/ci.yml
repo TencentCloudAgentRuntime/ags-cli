@@ -133,6 +133,20 @@ jobs:
         run: |
           go test ./internal/cli -run "TestResolveOverlay|TestOverlay_TempInstance|TestOverlay_InstanceExecTempLifecycleIntegration|TestOverlay_PreExecutionFailureForcesCleanup" -count=1 -v
 
+  integ-tests:
+    name: Integration Tests (no credentials)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run credential-free integration tests
+        run: go test ./tests/integ/ -v -count=1 -timeout 30s
+
   release-ready:
     name: Release Ready
     runs-on: ubuntu-latest
@@ -176,6 +190,7 @@ jobs:
       - changelog-gate
       - generator-gate
       - overlay-smoke
+      - integ-tests
       - release-ready
     runs-on: ubuntu-latest
     steps:
