@@ -7,9 +7,20 @@ set -eu
 
 REPO="TencentCloudAgentRuntime/ags-cli"
 BINARY="agr"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 AGR_DOWNLOAD_MIRROR="${AGR_DOWNLOAD_MIRROR:-official}"
 OFFICIAL_BASE_URL="${AGR_DOWNLOAD_BASE_URL:-https://dl.tencentags.com/agr-cli}"
+
+if [ -n "${INSTALL_DIR:-}" ]; then
+    : # Honor the caller's explicit install directory.
+elif [ -w /usr/local/bin ]; then
+    INSTALL_DIR="/usr/local/bin"
+elif [ -n "${HOME:-}" ]; then
+    INSTALL_DIR="${HOME}/.local/bin"
+else
+    echo "Error: no writable install directory found and HOME is not set." >&2
+    echo "Set INSTALL_DIR to a writable directory and retry." >&2
+    exit 1
+fi
 
 download() {
     url="$1"
@@ -155,16 +166,26 @@ fi
 
 chmod +x "$TMPDIR/$BIN_NAME"
 
-if [ -w "$INSTALL_DIR" ]; then
-    mv "$TMPDIR/$BIN_NAME" "${INSTALL_DIR}/${BINARY}"
-else
-    echo "Installing to ${INSTALL_DIR}/${BINARY} (requires sudo) ..."
-    sudo mv "$TMPDIR/$BIN_NAME" "${INSTALL_DIR}/${BINARY}"
+mkdir -p "$INSTALL_DIR"
+if [ ! -w "$INSTALL_DIR" ]; then
+    echo "Error: install directory '$INSTALL_DIR' is not writable." >&2
+    echo "Set INSTALL_DIR to a writable directory and retry." >&2
+    exit 1
 fi
+mv "$TMPDIR/$BIN_NAME" "${INSTALL_DIR}/${BINARY}"
 
 echo ""
 echo "AGR CLI installed successfully!"
 echo "  Command:  ${INSTALL_DIR}/${BINARY}"
-echo "  Version:  $(${INSTALL_DIR}/${BINARY} version 2>/dev/null | head -1 || echo "${TAG}")"
+echo "  Version:  $("${INSTALL_DIR}/${BINARY}" version 2>/dev/null | head -1 || echo "${TAG}")"
 echo ""
+case ":${PATH:-}:" in
+    *":${INSTALL_DIR}:"*) ;;
+    *)
+        echo "Note: ${INSTALL_DIR} is not in PATH."
+        echo "Add it for the current shell with:"
+        echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
+        echo ""
+        ;;
+esac
 echo "Next step: run 'agr init' to configure your credentials."

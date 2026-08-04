@@ -56,6 +56,17 @@ jobs:
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
 
+      - name: Test one-line installer
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            system_bin_mode="$(stat -c '%a' /usr/local/bin)"
+            trap 'sudo chmod "$system_bin_mode" /usr/local/bin' EXIT
+            sudo chmod a-w /usr/local/bin
+            sh scripts/test-install.sh --require-fallback
+          else
+            sh scripts/test-install.sh
+          fi
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

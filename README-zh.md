@@ -20,6 +20,16 @@ brew install TencentCloudAgentRuntime/tap/agr-cli
 curl -fsSL https://dl.tencentags.com/agr-cli/latest/install.sh | sh
 ```
 
+安装器会优先使用可写的 `/usr/local/bin`；在无 root 权限的环境中，会自动回退到
+`$HOME/.local/bin`，且不会调用 `sudo`。如果所选目录不在 `PATH` 中，安装器会输出
+相应的添加命令。
+
+如需明确指定其他可写目录：
+
+```bash
+curl -fsSL https://dl.tencentags.com/agr-cli/latest/install.sh | INSTALL_DIR="$HOME/bin" sh
+```
+
 安装指定版本：
 
 ```bash
