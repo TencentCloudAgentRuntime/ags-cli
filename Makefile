@@ -1,4 +1,4 @@
-.PHONY: build install go-install clean test lint fmt help man install-man e2e
+.PHONY: build install go-install clean test lint fmt help man install-man e2e integ
 
 # Binary name
 BINARY_NAME=agr
@@ -101,6 +101,10 @@ fmt:
 ## e2e: Run lifecycle tests (requires credentials via env or ~/.agr/config.toml)
 e2e:
 	$(GOTEST) -v -timeout 20m ./tests/lifecycle/...
+
+## integ: Run integration tests (no credentials required,<30s)
+integ:
+	$(GOTEST) -v -count=1 -timeout 30s ./tests/integ/...
 
 ## deps: Download dependencies
 deps:
