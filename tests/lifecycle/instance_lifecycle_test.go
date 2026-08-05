@@ -22,19 +22,29 @@ var _ = Describe("Instance CLI lifecycle", func() {
 
 	It("creates, inspects, lists, exercises data plane, and deletes an instance", func() {
 		toolID := testutil.State().EnsureToolID(context.Background())
-		args := []string{"--output", "json", "instance", "create", "--timeout", "5m", "--tool-id", toolID}
+		args := []string{"--output", "json", "instance", "create", "--wait", "--timeout", "5m", "--tool-id", toolID}
 
 		create := cli.Run(context.Background(), args...)
-		create.ExpectSuccess()
 		createEnv := create.Envelope()
+		instanceID := createdResourceID(createEnv, "InstanceId")
+		tracker.AddInstance(instanceID)
+		create.ExpectSuccess()
 		Expect(createEnv.Command).To(Equal("instance.create"))
 		Expect(createEnv.Status).To(Equal("succeeded"))
-		instanceID := stringField(createEnv.Data, "InstanceId")
 		Expect(instanceID).NotTo(BeEmpty())
-		tracker.AddInstance(instanceID)
+		Expect(stringField(createEnv.Data, "Status")).To(Equal("RUNNING"))
 
-		getEnv := waitForInstanceStatus(cli, instanceID, "RUNNING")
-		Expect(stringField(getEnv.Data, "InstanceId")).To(Equal(instanceID))
+		pause := cli.Run(context.Background(), "--output", "json", "instance", "pause", instanceID, "--wait")
+		pause.ExpectSuccess()
+		pauseEnv := pause.Envelope()
+		Expect(pauseEnv.Command).To(Equal("instance.pause"))
+		Expect(stringField(pauseEnv.Data, "Status")).To(Equal("PAUSED"))
+
+		resume := cli.Run(context.Background(), "--output", "json", "instance", "resume", instanceID, "--wait")
+		resume.ExpectSuccess()
+		resumeEnv := resume.Envelope()
+		Expect(resumeEnv.Command).To(Equal("instance.resume"))
+		Expect(stringField(resumeEnv.Data, "Status")).To(Equal("RUNNING"))
 
 		list := cli.Run(context.Background(), "--output", "json", "instance", "list", "--limit", "20")
 		list.ExpectSuccess()
@@ -58,7 +68,7 @@ var _ = Describe("Instance CLI lifecycle", func() {
 		remoteFailure.ExpectExit(7)
 		Expect(strings.TrimSpace(remoteFailure.Stdout)).To(BeEmpty(), remoteFailure.Diagnostics())
 
-		deleted := cli.Run(context.Background(), "--output", "json", "instance", "delete", instanceID)
+		deleted := cli.Run(context.Background(), "--output", "json", "instance", "delete", instanceID, "--wait")
 		deleted.ExpectSuccess()
 		deletedEnv := deleted.Envelope()
 		Expect(numberField(deletedEnv.Data, "Deleted")).To(Equal(1))

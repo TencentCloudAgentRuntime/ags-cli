@@ -8,6 +8,7 @@ import (
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -26,6 +27,7 @@ func Module() command.Module {
 		Short:        "Get instance details",
 		Long:         "Get detailed information about a specific instance.",
 		Args:         []command.ArgSpec{{Name: "instance-id", Required: true}},
+		Flags:        []command.FlagSpec{resourcewait.Flag()},
 		SupportsJSON: true,
 		Output:       command.OutputSpec{DataType: "Instance"},
 	}
@@ -54,17 +56,29 @@ func Module() command.Module {
 				if strings.TrimSpace(instanceID) == "" {
 					return nil, output.NewUsageError("MISSING_REQUIRED_ARG", "missing instance id", "Provide <instance-id>.")
 				}
-				instance, err := cp.GetInstance(ctx, instanceID)
+				var instance *ags.SandboxInstance
+				var err error
+				if resourcewait.Requested(req) {
+					instance, err = resourcewait.WaitForInstance(ctx, instanceID, cp.GetInstance, resourcewait.OptionsFromDeps(deps))
+				} else {
+					instance, err = cp.GetInstance(ctx, instanceID)
+				}
 				if err != nil {
 					return nil, err
 				}
-				return &command.Result{
-					Data: instanceview.CanonicalData(instance),
-					Text: func(w io.Writer) {
-						renderInstanceDetails(w, instance)
-					},
-				}, nil
+				return Result(instance), nil
 			})}, nil
+		},
+	}
+}
+
+// Result returns the canonical command result for an Instance. Lifecycle
+// mutation commands reuse it after --wait reaches the expected state.
+func Result(instance *ags.SandboxInstance) *command.Result {
+	return &command.Result{
+		Data: instanceview.CanonicalData(instance),
+		Text: func(w io.Writer) {
+			renderInstanceDetails(w, instance)
 		},
 	}
 }

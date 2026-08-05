@@ -4,24 +4,37 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 type fakeControlPlane struct {
 	sourceTool *ags.SandboxTool
+	newStatus  string
 	getErr     error
 	callErr    error
 	action     string
 	request    map[string]any
+	getIDs     []string
+	callCount  int
 }
 
 func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+	f.getIDs = append(f.getIDs, toolID)
 	if f.getErr != nil {
 		return nil, f.getErr
+	}
+	if toolID == "sdt-new" {
+		status := f.newStatus
+		if status == "" {
+			status = "ACTIVE"
+		}
+		return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
 	}
 	if f.sourceTool != nil {
 		return f.sourceTool, nil
@@ -32,10 +45,61 @@ func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.Sandb
 func (f *fakeControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
 	f.action = action
 	f.request = request
+	f.callCount++
 	if f.callErr != nil {
 		return nil, f.callErr
 	}
 	return map[string]any{"ToolId": "sdt-new"}, nil
+}
+
+func TestModuleWaitsForForkedToolWithoutRepeatingCreate(t *testing.T) {
+	cp := &fakeControlPlane{}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	result, err := runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"sdt-source"},
+		Flags: map[string]command.FlagValue{
+			"tool-name": {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
+			"wait":      {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if cp.callCount != 1 || len(cp.getIDs) != 2 || cp.getIDs[0] != "sdt-source" || cp.getIDs[1] != "sdt-new" {
+		t.Fatalf("Call = %d, GetTool ids = %#v", cp.callCount, cp.getIDs)
+	}
+	if result.Data.(map[string]any)["Status"] != "ACTIVE" {
+		t.Fatalf("result = %#v", result.Data)
+	}
+}
+
+func TestModuleWaitReportsForkedToolIsolatedAsUnavailable(t *testing.T) {
+	cp := &fakeControlPlane{newStatus: "ISOLATED"}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
+	}})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	_, err = runtime.Handler.Run(context.Background(), command.Request{
+		Args: []string{"sdt-source"},
+		Flags: map[string]command.FlagValue{
+			"tool-name": {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
+			"wait":      {Name: "wait", Type: command.FlagBool, Bool: true},
+		},
+	})
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "WAIT_PREEMPTED" {
+		t.Fatalf("error = %#v, want WAIT_PREEMPTED", err)
+	}
+	if cp.callCount != 1 {
+		t.Fatalf("Call = %d, want exactly one create mutation", cp.callCount)
+	}
 }
 
 func TestModuleCopiesCreateCapableFields(t *testing.T) {
