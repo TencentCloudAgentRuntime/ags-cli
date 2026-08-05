@@ -13,8 +13,8 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags v1.3.87
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.87
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags v1.3.151
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.151
 	golang.org/x/term v0.42.0
 )
 

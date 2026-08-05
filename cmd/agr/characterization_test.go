@@ -230,7 +230,7 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"Create an image pre-cache task",
 				"--image string",
 				"--image-registry-type string",
-				"Image registry type: enterprise or personal (required)",
+				"Image registry type: enterprise, personal, or custom (required)",
 			},
 		},
 		{
@@ -239,7 +239,7 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"Describe an image pre-cache task",
 				"--image string",
 				"--image-registry-type string",
-				"Image registry type: enterprise or personal (required)",
+				"Image registry type: enterprise, personal, or custom (required)",
 			},
 		},
 	}

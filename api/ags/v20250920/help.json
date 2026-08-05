@@ -54,9 +54,9 @@
                     "inputs": {
                         "custom-configuration": {
                             "usage": "CustomConfiguration JSON object, @file, or - for stdin",
-                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}]}",
+                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}",
                             "examples": [
-                                "agr instance create --tool-id sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"hello\"}]}'"
+                                "agr instance create --tool-id sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"hello\"}],\"Resources\":{\"Storage\":\"10Gi\"}}'"
                             ]
                         }
                     }
@@ -191,10 +191,40 @@
             }
         },
         "instance.pause": {
-            "short": "Pause instance"
+            "short": "Pause instance",
+            "long": "Pause a sandbox instance. Use --memory to preserve process and memory state; omit it to use the service default.",
+            "examples": [
+                "agr instance pause ins-xxxx",
+                "agr instance pause ins-xxxx --memory"
+            ],
+            "fields": {
+                "Memory": {
+                    "description": "Whether to preserve process and memory state while paused.",
+                    "inputs": {
+                        "memory": {
+                            "usage": "Preserve process and memory state; use --memory=false for disk-only pause"
+                        }
+                    }
+                }
+            }
         },
         "instance.resume": {
-            "short": "Resume instance"
+            "short": "Resume instance",
+            "long": "Resume a paused sandbox instance, optionally setting the automatic recycle timeout.",
+            "examples": [
+                "agr instance resume ins-xxxx",
+                "agr instance resume ins-xxxx --timeout 10m"
+            ],
+            "fields": {
+                "Timeout": {
+                    "description": "Automatic recycle timeout after resume.",
+                    "inputs": {
+                        "timeout": {
+                            "usage": "Timeout from 30s to 24h, for example 5m, 300s, or 1h"
+                        }
+                    }
+                }
+            }
         },
         "instance.delete": {
             "short": "Delete instances",
@@ -221,7 +251,18 @@
                     "description": "Tool type.",
                     "inputs": {
                         "tool-type": {
-                            "usage": "Tool type (required)"
+                            "usage": "Tool type (required)",
+                            "values": [
+                                "browser",
+                                "code-interpreter",
+                                "mobile",
+                                "osworld",
+                                "custom",
+                                "swebench",
+                                "aio",
+                                "android-world",
+                                "waa"
+                            ]
                         }
                     }
                 },
@@ -285,11 +326,12 @@
                     "inputs": {
                         "storage-mounts": {
                             "usage": "StorageMounts as JSON array, @file, or - for stdin",
-                            "format": "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":false,\"StorageSource\":{\"Cos\":{...}}}]",
+                            "format": "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":false,\"StorageSource\":{\"Cos\":{...}}}] or [{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"StorageSource\":{\"AgentBucket\":{\"LibraryId\":\"<library-id>\",\"SpaceId\":\"<space-id>\",\"AccessDomain\":\"<domain>\"}}}]",
                             "values": [
                                 "Cos: Tencent Cloud Object Storage source",
                                 "Image: container image volume source",
-                                "Cfs: Cloud File Storage source"
+                                "Cfs: Cloud File Storage source",
+                                "AgentBucket: AgentBucket source with LibraryId, SpaceId, and AccessDomain"
                             ],
                             "examples": [
                                 "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --role-arn qcs::cam::uin/100000:roleName/my-role --storage-mounts '[{\"Name\":\"data\",\"MountPath\":\"/data\",\"StorageSource\":{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"my-bucket\",\"BucketPath\":\"/workspace\"}}}]'"
@@ -302,9 +344,9 @@
                     "inputs": {
                         "custom-configuration": {
                             "usage": "CustomConfiguration JSON object, @file, or - for stdin",
-                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/bin/sh\"],\"Args\":[\"-c\",\"sleep 3600\"],\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}",
+                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/bin/sh\"],\"Args\":[\"-c\",\"sleep 3600\"],\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}",
                             "examples": [
-                                "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}'"
+                                "agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}'"
                             ]
                         }
                     }
@@ -433,9 +475,9 @@
                     "inputs": {
                         "custom-configuration": {
                             "usage": "CustomConfiguration JSON object, @file, or - for stdin",
-                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}]}",
+                            "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}",
                             "examples": [
-                                "agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}]}'"
+                                "agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}],\"Resources\":{\"Storage\":\"10Gi\"}}'"
                             ]
                         }
                     }
@@ -479,7 +521,7 @@
                     "description": "Image registry type.",
                     "inputs": {
                         "image-registry-type": {
-                            "usage": "Image registry type: enterprise or personal (required)"
+                            "usage": "Image registry type: enterprise, personal, or custom (required)"
                         }
                     }
                 }
@@ -508,7 +550,7 @@
                     "description": "Image registry type.",
                     "inputs": {
                         "image-registry-type": {
-                            "usage": "Image registry type: enterprise or personal (required)"
+                            "usage": "Image registry type: enterprise, personal, or custom (required)"
                         }
                     }
                 }

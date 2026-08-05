@@ -14,6 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "pause"},
 			Use:          "pause <instance-id>",
 			Short:        "Pause instance",
+			Long:         "Pause a sandbox instance. Use --memory to preserve process and memory state; omit it to use the service default.",
+			Examples:     []string{"agr instance pause ins-xxxx", "agr instance pause ins-xxxx --memory"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
 				{Name: "instance-id", Required: true, Description: "Sandbox instance ID."},
@@ -38,6 +40,13 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "instance-id", Positional: true},
+				},
+			},
+			{
+				Name:   "Memory",
+				Parser: "common.default_bool",
+				Inputs: []apicli.InputSpec{
+					{Name: "memory", Flag: "memory", Usage: "Preserve process and memory state; use --memory=false for disk-only pause", Type: command.FlagBool},
 				},
 			},
 		},
