@@ -638,6 +638,25 @@ func staticWorkflowModules() []registryModule {
 		"instance.proxy",
 		"tool.get",
 		"tool.fork",
+		// Identity & Credential modules — workflow adapter mode.
+		// Remove from this list when migrating to mixed-api mode.
+		"credential.oauth2.acquire",
+		"credential.oauth2.complete",
+		"credential.provider.create",
+		"credential.provider.delete",
+		"credential.provider.get",
+		"credential.provider.list",
+		"credential.provider.update",
+		"credential.secret.delete",
+		"credential.secret.get",
+		"credential.secret.list",
+		"credential.secret.set",
+		"identity.create",
+		"identity.delete",
+		"identity.get",
+		"identity.list",
+		"identity.token.create",
+		"identity.update",
 	}
 	modules := make([]registryModule, 0, len(ids))
 	for _, id := range ids {

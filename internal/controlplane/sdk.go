@@ -25,6 +25,12 @@ type SDK struct {
 	TokenCache                  *token.Cache
 	TokenCacheReady             bool
 	Warnf                       func(format string, args ...any)
+	// RawSender, when set, is used by the default-case fallback to send raw
+	// HTTP for actions not yet covered by typed SDK wrappers (e.g. identity/
+	// credential modules in workflow-adapter mode). When nil the fallback
+	// builds its own cloudapi.Caller from config. Injecting a sender makes the
+	// fallback path unit-testable without a live network.
+	RawSender RawAPISender
 }
 
 type jsonRequest interface {
@@ -134,7 +140,30 @@ func (s *SDK) Call(ctx context.Context, action string, request map[string]any) (
 		}
 		return callDescribePreCacheImageTask(ctx, apiClient, req)
 	default:
-		return nil, fmt.Errorf("unsupported control-plane action %q", action)
+		// Fallback: for Actions not yet in the typed SDK (e.g. identity/credential
+		// modules added via workflow adapter before SDK sync), send as raw HTTP
+		// using the same path as `agr api call`. This ensures commands are
+		// functional immediately without waiting for SDK updates.
+		raw, err := json.Marshal(request)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request for %s: %w", action, err)
+		}
+		result, err := RawAPIClient{Sender: s.RawSender}.RawCall(ctx, action, raw)
+		if err != nil {
+			// Classify TencentCloud SDK errors into typed CLIErrors so callers
+			// see the real API code (e.g. AuthFailure, ResourceNotFound) and
+			// kind/retryable flags, mirroring the typed call wrappers below.
+			return nil, client.ClassifyCloudError(err)
+		}
+		// Extract the inner Response object for consistency with typed calls.
+		if respMap, ok := result.Response.(map[string]any); ok {
+			if inner, ok := respMap["Response"].(map[string]any); ok {
+				// Remove RequestId from the data payload (it's metadata).
+				delete(inner, "RequestId")
+				return inner, nil
+			}
+		}
+		return result.Response, nil
 	}
 }
 

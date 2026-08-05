@@ -12,8 +12,12 @@ package cloudapi
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
 
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	tchttp "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http"
@@ -50,7 +54,28 @@ func New(secretID, secretKey, region, cloudEndpoint string) (*Caller, error) {
 	cpf.HttpProfile.Endpoint = cloudEndpoint
 
 	client := common.NewCommonClient(credential, region, cpf)
+
+	// Support AGR_INSECURE_SKIP_VERIFY=1 for integration tests with self-signed certs.
+	// Only effective when endpoint is localhost to prevent misuse in production.
+	if os.Getenv("AGR_INSECURE_SKIP_VERIFY") == "1" && isLoopbackEndpoint(cloudEndpoint) {
+		client.WithHttpTransport(&http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // test-only, localhost guard
+		})
+	}
+
 	return &Caller{client: client}, nil
+}
+
+// isLoopbackEndpoint checks if the endpoint is localhost/127.0.0.1/[::1].
+func isLoopbackEndpoint(endpoint string) bool {
+	host := endpoint
+	// Strip port if present.
+	if idx := strings.LastIndex(endpoint, ":"); idx > 0 {
+		host = endpoint[:idx]
+	}
+	host = strings.TrimPrefix(host, "[")
+	host = strings.TrimSuffix(host, "]")
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 // Call executes the given action with a raw JSON request payload and
