@@ -30,6 +30,7 @@ var _ = Describe("Tool CLI lifecycle", func() {
 
 		toolName := uniqueName("ags-cli-e2e-tool")
 		create := cli.Run(context.Background(), "--output", "json", "tool", "create",
+			"--wait",
 			"-n", toolName,
 			"-t", "code-interpreter",
 			"-d", "AGR CLI E2E tool",
@@ -37,17 +38,17 @@ var _ = Describe("Tool CLI lifecycle", func() {
 			"--network-configuration", `{"NetworkMode":"PUBLIC"}`,
 			"--tags", `[{"Key":"ags-cli-e2e","Value":"true"}]`,
 		)
-		create.ExpectSuccess()
 		createEnv := create.Envelope()
+		toolID := createdResourceID(createEnv, "ToolId")
+		tracker.AddTool(toolID)
+		create.ExpectSuccess()
 		Expect(createEnv.Command).To(Equal("tool.create"))
 		Expect(createEnv.Status).To(Equal("succeeded"))
-		toolID := stringField(createEnv.Data, "ToolId")
 		Expect(toolID).NotTo(BeEmpty())
-		tracker.AddTool(toolID)
+		Expect(stringField(createEnv.Data, "Status")).To(Equal("ACTIVE"))
 
-		getEnv := waitForToolStatus(cli, toolID, "ACTIVE")
-		Expect(stringField(getEnv.Data, "ToolName")).To(Equal(toolName))
-		Expect(stringField(getEnv.Data, "ToolType")).To(Equal("code-interpreter"))
+		Expect(stringField(createEnv.Data, "ToolName")).To(Equal(toolName))
+		Expect(stringField(createEnv.Data, "ToolType")).To(Equal("code-interpreter"))
 
 		jq := cli.Run(context.Background(), "--output", "json", "--jq", ".Data.ToolId", "tool", "get", toolID)
 		jq.ExpectSuccess()
@@ -67,7 +68,7 @@ var _ = Describe("Tool CLI lifecycle", func() {
 		Expect(missingEnv.Failure).NotTo(BeNil())
 		Expect(missingEnv.Failure.Kind).To(Equal("not_found"))
 
-		deleted := cli.Run(context.Background(), "--output", "json", "tool", "delete", toolID)
+		deleted := cli.Run(context.Background(), "--output", "json", "tool", "delete", toolID, "--wait", "--yes")
 		deleted.ExpectSuccess()
 		deletedEnv := deleted.Envelope()
 		Expect(numberField(deletedEnv.Data, "Deleted")).To(Equal(1))

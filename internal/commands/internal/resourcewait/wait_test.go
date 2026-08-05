@@ -99,7 +99,7 @@ func TestWaitForToolGetReturnsFailedAsError(t *testing.T) {
 
 func TestWaitForInstancePauseUsesOperationOutcome(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		statuses := []string{"PAUSING", "PAUSED"}
+		statuses := []string{"RUNNING", "PAUSING", "PAUSED"}
 		calls := 0
 		got, err := WaitForInstanceWithPolicy(
 			context.Background(),
@@ -112,12 +112,32 @@ func TestWaitForInstancePauseUsesOperationOutcome(t *testing.T) {
 			InstancePolicy(OperationPause),
 			testOptions(),
 		)
-		if err != nil || calls != 2 || got == nil || got.Status == nil || *got.Status != "PAUSED" {
+		if err != nil || calls != 3 || got == nil || got.Status == nil || *got.Status != "PAUSED" {
 			t.Fatalf("calls = %d, instance = %#v, error = %v", calls, got, err)
 		}
 	})
 
 	t.Run("backend rollback to running", func(t *testing.T) {
+		statuses := []string{"PAUSING", "RUNNING"}
+		calls := 0
+		_, err := WaitForInstanceWithPolicy(
+			context.Background(),
+			"ins-1",
+			func(context.Context, string) (*ags.SandboxInstance, error) {
+				status := statuses[calls]
+				calls++
+				return &ags.SandboxInstance{Status: &status}, nil
+			},
+			InstancePolicy(OperationPause),
+			testOptions(),
+		)
+		assertWaitError(t, err, "WAIT_FAILED", "RUNNING", OperationPause)
+		if calls != 2 {
+			t.Fatalf("calls = %d, want 2", calls)
+		}
+	})
+
+	t.Run("running without observed progress times out", func(t *testing.T) {
 		_, err := WaitForInstanceWithPolicy(
 			context.Background(),
 			"ins-1",
@@ -125,7 +145,7 @@ func TestWaitForInstancePauseUsesOperationOutcome(t *testing.T) {
 			InstancePolicy(OperationPause),
 			testOptions(),
 		)
-		assertWaitError(t, err, "WAIT_FAILED", "RUNNING", OperationPause)
+		assertWaitError(t, err, "WAIT_TIMEOUT", "RUNNING", OperationPause)
 	})
 
 	t.Run("preempted by stop", func(t *testing.T) {
@@ -258,6 +278,49 @@ func TestWaitForToolDeleteTreatsOnlyNotFoundAsSuccess(t *testing.T) {
 		)
 		if !errors.Is(err, want) {
 			t.Fatalf("error = %v, want %v", err, want)
+		}
+		var cliErr *output.CLIError
+		if !errors.As(err, &cliErr) || cliErr.Failure.Details["ResourceId"] != "tool-1" {
+			t.Fatalf("error = %T %v, failure = %#v", err, err, cliErr)
+		}
+	})
+
+	t.Run("CLI error details", func(t *testing.T) {
+		options := testOptions()
+		options.IsNotFound = isNotFoundError
+		want := output.NewCLIError(&output.Failure{
+			Code:      "GET_FAILED",
+			Kind:      output.KindNetwork,
+			Message:   "network down",
+			Hint:      "retry",
+			Retryable: true,
+			Details:   map[string]any{"RequestId": "req-1"},
+		})
+		_, err := WaitForToolWithPolicy(
+			context.Background(),
+			"tool-1",
+			func(context.Context, string) (*ags.SandboxTool, error) {
+				return nil, want
+			},
+			ToolPolicy(OperationDelete),
+			options,
+		)
+		if !errors.Is(err, want) {
+			t.Fatalf("error = %v, want %v", err, want)
+		}
+		var cliErr *output.CLIError
+		if !errors.As(err, &cliErr) {
+			t.Fatalf("error = %T %v, want *output.CLIError", err, err)
+		}
+		if cliErr.Failure.Code != "GET_FAILED" || cliErr.Failure.Kind != output.KindNetwork || !cliErr.Failure.Retryable {
+			t.Fatalf("failure = %#v", cliErr.Failure)
+		}
+		details := cliErr.Failure.Details
+		if details["RequestId"] != "req-1" || details["ResourceType"] != "tool" || details["ResourceId"] != "tool-1" {
+			t.Fatalf("details = %#v", details)
+		}
+		if details["Operation"] != string(OperationDelete) || details["LastStatus"] != "" || details["Attempts"] != 1 {
+			t.Fatalf("wait details = %#v", details)
 		}
 	})
 }

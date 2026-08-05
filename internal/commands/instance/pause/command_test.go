@@ -20,6 +20,7 @@ type fakeMixedControlPlane struct {
 	calls    int
 	getCalls int
 	status   string
+	statuses []string
 }
 
 func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
@@ -30,8 +31,16 @@ func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request m
 }
 
 func (f *fakeMixedControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
+	status := f.status
+	if len(f.statuses) > 0 {
+		index := f.getCalls
+		if index >= len(f.statuses) {
+			index = len(f.statuses) - 1
+		}
+		status = f.statuses[index]
+	}
 	f.getCalls++
-	return &ags.SandboxInstance{InstanceId: &instanceID, Status: &f.status}, nil
+	return &ags.SandboxInstance{InstanceId: &instanceID, Status: &status}, nil
 }
 
 func TestModulePausesInstanceAndRendersText(t *testing.T) {
@@ -57,8 +66,8 @@ func TestModulePausesInstanceAndRendersText(t *testing.T) {
 	}
 }
 
-func TestModuleWaitsAfterPausingExactlyOnce(t *testing.T) {
-	cp := &fakeMixedControlPlane{status: "PAUSED"}
+func TestModuleWaitsThroughStaleRunningAfterPausingExactlyOnce(t *testing.T) {
+	cp := &fakeMixedControlPlane{statuses: []string{"RUNNING", "PAUSING", "PAUSED"}}
 	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
 		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
 	}})
@@ -73,7 +82,7 @@ func TestModuleWaitsAfterPausingExactlyOnce(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	if cp.calls != 1 || cp.getCalls != 1 {
+	if cp.calls != 1 || cp.getCalls != 3 {
 		t.Fatalf("Call = %d, GetInstance = %d", cp.calls, cp.getCalls)
 	}
 	if result.Data.(map[string]any)["Status"] != "PAUSED" {
@@ -82,7 +91,7 @@ func TestModuleWaitsAfterPausingExactlyOnce(t *testing.T) {
 }
 
 func TestModuleWaitReportsBackendRollbackToRunning(t *testing.T) {
-	cp := &fakeMixedControlPlane{status: "RUNNING"}
+	cp := &fakeMixedControlPlane{statuses: []string{"PAUSING", "RUNNING"}}
 	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
 		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 50 * time.Millisecond},
 	}})
@@ -98,7 +107,7 @@ func TestModuleWaitReportsBackendRollbackToRunning(t *testing.T) {
 	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "WAIT_FAILED" {
 		t.Fatalf("error = %#v, want WAIT_FAILED", err)
 	}
-	if cp.calls != 1 || cp.getCalls != 1 {
+	if cp.calls != 1 || cp.getCalls != 2 {
 		t.Fatalf("Call = %d, GetInstance = %d", cp.calls, cp.getCalls)
 	}
 }

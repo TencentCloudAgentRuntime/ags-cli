@@ -51,10 +51,11 @@ type Envelope struct {
 
 // Failure mirrors the structured failure object inside an envelope.
 type Failure struct {
-	Code    string `json:"Code"`
-	Kind    string `json:"Kind"`
-	Message string `json:"Message"`
-	Hint    string `json:"Hint"`
+	Code    string         `json:"Code"`
+	Kind    string         `json:"Kind"`
+	Message string         `json:"Message"`
+	Hint    string         `json:"Hint"`
+	Details map[string]any `json:"Details"`
 }
 
 // NewCLI creates an isolated CLI runner using the suite's built binary.

@@ -6,19 +6,34 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/tests/testutil"
 )
 
+const lifecycleCommandTimeout = 12 * time.Minute
+
 func newCLI() *testutil.CLI {
 	cli := testutil.NewCLI()
+	if cli.Timeout < lifecycleCommandTimeout {
+		cli.Timeout = lifecycleCommandTimeout
+	}
 	DeferCleanup(cli.Cleanup)
 	return cli
 }
 
 func stringField(data map[string]any, key string) string {
 	return testutil.StringField(data, key)
+}
+
+func createdResourceID(env testutil.Envelope, dataKey string) string {
+	if id, ok := env.Data[dataKey].(string); ok && id != "" {
+		return id
+	}
+	if env.Failure == nil {
+		return ""
+	}
+	id, _ := env.Failure.Details["ResourceId"].(string)
+	return id
 }
 
 func numberField(data map[string]any, key string) int {
@@ -80,34 +95,6 @@ func removeString(values []string, target string) []string {
 		}
 	}
 	return out
-}
-
-func waitForToolStatus(cli *testutil.CLI, toolID string, allowed ...string) testutil.Envelope {
-	var last testutil.CommandResult
-	var env testutil.Envelope
-	Eventually(func(g Gomega) string {
-		last = cli.Run(context.Background(), "--output", "json", "tool", "get", toolID)
-		g.Expect(last.ExitCode).To(Equal(0), last.Diagnostics())
-		env = last.Envelope()
-		return stringField(env.Data, "Status")
-	}, 8*time.Minute, 10*time.Second).Should(BeElementOf(allowed), func() string {
-		return fmt.Sprintf("tool %s did not reach %v\n%s", toolID, allowed, last.Diagnostics())
-	})
-	return env
-}
-
-func waitForInstanceStatus(cli *testutil.CLI, instanceID string, allowed ...string) testutil.Envelope {
-	var last testutil.CommandResult
-	var env testutil.Envelope
-	Eventually(func(g Gomega) string {
-		last = cli.Run(context.Background(), "--output", "json", "instance", "get", instanceID)
-		g.Expect(last.ExitCode).To(Equal(0), last.Diagnostics())
-		env = last.Envelope()
-		return stringField(env.Data, "Status")
-	}, 8*time.Minute, 10*time.Second).Should(BeElementOf(allowed), func() string {
-		return fmt.Sprintf("instance %s did not reach %v\n%s", instanceID, allowed, last.Diagnostics())
-	})
-	return env
 }
 
 func uniqueName(prefix string) string {

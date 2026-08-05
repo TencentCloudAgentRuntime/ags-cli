@@ -44,10 +44,18 @@ const (
 	Preempted
 )
 
+// Observation captures the current status and whether operation progress has
+// already been observed during this wait.
+type Observation struct {
+	Status             string
+	InProgressObserved bool
+}
+
 // Policy interprets resource statuses for one operation.
 type Policy struct {
 	Operation         Operation
-	Decide            func(string) Decision
+	Decide            func(Observation) Decision
+	IsInProgress      func(string) bool
 	NotFoundIsSuccess bool
 }
 
@@ -120,20 +128,26 @@ func OptionsFromDeps(deps command.Deps) Options {
 // InstancePolicy returns the backend-aligned status policy for an Instance
 // operation.
 func InstancePolicy(operation Operation) Policy {
-	return Policy{
+	policy := Policy{
 		Operation: operation,
-		Decide: func(status string) Decision {
-			return decideInstanceStatus(operation, normalizeStatus(status))
+		Decide: func(observation Observation) Decision {
+			return decideInstanceStatus(operation, normalizeStatus(observation.Status), observation.InProgressObserved)
 		},
 	}
+	if operation == OperationPause {
+		policy.IsInProgress = func(status string) bool {
+			return normalizeStatus(status) == "PAUSING"
+		}
+	}
+	return policy
 }
 
 // ToolPolicy returns the backend-aligned status policy for a Tool operation.
 func ToolPolicy(operation Operation) Policy {
 	return Policy{
 		Operation: operation,
-		Decide: func(status string) Decision {
-			return decideToolStatus(operation, normalizeStatus(status))
+		Decide: func(observation Observation) Decision {
+			return decideToolStatus(operation, normalizeStatus(observation.Status))
 		},
 		NotFoundIsSuccess: operation == OperationDelete,
 	}
@@ -216,6 +230,7 @@ func waitFor[T any](
 	startedAt := time.Now()
 	lastStatus := ""
 	attempts := 0
+	inProgressObserved := false
 	for {
 		attempts++
 		resource, err := get(waitCtx, resourceID)
@@ -226,11 +241,14 @@ func waitFor[T any](
 			if policy.NotFoundIsSuccess && options.IsNotFound != nil && options.IsNotFound(err) {
 				return zero, nil
 			}
-			return zero, err
+			return zero, annotateWaitError(err, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
 		}
 
 		lastStatus = strings.TrimSpace(statusOf(resource))
-		switch policy.Decide(lastStatus) {
+		if policy.IsInProgress != nil && policy.IsInProgress(lastStatus) {
+			inProgressObserved = true
+		}
+		switch policy.Decide(Observation{Status: lastStatus, InProgressObserved: inProgressObserved}) {
 		case Success:
 			return resource, nil
 		case Failed:
@@ -246,7 +264,47 @@ func waitFor[T any](
 	}
 }
 
-func decideInstanceStatus(operation Operation, status string) Decision {
+type annotatedWaitError struct {
+	cause      error
+	classified *output.CLIError
+}
+
+func (e *annotatedWaitError) Error() string { return e.cause.Error() }
+
+func (e *annotatedWaitError) Unwrap() []error { return []error{e.classified, e.cause} }
+
+func annotateWaitError(
+	err error,
+	resourceType string,
+	resourceID string,
+	operation Operation,
+	lastStatus string,
+	attempts int,
+	startedAt time.Time,
+) error {
+	classified := output.ClassifyError(err)
+	failure := *classified.Failure
+	details := make(map[string]any, len(failure.Details)+6)
+	for key, value := range failure.Details {
+		details[key] = value
+	}
+	for key, value := range waitDetails(resourceType, resourceID, operation, lastStatus, attempts, startedAt) {
+		if _, exists := details[key]; !exists {
+			details[key] = value
+		}
+	}
+	failure.Details = details
+
+	return &annotatedWaitError{
+		cause: err,
+		classified: &output.CLIError{
+			Failure:  &failure,
+			ExitCode: classified.ExitCode,
+		},
+	}
+}
+
+func decideInstanceStatus(operation Operation, status string, inProgressObserved bool) Decision {
 	switch operation {
 	case OperationCreate:
 		switch status {
@@ -272,7 +330,12 @@ func decideInstanceStatus(operation Operation, status string) Decision {
 		switch status {
 		case "PAUSED":
 			return Success
-		case "RUNNING", "FAILED", "STARTING_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
+		case "RUNNING":
+			if inProgressObserved {
+				return Failed
+			}
+			return Continue
+		case "FAILED", "STARTING_FAILED", "PAUSE_FAILED", "RESUME_FAILED":
 			return Failed
 		case "STOPPED", "STOPPING_FAILED", "STOP_FAILED":
 			return Preempted
