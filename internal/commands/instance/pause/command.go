@@ -40,7 +40,7 @@ func Module() command.Module {
 				}
 				instanceID := instanceID(req, apiReq)
 				result.Text = func(w io.Writer) {
-					fmt.Fprintf(w, "Instance paused: %s\n", instanceID)
+					fmt.Fprintln(w, pauseResultText(result.Data, instanceID))
 				}
 				return result, nil
 			})}, nil
