@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -95,6 +96,15 @@ func (c *CLI) InitConfig() Envelope {
 
 // Run executes the agr binary with the runner's environment and captures output.
 func (c *CLI) Run(ctx context.Context, args ...string) CommandResult {
+	return c.run(ctx, nil, args...)
+}
+
+// RunWithInput executes the agr binary and feeds input to stdin.
+func (c *CLI) RunWithInput(ctx context.Context, input string, args ...string) CommandResult {
+	return c.run(ctx, strings.NewReader(input), args...)
+}
+
+func (c *CLI) run(ctx context.Context, stdin io.Reader, args ...string) CommandResult {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -107,6 +117,7 @@ func (c *CLI) Run(ctx context.Context, args ...string) CommandResult {
 
 	cmd := exec.CommandContext(runCtx, c.BinaryPath, args...)
 	cmd.Env = c.env()
+	cmd.Stdin = stdin
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

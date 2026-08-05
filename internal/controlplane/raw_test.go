@@ -9,6 +9,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
+	sdkerrors "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 )
 
 func TestRawAPIClientUsesInjectedSender(t *testing.T) {
@@ -81,5 +82,74 @@ func TestFillRequestUsesCanonicalPrecacheCommandIDInHint(t *testing.T) {
 	}
 	if !strings.Contains(cliErr.Failure.Hint, "agr schema pre-cache-image-task.create -o json") {
 		t.Fatalf("hint = %q", cliErr.Failure.Hint)
+	}
+}
+
+// TestSDKCallFallbackClassifiesSDKError guards the default-case fallback:
+// actions not covered by typed wrappers (identity/credential modules in
+// workflow-adapter mode) must classify TencentCloud SDK errors into typed
+// CLIErrors, mirroring the typed call wrappers. Otherwise an AuthFailure /
+// ResourceNotFound surfaces as a generic INTERNAL_ERROR with no code or hint.
+func TestSDKCallFallbackClassifiesSDKError(t *testing.T) {
+	config.SetSecretID("sid")
+	config.SetSecretKey("skey")
+
+	sdkErr := sdkerrors.NewTencentCloudSDKError("AuthFailure", "invalid secret key", "req-123")
+	sdk := &SDK{
+		NewClient: func() (*ags.Client, error) { return &ags.Client{}, nil },
+		RawSender: func(context.Context, string, string, []byte) ([]byte, error) {
+			return nil, sdkErr
+		},
+	}
+
+	_, err := sdk.Call(context.Background(), "CreateWorkloadIdentity", map[string]any{"Name": "x"})
+	if err == nil {
+		t.Fatal("expected error from fallback")
+	}
+	cliErr, ok := err.(*output.CLIError)
+	if !ok {
+		t.Fatalf("expected *output.CLIError, got %T: %v", err, err)
+	}
+	if cliErr.Failure == nil {
+		t.Fatal("expected non-nil Failure")
+	}
+	if cliErr.Failure.Kind != output.KindAuthOrPermission {
+		t.Fatalf("Kind = %q, want %q (AuthFailure should classify as auth)", cliErr.Failure.Kind, output.KindAuthOrPermission)
+	}
+	if cliErr.Failure.Code != "AuthFailure" {
+		t.Fatalf("Code = %q, want AuthFailure", cliErr.Failure.Code)
+	}
+	if cliErr.Failure.Details["RequestId"] != "req-123" {
+		t.Fatalf("RequestId detail = %v, want req-123", cliErr.Failure.Details["RequestId"])
+	}
+}
+
+// TestSDKCallFallbackUnwrapsInnerResponse verifies the fallback returns the
+// inner Response object (with RequestId stripped) on success, matching the
+// shape typed callers expect.
+func TestSDKCallFallbackUnwrapsInnerResponse(t *testing.T) {
+	config.SetSecretID("sid")
+	config.SetSecretKey("skey")
+
+	sdk := &SDK{
+		NewClient: func() (*ags.Client, error) { return &ags.Client{}, nil },
+		RawSender: func(context.Context, string, string, []byte) ([]byte, error) {
+			return []byte(`{"Response":{"WorkloadIdentityId":"wi-1","RequestId":"rid-omit"}}`), nil
+		},
+	}
+
+	got, err := sdk.Call(context.Background(), "CreateWorkloadIdentity", map[string]any{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	inner, ok := got.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map[string]any, got %T", got)
+	}
+	if inner["WorkloadIdentityId"] != "wi-1" {
+		t.Fatalf("WorkloadIdentityId = %v, want wi-1", inner["WorkloadIdentityId"])
+	}
+	if _, present := inner["RequestId"]; present {
+		t.Fatalf("RequestId should be stripped from inner Response, got %v", inner["RequestId"])
 	}
 }

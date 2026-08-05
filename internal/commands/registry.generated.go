@@ -8,6 +8,23 @@ import (
 	apikeycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/apikey/create"
 	apikeydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/apikey/delete"
 	apikeylist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/apikey/list"
+	credentialoauth2acquire "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/oauth2/acquire"
+	credentialoauth2complete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/oauth2/complete"
+	credentialprovidercreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/provider/create"
+	credentialproviderdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/provider/delete"
+	credentialproviderget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/provider/get"
+	credentialproviderlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/provider/list"
+	credentialproviderupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/provider/update"
+	credentialsecretdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/delete"
+	credentialsecretget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/get"
+	credentialsecretlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/list"
+	credentialsecretset "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/set"
+	identitycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/create"
+	identitydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/delete"
+	identityget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/get"
+	identitylist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/list"
+	identitytokencreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/token/create"
+	identityupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/update"
 	instancebrowservnc "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/browser/vnc"
 	instancecoderun "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/code/run"
 	instancecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/create"
@@ -45,6 +62,23 @@ func Registry() (*command.Registry, error) {
 		apikeycreate.Module(),
 		apikeydelete.Module(),
 		apikeylist.Module(),
+		credentialoauth2acquire.Module(),
+		credentialoauth2complete.Module(),
+		credentialprovidercreate.Module(),
+		credentialproviderdelete.Module(),
+		credentialproviderget.Module(),
+		credentialproviderlist.Module(),
+		credentialproviderupdate.Module(),
+		credentialsecretdelete.Module(),
+		credentialsecretget.Module(),
+		credentialsecretlist.Module(),
+		credentialsecretset.Module(),
+		identitycreate.Module(),
+		identitydelete.Module(),
+		identityget.Module(),
+		identitylist.Module(),
+		identitytokencreate.Module(),
+		identityupdate.Module(),
 		instancebrowservnc.Module(),
 		instancecoderun.Module(),
 		instancecreate.Module(),
