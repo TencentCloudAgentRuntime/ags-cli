@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.4] - 2026-08-06
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add 17 workflow commands for managing workload identities, access tokens,
+  credential providers, managed secrets, and OAuth2 authorization through the
+  new `agr identity` and `agr credential` command groups.
+- Add operation-aware `--wait` to Instance and Tool lifecycle commands,
+  including deletion. Waiting now follows backend-aligned final outcomes,
+  reports failed or preempted operations, and includes timeout diagnostics for
+  unfamiliar statuses.
+- Add `agr update` and a non-blocking background update check with a 24-hour
+  cache. Interactive text commands show update notices without delaying normal
+  command execution or contaminating JSON output.
+- Show progress spinners while creating instances and tools in interactive text
+  terminals, while keeping JSON, redirected, and non-interactive output clean.
+- Add unified error classification with inline fix commands and
+  `agr explain <CODE>` guidance for actionable failures.
+- Refresh AGS API metadata and expose `instance pause --memory` and
+  `instance resume --timeout`, together with expanded storage, tool type, and
+  custom image registry help.
+
+### Bug Fixes
+- Install to `$HOME/.local/bin` when `/usr/local/bin` is not writable, honoring
+  `INSTALL_DIR` and avoiding implicit `sudo` in non-root environments.
+- Report the actual status returned by `instance pause` instead of always
+  claiming that the instance is paused.
+
+### Docs
+- Document non-root installer fallback behavior and the corresponding `PATH`
+  setup in README and README-zh.
+
 ## [0.6.3] - 2026-07-15
 
 ### Breaking Changes
