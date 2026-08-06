@@ -48,6 +48,8 @@ func TestGenerate_FlagsContainBaseLongFlags(t *testing.T) {
 		{"StartSandboxInstance", "ToolName", "tool-name"},
 		{"StartSandboxInstance", "ToolId", "tool-id"},
 		{"StartSandboxInstance", "MountOptions", "mount-options"},
+		{"PauseSandboxInstance", "Memory", "memory"},
+		{"ResumeSandboxInstance", "Timeout", "timeout"},
 		{"CreateSandboxTool", "StorageMounts", "storage-mounts"},
 		{"CreateSandboxTool", "NetworkConfiguration", "network-configuration"},
 		{"CreatePreCacheImageTask", "Image", "image"},
@@ -57,6 +59,40 @@ func TestGenerate_FlagsContainBaseLongFlags(t *testing.T) {
 		if !have[key] {
 			t.Errorf("missing generated flag: %s -> --%s", e.field, e.flag)
 		}
+	}
+}
+
+func TestSpecIncludesLatestStorageContract(t *testing.T) {
+	spec, _ := loadInputs(t)
+	tests := []struct {
+		object string
+		field  string
+		typeID string
+		member string
+	}{
+		{object: "ResourceConfiguration", field: "Storage", typeID: "string", member: "string"},
+		{object: "StorageSource", field: "AgentBucket", typeID: "object", member: "AgentBucketStorageSource"},
+		{object: "AgentBucketStorageSource", field: "LibraryId", typeID: "string", member: "string"},
+		{object: "AgentBucketStorageSource", field: "SpaceId", typeID: "string", member: "string"},
+		{object: "AgentBucketStorageSource", field: "AccessDomain", typeID: "string", member: "string"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.object+"."+tt.field, func(t *testing.T) {
+			object := spec.Object(tt.object)
+			if object == nil {
+				t.Fatalf("object %s is missing", tt.object)
+			}
+			for _, member := range object.Members {
+				if member.Name != tt.field {
+					continue
+				}
+				if member.Type != tt.typeID || member.Member != tt.member {
+					t.Fatalf("%s.%s type=%s member=%s", tt.object, tt.field, member.Type, member.Member)
+				}
+				return
+			}
+			t.Fatalf("field %s.%s is missing", tt.object, tt.field)
+		})
 	}
 }
 

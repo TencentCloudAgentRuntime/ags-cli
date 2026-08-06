@@ -85,6 +85,35 @@ func TestFillRequestUsesCanonicalPrecacheCommandIDInHint(t *testing.T) {
 	}
 }
 
+func TestFillRequestAcceptsLatestPauseAndResumeFields(t *testing.T) {
+	tests := []struct {
+		name      string
+		commandID string
+		request   map[string]any
+		target    jsonRequest
+	}{
+		{
+			name:      "pause memory",
+			commandID: "instance.pause",
+			request:   map[string]any{"InstanceId": "ins-unit", "Memory": true},
+			target:    ags.NewPauseSandboxInstanceRequest(),
+		},
+		{
+			name:      "resume timeout",
+			commandID: "instance.resume",
+			request:   map[string]any{"InstanceId": "ins-unit", "Timeout": "10m"},
+			target:    ags.NewResumeSandboxInstanceRequest(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := fillRequest(tt.commandID, tt.request, tt.target); err != nil {
+				t.Fatalf("fillRequest returned error: %v", err)
+			}
+		})
+	}
+}
+
 // TestSDKCallFallbackClassifiesSDKError guards the default-case fallback:
 // actions not covered by typed wrappers (identity/credential modules in
 // workflow-adapter mode) must classify TencentCloud SDK errors into typed

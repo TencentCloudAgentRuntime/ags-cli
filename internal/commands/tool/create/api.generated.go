@@ -45,7 +45,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "tool-type", Flag: "tool-type", Shorthand: "t", Usage: "Tool type (required)", Type: command.FlagString},
+					{Name: "tool-type", Flag: "tool-type", Shorthand: "t", Usage: "Tool type (required)", Values: []string{"browser", "code-interpreter", "mobile", "osworld", "custom", "swebench", "aio", "android-world", "waa"}, Type: command.FlagString},
 				},
 			},
 			{
@@ -95,14 +95,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "StorageMounts",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage-mounts", Flag: "storage-mounts", Usage: "StorageMounts as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":false,\"StorageSource\":{\"Cos\":{...}}}]", Examples: []string{"agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --role-arn qcs::cam::uin/100000:roleName/my-role --storage-mounts '[{\"Name\":\"data\",\"MountPath\":\"/data\",\"StorageSource\":{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"my-bucket\",\"BucketPath\":\"/workspace\"}}}]'"}, Values: []string{"Cos: Tencent Cloud Object Storage source", "Image: container image volume source", "Cfs: Cloud File Storage source"}, Type: command.FlagString},
+					{Name: "storage-mounts", Flag: "storage-mounts", Usage: "StorageMounts as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":false,\"StorageSource\":{\"Cos\":{...}}}] or [{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"StorageSource\":{\"AgentBucket\":{\"LibraryId\":\"<library-id>\",\"SpaceId\":\"<space-id>\",\"AccessDomain\":\"<domain>\"}}}]", Examples: []string{"agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --role-arn qcs::cam::uin/100000:roleName/my-role --storage-mounts '[{\"Name\":\"data\",\"MountPath\":\"/data\",\"StorageSource\":{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"my-bucket\",\"BucketPath\":\"/workspace\"}}}]'"}, Values: []string{"Cos: Tencent Cloud Object Storage source", "Image: container image volume source", "Cfs: Cloud File Storage source", "AgentBucket: AgentBucket source with LibraryId, SpaceId, and AccessDomain"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "CustomConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/bin/sh\"],\"Args\":[\"-c\",\"sleep 3600\"],\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}", Examples: []string{"agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\"}}'"}, Type: command.FlagString},
+					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/bin/sh\"],\"Args\":[\"-c\",\"sleep 3600\"],\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Ports\":[{\"Name\":\"app\",\"Port\":8080,\"Protocol\":\"TCP\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}", Examples: []string{"agr tool create -n my-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}'"}, Type: command.FlagString},
 				},
 			},
 			{

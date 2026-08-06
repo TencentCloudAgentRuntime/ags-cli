@@ -61,7 +61,7 @@ func TestModulePausesInstanceAndRendersText(t *testing.T) {
 	}
 	var text bytes.Buffer
 	result.Text(&text)
-	if !strings.Contains(text.String(), "Instance paused: ins-unit") {
+	if !strings.Contains(text.String(), "Pause requested: ins-unit") {
 		t.Fatalf("text = %q", text.String())
 	}
 }

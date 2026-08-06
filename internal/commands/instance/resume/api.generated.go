@@ -14,6 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "resume"},
 			Use:          "resume <instance-id>",
 			Short:        "Resume instance",
+			Long:         "Resume a paused sandbox instance, optionally setting the automatic recycle timeout.",
+			Examples:     []string{"agr instance resume ins-xxxx", "agr instance resume ins-xxxx --timeout 10m"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
 				{Name: "instance-id", Required: true, Description: "Sandbox instance ID."},
@@ -38,6 +40,13 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "instance-id", Positional: true},
+				},
+			},
+			{
+				Name:   "Timeout",
+				Parser: "common.default_string",
+				Inputs: []apicli.InputSpec{
+					{Name: "timeout", Flag: "timeout", Usage: "Timeout from 30s to 24h, for example 5m, 300s, or 1h", Type: command.FlagString},
 				},
 			},
 		},

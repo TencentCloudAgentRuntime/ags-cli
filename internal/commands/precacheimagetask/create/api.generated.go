@@ -42,7 +42,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "image-registry-type", Flag: "image-registry-type", Usage: "Image registry type: enterprise or personal (required)", Type: command.FlagString},
+					{Name: "image-registry-type", Flag: "image-registry-type", Usage: "Image registry type: enterprise, personal, or custom (required)", Type: command.FlagString},
 				},
 			},
 		},
