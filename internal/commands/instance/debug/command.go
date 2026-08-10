@@ -98,7 +98,7 @@ func Module() command.Module {
 					Aliases: []string{"i"},
 				},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			cp, ok := deps.ControlPlane.(ControlPlane)

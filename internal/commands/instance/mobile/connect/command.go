@@ -93,7 +93,7 @@ Examples:
   agr instance mobile disconnect <instance-id>`,
 				},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

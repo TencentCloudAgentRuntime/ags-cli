@@ -42,7 +42,7 @@ to obtain WorkloadAccessTokens and associate with CredentialProviders.`,
 		Descriptor: command.Descriptor{
 			Spec:   spec,
 			Groups: identityGroups(),
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

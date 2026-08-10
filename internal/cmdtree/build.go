@@ -406,7 +406,7 @@ func validateSpec(spec command.Spec) error {
 
 func validateGeneratedAPIMetadata(desc command.Descriptor) error {
 	if desc.Generated == nil {
-		if desc.Source == "mixed-api" && desc.API != nil {
+		if desc.Source == command.SourceMixedAPI && desc.API != nil {
 			return fmt.Errorf("mixed API command %q missing generated descriptor snapshot", desc.Spec.ID)
 		}
 		return nil
@@ -433,7 +433,7 @@ func validateMixedOutput(desc command.Descriptor) error {
 	if desc.API == nil {
 		return nil
 	}
-	if desc.Source == "apicli" {
+	if desc.Source == command.SourceAPICli {
 		return nil
 	}
 	if desc.Spec.Output.DataType == "" {

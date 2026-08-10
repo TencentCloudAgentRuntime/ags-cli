@@ -36,7 +36,7 @@ has been received. This finalizes the session so AccessToken can be obtained.`,
 				{Path: []string{"credential"}, Use: "credential", Short: "Manage credentials and providers"},
 				{Path: []string{"credential", "oauth2"}, Use: "oauth2", Short: "OAuth2 authorization workflows"},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

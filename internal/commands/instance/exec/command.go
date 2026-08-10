@@ -67,7 +67,7 @@ Examples:
 					Aliases: []string{"i"},
 				},
 			},
-			Source: "workflow",
+			Source: cmdcore.SourceWorkflow,
 		},
 		Build: func(deps cmdcore.Deps) (cmdcore.Runtime, error) {
 			deps = deps.WithDefaults()

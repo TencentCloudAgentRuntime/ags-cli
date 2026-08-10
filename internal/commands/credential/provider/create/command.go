@@ -50,7 +50,7 @@ Config is a JSON array of {Key, Value} pairs. Required config keys depend on typ
 		Descriptor: command.Descriptor{
 			Spec:   spec,
 			Groups: credentialProviderGroups(),
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

@@ -49,7 +49,7 @@ func Module() command.Module {
 		Descriptor: command.Descriptor{
 			Spec:   spec,
 			Groups: groups,
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			cp, ok := deps.ControlPlane.(ControlPlane)

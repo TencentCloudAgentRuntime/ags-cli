@@ -26,11 +26,11 @@ func Module() command.Module {
 				Spec:   generatedSpec,
 				Groups: api.Groups,
 				API:    api,
-				Source: "apicli",
+				Source: command.SourceAPICli,
 			},
 			Groups: api.Groups,
 			API:    api,
-			Source: "mixed-api",
+			Source: command.SourceMixedAPI,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			builder := apicli.NewRequestBuilder(api)

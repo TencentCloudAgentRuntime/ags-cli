@@ -25,7 +25,7 @@ func Module() command.Module {
 		Descriptor: command.Descriptor{
 			Spec:   spec,
 			Groups: []command.GroupSpec{{Path: []string{"identity"}, Use: "identity", Short: "Manage workload identities"}},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

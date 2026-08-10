@@ -40,7 +40,7 @@ and user context. The token determines which user's secret is returned.`,
 				{Path: []string{"credential"}, Use: "credential", Short: "Manage credentials and providers"},
 				{Path: []string{"credential", "secret"}, Use: "secret", Short: "Manage per-user managed secrets"},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

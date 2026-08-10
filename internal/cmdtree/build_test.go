@@ -197,7 +197,7 @@ func TestBuildRejectsMixedModuleMissingOutputDataType(t *testing.T) {
 
 func TestBuildRejectsNonDefaultAPIModuleMissingOutputDataType(t *testing.T) {
 	module := mixedAPIModule()
-	module.Descriptor.Source = "workflow"
+	module.Descriptor.Source = command.SourceWorkflow
 	module.Descriptor.Spec.Output.DataType = ""
 	err := buildSingle(module)
 	if err == nil || !strings.Contains(err.Error(), "must declare output data type") {
@@ -308,11 +308,11 @@ func mixedAPIModule() command.Module {
 				Spec:   generatedSpec,
 				Groups: api.Groups,
 				API:    api,
-				Source: "apicli",
+				Source: command.SourceAPICli,
 			},
 			Groups: api.Groups,
 			API:    api,
-			Source: "mixed-api",
+			Source: command.SourceMixedAPI,
 		},
 		Build: func(command.Deps) (command.Runtime, error) {
 			return command.Runtime{

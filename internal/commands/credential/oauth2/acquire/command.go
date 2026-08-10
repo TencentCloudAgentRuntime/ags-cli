@@ -45,7 +45,7 @@ Use "agr credential oauth2 acquire --session-uri <uri>" to poll the session.`,
 				{Path: []string{"credential"}, Use: "credential", Short: "Manage credentials and providers"},
 				{Path: []string{"credential", "oauth2"}, Use: "oauth2", Short: "OAuth2 authorization workflows"},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

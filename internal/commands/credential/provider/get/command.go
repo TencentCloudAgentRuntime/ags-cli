@@ -28,7 +28,7 @@ func Module() command.Module {
 		Descriptor: command.Descriptor{
 			Spec:   spec,
 			Groups: []command.GroupSpec{{Path: []string{"credential"}, Use: "credential", Short: "Manage credentials and providers"}, {Path: []string{"credential", "provider"}, Use: "provider", Short: "Manage credential providers"}},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

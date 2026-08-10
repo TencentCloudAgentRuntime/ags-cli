@@ -406,6 +406,11 @@ func registeredSchemaSeeds() []CommandSchema {
 func schemaFromDescriptor(desc command.Descriptor) CommandSchema {
 	spec := desc.Spec
 	mutation, createsResource, requiresAuth := schemaEffects(spec.Output.Effects)
+	// Workflow commands always require authentication since they call the
+	// cloud control plane, even if they have no declared side-effects.
+	if desc.Source == command.SourceWorkflow {
+		requiresAuth = true
+	}
 	return CommandSchema{
 		Name:            spec.ID,
 		Kind:            "command",
@@ -438,6 +443,8 @@ func schemaEffects(effects []string) (mutation, createsResource, requiresAuth bo
 		case "create":
 			mutation = true
 			createsResource = true
+		case "update":
+			mutation = true
 		case "delete":
 			mutation = true
 		}
@@ -1297,7 +1304,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 			SupportsRequest: true,
 			RequestSchema: &RequestSchema{Type: "object", AdditionalProperties: false, Required: []string{"Image"}, Properties: map[string]PropertySchema{
 				"Image":             {Type: "string", CliFlag: nil},
-				"ImageRegistryType": {Type: "enum", Values: []string{"enterprise", "personal"}, CliFlag: nil},
+				"ImageRegistryType": {Type: "enum", Values: []string{"enterprise", "personal", "custom"}, CliFlag: nil},
 			}},
 			Flags: []FlagSchema{{Name: "request", Type: "string"}, {Name: "generate-skeleton", Type: "bool"}},
 		},
@@ -1310,7 +1317,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 			RequestSchema: &RequestSchema{Type: "object", AdditionalProperties: false, Properties: map[string]PropertySchema{
 				"Image":             {Type: "string", CliFlag: nil},
 				"ImageDigest":       {Type: "string", CliFlag: nil},
-				"ImageRegistryType": {Type: "enum", Values: []string{"enterprise", "personal"}, CliFlag: nil},
+				"ImageRegistryType": {Type: "enum", Values: []string{"enterprise", "personal", "custom"}, CliFlag: nil},
 			}},
 			Args:  []ArgSchema{{Name: "ImageDigest", Type: "string", Required: true}},
 			Flags: []FlagSchema{{Name: "request", Type: "string"}, {Name: "generate-skeleton", Type: "bool"}},

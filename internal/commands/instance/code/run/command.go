@@ -70,7 +70,7 @@ Supported languages: python (default), javascript, typescript, r, java, bash`,
 				},
 				{Path: []string{"instance", "code"}, Use: "code", Short: "Code execution commands"},
 			},
-			Source: "workflow",
+			Source: cmdcore.SourceWorkflow,
 		},
 		Build: func(deps cmdcore.Deps) (cmdcore.Runtime, error) {
 			deps = deps.WithDefaults()
