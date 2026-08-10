@@ -51,7 +51,7 @@ Examples:
 				},
 				{Path: []string{"instance", "browser"}, Use: "browser", Short: "Browser sandbox commands"},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

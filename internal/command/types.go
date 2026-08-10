@@ -97,6 +97,13 @@ const (
 	FlagStringArray FlagType = "stringArray"
 )
 
+// Source constants identify the module family for diagnostics and schema output.
+const (
+	SourceAPICli   = "apicli"
+	SourceWorkflow = "workflow"
+	SourceMixedAPI = "mixed-api"
+)
+
 // FlagSpec describes one CLI flag attached to a command.
 type FlagSpec struct {
 	Name      string

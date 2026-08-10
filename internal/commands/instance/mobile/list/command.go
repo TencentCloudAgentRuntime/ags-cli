@@ -52,7 +52,7 @@ Examples:
   agr instance mobile adb <instance-id> -- shell ls /sdcard
   agr instance mobile disconnect <instance-id>`},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

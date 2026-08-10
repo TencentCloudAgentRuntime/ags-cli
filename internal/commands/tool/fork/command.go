@@ -39,7 +39,7 @@ func Module() command.Module {
 			Spec:   spec,
 			Groups: groups,
 			API:    api,
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			cp, ok := deps.ControlPlane.(ControlPlane)

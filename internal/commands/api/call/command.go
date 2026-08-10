@@ -51,7 +51,7 @@ func Module() command.Module {
 					Long:  "Raw API access for debugging and unmapped control-plane operations.",
 				},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

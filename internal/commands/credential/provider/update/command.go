@@ -46,7 +46,7 @@ A provider must be DISABLED before deletion.`,
 				{Path: []string{"credential"}, Use: "credential", Short: "Manage credentials and providers"},
 				{Path: []string{"credential", "provider"}, Use: "provider", Short: "Manage credential providers"},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

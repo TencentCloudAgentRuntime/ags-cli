@@ -42,7 +42,7 @@ get the full token value.`,
 				{Path: []string{"identity"}, Use: "identity", Short: "Manage workload identities"},
 				{Path: []string{"identity", "token"}, Use: "token", Short: "Manage workload access tokens"},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

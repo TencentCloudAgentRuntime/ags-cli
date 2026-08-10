@@ -67,7 +67,7 @@ Examples:
 				Long:    "Manage sandbox instances and related data-plane workflows.",
 				Aliases: []string{"i"},
 			}},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

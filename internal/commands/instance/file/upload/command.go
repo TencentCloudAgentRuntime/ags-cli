@@ -60,7 +60,7 @@ Examples:
   agr instance file download ins-xxxx /home/user/data.txt -`,
 				},
 			},
-			Source: "workflow",
+			Source: command.SourceWorkflow,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

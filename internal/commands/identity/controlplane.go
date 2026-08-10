@@ -7,7 +7,7 @@
 // stabilizes and is added to api.json + mapping.yaml:
 //
 //  1. Run `go run ./cmd/internal/cobragen` to generate api.generated.go
-//  2. Change Source from "workflow" to "mixed-api"
+//  2. Change Source from command.SourceWorkflow to command.SourceMixedAPI
 //  3. Reference APIDescriptor() for flags (keeps custom validation/rendering)
 //
 // The command IDs, paths, and flag names are chosen to match the expected

@@ -62,7 +62,7 @@ func NewModule(desc APIDescriptor) command.Module {
 			Spec:   spec,
 			Groups: desc.Groups,
 			API:    desc,
-			Source: "apicli",
+			Source: command.SourceAPICli,
 		},
 		Build: func(deps command.Deps) (command.Runtime, error) {
 			deps = deps.WithDefaults()

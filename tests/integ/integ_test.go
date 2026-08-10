@@ -643,3 +643,158 @@ func TestCompletion_ZshOutput(t *testing.T) {
 		t.Fatalf("completion zsh output unexpected:\n%s", r.stdout[:min(len(r.stdout), 200)])
 	}
 }
+
+// --- Schema metadata correctness (issue #94) ---
+
+func TestSchema_UpdateCommandsAreMutations(t *testing.T) {
+	// Dynamically discover all *.update commands and assert Mutation: true.
+	r := run(t, "schema", "-o", "json")
+	if r.exitCode != 0 {
+		t.Fatalf("exit code = %d\nstderr: %s\nstdout: %s", r.exitCode, r.stderr, r.stdout)
+	}
+	env := parseEnvelope(t, r.stdout)
+	rawCmds, ok := env.Data["Commands"].([]any)
+	if !ok {
+		t.Fatalf("Data.Commands not an array: %T", env.Data["Commands"])
+	}
+	var updateCmds []string
+	for _, raw := range rawCmds {
+		m, _ := raw.(map[string]any)
+		name, _ := m["Name"].(string)
+		if strings.HasSuffix(name, ".update") {
+			updateCmds = append(updateCmds, name)
+		}
+	}
+	if len(updateCmds) == 0 {
+		t.Fatal("no *.update commands discovered from schema output")
+	}
+	for _, cmd := range updateCmds {
+		t.Run(cmd, func(t *testing.T) {
+			r := run(t, "schema", cmd, "-o", "json")
+			if r.exitCode != 0 {
+				t.Fatalf("exit code = %d\nstderr: %s\nstdout: %s", r.exitCode, r.stderr, r.stdout)
+			}
+			cmdEnv := parseEnvelope(t, r.stdout)
+			mutation, ok := cmdEnv.Data["Mutation"].(bool)
+			if !ok {
+				t.Fatalf("Data.Mutation not a bool: %v", cmdEnv.Data["Mutation"])
+			}
+			if !mutation {
+				t.Fatalf("schema %s: Mutation = false, want true", cmd)
+			}
+		})
+	}
+}
+
+func TestSchema_WorkflowCommandsRequireAuth(t *testing.T) {
+	// Workflow commands that call the cloud control plane must report
+	// RequiresAuth: true. We verify this from the full schema listing in one
+	// pass — no per-command sub-requests needed.
+	//
+	// The expected set below is maintained explicitly so that any new workflow
+	// command that forgets to declare auth will cause a test failure.
+	expectedAuthCmds := map[string]bool{
+		"identity.create":            true,
+		"identity.get":               true,
+		"identity.list":              true,
+		"identity.update":            true,
+		"identity.delete":            true,
+		"identity.token.create":      true,
+		"credential.provider.create": true,
+		"credential.provider.get":    true,
+		"credential.provider.list":   true,
+		"credential.provider.update": true,
+		"credential.provider.delete": true,
+		"credential.secret.set":      true,
+		"credential.secret.get":      true,
+		"credential.secret.list":     true,
+		"credential.secret.delete":   true,
+		"credential.oauth2.acquire":  true,
+		"credential.oauth2.complete": true,
+	}
+
+	r := run(t, "schema", "-o", "json")
+	if r.exitCode != 0 {
+		t.Fatalf("exit code = %d\nstderr: %s\nstdout: %s", r.exitCode, r.stderr, r.stdout)
+	}
+	env := parseEnvelope(t, r.stdout)
+	rawCmds, ok := env.Data["Commands"].([]any)
+	if !ok {
+		t.Fatalf("Data.Commands not an array: %T", env.Data["Commands"])
+	}
+
+	seen := make(map[string]bool)
+	for _, raw := range rawCmds {
+		m, _ := raw.(map[string]any)
+		name, _ := m["Name"].(string)
+		kind, _ := m["Kind"].(string)
+		if kind != "command" {
+			continue
+		}
+		requiresAuth, _ := m["RequiresAuth"].(bool)
+
+		if expectedAuthCmds[name] {
+			seen[name] = true
+			if !requiresAuth {
+				t.Errorf("schema %s: RequiresAuth = false, want true", name)
+			}
+		}
+	}
+
+	// Ensure all expected commands were found in the schema output.
+	for cmd := range expectedAuthCmds {
+		if !seen[cmd] {
+			t.Errorf("expected workflow command %q not found in schema output", cmd)
+		}
+	}
+}
+
+func TestSchema_PreCacheImageRegistryTypeIncludesCustom(t *testing.T) {
+	// The ImageRegistryType enum in pre-cache-image-task commands should
+	// include "custom" in addition to "enterprise" and "personal".
+	cmds := []string{
+		"pre-cache-image-task.create",
+		"pre-cache-image-task.get",
+	}
+	for _, cmd := range cmds {
+		t.Run(cmd, func(t *testing.T) {
+			r := run(t, "schema", cmd, "-o", "json")
+			if r.exitCode != 0 {
+				t.Fatalf("exit code = %d\nstderr: %s\nstdout: %s", r.exitCode, r.stderr, r.stdout)
+			}
+			env := parseEnvelope(t, r.stdout)
+			reqSchema, ok := env.Data["RequestSchema"].(map[string]any)
+			if !ok {
+				t.Fatalf("Data.RequestSchema not an object: %v", env.Data["RequestSchema"])
+			}
+			props, ok := reqSchema["Properties"].(map[string]any)
+			if !ok {
+				t.Fatalf("RequestSchema.Properties not an object: %v", reqSchema["Properties"])
+			}
+			irt, ok := props["ImageRegistryType"].(map[string]any)
+			if !ok {
+				t.Fatalf("Properties.ImageRegistryType not an object: %v", props["ImageRegistryType"])
+			}
+			rawValues, ok := irt["Values"].([]any)
+			if !ok {
+				t.Fatalf("ImageRegistryType.Values not an array: %v", irt["Values"])
+			}
+			values := make([]string, len(rawValues))
+			for i, v := range rawValues {
+				values[i], _ = v.(string)
+			}
+			for _, want := range []string{"enterprise", "personal", "custom"} {
+				found := false
+				for _, v := range values {
+					if v == want {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Fatalf("schema %s: ImageRegistryType.Values = %v, missing %q", cmd, values, want)
+				}
+			}
+		})
+	}
+}
