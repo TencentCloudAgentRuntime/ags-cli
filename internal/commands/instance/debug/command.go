@@ -239,6 +239,10 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	instance, err := waitForInstanceRunning(ctx, cp, instanceID, resourcewait.OptionsFromDeps(deps))
 	if err != nil {
 		cleanupDebugResources(deps, cp, instanceID, debugToolID)
+		cliErr := output.ClassifyError(err)
+		if cliErr != nil && cliErr.Failure != nil && strings.HasPrefix(cliErr.Failure.Code, "WAIT_") {
+			cliErr.Failure.Hint = "Cleanup was attempted for the temporary debug resources. Re-run the same 'agr instance debug' command to retry."
+		}
 		return nil, err
 	}
 

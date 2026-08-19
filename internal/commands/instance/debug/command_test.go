@@ -250,6 +250,7 @@ func TestModuleCleansUpInstanceThenToolOnInstanceFailure(t *testing.T) {
 	}
 	_, err = runtime.Handler.Run(context.Background(), command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
 	assertDebugWaitError(t, err, "WAIT_FAILED", failed)
+	assertDebugCleanupHint(t, err)
 	if got, want := strings.Join(cp.deletes, ","), "instance:ins-debug,tool:sdt-debug"; got != want {
 		t.Fatalf("deletes = %q, want %q", got, want)
 	}
@@ -285,6 +286,7 @@ func TestModuleInstanceWaitTimeoutIncludesLastStatus(t *testing.T) {
 	defer cancel()
 	_, err = runtime.Handler.Run(ctx, command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
 	assertDebugWaitError(t, err, "WAIT_TIMEOUT", starting)
+	assertDebugCleanupHint(t, err)
 	if got, want := strings.Join(cp.deletes, ","), "instance:ins-debug,tool:sdt-debug"; got != want {
 		t.Fatalf("deletes = %q, want %q", got, want)
 	}
@@ -517,6 +519,18 @@ func assertDebugWaitError(t *testing.T, err error, code, lastStatus string) {
 	if details["ResourceType"] != "instance" || details["ResourceId"] != "ins-debug" ||
 		details["Operation"] != string(resourcewait.OperationCreate) || details["LastStatus"] != lastStatus {
 		t.Fatalf("failure details = %#v", details)
+	}
+}
+
+func assertDebugCleanupHint(t *testing.T, err error) {
+	t.Helper()
+	cliErr := output.ClassifyError(err)
+	if cliErr == nil || cliErr.Failure == nil {
+		t.Fatalf("error = %T %v, want classified failure", err, err)
+	}
+	want := "Cleanup was attempted for the temporary debug resources. Re-run the same 'agr instance debug' command to retry."
+	if cliErr.Failure.Hint != want {
+		t.Fatalf("failure hint = %q, want %q", cliErr.Failure.Hint, want)
 	}
 }
 
