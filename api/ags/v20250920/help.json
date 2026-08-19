@@ -135,7 +135,9 @@
                             "usage": "Additional filters as JSON array, @file, or - for stdin",
                             "format": "[{\"Name\":\"<field>\",\"Values\":[\"<value1>\",\"<value2>\"]}]",
                             "values": [
-                                "Status: STARTING, RUNNING, STOPPING, STOPPED, STOP_FAILED, FAILED",
+                                "Status (persisted): STARTING, RUNNING, STARTING_FAILED, PAUSING, PAUSED, PAUSE_FAILED, RESUME_FAILED, FORK_FAILED, STOPPING, STOPPED, STOPPING_FAILED, FAILED",
+                                "Status (derived): UNHEALTHY; use it as the sole Status value; --limit/--offset are ignored",
+                                "RUNNING filter results may be displayed as UNHEALTHY",
                                 "ToolName: tool name used to create the instance",
                                 "ToolId: tool ID"
                             ],

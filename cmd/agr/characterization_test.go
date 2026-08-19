@@ -170,8 +170,9 @@ func TestCharacterization_PublicCommandSurface(t *testing.T) {
 func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 	root := contractRoot()
 	helpCases := []struct {
-		command  string
-		contains []string
+		command     string
+		contains    []string
+		notContains []string
 	}{
 		{
 			command: "instance.create",
@@ -203,8 +204,11 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"--filters string",
 				"Format:",
 				`[{"Name":"<field>","Values":["<value1>","<value2>"]}]`,
-				"Status: STARTING, RUNNING, STOPPING, STOPPED, STOP_FAILED, FAILED",
+				"Status (persisted): STARTING, RUNNING, STARTING_FAILED, PAUSING, PAUSED, PAUSE_FAILED, RESUME_FAILED, FORK_FAILED, STOPPING, STOPPED, STOPPING_FAILED, FAILED",
+				"Status (derived): UNHEALTHY; use it as the sole Status value; --limit/--offset are ignored",
+				"RUNNING filter results may be displayed as UNHEALTHY",
 			},
+			notContains: []string{"STOP_FAILED"},
 		},
 		{
 			command: "tool.update",
@@ -253,6 +257,11 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			for _, want := range tc.contains {
 				if !strings.Contains(help, want) {
 					t.Fatalf("help for %s missing %q\n%s", tc.command, want, help)
+				}
+			}
+			for _, unwanted := range tc.notContains {
+				if strings.Contains(help, unwanted) {
+					t.Fatalf("help for %s unexpectedly contains %q\n%s", tc.command, unwanted, help)
 				}
 			}
 			if strings.Contains(help, "Run "+tc.command) {
