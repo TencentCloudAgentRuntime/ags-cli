@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -232,19 +233,60 @@ func TestModuleCleansUpOnToolReadyFailure(t *testing.T) {
 }
 
 func TestModuleCleansUpInstanceThenToolOnInstanceFailure(t *testing.T) {
-	failed := "FAILED"
+	failed := "STARTING_FAILED"
 	cp := &fakeControlPlane{
 		sourceTool: sourceTool(),
 		instance:   &ags.SandboxInstance{InstanceId: strPtr("ins-debug"), Status: &failed},
 	}
-	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	runtime, err := Module().Build(command.Deps{
+		ControlPlane: cp,
+		Values: map[string]any{resourcewait.OptionsKey: resourcewait.Options{
+			Interval: time.Millisecond,
+			Timeout:  50 * time.Millisecond,
+		}},
+	})
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
 	_, err = runtime.Handler.Run(context.Background(), command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
-	if err == nil || !strings.Contains(err.Error(), "debug instance ins-debug failed") {
-		t.Fatalf("error = %v, want instance ready failure", err)
+	assertDebugWaitError(t, err, "WAIT_FAILED", failed)
+	assertDebugCleanupHint(t, err)
+	if got, want := strings.Join(cp.deletes, ","), "instance:ins-debug,tool:sdt-debug"; got != want {
+		t.Fatalf("deletes = %q, want %q", got, want)
 	}
+}
+
+func TestWaitForInstanceRunningReturnsStructuredErrorWhenPreempted(t *testing.T) {
+	stopped := "STOPPED"
+	cp := &fakeControlPlane{instance: &ags.SandboxInstance{InstanceId: strPtr("ins-debug"), Status: &stopped}}
+	_, err := waitForInstanceRunning(context.Background(), cp, "ins-debug", resourcewait.Options{
+		Interval: time.Millisecond,
+		Timeout:  50 * time.Millisecond,
+	})
+	assertDebugWaitError(t, err, "WAIT_PREEMPTED", stopped)
+}
+
+func TestModuleInstanceWaitTimeoutIncludesLastStatus(t *testing.T) {
+	starting := "STARTING"
+	cp := &fakeControlPlane{
+		sourceTool: sourceTool(),
+		instance:   &ags.SandboxInstance{InstanceId: strPtr("ins-debug"), Status: &starting},
+	}
+	runtime, err := Module().Build(command.Deps{
+		ControlPlane: cp,
+		Values: map[string]any{resourcewait.OptionsKey: resourcewait.Options{
+			Interval: time.Millisecond,
+			Timeout:  5 * time.Millisecond,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	_, err = runtime.Handler.Run(ctx, command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
+	assertDebugWaitError(t, err, "WAIT_TIMEOUT", starting)
+	assertDebugCleanupHint(t, err)
 	if got, want := strings.Join(cp.deletes, ","), "instance:ins-debug,tool:sdt-debug"; got != want {
 		t.Fatalf("deletes = %q, want %q", got, want)
 	}
@@ -264,9 +306,7 @@ func TestModuleReturnsCleanupWarnings(t *testing.T) {
 		t.Fatalf("Build returned error: %v", err)
 	}
 	_, err = runtime.Handler.Run(context.Background(), command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
-	if err == nil || !strings.Contains(err.Error(), "debug instance ins-debug failed") {
-		t.Fatalf("error = %v, want primary instance failure", err)
-	}
+	assertDebugWaitError(t, err, "WAIT_FAILED", failed)
 	warnings := stderr.String()
 	if !strings.Contains(warnings, "Warning: failed to cleanup debug instance ins-debug: delete instance boom") ||
 		!strings.Contains(warnings, "Warning: failed to cleanup debug tool sdt-debug: delete tool boom") {
@@ -465,5 +505,33 @@ func strPtr(value string) *string { return &value }
 func boolPtr(value bool) *bool { return &value }
 
 func int64Ptr(value int64) *int64 { return &value }
+
+func assertDebugWaitError(t *testing.T, err error, code, lastStatus string) {
+	t.Helper()
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) {
+		t.Fatalf("error = %T %v, want *output.CLIError", err, err)
+	}
+	if cliErr.Failure.Code != code {
+		t.Fatalf("failure code = %q, want %q: %#v", cliErr.Failure.Code, code, cliErr.Failure)
+	}
+	details := cliErr.Failure.Details
+	if details["ResourceType"] != "instance" || details["ResourceId"] != "ins-debug" ||
+		details["Operation"] != string(resourcewait.OperationCreate) || details["LastStatus"] != lastStatus {
+		t.Fatalf("failure details = %#v", details)
+	}
+}
+
+func assertDebugCleanupHint(t *testing.T, err error) {
+	t.Helper()
+	cliErr := output.ClassifyError(err)
+	if cliErr == nil || cliErr.Failure == nil {
+		t.Fatalf("error = %T %v, want classified failure", err, err)
+	}
+	want := "Cleanup was attempted for the temporary debug resources. Re-run the same 'agr instance debug' command to retry."
+	if cliErr.Failure.Hint != want {
+		t.Fatalf("failure hint = %q, want %q", cliErr.Failure.Hint, want)
+	}
+}
 
 var _ ControlPlane = (*fakeControlPlane)(nil)

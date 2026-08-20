@@ -11,6 +11,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/tooltags"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -235,9 +236,13 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 		cleanupDebugResources(deps, cp, "", debugToolID)
 		return nil, fmt.Errorf("no instance id returned from StartSandboxInstance")
 	}
-	instance, err := waitForInstanceRunning(ctx, cp, instanceID)
+	instance, err := waitForInstanceRunning(ctx, cp, instanceID, resourcewait.OptionsFromDeps(deps))
 	if err != nil {
 		cleanupDebugResources(deps, cp, instanceID, debugToolID)
+		cliErr := output.ClassifyError(err)
+		if cliErr != nil && cliErr.Failure != nil && strings.HasPrefix(cliErr.Failure.Code, "WAIT_") {
+			cliErr.Failure.Hint = "Cleanup was attempted for the temporary debug resources. Re-run the same 'agr instance debug' command to retry."
+		}
 		return nil, err
 	}
 
@@ -300,25 +305,14 @@ func waitForToolReady(ctx context.Context, cp ControlPlane, toolID string) (*ags
 	}
 }
 
-func waitForInstanceRunning(ctx context.Context, cp ControlPlane, instanceID string) (*ags.SandboxInstance, error) {
-	waitCtx, cancel := context.WithTimeout(ctx, debugReadyTimeout)
-	defer cancel()
-	for {
-		instance, err := cp.GetInstance(waitCtx, instanceID)
-		if err != nil {
-			return nil, err
-		}
-		status := strings.ToUpper(derefString(instance.Status))
-		switch status {
-		case "RUNNING":
-			return instance, nil
-		case "FAILED", "STOPPED", "STOP_FAILED":
-			return nil, fmt.Errorf("debug instance %s failed to become ready (status: %s)", instanceID, status)
-		}
-		if err := waitBeforeRetry(waitCtx); err != nil {
-			return nil, fmt.Errorf("timed out waiting for debug instance %s to become ready: %w", instanceID, err)
-		}
-	}
+func waitForInstanceRunning(ctx context.Context, cp ControlPlane, instanceID string, options resourcewait.Options) (*ags.SandboxInstance, error) {
+	return resourcewait.WaitForInstanceWithPolicy(
+		ctx,
+		instanceID,
+		cp.GetInstance,
+		resourcewait.InstancePolicy(resourcewait.OperationCreate),
+		options,
+	)
 }
 
 func waitBeforeRetry(ctx context.Context) error {
