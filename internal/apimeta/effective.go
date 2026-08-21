@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -150,6 +151,10 @@ func EvaluateAPIPatch(upstream, patchData []byte) (PatchReport, error) {
 }
 
 func decodeAndValidatePatch(data []byte) (jsonpatch.Patch, error) {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || trimmed[0] != '[' {
+		return nil, fmt.Errorf("RFC 6902 API patch must be a JSON array")
+	}
 	patch, err := jsonpatch.DecodePatch(data)
 	if err != nil {
 		return nil, fmt.Errorf("decode RFC 6902 API patch: %w", err)
@@ -166,7 +171,7 @@ func decodeAndValidatePatch(data []byte) (jsonpatch.Patch, error) {
 		if _, err := pointerTokens(path); err != nil {
 			return nil, fmt.Errorf("patch operation %d path: %w", i, err)
 		}
-		if kind != "remove" && operationValue(operation) == nil {
+		if kind != "remove" && !operationHasValue(operation) {
 			return nil, fmt.Errorf("patch operation %d %s %s requires value", i, kind, path)
 		}
 		if kind == "replace" || kind == "remove" {
@@ -248,11 +253,24 @@ func evaluateReplace(doc *[]byte, patch jsonpatch.Patch, index int, path string,
 }
 
 func evaluateRemove(doc *[]byte, patch jsonpatch.Patch, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
+	expected := operationValue(patch[index-1])
+	if state, detail, handled, err := classifyMemberRemove(*doc, path, expected); err != nil {
+		return PatchOperationReport{}, err
+	} else if handled {
+		result := PatchOperationReport{Index: index, Op: "remove", Path: path, Status: state, Detail: detail}
+		if state == PatchStatusActive {
+			*doc, err = applyOne(*doc, operation)
+			if err != nil {
+				return PatchOperationReport{}, fmt.Errorf("apply active remove %s: %w", path, err)
+			}
+		}
+		return result, nil
+	}
+
 	current, exists, err := pointerValue(*doc, path)
 	if err != nil {
 		return PatchOperationReport{}, err
 	}
-	expected := operationValue(patch[index-1])
 	result := PatchOperationReport{Index: index, Op: "remove", Path: path}
 	switch {
 	case !exists:
@@ -329,6 +347,57 @@ func classifyMemberAppend(doc []byte, parentTokens []string, value []byte) (Patc
 	return PatchStatusActive, fmt.Sprintf("member %s is absent upstream", added.Name), nil
 }
 
+func classifyMemberRemove(doc []byte, path string, expected []byte) (PatchStatus, string, bool, error) {
+	tokens, err := pointerTokens(path)
+	if err != nil {
+		return "", "", false, err
+	}
+	if len(tokens) != 4 || tokens[0] != "objects" || tokens[2] != "members" || !isArrayIndex(tokens[3]) {
+		return "", "", false, nil
+	}
+	index, err := strconv.Atoi(tokens[3])
+	if err != nil {
+		return "", "", true, fmt.Errorf("invalid members array index %q: %w", tokens[3], err)
+	}
+	var removed struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(expected, &removed); err != nil || removed.Name == "" {
+		return "", "", false, nil
+	}
+
+	parent, exists, err := pointerValueTokens(doc, tokens[:3])
+	if err != nil {
+		return "", "", true, err
+	}
+	if !exists {
+		return PatchStatusConflict, "upstream no longer contains the target members array", true, nil
+	}
+	var members []json.RawMessage
+	if err := json.Unmarshal(parent, &members); err != nil {
+		return "", "", true, fmt.Errorf("target members path is not an array: %w", err)
+	}
+	for memberIndex, member := range members {
+		var existing struct {
+			Name string `json:"name"`
+		}
+		if err := json.Unmarshal(member, &existing); err != nil {
+			return "", "", true, fmt.Errorf("decode existing member: %w", err)
+		}
+		if existing.Name != removed.Name {
+			continue
+		}
+		if memberIndex != index {
+			return PatchStatusConflict, fmt.Sprintf("member %s still exists at index %d", removed.Name, memberIndex), true, nil
+		}
+		if !jsonValuesEqual(member, expected) {
+			return PatchStatusConflict, fmt.Sprintf("member %s has a different value upstream", removed.Name), true, nil
+		}
+		return PatchStatusActive, fmt.Sprintf("member %s still matches the guarded value", removed.Name), true, nil
+	}
+	return PatchStatusObsolete, fmt.Sprintf("member %s is absent upstream", removed.Name), true, nil
+}
+
 func validateEffectiveJSON(data []byte) error {
 	var root map[string]json.RawMessage
 	if err := json.Unmarshal(data, &root); err != nil {
@@ -336,6 +405,31 @@ func validateEffectiveJSON(data []byte) error {
 	}
 	if root["actions"] == nil || root["objects"] == nil {
 		return fmt.Errorf("effective API must contain actions and objects")
+	}
+	var rawActions map[string]json.RawMessage
+	if err := json.Unmarshal(root["actions"], &rawActions); err != nil {
+		return fmt.Errorf("effective API actions must be an object: %w", err)
+	}
+	if rawActions == nil {
+		return fmt.Errorf("effective API actions must be an object")
+	}
+	var rawObjects map[string]json.RawMessage
+	if err := json.Unmarshal(root["objects"], &rawObjects); err != nil {
+		return fmt.Errorf("effective API objects must be an object: %w", err)
+	}
+	if rawObjects == nil {
+		return fmt.Errorf("effective API objects must be an object")
+	}
+	objectNames := make([]string, 0, len(rawObjects))
+	for name := range rawObjects {
+		objectNames = append(objectNames, name)
+	}
+	sort.Strings(objectNames)
+	for _, name := range objectNames {
+		object := rawObjects[name]
+		if bytes.Equal(bytes.TrimSpace(object), []byte("null")) {
+			return fmt.Errorf("effective API object %s must not be null", name)
+		}
 	}
 	spec, err := ParseSpec(data)
 	if err != nil {
@@ -364,6 +458,16 @@ func validateEffectiveJSON(data []byte) error {
 				return fmt.Errorf("effective API object %s contains duplicate member %s", objectName, member.Name)
 			}
 			seen[member.Name] = true
+			memberType := strings.ToLower(member.Type)
+			if !IsScalar(memberType) && memberType != "list" && memberType != "object" {
+				return fmt.Errorf("effective API member %s.%s has unsupported type %q", objectName, member.Name, member.Type)
+			}
+			if member.Member == "" {
+				return fmt.Errorf("effective API member %s.%s has empty member type", objectName, member.Name)
+			}
+			if IsScalar(memberType) && !IsScalar(strings.ToLower(member.Member)) {
+				return fmt.Errorf("effective API member %s.%s has unsupported scalar member type %q", objectName, member.Name, member.Member)
+			}
 			if referencesObject(member) && spec.Object(member.Member) == nil {
 				return fmt.Errorf("effective API member %s.%s references missing object %q", objectName, member.Name, member.Member)
 			}
@@ -389,11 +493,19 @@ func applyOne(doc []byte, operation jsonpatch.Operation) ([]byte, error) {
 }
 
 func operationValue(operation jsonpatch.Operation) []byte {
-	value := operation["value"]
-	if value == nil {
+	value, ok := operation["value"]
+	if !ok {
 		return nil
 	}
+	if value == nil {
+		return []byte("null")
+	}
 	return []byte(*value)
+}
+
+func operationHasValue(operation jsonpatch.Operation) bool {
+	_, ok := operation["value"]
+	return ok
 }
 
 func isGuardForNext(patch jsonpatch.Patch, index int) bool {

@@ -153,6 +153,46 @@ func TestApplyAPIPatch_RequiresGuardedReplaceAndRemove(t *testing.T) {
 	}
 }
 
+func TestApplyAPIPatch_AllowsExplicitNullValue(t *testing.T) {
+	patch := `[{"op":"add","path":"/metadata/nullable","value":null}]`
+	effective, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(patch))
+	if err != nil {
+		t.Fatalf("explicit null patch returned error: %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(effective, &raw); err != nil {
+		t.Fatalf("unmarshal effective JSON: %v", err)
+	}
+	metadata := raw["metadata"].(map[string]any)
+	if value, ok := metadata["nullable"]; !ok || value != nil {
+		t.Fatalf("nullable=%#v, present=%v; want explicit null", value, ok)
+	}
+	guardedRemove := `[
+      {"op":"test","path":"/metadata/nullable","value":null},
+      {"op":"remove","path":"/metadata/nullable"}
+    ]`
+	removed, err := apimeta.ApplyAPIPatch(effective, []byte(guardedRemove))
+	if err != nil {
+		t.Fatalf("guarded null removal returned error: %v", err)
+	}
+	if strings.Contains(string(removed), `"nullable"`) {
+		t.Fatalf("guarded removal left nullable in effective JSON: %s", removed)
+	}
+}
+
+func TestApplyAPIPatch_RejectsNullObject(t *testing.T) {
+	patch := `[{"op":"add","path":"/objects/Unused","value":null}]`
+	if _, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(patch)); err == nil || !strings.Contains(err.Error(), "object Unused must not be null") {
+		t.Fatalf("null object patch error=%v", err)
+	}
+}
+
+func TestApplyAPIPatch_RejectsNonArrayDocument(t *testing.T) {
+	if _, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(`null`)); err == nil || !strings.Contains(err.Error(), "must be a JSON array") {
+		t.Fatalf("non-array patch error=%v", err)
+	}
+}
+
 func TestApplyAPIPatch_RejectsNumericArrayAddAndMissingReferences(t *testing.T) {
 	numeric := `[{"op":"add","path":"/objects/ExistingRequest/members/0","value":{"name":"Other","type":"string","member":"string"}}]`
 	if _, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(numeric)); err == nil || !strings.Contains(err.Error(), "numeric array index") {
@@ -176,6 +216,38 @@ func TestApplyAPIPatch_AllowsPrimitiveLists(t *testing.T) {
 	patch := `[{"op":"add","path":"/objects/ExistingRequest/members/-","value":{"name":"Values","type":"list","member":"double","required":false}}]`
 	if _, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(patch)); err != nil {
 		t.Fatalf("primitive list patch returned error: %v", err)
+	}
+}
+
+func TestApplyAPIPatch_RejectsInvalidMemberTypes(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  string
+	}{
+		{
+			name:  "unknown type",
+			value: `{"name":"Count","type":"intrger","member":"int64"}`,
+			want:  `unsupported type "intrger"`,
+		},
+		{
+			name:  "empty member type",
+			value: `{"name":"Count","type":"int","member":""}`,
+			want:  "empty member type",
+		},
+		{
+			name:  "unknown scalar member type",
+			value: `{"name":"Count","type":"int","member":"integer"}`,
+			want:  `unsupported scalar member type "integer"`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			patch := `[{"op":"add","path":"/objects/ExistingRequest/members/-","value":` + tt.value + `}]`
+			if _, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(patch)); err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("invalid member patch error=%v, want containing %q", err, tt.want)
+			}
+		})
 	}
 }
 
@@ -269,6 +341,36 @@ func TestEvaluateAPIPatch_GuardedReplaceBecomesObsolete(t *testing.T) {
 	}
 }
 
+func TestEvaluateAPIPatch_ClassifiesGuardedMemberRemoval(t *testing.T) {
+	member := func(name string) map[string]any {
+		return map[string]any{"name": name, "type": "string", "member": "string"}
+	}
+	patch := `[
+      {"op":"test","path":"/objects/ExistingRequest/members/1","value":{"name":"B","type":"string","member":"string"}},
+      {"op":"remove","path":"/objects/ExistingRequest/members/1"}
+    ]`
+	tests := []struct {
+		name    string
+		members []map[string]any
+		want    apimeta.PatchStatus
+	}{
+		{name: "active", members: []map[string]any{member("A"), member("B"), member("C")}, want: apimeta.PatchStatusActive},
+		{name: "obsolete after compaction", members: []map[string]any{member("A"), member("C")}, want: apimeta.PatchStatusObsolete},
+		{name: "conflict after reorder", members: []map[string]any{member("B"), member("A"), member("C")}, want: apimeta.PatchStatusConflict},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			report, err := apimeta.EvaluateAPIPatch([]byte(withRequestMembers(t, tt.members)), []byte(patch))
+			if err != nil {
+				t.Fatalf("EvaluateAPIPatch returned error: %v", err)
+			}
+			if report.Status != tt.want {
+				t.Fatalf("status=%s, want %s; operations=%+v", report.Status, tt.want, report.Operations)
+			}
+		})
+	}
+}
+
 func addMetadataFields(t *testing.T, fields map[string]any) string {
 	t.Helper()
 	var raw map[string]any
@@ -279,6 +381,22 @@ func addMetadataFields(t *testing.T, fields map[string]any) string {
 	for key, value := range fields {
 		metadata[key] = value
 	}
+	data, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatalf("marshal fixture: %v", err)
+	}
+	return string(data)
+}
+
+func withRequestMembers(t *testing.T, members []map[string]any) string {
+	t.Helper()
+	var raw map[string]any
+	if err := json.Unmarshal([]byte(effectiveTestBase), &raw); err != nil {
+		t.Fatalf("unmarshal fixture: %v", err)
+	}
+	objects := raw["objects"].(map[string]any)
+	request := objects["ExistingRequest"].(map[string]any)
+	request["members"] = members
 	data, err := json.Marshal(raw)
 	if err != nil {
 		t.Fatalf("marshal fixture: %v", err)
