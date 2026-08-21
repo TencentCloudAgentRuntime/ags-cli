@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.5] - 2026-08-21
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- This release has no new Features.
+
+### Bug Fixes
+- Correct machine-readable command schemas so update operations are marked as
+  mutations, workflow commands require authentication, custom image registries
+  are accepted by pre-cache commands, and JSON schemas expose the same examples
+  as command help.
+- Make `agr instance debug` follow the shared instance-create lifecycle policy,
+  return structured wait failures instead of polling known terminal states until
+  timeout, and provide a retry hint after temporary-resource cleanup.
+- Align `agr instance list --filters` status help with current persisted states
+  and document the special filtering and pagination behavior of the derived
+  `UNHEALTHY` status.
+
+### Docs
+- This release has no documentation changes.
+
 ## [0.6.4] - 2026-08-06
 
 ### Breaking Changes
