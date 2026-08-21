@@ -80,7 +80,7 @@ type groupModel struct {
 }
 
 func main() {
-	apiDir := flag.String("api", filepath.Join("api", apiService, apiVersion), "directory containing api.json, mapping.yaml and help.json")
+	apiDir := flag.String("api", filepath.Join("api", apiService, apiVersion), "directory containing api.json, api.patch.json, mapping.yaml and help.json")
 	check := flag.Bool("check", false, "fail if generated files are stale")
 	flag.Parse()
 	args := flag.Args()
@@ -94,7 +94,7 @@ func main() {
 }
 
 func run(apiDir string, check bool) error {
-	spec, err := apimeta.LoadSpec(filepath.Join(apiDir, "api.json"))
+	spec, err := apimeta.LoadEffectiveSpec(apiDir)
 	if err != nil {
 		return err
 	}

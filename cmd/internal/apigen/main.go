@@ -3,7 +3,7 @@
 //
 //	go run ./cmd/internal/apigen coverage         -> textual coverage report
 //	go run ./cmd/internal/apigen coverage --format json
-//	go run ./cmd/internal/apigen list-actions     -> list api.json actions and their mapping status
+//	go run ./cmd/internal/apigen list-actions     -> list effective API actions and their mapping status
 //	go run ./cmd/internal/apigen schema [Object]  -> dump an api.json object schema
 //
 // The `coverage`, `list-actions`, and `schema` subcommands replace the
@@ -35,7 +35,7 @@ func main() {
 		apiDir      string
 	)
 	flag.BoolVar(&legacyCheck, "check", false, "deprecated: use `cobragen check` instead")
-	flag.StringVar(&apiDir, "api", filepath.Join("api", apiService, apiVersion), "directory containing api.json and mapping.yaml")
+	flag.StringVar(&apiDir, "api", filepath.Join("api", apiService, apiVersion), "directory containing api.json, api.patch.json and mapping.yaml")
 	flag.Parse()
 
 	args := flag.Args()
@@ -69,10 +69,9 @@ func main() {
 }
 
 func loadInputs(apiDir string) (*apimeta.Spec, *apimeta.Mapping, error) {
-	specPath := filepath.Join(apiDir, "api.json")
 	mappingPath := filepath.Join(apiDir, "mapping.yaml")
 
-	spec, err := apimeta.LoadSpec(specPath)
+	spec, err := apimeta.LoadEffectiveSpec(apiDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("load spec: %w", err)
 	}

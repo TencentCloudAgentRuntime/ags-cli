@@ -1,5 +1,5 @@
 // Package apimeta is the API metadata centre. Runtime consumes generated
-// Go metadata produced from api.json, mapping.yaml and help.json; it does
+// Go metadata produced from the effective API, mapping.yaml and help.json; it does
 // not read or embed a committed JSON catalog.
 package apimeta
 

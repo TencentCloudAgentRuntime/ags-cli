@@ -73,7 +73,7 @@ func TestContract_GeneratedFlagTypesMatchCobraTypes(t *testing.T) {
 
 func TestContract_RequestFlagOnEveryMappedRequestCommand(t *testing.T) {
 	root := filepath.Join("..", "..", "api", "ags", "v20250920")
-	spec, err := apimeta.LoadSpec(filepath.Join(root, "api.json"))
+	spec, err := apimeta.LoadEffectiveSpec(root)
 	if err != nil {
 		t.Fatalf("load spec: %v", err)
 	}
@@ -131,7 +131,7 @@ func expectedCobraType(f apimeta.FieldFlag) (string, bool) {
 func loadGeneratedFlags(t *testing.T) []apimeta.FieldFlag {
 	t.Helper()
 	root := filepath.Join("..", "..", "api", "ags", "v20250920")
-	spec, err := apimeta.LoadSpec(filepath.Join(root, "api.json"))
+	spec, err := apimeta.LoadEffectiveSpec(root)
 	if err != nil {
 		t.Fatalf("load spec: %v", err)
 	}

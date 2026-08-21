@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	connectrpc.com/connect v1.18.1
 	github.com/TencentCloudAgentRuntime/ags-go-sdk v0.0.10
+	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/gofrs/flock v0.13.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/itchyny/gojq v0.12.19
