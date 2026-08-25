@@ -1172,11 +1172,52 @@ func runAGR(t *testing.T, args ...string) (string, error) {
 		"AGR_CHARACTERIZATION_HELPER=1",
 		"HOME="+t.TempDir(),
 		"USERPROFILE="+t.TempDir(),
+		"GORACE="+characterizationGORACE(os.Getenv("GORACE")),
 		"TENCENTCLOUD_SECRET_ID=",
 		"TENCENTCLOUD_SECRET_KEY=",
 	)
 	out, err := cmd.CombinedOutput()
 	return string(out), err
+}
+
+func characterizationGORACE(existing string) string {
+	options := strings.Fields(existing)
+	filtered := options[:0]
+	for _, option := range options {
+		if !strings.HasPrefix(option, "atexit_sleep_ms=") {
+			filtered = append(filtered, option)
+		}
+	}
+	return strings.Join(append(filtered, "atexit_sleep_ms=0"), " ")
+}
+
+func TestCharacterizationGORACEDisablesChildExitSleep(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		existing string
+		want     string
+	}{
+		{
+			name: "default",
+			want: "atexit_sleep_ms=0",
+		},
+		{
+			name:     "preserves other options",
+			existing: "halt_on_error=1 strip_path_prefix=/tmp",
+			want:     "halt_on_error=1 strip_path_prefix=/tmp atexit_sleep_ms=0",
+		},
+		{
+			name:     "overrides existing exit sleep",
+			existing: "atexit_sleep_ms=1000 halt_on_error=1",
+			want:     "halt_on_error=1 atexit_sleep_ms=0",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := characterizationGORACE(tc.existing); got != tc.want {
+				t.Fatalf("characterizationGORACE(%q) = %q, want %q", tc.existing, got, tc.want)
+			}
+		})
+	}
 }
 
 func TestCharacterizationHelperProcess(t *testing.T) {
