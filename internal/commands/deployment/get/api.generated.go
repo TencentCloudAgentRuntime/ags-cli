@@ -14,7 +14,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"deployment", "get"},
 			Use:          "get <deployment-id>",
 			Short:        "Describe a deployment",
-			Examples:     []string{"agr deployment get dpl-a1b2c3d4", "agr deployment get dpl-a1b2c3d4 -o json"},
+			Examples:     []string{"Example - Inspect the Deployment in a human-readable form:\n  agr deployment get dpl-a1b2c3d4", "Example - Print the complete API response:\n  agr deployment get dpl-a1b2c3d4 -o json", "Example - Extract the current status for a script:\n  agr deployment get dpl-a1b2c3d4 -o json --jq '.Data.Deployment.Status'"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
 				{Name: "deployment-id", Required: true, Description: "Deployment ID."},

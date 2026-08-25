@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
@@ -75,6 +76,62 @@ func TestRegistryIncludesAllKnownCommandModules(t *testing.T) {
 	}
 	if got := len(registry.Modules()); got != len(want) {
 		t.Fatalf("module count = %d, want %d", got, len(want))
+	}
+}
+
+func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
+	registry, err := Registry()
+	if err != nil {
+		t.Fatalf("Registry returned error: %v", err)
+	}
+	wants := map[string][]string{
+		"deployment.create": {
+			"Example - Scale to zero after five idle minutes",
+			"Example - Keep two instances active",
+			`"Mode":"BEST_EFFORT"`,
+			"@scaling.json",
+		},
+		"deployment.delete": {
+			"Example - Delete and wait for completion",
+			"--wait=false",
+			"--timeout 30m",
+			"--timeout 0",
+		},
+		"deployment.get": {
+			"Example - Inspect the Deployment",
+			"Example - Print the complete API response",
+			".Data.Deployment.Status",
+		},
+		"deployment.list": {
+			`"Name":"tool-id"`,
+			`"Name":"deployment-name-like"`,
+			"DELETE_FAILED",
+			".Data.DeploymentSet[].DeploymentId",
+		},
+		"deployment.update": {
+			"Example - Increase active capacity",
+			`"IdleAction":"PAUSE"`,
+			`"IdleAction":"STOP"`,
+			"Example - Clear all tags",
+		},
+		"deployment.proxy": {
+			"Example - Forward the same local and remote port",
+			"Example - Avoid a local port conflict",
+			"curl -N http://127.0.0.1:3000/events",
+			"--verbose",
+		},
+	}
+	for id, required := range wants {
+		module, ok := registry.Lookup(id)
+		if !ok {
+			t.Fatalf("registry missing %s", id)
+		}
+		examples := strings.Join(module.Descriptor.Spec.Examples, "\n")
+		for _, want := range required {
+			if !strings.Contains(examples, want) {
+				t.Errorf("%s examples missing %q:\n%s", id, want, examples)
+			}
+		}
 	}
 }
 
