@@ -96,11 +96,7 @@ func New(opts Options) (*Proxy, error) {
 		if opts.Affinity.HeaderName == "" {
 			return nil, fmt.Errorf("affinity headerName is required")
 		}
-		affinity = &affinityState{
-			headerName: opts.Affinity.HeaderName,
-			id:         opts.Affinity.InitialID,
-			onChange:   opts.Affinity.OnIDChange,
-		}
+		affinity = newAffinityState(opts.Affinity.HeaderName, opts.Affinity.InitialID, opts.Affinity.OnIDChange)
 	}
 
 	logger := opts.Logger
@@ -167,7 +163,7 @@ func (p *Proxy) Start() (string, error) {
 		}
 	}
 	reverseProxy.ModifyResponse = func(response *http.Response) error {
-		p.observeAffinityResponse(requestAffinityID(response.Request.Context()), response.Header)
+		p.captureAffinityResponse(response.Request.Context(), response.Header)
 		return nil
 	}
 
@@ -197,15 +193,21 @@ func (p *Proxy) Start() (string, error) {
 
 	// Build the HTTP handler that routes between HTTP proxy and WebSocket proxy
 	mux := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestContext := r.Context()
+		if p.affinity != nil {
+			affinityRequest, err := p.affinity.acquire(requestContext)
+			if err != nil {
+				return
+			}
+			defer affinityRequest.complete("")
+			requestContext = context.WithValue(requestContext, requestAffinityRequestKey{}, affinityRequest)
+		}
+		r = r.WithContext(requestContext)
 		token, ok := p.acquireRequestToken(w, r)
 		if !ok {
 			return
 		}
-		requestContext := context.WithValue(r.Context(), requestTokenKey{}, token)
-		if p.affinity != nil {
-			requestContext = context.WithValue(requestContext, requestAffinityIDKey{}, p.affinity.currentID())
-		}
-		r = r.WithContext(requestContext)
+		r = r.WithContext(context.WithValue(r.Context(), requestTokenKey{}, token))
 		if isWebSocketRequest(r) {
 			p.handleWebSocket(w, r, wsUpgrader)
 			return
@@ -296,9 +298,11 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 		return
 	}
 	defer func() { _ = upstreamConn.Close() }()
+	var affinityHeaders http.Header
 	if upstreamResp != nil {
-		p.observeAffinityResponse(requestAffinityID(r.Context()), upstreamResp.Header)
+		affinityHeaders = upstreamResp.Header
 	}
+	p.captureAffinityResponse(r.Context(), affinityHeaders)
 
 	// Pass negotiated subprotocol back to client
 	responseHeader := http.Header{}
@@ -365,41 +369,111 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 
 type requestTokenKey struct{}
 
-type requestAffinityIDKey struct{}
+type requestAffinityRequestKey struct{}
 
 func requestAffinityID(ctx context.Context) string {
-	id, _ := ctx.Value(requestAffinityIDKey{}).(string)
-	return id
+	request, _ := ctx.Value(requestAffinityRequestKey{}).(*affinityRequest)
+	if request == nil {
+		return ""
+	}
+	return request.sentID
 }
 
 type affinityState struct {
-	mu         sync.Mutex
-	headerName string
-	id         string
-	onChange   func(string)
+	idMu          sync.RWMutex
+	headerName    string
+	id            string
+	discoveryGate chan struct{}
+	onChange      func(string)
+}
+
+func newAffinityState(headerName, initialID string, onChange func(string)) *affinityState {
+	return &affinityState{
+		headerName:    headerName,
+		id:            initialID,
+		discoveryGate: make(chan struct{}, 1),
+		onChange:      onChange,
+	}
 }
 
 func (s *affinityState) currentID() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.idMu.RLock()
+	defer s.idMu.RUnlock()
 	return s.id
 }
 
+// acquire admits requests with a known affinity ID immediately. While the ID
+// is unknown, a separate discovery gate admits exactly one unbound request.
+// The ID is checked again after acquiring the gate because another request may
+// have populated it while this request was waiting.
+func (s *affinityState) acquire(ctx context.Context) (*affinityRequest, error) {
+	if id := s.currentID(); id != "" {
+		return &affinityRequest{state: s, sentID: id}, nil
+	}
+
+	select {
+	case s.discoveryGate <- struct{}{}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
+	if id := s.currentID(); id != "" {
+		<-s.discoveryGate
+		return &affinityRequest{state: s, sentID: id}, nil
+	}
+	return &affinityRequest{state: s, discovery: true}, nil
+}
+
+type affinityRequest struct {
+	state     *affinityState
+	sentID    string
+	discovery bool
+	once      sync.Once
+}
+
+func (r *affinityRequest) complete(responseID string) {
+	if r == nil {
+		return
+	}
+	r.once.Do(func() {
+		if r.discovery {
+			r.state.completeDiscovery(responseID)
+			return
+		}
+		r.state.observe(r.sentID, responseID)
+	})
+}
+
+func (s *affinityState) completeDiscovery(responseID string) {
+	s.idMu.Lock()
+	changed := responseID != "" && s.id == ""
+	if changed {
+		s.id = responseID
+	}
+	onChange := s.onChange
+	s.idMu.Unlock()
+	<-s.discoveryGate
+
+	if changed && onChange != nil {
+		onChange(responseID)
+	}
+}
+
 // observe accepts a response only when it corresponds to the currently tracked
-// request ID. For concurrent unbound requests, the first response to establish
-// an ID wins; late responses cannot replace it.
+// request ID. For concurrent bound requests, the first response to rotate the
+// ID wins; late responses carrying the previous ID cannot replace it.
 func (s *affinityState) observe(sentID, responseID string) {
 	if responseID == "" {
 		return
 	}
-	s.mu.Lock()
+	s.idMu.Lock()
 	if (sentID == "" && s.id != "") || (sentID != "" && s.id != sentID) || s.id == responseID {
-		s.mu.Unlock()
+		s.idMu.Unlock()
 		return
 	}
 	s.id = responseID
 	onChange := s.onChange
-	s.mu.Unlock()
+	s.idMu.Unlock()
 	if onChange != nil {
 		onChange(responseID)
 	}
@@ -415,11 +489,16 @@ func (p *Proxy) applyAffinityHeader(headers http.Header, id string) {
 	}
 }
 
-func (p *Proxy) observeAffinityResponse(sentID string, headers http.Header) {
-	if p.affinity == nil || headers == nil {
+func (p *Proxy) captureAffinityResponse(ctx context.Context, headers http.Header) {
+	request, _ := ctx.Value(requestAffinityRequestKey{}).(*affinityRequest)
+	if request == nil || headers == nil {
 		return
 	}
-	p.affinity.observe(sentID, headers.Get(p.affinity.headerName))
+	responseID := headers.Get(request.state.headerName)
+	if responseID == "" {
+		return
+	}
+	request.complete(responseID)
 }
 
 func (p *Proxy) tokenForRequest(ctx context.Context) (string, error) {

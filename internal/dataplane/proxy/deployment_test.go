@@ -254,6 +254,139 @@ func TestDeploymentAffinityCapturesAndReusesResponseID(t *testing.T) {
 	}
 }
 
+func TestDeploymentAffinitySerializesRequestsUntilFirstIDIsCaptured(t *testing.T) {
+	const affinityHeader = "X-Workspace-Session"
+	firstStarted := make(chan struct{})
+	releaseFirst := make(chan struct{})
+	secondStarted := make(chan struct{})
+	var requests atomic.Int32
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch requests.Add(1) {
+		case 1:
+			close(firstStarted)
+			<-releaseFirst
+			w.Header().Set(affinityHeader, "serialized-session")
+		case 2:
+			close(secondStarted)
+			if got := r.Header.Get(affinityHeader); got != "serialized-session" {
+				http.Error(w, "affinity id not reused: "+got, http.StatusBadRequest)
+				return
+			}
+		default:
+			http.Error(w, "unexpected request", http.StatusBadRequest)
+			return
+		}
+		fmt.Fprint(w, "ok")
+	}))
+	defer upstream.Close()
+
+	p := newAffinityTestProxy(t, upstream, AffinityOptions{HeaderName: affinityHeader})
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+
+	results := make(chan error, 2)
+	request := func() {
+		response, err := http.Get("http://" + address + "/")
+		if err != nil {
+			results <- err
+			return
+		}
+		body, readErr := io.ReadAll(response.Body)
+		_ = response.Body.Close()
+		if readErr != nil {
+			results <- readErr
+			return
+		}
+		if response.StatusCode != http.StatusOK {
+			results <- fmt.Errorf("status=%d body=%q", response.StatusCode, body)
+			return
+		}
+		results <- nil
+	}
+	go request()
+	<-firstStarted
+	go request()
+
+	secondReachedUpstreamBeforeCapture := false
+	select {
+	case <-secondStarted:
+		secondReachedUpstreamBeforeCapture = true
+	case <-time.After(150 * time.Millisecond):
+	}
+	close(releaseFirst)
+	for i := 0; i < 2; i++ {
+		if err := <-results; err != nil {
+			t.Fatalf("proxied request failed: %v", err)
+		}
+	}
+	if secondReachedUpstreamBeforeCapture {
+		t.Fatal("a second unbound request reached upstream before the first affinity ID was captured")
+	}
+}
+
+func TestDeploymentAffinityKeepsGateUntilUnboundRequestWithoutIDCompletes(t *testing.T) {
+	const affinityHeader = "X-Workspace-Session"
+	firstHeadersSent := make(chan struct{})
+	releaseFirst := make(chan struct{})
+	secondStarted := make(chan struct{})
+	var requests atomic.Int32
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch requests.Add(1) {
+		case 1:
+			w.WriteHeader(http.StatusOK)
+			w.(http.Flusher).Flush()
+			close(firstHeadersSent)
+			<-releaseFirst
+		case 2:
+			close(secondStarted)
+		default:
+			http.Error(w, "unexpected request", http.StatusBadRequest)
+			return
+		}
+		fmt.Fprint(w, "ok")
+	}))
+	defer upstream.Close()
+
+	p := newAffinityTestProxy(t, upstream, AffinityOptions{HeaderName: affinityHeader})
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+
+	results := make(chan error, 2)
+	request := func() {
+		response, err := http.Get("http://" + address + "/")
+		if err == nil {
+			_, err = io.Copy(io.Discard, response.Body)
+			_ = response.Body.Close()
+		}
+		results <- err
+	}
+	go request()
+	<-firstHeadersSent
+	go request()
+
+	secondReachedUpstreamBeforeCompletion := false
+	select {
+	case <-secondStarted:
+		secondReachedUpstreamBeforeCompletion = true
+	case <-time.After(150 * time.Millisecond):
+	}
+	close(releaseFirst)
+	for i := 0; i < 2; i++ {
+		if err := <-results; err != nil {
+			t.Fatalf("proxied request failed: %v", err)
+		}
+	}
+	if secondReachedUpstreamBeforeCompletion {
+		t.Fatal("a second unbound request reached upstream while the first request was still active")
+	}
+}
+
 func TestDeploymentAffinityInitialIDAndServerRotation(t *testing.T) {
 	const affinityHeader = "X-Workspace-Session"
 	var requests atomic.Int32
@@ -362,12 +495,23 @@ func TestDeploymentWebSocketAffinityCapturesAndReusesResponseID(t *testing.T) {
 
 func TestAffinityStateIgnoresStaleConcurrentResponses(t *testing.T) {
 	var changes []string
-	state := &affinityState{onChange: func(id string) { changes = append(changes, id) }}
+	state := newAffinityState("X-Session", "", func(id string) { changes = append(changes, id) })
 
-	state.observe("", "first-session")
-	state.observe("", "late-unbound-session")
-	state.observe("first-session", "rotated-session")
-	state.observe("first-session", "late-old-session")
+	discovery, err := state.acquire(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	discovery.complete("first-session")
+	firstBound, err := state.acquire(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondBound, err := state.acquire(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstBound.complete("rotated-session")
+	secondBound.complete("late-old-session")
 
 	if got := state.currentID(); got != "rotated-session" {
 		t.Fatalf("current affinity ID = %q, want rotated-session", got)
@@ -375,6 +519,41 @@ func TestAffinityStateIgnoresStaleConcurrentResponses(t *testing.T) {
 	if len(changes) != 2 || changes[0] != "first-session" || changes[1] != "rotated-session" {
 		t.Fatalf("affinity changes = %#v", changes)
 	}
+}
+
+func TestAffinityStateWaitsForDiscoveryAndHonorsCancellation(t *testing.T) {
+	state := newAffinityState("X-Session", "", nil)
+	leader, err := state.acquire(context.Background())
+	if err != nil || !leader.discovery {
+		t.Fatalf("leader = %#v, error = %v", leader, err)
+	}
+
+	waitContext, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	if _, err := state.acquire(waitContext); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("waiting acquire error = %v, want context deadline exceeded", err)
+	}
+
+	leader.complete("captured-session")
+	follower, err := state.acquire(context.Background())
+	if err != nil || follower.discovery || follower.sentID != "captured-session" {
+		t.Fatalf("follower = %#v, error = %v", follower, err)
+	}
+}
+
+func TestAffinityStateReelectsDiscoveryAfterResponseWithoutID(t *testing.T) {
+	state := newAffinityState("X-Session", "", nil)
+	first, err := state.acquire(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	first.complete("")
+
+	second, err := state.acquire(context.Background())
+	if err != nil || !second.discovery || second.sentID != "" {
+		t.Fatalf("second discovery = %#v, error = %v", second, err)
+	}
+	second.complete("")
 }
 
 func newAffinityTestProxy(t *testing.T, upstream *httptest.Server, affinity AffinityOptions) *Proxy {
