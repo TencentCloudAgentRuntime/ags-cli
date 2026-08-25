@@ -35,6 +35,29 @@ func TestModuleRendersModifiedDeploymentAndPreservesResponse(t *testing.T) {
 	}
 }
 
+func TestModulePreservesExplicitEmptyTags(t *testing.T) {
+	id := "dpl-update"
+	response := &ags.ModifyDeploymentResponseParams{Deployment: &ags.Deployment{DeploymentId: &id}}
+	cp := &fakeControlPlane{response: response}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = runtime.Handler.Run(context.Background(), command.Request{
+		ArgValues: map[string]string{"deployment-id": id},
+		Flags: map[string]command.FlagValue{
+			"tags": {Name: "tags", Type: command.FlagString, String: "[]", Changed: true},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tags, ok := cp.request["Tags"].([]any)
+	if !ok || tags == nil || len(tags) != 0 {
+		t.Fatalf("Tags = %#v, want explicit empty array", cp.request["Tags"])
+	}
+}
+
 type fakeControlPlane struct {
 	action   string
 	request  map[string]any

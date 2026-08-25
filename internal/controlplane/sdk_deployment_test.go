@@ -3,6 +3,7 @@ package controlplane
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
@@ -76,10 +77,13 @@ func TestSDKCallUsesTypedDeploymentOperations(t *testing.T) {
 	t.Run("modify", func(t *testing.T) {
 		called := false
 		sdk := &SDK{Client: client, ModifyDeployment: func(_ context.Context, _ *ags.Client, req *ags.ModifyDeploymentRequest) (*ags.ModifyDeploymentResponseParams, error) {
-			called = derefTestString(req.DeploymentId) == "dpl-a1b2c3d4"
+			called = derefTestString(req.DeploymentId) == "dpl-a1b2c3d4" && req.Tags != nil && len(req.Tags) == 0
+			if !strings.Contains(req.ToJsonString(), `"Tags":[]`) {
+				t.Fatalf("request JSON omitted explicit empty Tags: %s", req.ToJsonString())
+			}
 			return &ags.ModifyDeploymentResponseParams{Deployment: &ags.Deployment{}}, nil
 		}}
-		_, err := sdk.Call(ctx, "ModifyDeployment", map[string]any{"DeploymentId": "dpl-a1b2c3d4"})
+		_, err := sdk.Call(ctx, "ModifyDeployment", map[string]any{"DeploymentId": "dpl-a1b2c3d4", "Tags": []any{}})
 		if err != nil || !called {
 			t.Fatalf("Call() error = %v, called=%v", err, called)
 		}
