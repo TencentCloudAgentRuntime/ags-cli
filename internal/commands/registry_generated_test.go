@@ -108,7 +108,7 @@ func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
 			`"Name":"tool-id"`,
 			`"Name":"deployment-name-like"`,
 			"DELETE_FAILED",
-			".Data.DeploymentSet[].DeploymentId",
+			"(.Data.DeploymentSet // [])[].DeploymentId",
 		},
 		"deployment.update": {
 			"Example - Increase active capacity",

@@ -14,7 +14,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"deployment", "list"},
 			Use:          "list",
 			Short:        "List deployments",
-			Examples:     []string{"Example - List Deployments with compact status and capacity summaries:\n  agr deployment list", "Example - List active Deployments for one Sandbox Tool:\n  agr deployment list --filters '[{\"Name\":\"tool-id\",\"Values\":[\"sdt-a1b2c3d4\"]},{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]}]'", "Example - Find Deployment names containing workspace:\n  agr deployment list --filters '[{\"Name\":\"deployment-name-like\",\"Values\":[\"workspace\"]}]'", "Example - Find Deployments whose last deletion failed:\n  agr deployment list --filters '[{\"Name\":\"status\",\"Values\":[\"DELETE_FAILED\"]}]'", "Example - Read the next page of Deployment IDs:\n  agr deployment list --offset 50 --limit 50 -o json --jq '.Data.DeploymentSet[].DeploymentId'"},
+			Examples:     []string{"Example - List Deployments with compact status and capacity summaries:\n  agr deployment list", "Example - List active Deployments for one Sandbox Tool:\n  agr deployment list --filters '[{\"Name\":\"tool-id\",\"Values\":[\"sdt-a1b2c3d4\"]},{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]}]'", "Example - Find Deployment names containing workspace:\n  agr deployment list --filters '[{\"Name\":\"deployment-name-like\",\"Values\":[\"workspace\"]}]'", "Example - Find Deployments whose last deletion failed:\n  agr deployment list --filters '[{\"Name\":\"status\",\"Values\":[\"DELETE_FAILED\"]}]'", "Example - Read the next page of Deployment IDs:\n  agr deployment list --offset 50 --limit 50 -o json --jq '(.Data.DeploymentSet // [])[].DeploymentId'"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeDeploymentListResponse",
@@ -48,7 +48,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Filters",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "filters", Flag: "filters", Usage: "Filters JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "filters", Flag: "filters", Usage: "Filters JSON array, @file, or - for stdin. Names and values are case-sensitive; different filters use AND, while Values within one filter use OR.", Format: "[{\"Name\":\"<filter>\",\"Values\":[\"<value>\"]}]", Values: []string{"deployment-id: exact Deployment ID", "deployment-name: exact Deployment name", "deployment-name-like: literal substring of the Deployment name; % and _ are not wildcards", "tool-id: exact Sandbox Tool ID", "status: exact status; ACTIVE, DELETING, or DELETE_FAILED"}, Type: command.FlagString},
 				},
 			},
 		},
