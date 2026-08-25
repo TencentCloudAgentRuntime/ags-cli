@@ -47,21 +47,21 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "ScalingConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "scaling-configuration", Flag: "scaling-configuration", Usage: "Complete ScalingConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "scaling-configuration", Flag: "scaling-configuration", Usage: "Complete scaling configuration JSON object, @file, or - for stdin. Providing it replaces the current scaling configuration; include all three fields because update does not apply create defaults.", Format: "{\"MinInstanceCount\":<integer>,\"MaxInstanceCount\":<integer>,\"MaxInstanceRequestConcurrency\":<integer>}", Values: []string{"MinInstanceCount: minimum number of active Sandbox Instances; >= 0", "MaxInstanceCount: maximum number of active Sandbox Instances; >= 1 and >= MinInstanceCount", "MaxInstanceRequestConcurrency: maximum concurrent Deployment request or connection leases per active Sandbox Instance; >= 1"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "LifecycleConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "lifecycle-configuration", Flag: "lifecycle-configuration", Usage: "Complete LifecycleConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "lifecycle-configuration", Flag: "lifecycle-configuration", Usage: "Complete idle lifecycle configuration JSON object, @file, or - for stdin. Providing it replaces the current lifecycle configuration; include both fields because update does not apply create defaults.", Format: "{\"IdleTimeoutSeconds\":<integer>,\"IdleAction\":\"<action>\"}", Values: []string{"IdleTimeoutSeconds: idle seconds after the last active Deployment request or connection before IdleAction; >= 30 with no fixed upper limit", "IdleAction: STOP releases the Sandbox Instance; PAUSE preserves its state"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "Tags",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "tags", Flag: "tags", Usage: "Complete Tags JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "tags", Flag: "tags", Usage: "Resource tags as a JSON array, @file, or - for stdin. Providing --tags replaces all tags; [] clears all tags; omit --tags to leave tags unchanged.", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Values: []string{"Key: tag key", "Value: tag value"}, Type: command.FlagString},
 				},
 			},
 		},

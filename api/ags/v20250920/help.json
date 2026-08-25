@@ -33,7 +33,13 @@
                     "description": "Scaling configuration.",
                     "inputs": {
                         "scaling-configuration": {
-                            "usage": "ScalingConfiguration JSON object, @file, or - for stdin"
+                            "usage": "Scaling configuration JSON object, @file, or - for stdin. The object and individual fields are optional; omitted fields use service defaults.",
+                            "format": "{\"MinInstanceCount\":<integer>,\"MaxInstanceCount\":<integer>,\"MaxInstanceRequestConcurrency\":<integer>}",
+                            "values": [
+                                "MinInstanceCount: minimum number of active Sandbox Instances; >= 0; default: 0",
+                                "MaxInstanceCount: maximum number of active Sandbox Instances; >= 1 and >= MinInstanceCount; default: 10",
+                                "MaxInstanceRequestConcurrency: maximum concurrent Deployment request or connection leases per active Sandbox Instance; >= 1; default: 100"
+                            ]
                         }
                     }
                 },
@@ -41,7 +47,12 @@
                     "description": "Idle lifecycle configuration.",
                     "inputs": {
                         "lifecycle-configuration": {
-                            "usage": "LifecycleConfiguration JSON object, @file, or - for stdin"
+                            "usage": "Idle lifecycle configuration JSON object, @file, or - for stdin. The object and individual fields are optional; omitted fields use service defaults.",
+                            "format": "{\"IdleTimeoutSeconds\":<integer>,\"IdleAction\":\"<action>\"}",
+                            "values": [
+                                "IdleTimeoutSeconds: idle seconds after the last active Deployment request or connection before IdleAction; >= 30 with no fixed upper limit; default: 300",
+                                "IdleAction: STOP releases the Sandbox Instance; PAUSE preserves its state; default: STOP"
+                            ]
                         }
                     }
                 },
@@ -49,7 +60,15 @@
                     "description": "Session affinity configuration.",
                     "inputs": {
                         "affinity-configuration": {
-                            "usage": "AffinityConfiguration JSON object, @file, or - for stdin"
+                            "usage": "Session affinity configuration JSON object, @file, or - for stdin. Affinity is disabled by default.",
+                            "format": "{\"Mode\":\"<mode>\",\"HeaderName\":\"<header-name>\"}",
+                            "values": [
+                                "BEST_EFFORT: prefer the previous Sandbox Instance; select another one when unavailable",
+                                "STRICT: require the previous Sandbox Instance; fail instead of selecting another one",
+                                "EXCLUSIVE: dedicate one non-migrating Sandbox Instance to each affinity ID",
+                                "HeaderName: request and response header carrying the affinity ID; default when enabled: X-Tencent-Agr-Affinity-Id; must be a non-reserved HTTP field name of 1-128 ASCII bytes",
+                                "Omit the object, omit Mode, or set Mode to an empty string to disable affinity; HeaderName must then be omitted"
+                            ]
                         }
                     }
                 },
@@ -57,7 +76,12 @@
                     "description": "Resource tags.",
                     "inputs": {
                         "tags": {
-                            "usage": "Tags JSON array, @file, or - for stdin"
+                            "usage": "Resource tags as a JSON array, @file, or - for stdin. Omit for no tags.",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "values": [
+                                "Key: tag key",
+                                "Value: tag value"
+                            ]
                         }
                     }
                 }
@@ -140,7 +164,13 @@
                     "description": "Complete replacement scaling configuration.",
                     "inputs": {
                         "scaling-configuration": {
-                            "usage": "Complete ScalingConfiguration JSON object, @file, or - for stdin"
+                            "usage": "Complete scaling configuration JSON object, @file, or - for stdin. Providing it replaces the current scaling configuration; include all three fields because update does not apply create defaults.",
+                            "format": "{\"MinInstanceCount\":<integer>,\"MaxInstanceCount\":<integer>,\"MaxInstanceRequestConcurrency\":<integer>}",
+                            "values": [
+                                "MinInstanceCount: minimum number of active Sandbox Instances; >= 0",
+                                "MaxInstanceCount: maximum number of active Sandbox Instances; >= 1 and >= MinInstanceCount",
+                                "MaxInstanceRequestConcurrency: maximum concurrent Deployment request or connection leases per active Sandbox Instance; >= 1"
+                            ]
                         }
                     }
                 },
@@ -148,7 +178,12 @@
                     "description": "Complete replacement idle lifecycle configuration.",
                     "inputs": {
                         "lifecycle-configuration": {
-                            "usage": "Complete LifecycleConfiguration JSON object, @file, or - for stdin"
+                            "usage": "Complete idle lifecycle configuration JSON object, @file, or - for stdin. Providing it replaces the current lifecycle configuration; include both fields because update does not apply create defaults.",
+                            "format": "{\"IdleTimeoutSeconds\":<integer>,\"IdleAction\":\"<action>\"}",
+                            "values": [
+                                "IdleTimeoutSeconds: idle seconds after the last active Deployment request or connection before IdleAction; >= 30 with no fixed upper limit",
+                                "IdleAction: STOP releases the Sandbox Instance; PAUSE preserves its state"
+                            ]
                         }
                     }
                 },
@@ -156,7 +191,12 @@
                     "description": "Complete replacement resource tags.",
                     "inputs": {
                         "tags": {
-                            "usage": "Complete Tags JSON array, @file, or - for stdin"
+                            "usage": "Resource tags as a JSON array, @file, or - for stdin. Providing --tags replaces all tags; [] clears all tags; omit --tags to leave tags unchanged.",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "values": [
+                                "Key: tag key",
+                                "Value: tag value"
+                            ]
                         }
                     }
                 }

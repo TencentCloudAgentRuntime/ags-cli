@@ -51,28 +51,28 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "ScalingConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "scaling-configuration", Flag: "scaling-configuration", Usage: "ScalingConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "scaling-configuration", Flag: "scaling-configuration", Usage: "Scaling configuration JSON object, @file, or - for stdin. The object and individual fields are optional; omitted fields use service defaults.", Format: "{\"MinInstanceCount\":<integer>,\"MaxInstanceCount\":<integer>,\"MaxInstanceRequestConcurrency\":<integer>}", Values: []string{"MinInstanceCount: minimum number of active Sandbox Instances; >= 0; default: 0", "MaxInstanceCount: maximum number of active Sandbox Instances; >= 1 and >= MinInstanceCount; default: 10", "MaxInstanceRequestConcurrency: maximum concurrent Deployment request or connection leases per active Sandbox Instance; >= 1; default: 100"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "LifecycleConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "lifecycle-configuration", Flag: "lifecycle-configuration", Usage: "LifecycleConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "lifecycle-configuration", Flag: "lifecycle-configuration", Usage: "Idle lifecycle configuration JSON object, @file, or - for stdin. The object and individual fields are optional; omitted fields use service defaults.", Format: "{\"IdleTimeoutSeconds\":<integer>,\"IdleAction\":\"<action>\"}", Values: []string{"IdleTimeoutSeconds: idle seconds after the last active Deployment request or connection before IdleAction; >= 30 with no fixed upper limit; default: 300", "IdleAction: STOP releases the Sandbox Instance; PAUSE preserves its state; default: STOP"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "AffinityConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "affinity-configuration", Flag: "affinity-configuration", Usage: "AffinityConfiguration JSON object, @file, or - for stdin", Type: command.FlagString},
+					{Name: "affinity-configuration", Flag: "affinity-configuration", Usage: "Session affinity configuration JSON object, @file, or - for stdin. Affinity is disabled by default.", Format: "{\"Mode\":\"<mode>\",\"HeaderName\":\"<header-name>\"}", Values: []string{"BEST_EFFORT: prefer the previous Sandbox Instance; select another one when unavailable", "STRICT: require the previous Sandbox Instance; fail instead of selecting another one", "EXCLUSIVE: dedicate one non-migrating Sandbox Instance to each affinity ID", "HeaderName: request and response header carrying the affinity ID; default when enabled: X-Tencent-Agr-Affinity-Id; must be a non-reserved HTTP field name of 1-128 ASCII bytes", "Omit the object, omit Mode, or set Mode to an empty string to disable affinity; HeaderName must then be omitted"}, Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "Tags",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "tags", Flag: "tags", Usage: "Tags JSON array, @file, or - for stdin", Type: command.FlagString},
+					{Name: "tags", Flag: "tags", Usage: "Resource tags as a JSON array, @file, or - for stdin. Omit for no tags.", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Values: []string{"Key: tag key", "Value: tag value"}, Type: command.FlagString},
 				},
 			},
 		},

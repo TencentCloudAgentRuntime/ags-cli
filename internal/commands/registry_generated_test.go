@@ -148,6 +148,91 @@ func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
 	}
 }
 
+func TestDeploymentConfigurationHelpDocumentsFieldsAndDefaults(t *testing.T) {
+	registry, err := Registry()
+	if err != nil {
+		t.Fatalf("Registry returned error: %v", err)
+	}
+	wants := map[string]map[string][]string{
+		"deployment.create": {
+			"scaling-configuration": {
+				"MinInstanceCount",
+				"MaxInstanceCount",
+				"MaxInstanceRequestConcurrency",
+				"default: 0",
+				"default: 10",
+				"default: 100",
+			},
+			"lifecycle-configuration": {
+				"IdleTimeoutSeconds",
+				"IdleAction",
+				"default: 300",
+				"default: STOP",
+				"PAUSE",
+			},
+			"affinity-configuration": {
+				"Mode",
+				"HeaderName",
+				"disabled by default",
+				"BEST_EFFORT",
+				"STRICT",
+				"EXCLUSIVE",
+				"X-Tencent-Agr-Affinity-Id",
+			},
+			"tags": {
+				"Key",
+				"Value",
+				"no tags",
+			},
+		},
+		"deployment.update": {
+			"scaling-configuration": {
+				"MinInstanceCount",
+				"MaxInstanceCount",
+				"MaxInstanceRequestConcurrency",
+				"all three fields",
+				"does not apply create defaults",
+			},
+			"lifecycle-configuration": {
+				"IdleTimeoutSeconds",
+				"IdleAction",
+				"both fields",
+				"does not apply create defaults",
+			},
+			"tags": {
+				"Key",
+				"Value",
+				"replaces all tags",
+				"[] clears all tags",
+				"leave tags unchanged",
+			},
+		},
+	}
+	for commandID, flagWants := range wants {
+		module, ok := registry.Lookup(commandID)
+		if !ok {
+			t.Fatalf("registry missing %s", commandID)
+		}
+		for flagName, required := range flagWants {
+			flag, ok := findFlag(module.Descriptor.Spec.Flags, flagName)
+			if !ok {
+				t.Errorf("%s missing --%s", commandID, flagName)
+				continue
+			}
+			help := strings.Join([]string{
+				flag.Usage,
+				flag.Format,
+				strings.Join(flag.Values, "\n"),
+			}, "\n")
+			for _, want := range required {
+				if !strings.Contains(help, want) {
+					t.Errorf("%s --%s help missing %q:\n%s", commandID, flagName, want, help)
+				}
+			}
+		}
+	}
+}
+
 func primaryAgrInvocation(example string) string {
 	var commandLines []string
 	for _, line := range strings.Split(example, "\n") {
