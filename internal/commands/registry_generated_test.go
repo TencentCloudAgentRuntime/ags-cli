@@ -89,6 +89,8 @@ func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
 			"Example - Scale to zero after five idle minutes",
 			"Example - Keep two instances active",
 			`"Mode":"BEST_EFFORT"`,
+			`"Mode":"STRICT"`,
+			`"Mode":"EXCLUSIVE"`,
 			"@scaling.json",
 		},
 		"deployment.delete": {
