@@ -196,6 +196,210 @@ func TestDeploymentHeadersPreserveBusinessHeadersAndNormalizeOrigin(t *testing.T
 	}
 }
 
+func TestDeploymentAffinityCapturesAndReusesResponseID(t *testing.T) {
+	const affinityHeader = "X-Workspace-Session"
+	var requests atomic.Int32
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch requests.Add(1) {
+		case 1:
+			if got := r.Header.Get(affinityHeader); got != "" {
+				http.Error(w, "unexpected initial affinity id: "+got, http.StatusBadRequest)
+				return
+			}
+			w.Header().Set(affinityHeader, "session-from-upstream")
+		case 2:
+			if got := r.Header.Get(affinityHeader); got != "session-from-upstream" {
+				http.Error(w, "affinity id not reused: "+got, http.StatusBadRequest)
+				return
+			}
+		default:
+			http.Error(w, "unexpected request", http.StatusBadRequest)
+			return
+		}
+		fmt.Fprint(w, "ok")
+	}))
+	defer upstream.Close()
+
+	changed := make(chan string, 1)
+	p := newAffinityTestProxy(t, upstream, AffinityOptions{
+		HeaderName: affinityHeader,
+		OnIDChange: func(id string) { changed <- id },
+	})
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+
+	for i := 0; i < 2; i++ {
+		request, _ := http.NewRequest(http.MethodGet, "http://"+address+"/", nil)
+		request.Header.Set(affinityHeader, "client-must-not-control-session")
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(response.Body)
+		_ = response.Body.Close()
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("request %d status=%d body=%q", i+1, response.StatusCode, body)
+		}
+	}
+	select {
+	case id := <-changed:
+		if id != "session-from-upstream" {
+			t.Fatalf("affinity change = %q", id)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("affinity ID change was not reported")
+	}
+}
+
+func TestDeploymentAffinityInitialIDAndServerRotation(t *testing.T) {
+	const affinityHeader = "X-Workspace-Session"
+	var requests atomic.Int32
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		want := "session-from-flag"
+		if requests.Add(1) == 2 {
+			want = "session-rotated"
+		}
+		if got := r.Header.Get(affinityHeader); got != want {
+			http.Error(w, fmt.Sprintf("affinity id = %q, want %q", got, want), http.StatusBadRequest)
+			return
+		}
+		if want == "session-from-flag" {
+			w.Header().Set(affinityHeader, "session-rotated")
+		}
+		fmt.Fprint(w, "ok")
+	}))
+	defer upstream.Close()
+
+	changed := make(chan string, 1)
+	p := newAffinityTestProxy(t, upstream, AffinityOptions{
+		HeaderName: affinityHeader,
+		InitialID:  "session-from-flag",
+		OnIDChange: func(id string) { changed <- id },
+	})
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+
+	for i := 0; i < 2; i++ {
+		response, err := http.Get("http://" + address + "/")
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(response.Body)
+		_ = response.Body.Close()
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("request %d status=%d body=%q", i+1, response.StatusCode, body)
+		}
+	}
+	select {
+	case id := <-changed:
+		if id != "session-rotated" {
+			t.Fatalf("affinity change = %q", id)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("rotated affinity ID was not reported")
+	}
+}
+
+func TestDeploymentWebSocketAffinityCapturesAndReusesResponseID(t *testing.T) {
+	const affinityHeader = "X-Workspace-Session"
+	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+	var requests atomic.Int32
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestNumber := requests.Add(1)
+		if requestNumber == 1 {
+			if got := r.Header.Get(affinityHeader); got != "" {
+				http.Error(w, "unexpected initial affinity id: "+got, http.StatusBadRequest)
+				return
+			}
+			w.Header().Set(affinityHeader, "websocket-session")
+		} else if got := r.Header.Get(affinityHeader); got != "websocket-session" {
+			http.Error(w, "affinity id not reused: "+got, http.StatusBadRequest)
+			return
+		}
+		conn, err := upgrader.Upgrade(w, r, w.Header())
+		if err == nil {
+			_ = conn.Close()
+		}
+	}))
+	defer upstream.Close()
+
+	changed := make(chan string, 1)
+	p := newAffinityTestProxy(t, upstream, AffinityOptions{
+		HeaderName: affinityHeader,
+		OnIDChange: func(id string) { changed <- id },
+	})
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+
+	for i := 0; i < 2; i++ {
+		conn, response, err := websocket.DefaultDialer.Dial("ws://"+address+"/socket", nil)
+		if response != nil && response.Body != nil {
+			_ = response.Body.Close()
+		}
+		if err != nil {
+			t.Fatalf("websocket request %d: %v", i+1, err)
+		}
+		_ = conn.Close()
+	}
+	select {
+	case id := <-changed:
+		if id != "websocket-session" {
+			t.Fatalf("affinity change = %q", id)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("WebSocket affinity ID change was not reported")
+	}
+}
+
+func TestAffinityStateIgnoresStaleConcurrentResponses(t *testing.T) {
+	var changes []string
+	state := &affinityState{onChange: func(id string) { changes = append(changes, id) }}
+
+	state.observe("", "first-session")
+	state.observe("", "late-unbound-session")
+	state.observe("first-session", "rotated-session")
+	state.observe("first-session", "late-old-session")
+
+	if got := state.currentID(); got != "rotated-session" {
+		t.Fatalf("current affinity ID = %q, want rotated-session", got)
+	}
+	if len(changes) != 2 || changes[0] != "first-session" || changes[1] != "rotated-session" {
+		t.Fatalf("affinity changes = %#v", changes)
+	}
+}
+
+func newAffinityTestProxy(t *testing.T, upstream *httptest.Server, affinity AffinityOptions) *Proxy {
+	t.Helper()
+	p, err := New(Options{
+		InstanceID:      "dpl-a1b2c3d4",
+		Domain:          "ap-guangzhou.agents.tencentags.com",
+		RemotePort:      8080,
+		Token:           "dpt_dynamic",
+		PreserveHeaders: true,
+		ListenAddress:   "127.0.0.1:0",
+		Insecure:        true,
+		Logger:          log.New(io.Discard, "", 0),
+		Affinity:        &affinity,
+		DialContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+			return dialer.DialContext(ctx, network, upstream.Listener.Addr().String())
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
 func TestInstanceWebSocketHeadersRemainLegacyCompatible(t *testing.T) {
 	p, err := New(Options{InstanceID: "ins-a1b2c3d4", Domain: "ap-guangzhou.tencentags.com", RemotePort: 8080, Token: "instance-token"})
 	if err != nil {

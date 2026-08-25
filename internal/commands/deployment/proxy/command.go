@@ -18,8 +18,9 @@ import (
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
-// ControlPlane supplies short-lived Deployment data-plane credentials.
+// ControlPlane supplies Deployment configuration and short-lived data-plane credentials.
 type ControlPlane interface {
+	GetDeployment(context.Context, string) (*ags.Deployment, error)
 	GetDeploymentToken(context.Context, string) (*ags.AcquireDeploymentTokenResponseParams, error)
 }
 
@@ -47,6 +48,8 @@ func Module() command.Module {
 
 This L7 proxy is recommended only for local debugging. It does not proxy raw TCP traffic.
 
+When Deployment affinity is enabled, the proxy captures the affinity ID returned by the service, prints it, and reuses it for later HTTP, SSE, and WebSocket requests. Use --affinity-id to resume a known affinity session.
+
 Port syntax:
   <remote-port>                 Use the same local and remote port
   <local-port>:<remote-port>    Use a different local port`,
@@ -54,6 +57,7 @@ Port syntax:
 			"Example - Forward the same local and remote port:\n  agr deployment proxy dpl-a1b2c3d4 8080",
 			"Example - Avoid a local port conflict:\n  agr deployment proxy dpl-a1b2c3d4 3000:8080",
 			"Example - Log proxied requests without printing credentials:\n  agr deployment proxy dpl-a1b2c3d4 3000:8080 --verbose",
+			"Example - Resume a known affinity session:\n  agr deployment proxy dpl-a1b2c3d4 3000:8080 --affinity-id session-a1b2c3d4",
 		},
 		Args: []command.ArgSpec{
 			{Name: "deployment-id", Required: true, Description: "Deployment ID."},
@@ -61,6 +65,7 @@ Port syntax:
 		},
 		Flags: []command.FlagSpec{
 			{Name: "address", Usage: "Local address to bind to", Type: command.FlagString, Default: "127.0.0.1"},
+			{Name: "affinity-id", Usage: "Initial affinity ID for a Deployment with affinity enabled", Type: command.FlagString},
 			{Name: "verbose", Usage: "Enable secret-safe request logging", Type: command.FlagBool},
 		},
 	}
@@ -76,7 +81,7 @@ Port syntax:
 			deps = deps.WithDefaults()
 			cp, ok := deps.ControlPlane.(ControlPlane)
 			if !ok {
-				return command.Runtime{}, fmt.Errorf("deployment.proxy requires Deployment token support")
+				return command.Runtime{}, fmt.Errorf("deployment.proxy requires Deployment control-plane support")
 			}
 			runtime := runtimeDeps(deps.DataPlane)
 			return command.Runtime{Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
@@ -120,6 +125,19 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	if !isLoopbackAddress(address) {
 		fmt.Fprintf(deps.IO.ErrOut, "Warning: binding to %s exposes the local debugging proxy to the network.\n", address)
 	}
+	deployment, err := cp.GetDeployment(ctx, deploymentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get deployment: %w", err)
+	}
+	affinityID := stringFlag(req, "affinity-id")
+	affinityHeader, affinityEnabled := deploymentAffinity(deployment)
+	if affinityID != "" && !affinityEnabled {
+		return nil, output.NewUsageError(
+			"AFFINITY_DISABLED",
+			fmt.Sprintf("deployment %s does not enable affinity", deploymentID),
+			"Remove --affinity-id or enable affinity when creating the Deployment.",
+		)
+	}
 
 	tokenLifecycle, cancelTokens := context.WithCancel(ctx)
 	defer cancelTokens()
@@ -129,6 +147,16 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	cfg := config.Get()
 	domain := fmt.Sprintf("%s.agents.%s", cfg.Region, cfg.DataPlaneDomain())
 	listenAddress := net.JoinHostPort(address, strconv.Itoa(localPort))
+	var affinityOptions *dataplaneproxy.AffinityOptions
+	if affinityEnabled {
+		affinityOptions = &dataplaneproxy.AffinityOptions{
+			HeaderName: affinityHeader,
+			InitialID:  affinityID,
+			OnIDChange: func(id string) {
+				fmt.Fprintf(deps.IO.Out, "Affinity ID: %s\n", id)
+			},
+		}
+	}
 	proxy, err := runtime.NewProxy(dataplaneproxy.Options{
 		InstanceID:      deploymentID,
 		Domain:          domain,
@@ -136,6 +164,7 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 		TokenProvider:   manager.Token,
 		RewriteOrigin:   true,
 		PreserveHeaders: true,
+		Affinity:        affinityOptions,
 		ListenAddress:   listenAddress,
 		Verbose:         boolFlag(req, "verbose"),
 	})
@@ -151,6 +180,9 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	fmt.Fprintf(deps.IO.Out, "Forwarding from %s -> %d\n", actualAddress, remotePort)
 	fmt.Fprintf(deps.IO.Out, "  Local:  http://%s\n", actualAddress)
 	fmt.Fprintf(deps.IO.Out, "  Remote: https://%d-%s.%s\n", remotePort, deploymentID, domain)
+	if affinityID != "" {
+		fmt.Fprintf(deps.IO.Out, "Affinity ID: %s\n", affinityID)
+	}
 	fmt.Fprintln(deps.IO.Out, "\nPress Ctrl+C to stop.")
 
 	runtime.Wait(ctx)
@@ -158,6 +190,19 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	fmt.Fprintln(deps.IO.Out, "\nStopping proxy...")
 	proxy.Stop()
 	return &command.Result{StreamDone: true}, nil
+}
+
+const defaultAffinityHeader = "X-Tencent-Agr-Affinity-Id"
+
+func deploymentAffinity(deployment *ags.Deployment) (string, bool) {
+	if deployment == nil || deployment.AffinityConfiguration == nil || deployment.AffinityConfiguration.Mode == nil || strings.TrimSpace(*deployment.AffinityConfiguration.Mode) == "" {
+		return "", false
+	}
+	headerName := defaultAffinityHeader
+	if configured := deployment.AffinityConfiguration.HeaderName; configured != nil && *configured != "" {
+		headerName = *configured
+	}
+	return headerName, true
 }
 
 func parsePortSpec(spec string) (int, int, error) {

@@ -325,6 +325,18 @@ The proxy supports HTTP, SSE, and WebSocket traffic, but not raw TCP. It binds
 to `127.0.0.1` by default. Using `--address` with a non-loopback address exposes
 the debugging proxy to the network and prints a warning.
 
+When Deployment affinity is enabled, the proxy captures the affinity ID from
+the upstream response, prints it, and automatically reuses it for later HTTP,
+SSE, and WebSocket requests during the lifetime of the proxy process. To resume
+a known affinity session after restarting the proxy, initialize it explicitly:
+
+```bash
+agr deployment proxy "$deployment_id" 3000:8080 --affinity-id "$affinity_id"
+```
+
+`--affinity-id` is rejected when the Deployment does not enable affinity. The
+proxy keeps affinity IDs only in memory and never persists them to disk.
+
 ## Cloud endpoint vs data-plane domain
 
 | Flag                         | Default                  | Controls                         |

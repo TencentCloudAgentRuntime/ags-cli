@@ -42,13 +42,26 @@ type Options struct {
 	// headers. When false, the legacy instance proxy forwards only Origin and
 	// Sec-WebSocket-Protocol in addition to its gateway token.
 	PreserveHeaders bool
-	ListenAddress   string      // e.g. "127.0.0.1:3000"
-	Logger          *log.Logger // Optional logger; defaults to log.Default()
-	Insecure        bool        // Skip TLS verification
-	Verbose         bool        // Enable verbose request logging
+	// Affinity enables process-local Deployment session affinity. The proxy
+	// replaces any client-supplied affinity header with the currently tracked
+	// ID, then learns authoritative IDs from upstream responses.
+	Affinity      *AffinityOptions
+	ListenAddress string      // e.g. "127.0.0.1:3000"
+	Logger        *log.Logger // Optional logger; defaults to log.Default()
+	Insecure      bool        // Skip TLS verification
+	Verbose       bool        // Enable verbose request logging
 	// DialContext overrides upstream TCP dialing. Production leaves it nil;
 	// integration tests use it to route synthetic authorities to a local TLS server.
 	DialContext func(context.Context, string, string) (net.Conn, error)
+}
+
+// AffinityOptions configures process-local Deployment session affinity.
+type AffinityOptions struct {
+	HeaderName string
+	InitialID  string
+	// OnIDChange is called after the proxy learns a new non-empty ID from an
+	// upstream response. It is not called for InitialID.
+	OnIDChange func(string)
 }
 
 // Proxy manages an active HTTP/WebSocket reverse proxy that forwards local
@@ -61,6 +74,7 @@ type Proxy struct {
 	cancel     context.CancelFunc
 	logger     *log.Logger
 	targetHost string // e.g. "3000-sandbox-xxx.ap-guangzhou.tencentags.com"
+	affinity   *affinityState
 }
 
 // New creates and initializes a new port-forward proxy but does not start it.
@@ -76,6 +90,17 @@ func New(opts Options) (*Proxy, error) {
 	}
 	if opts.ListenAddress == "" {
 		opts.ListenAddress = "127.0.0.1:0"
+	}
+	var affinity *affinityState
+	if opts.Affinity != nil {
+		if opts.Affinity.HeaderName == "" {
+			return nil, fmt.Errorf("affinity headerName is required")
+		}
+		affinity = &affinityState{
+			headerName: opts.Affinity.HeaderName,
+			id:         opts.Affinity.InitialID,
+			onChange:   opts.Affinity.OnIDChange,
+		}
 	}
 
 	logger := opts.Logger
@@ -93,6 +118,7 @@ func New(opts Options) (*Proxy, error) {
 		cancel:     cancel,
 		logger:     logger,
 		targetHost: targetHost,
+		affinity:   affinity,
 	}, nil
 }
 
@@ -134,10 +160,15 @@ func (p *Proxy) Start() (string, error) {
 		// Inject access token. The sandbox gateway authenticates via X-Access-Token only.
 		token, _ := req.Context().Value(requestTokenKey{}).(string)
 		req.Header.Set("X-Access-Token", token)
+		p.applyAffinityHeader(req.Header, requestAffinityID(req.Context()))
 		p.normalizeOrigin(req.Header)
 		if p.options.Verbose {
 			p.logger.Printf("[HTTP] %s %s", req.Method, req.URL.Path)
 		}
+	}
+	reverseProxy.ModifyResponse = func(response *http.Response) error {
+		p.observeAffinityResponse(requestAffinityID(response.Request.Context()), response.Header)
+		return nil
 	}
 
 	// Error handler: log the full error internally, but only expose details
@@ -170,7 +201,11 @@ func (p *Proxy) Start() (string, error) {
 		if !ok {
 			return
 		}
-		r = r.WithContext(context.WithValue(r.Context(), requestTokenKey{}, token))
+		requestContext := context.WithValue(r.Context(), requestTokenKey{}, token)
+		if p.affinity != nil {
+			requestContext = context.WithValue(requestContext, requestAffinityIDKey{}, p.affinity.currentID())
+		}
+		r = r.WithContext(requestContext)
 		if isWebSocketRequest(r) {
 			p.handleWebSocket(w, r, wsUpgrader)
 			return
@@ -230,6 +265,7 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	// removing client-side WebSocket handshake headers that gorilla generates.
 	token, _ := r.Context().Value(requestTokenKey{}).(string)
 	upstreamHeaders := p.webSocketUpstreamHeaders(r, token)
+	p.applyAffinityHeader(upstreamHeaders, requestAffinityID(r.Context()))
 	upstreamHeaders.Set("Host", p.targetHost)
 
 	// Connect to upstream WebSocket
@@ -260,12 +296,20 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 		return
 	}
 	defer func() { _ = upstreamConn.Close() }()
+	if upstreamResp != nil {
+		p.observeAffinityResponse(requestAffinityID(r.Context()), upstreamResp.Header)
+	}
 
 	// Pass negotiated subprotocol back to client
 	responseHeader := http.Header{}
 	if upstreamResp != nil {
 		if proto := upstreamResp.Header.Get("Sec-WebSocket-Protocol"); proto != "" {
 			responseHeader.Set("Sec-WebSocket-Protocol", proto)
+		}
+		if p.affinity != nil {
+			if id := upstreamResp.Header.Get(p.affinity.headerName); id != "" {
+				responseHeader.Set(p.affinity.headerName, id)
+			}
 		}
 	}
 
@@ -320,6 +364,63 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 }
 
 type requestTokenKey struct{}
+
+type requestAffinityIDKey struct{}
+
+func requestAffinityID(ctx context.Context) string {
+	id, _ := ctx.Value(requestAffinityIDKey{}).(string)
+	return id
+}
+
+type affinityState struct {
+	mu         sync.Mutex
+	headerName string
+	id         string
+	onChange   func(string)
+}
+
+func (s *affinityState) currentID() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.id
+}
+
+// observe accepts a response only when it corresponds to the currently tracked
+// request ID. For concurrent unbound requests, the first response to establish
+// an ID wins; late responses cannot replace it.
+func (s *affinityState) observe(sentID, responseID string) {
+	if responseID == "" {
+		return
+	}
+	s.mu.Lock()
+	if (sentID == "" && s.id != "") || (sentID != "" && s.id != sentID) || s.id == responseID {
+		s.mu.Unlock()
+		return
+	}
+	s.id = responseID
+	onChange := s.onChange
+	s.mu.Unlock()
+	if onChange != nil {
+		onChange(responseID)
+	}
+}
+
+func (p *Proxy) applyAffinityHeader(headers http.Header, id string) {
+	if p.affinity == nil {
+		return
+	}
+	headers.Del(p.affinity.headerName)
+	if id != "" {
+		headers.Set(p.affinity.headerName, id)
+	}
+}
+
+func (p *Proxy) observeAffinityResponse(sentID string, headers http.Header) {
+	if p.affinity == nil || headers == nil {
+		return
+	}
+	p.affinity.observe(sentID, headers.Get(p.affinity.headerName))
+}
 
 func (p *Proxy) tokenForRequest(ctx context.Context) (string, error) {
 	if p.options.TokenProvider == nil {
