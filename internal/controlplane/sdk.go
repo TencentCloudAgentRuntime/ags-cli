@@ -22,6 +22,12 @@ type SDK struct {
 	NewClient                   func() (*ags.Client, error)
 	StartSandboxInstance        func(context.Context, *ags.Client, *ags.StartSandboxInstanceRequest) (*ags.StartSandboxInstanceResponseParams, error)
 	AcquireSandboxInstanceToken func(context.Context, *ags.Client, *ags.AcquireSandboxInstanceTokenRequest) (*ags.AcquireSandboxInstanceTokenResponseParams, error)
+	CreateDeployment            func(context.Context, *ags.Client, *ags.CreateDeploymentRequest) (*ags.CreateDeploymentResponseParams, error)
+	DeleteDeployment            func(context.Context, *ags.Client, *ags.DeleteDeploymentRequest) (*ags.DeleteDeploymentResponseParams, error)
+	DescribeDeployment          func(context.Context, *ags.Client, *ags.DescribeDeploymentRequest) (*ags.DescribeDeploymentResponseParams, error)
+	DescribeDeploymentList      func(context.Context, *ags.Client, *ags.DescribeDeploymentListRequest) (*ags.DescribeDeploymentListResponseParams, error)
+	ModifyDeployment            func(context.Context, *ags.Client, *ags.ModifyDeploymentRequest) (*ags.ModifyDeploymentResponseParams, error)
+	AcquireDeploymentToken      func(context.Context, *ags.Client, *ags.AcquireDeploymentTokenRequest) (*ags.AcquireDeploymentTokenResponseParams, error)
 	TokenCache                  *token.Cache
 	TokenCacheReady             bool
 	Warnf                       func(format string, args ...any)
@@ -47,6 +53,42 @@ func (s *SDK) Call(ctx context.Context, action string, request map[string]any) (
 		return nil, err
 	}
 	switch action {
+	case "CreateDeployment":
+		req := ags.NewCreateDeploymentRequest()
+		if err := fillRequest("deployment.create", request, req); err != nil {
+			return nil, err
+		}
+		return s.createDeployment(ctx, apiClient, req)
+	case "DeleteDeployment":
+		req := ags.NewDeleteDeploymentRequest()
+		if err := fillRequest("deployment.delete", request, req); err != nil {
+			return nil, err
+		}
+		return s.deleteDeployment(ctx, apiClient, req)
+	case "DescribeDeployment":
+		req := ags.NewDescribeDeploymentRequest()
+		if err := fillRequest("deployment.get", request, req); err != nil {
+			return nil, err
+		}
+		return s.describeDeployment(ctx, apiClient, req)
+	case "DescribeDeploymentList":
+		req := ags.NewDescribeDeploymentListRequest()
+		if err := fillRequest("deployment.list", request, req); err != nil {
+			return nil, err
+		}
+		return s.describeDeploymentList(ctx, apiClient, req)
+	case "ModifyDeployment":
+		req := ags.NewModifyDeploymentRequest()
+		if err := fillRequest("deployment.update", request, req); err != nil {
+			return nil, err
+		}
+		return s.modifyDeployment(ctx, apiClient, req)
+	case "AcquireDeploymentToken":
+		req := ags.NewAcquireDeploymentTokenRequest()
+		if err := fillRequest("deployment.proxy", request, req); err != nil {
+			return nil, err
+		}
+		return s.acquireDeploymentToken(ctx, apiClient, req)
 	case "CreateAPIKey":
 		req := ags.NewCreateAPIKeyRequest()
 		if err := fillRequest("apikey.create", request, req); err != nil {
@@ -232,6 +274,43 @@ func (s *SDK) GetInstance(ctx context.Context, instanceID string) (*ags.SandboxI
 	return resp.InstanceSet[0], nil
 }
 
+// GetDeployment returns a Deployment by ID using the typed control-plane API.
+func (s *SDK) GetDeployment(ctx context.Context, deploymentID string) (*ags.Deployment, error) {
+	apiClient, err := s.cloudClient()
+	if err != nil {
+		return nil, err
+	}
+	req := ags.NewDescribeDeploymentRequest()
+	req.DeploymentId = &deploymentID
+	response, err := s.describeDeployment(ctx, apiClient, req)
+	if err != nil {
+		return nil, err
+	}
+	if response == nil || response.Deployment == nil {
+		return nil, output.NewNotFoundError("ResourceNotFound.Deployment", fmt.Sprintf("deployment not found: %s", deploymentID), "Run 'agr deployment list' to find available Deployments.")
+	}
+	return response.Deployment, nil
+}
+
+// GetDeploymentToken acquires a short-lived data-plane credential. Callers
+// must keep the returned token in memory and must not log or persist it.
+func (s *SDK) GetDeploymentToken(ctx context.Context, deploymentID string) (*ags.AcquireDeploymentTokenResponseParams, error) {
+	apiClient, err := s.cloudClient()
+	if err != nil {
+		return nil, err
+	}
+	req := ags.NewAcquireDeploymentTokenRequest()
+	req.DeploymentId = &deploymentID
+	return s.acquireDeploymentToken(ctx, apiClient, req)
+}
+
+// IsDeploymentNotFound reports only the exact structured API terminal used by
+// asynchronous Deployment deletion.
+func (s *SDK) IsDeploymentNotFound(err error) bool {
+	var cliErr *output.CLIError
+	return errors.As(err, &cliErr) && cliErr.Failure != nil && cliErr.Failure.Code == "ResourceNotFound.Deployment"
+}
+
 // IsNotFound reports whether err represents a structured not-found failure.
 func (s *SDK) IsNotFound(err error) bool {
 	var cliErr *output.CLIError
@@ -318,6 +397,48 @@ func (s *SDK) acquireSandboxInstanceToken(ctx context.Context, sdk *ags.Client, 
 		return s.AcquireSandboxInstanceToken(ctx, sdk, req)
 	}
 	return callAcquireSandboxInstanceToken(ctx, sdk, req)
+}
+
+func (s *SDK) createDeployment(ctx context.Context, sdk *ags.Client, req *ags.CreateDeploymentRequest) (*ags.CreateDeploymentResponseParams, error) {
+	if s.CreateDeployment != nil {
+		return s.CreateDeployment(ctx, sdk, req)
+	}
+	return callCreateDeployment(ctx, sdk, req)
+}
+
+func (s *SDK) deleteDeployment(ctx context.Context, sdk *ags.Client, req *ags.DeleteDeploymentRequest) (*ags.DeleteDeploymentResponseParams, error) {
+	if s.DeleteDeployment != nil {
+		return s.DeleteDeployment(ctx, sdk, req)
+	}
+	return callDeleteDeployment(ctx, sdk, req)
+}
+
+func (s *SDK) describeDeployment(ctx context.Context, sdk *ags.Client, req *ags.DescribeDeploymentRequest) (*ags.DescribeDeploymentResponseParams, error) {
+	if s.DescribeDeployment != nil {
+		return s.DescribeDeployment(ctx, sdk, req)
+	}
+	return callDescribeDeployment(ctx, sdk, req)
+}
+
+func (s *SDK) describeDeploymentList(ctx context.Context, sdk *ags.Client, req *ags.DescribeDeploymentListRequest) (*ags.DescribeDeploymentListResponseParams, error) {
+	if s.DescribeDeploymentList != nil {
+		return s.DescribeDeploymentList(ctx, sdk, req)
+	}
+	return callDescribeDeploymentList(ctx, sdk, req)
+}
+
+func (s *SDK) modifyDeployment(ctx context.Context, sdk *ags.Client, req *ags.ModifyDeploymentRequest) (*ags.ModifyDeploymentResponseParams, error) {
+	if s.ModifyDeployment != nil {
+		return s.ModifyDeployment(ctx, sdk, req)
+	}
+	return callModifyDeployment(ctx, sdk, req)
+}
+
+func (s *SDK) acquireDeploymentToken(ctx context.Context, sdk *ags.Client, req *ags.AcquireDeploymentTokenRequest) (*ags.AcquireDeploymentTokenResponseParams, error) {
+	if s.AcquireDeploymentToken != nil {
+		return s.AcquireDeploymentToken(ctx, sdk, req)
+	}
+	return callAcquireDeploymentToken(ctx, sdk, req)
 }
 
 func fillRequest(commandID string, request map[string]any, target jsonRequest) error {
@@ -456,6 +577,54 @@ func callCreatePreCacheImageTask(ctx context.Context, sdk *ags.Client, req *ags.
 
 func callDescribePreCacheImageTask(ctx context.Context, sdk *ags.Client, req *ags.DescribePreCacheImageTaskRequest) (*ags.DescribePreCacheImageTaskResponseParams, error) {
 	resp, err := sdk.DescribePreCacheImageTaskWithContext(ctx, req)
+	if err != nil {
+		return nil, client.ClassifyCloudError(err)
+	}
+	return resp.Response, nil
+}
+
+func callCreateDeployment(ctx context.Context, sdk *ags.Client, req *ags.CreateDeploymentRequest) (*ags.CreateDeploymentResponseParams, error) {
+	resp, err := sdk.CreateDeploymentWithContext(ctx, req)
+	if err != nil {
+		return nil, client.ClassifyCloudError(err)
+	}
+	return resp.Response, nil
+}
+
+func callDeleteDeployment(ctx context.Context, sdk *ags.Client, req *ags.DeleteDeploymentRequest) (*ags.DeleteDeploymentResponseParams, error) {
+	resp, err := sdk.DeleteDeploymentWithContext(ctx, req)
+	if err != nil {
+		return nil, client.ClassifyCloudError(err)
+	}
+	return resp.Response, nil
+}
+
+func callDescribeDeployment(ctx context.Context, sdk *ags.Client, req *ags.DescribeDeploymentRequest) (*ags.DescribeDeploymentResponseParams, error) {
+	resp, err := sdk.DescribeDeploymentWithContext(ctx, req)
+	if err != nil {
+		return nil, client.ClassifyCloudError(err)
+	}
+	return resp.Response, nil
+}
+
+func callDescribeDeploymentList(ctx context.Context, sdk *ags.Client, req *ags.DescribeDeploymentListRequest) (*ags.DescribeDeploymentListResponseParams, error) {
+	resp, err := sdk.DescribeDeploymentListWithContext(ctx, req)
+	if err != nil {
+		return nil, client.ClassifyCloudError(err)
+	}
+	return resp.Response, nil
+}
+
+func callModifyDeployment(ctx context.Context, sdk *ags.Client, req *ags.ModifyDeploymentRequest) (*ags.ModifyDeploymentResponseParams, error) {
+	resp, err := sdk.ModifyDeploymentWithContext(ctx, req)
+	if err != nil {
+		return nil, client.ClassifyCloudError(err)
+	}
+	return resp.Response, nil
+}
+
+func callAcquireDeploymentToken(ctx context.Context, sdk *ags.Client, req *ags.AcquireDeploymentTokenRequest) (*ags.AcquireDeploymentTokenResponseParams, error) {
+	resp, err := sdk.AcquireDeploymentTokenWithContext(ctx, req)
 	if err != nil {
 		return nil, client.ClassifyCloudError(err)
 	}

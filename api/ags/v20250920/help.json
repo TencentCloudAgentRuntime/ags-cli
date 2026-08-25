@@ -1,6 +1,130 @@
 {
     "api_version": "v20250920",
     "commands": {
+        "deployment.create": {
+            "short": "Create a deployment",
+            "long": "Create a remotely managed Deployment. Complex configuration fields accept a JSON value, @file, or - for stdin.",
+            "examples": [
+                "agr deployment create --deployment-name workspace-service --tool-id sdt-a1b2c3d4",
+                "agr deployment create --deployment-name workspace-service --scaling-configuration '{\"MinInstanceCount\":0,\"MaxInstanceCount\":10,\"MaxInstanceRequestConcurrency\":100}'"
+            ],
+            "fields": {
+                "DeploymentName": {
+                    "description": "Unique DNS-1123 deployment name.",
+                    "inputs": {
+                        "deployment-name": {
+                            "usage": "Unique DNS-1123 deployment name (required)"
+                        }
+                    }
+                },
+                "ToolId": {
+                    "description": "Associated sandbox tool ID.",
+                    "inputs": {
+                        "tool-id": {
+                            "usage": "Associated sandbox tool ID"
+                        }
+                    }
+                },
+                "ScalingConfiguration": {
+                    "description": "Scaling configuration.",
+                    "inputs": {
+                        "scaling-configuration": {
+                            "usage": "ScalingConfiguration JSON object, @file, or - for stdin"
+                        }
+                    }
+                },
+                "LifecycleConfiguration": {
+                    "description": "Idle lifecycle configuration.",
+                    "inputs": {
+                        "lifecycle-configuration": {
+                            "usage": "LifecycleConfiguration JSON object, @file, or - for stdin"
+                        }
+                    }
+                },
+                "AffinityConfiguration": {
+                    "description": "Session affinity configuration.",
+                    "inputs": {
+                        "affinity-configuration": {
+                            "usage": "AffinityConfiguration JSON object, @file, or - for stdin"
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Resource tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Tags JSON array, @file, or - for stdin"
+                        }
+                    }
+                }
+            }
+        },
+        "deployment.delete": {
+            "short": "Delete a deployment",
+            "long": "Delete a Deployment and wait for its asynchronous deletion to finish by default.",
+            "examples": [
+                "agr deployment delete dpl-a1b2c3d4",
+                "agr deployment delete dpl-a1b2c3d4 --wait=false"
+            ]
+        },
+        "deployment.get": {
+            "short": "Describe a deployment",
+            "examples": [
+                "agr deployment get dpl-a1b2c3d4",
+                "agr deployment get dpl-a1b2c3d4 -o json"
+            ]
+        },
+        "deployment.list": {
+            "short": "List deployments",
+            "examples": [
+                "agr deployment list",
+                "agr deployment list --filters '[{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]}]'"
+            ],
+            "fields": {
+                "Filters": {
+                    "description": "Deployment query filters.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters JSON array, @file, or - for stdin"
+                        }
+                    }
+                }
+            }
+        },
+        "deployment.update": {
+            "short": "Update a deployment",
+            "long": "Update the mutable configuration of a remotely managed Deployment. Provided configuration objects replace their current values in full.",
+            "examples": [
+                "agr deployment update dpl-a1b2c3d4 --scaling-configuration '{\"MinInstanceCount\":0,\"MaxInstanceCount\":10,\"MaxInstanceRequestConcurrency\":100}'",
+                "agr deployment update dpl-a1b2c3d4 --tags '[{\"Key\":\"env\",\"Value\":\"test\"}]'"
+            ],
+            "fields": {
+                "ScalingConfiguration": {
+                    "description": "Complete replacement scaling configuration.",
+                    "inputs": {
+                        "scaling-configuration": {
+                            "usage": "Complete ScalingConfiguration JSON object, @file, or - for stdin"
+                        }
+                    }
+                },
+                "LifecycleConfiguration": {
+                    "description": "Complete replacement idle lifecycle configuration.",
+                    "inputs": {
+                        "lifecycle-configuration": {
+                            "usage": "Complete LifecycleConfiguration JSON object, @file, or - for stdin"
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Complete replacement resource tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Complete Tags JSON array, @file, or - for stdin"
+                        }
+                    }
+                }
+            }
+        },
         "instance.create": {
             "short": "Create a new sandbox instance",
             "long": "Create a new sandbox instance from a tool template.\n\nThe referenced tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",

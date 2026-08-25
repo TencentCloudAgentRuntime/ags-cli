@@ -2,7 +2,7 @@
 
 [中文文档](README-zh.md)
 
-AGR CLI manages Tencent Cloud Agent Runtime instances, tools, API keys, and data-plane operations from the `agr` command.
+AGR CLI manages Tencent Cloud Agent Runtime deployments, instances, tools, API keys, and data-plane operations from the `agr` command.
 
 ## Installation
 
@@ -250,6 +250,52 @@ debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
   -o json --jq '.Data.InstanceId')
 ```
 
+## Deployments
+
+A Deployment is a remotely managed, stable data-plane authority backed by a
+sandbox tool. Create and modify its nested configuration with JSON values,
+`@file`, or `-` for stdin:
+
+```bash
+deployment_id=$(agr deployment create \
+  --deployment-name workspace-service \
+  --tool-id "$tool_id" \
+  --scaling-configuration '{"MinInstanceCount":0,"MaxInstanceCount":10,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":300,"IdleAction":"PAUSE"}' \
+  -o json --jq '.Data.Deployment.DeploymentId')
+
+agr deployment get "$deployment_id"
+agr deployment list
+agr deployment update "$deployment_id" \
+  --tags '[{"Key":"env","Value":"test"}]'
+```
+
+The text form of create, get, and update is a describe-style view. List uses
+the columns `ID NAME TOOL STATUS SCALING LIFECYCLE AFFINITY AGE`; `AGE` is the
+elapsed time since creation. Use `-o json` for the complete API response.
+
+Delete waits for the asynchronous operation by default, polling once per
+second until the Deployment disappears or reports `DELETE_FAILED`. The default
+timeout is 10 minutes. Use `--wait=false` to return after the delete request is
+accepted, or `--timeout 0` to wait without a deadline:
+
+```bash
+agr deployment delete "$deployment_id"
+agr deployment delete "$deployment_id" --wait=false
+```
+
+`agr deployment proxy` forwards HTTP, SSE, and WebSocket traffic. It is an L7
+proxy, not a raw TCP tunnel, and is recommended only for local debugging. The
+default bind address is `127.0.0.1`; binding another address prints an exposure
+warning. The proxy acquires Deployment credentials lazily, refreshes them in
+memory, preserves application headers, replaces `X-Access-Token`, and
+normalizes non-empty `Origin` headers to the remote Deployment authority.
+
+```bash
+agr deployment proxy "$deployment_id" 8080
+agr deployment proxy "$deployment_id" 3000:8080
+```
+
 ## Cloud endpoint vs data-plane domain
 
 | Flag                         | Default                  | Controls                         |
@@ -300,6 +346,13 @@ agr instance login <id>          PTY terminal session
 agr instance browser vnc <id>    Show VNC URL
 agr instance proxy <id> PORT     Forward instance port to localhost
 agr instance mobile ...          Mobile ADB operations
+
+agr deployment create            Create a Deployment
+agr deployment list              List Deployments
+agr deployment get <id>          Describe a Deployment
+agr deployment update <id>       Update mutable Deployment configuration
+agr deployment delete <id>       Delete and wait for a Deployment
+agr deployment proxy <id> PORT   L7 proxy for local debugging
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete

@@ -29,11 +29,26 @@ type Options struct {
 	// Token is the access token for the sandbox. Its lifetime is bound to the
 	// sandbox instance lifecycle — it stays valid as long as the instance is
 	// running, so no refresh or 401-retry logic is required.
-	Token         string
-	ListenAddress string      // e.g. "127.0.0.1:3000"
-	Logger        *log.Logger // Optional logger; defaults to log.Default()
-	Insecure      bool        // Skip TLS verification
-	Verbose       bool        // Enable verbose request logging
+	Token string
+	// TokenProvider supplies a token for each incoming HTTP request or WebSocket
+	// connection. It enables lazy, refreshable Deployment credentials. When it
+	// is nil, Token retains the existing static instance-proxy behavior.
+	TokenProvider func(context.Context) (string, error)
+	// RewriteOrigin normalizes each non-empty Origin to the upstream authority.
+	// Deployment proxy enables it because that proxy is intended for local
+	// debugging; instance proxy leaves it disabled for compatibility.
+	RewriteOrigin bool
+	// PreserveHeaders enables Deployment WebSocket forwarding of application
+	// headers. When false, the legacy instance proxy forwards only Origin and
+	// Sec-WebSocket-Protocol in addition to its gateway token.
+	PreserveHeaders bool
+	ListenAddress   string      // e.g. "127.0.0.1:3000"
+	Logger          *log.Logger // Optional logger; defaults to log.Default()
+	Insecure        bool        // Skip TLS verification
+	Verbose         bool        // Enable verbose request logging
+	// DialContext overrides upstream TCP dialing. Production leaves it nil;
+	// integration tests use it to route synthetic authorities to a local TLS server.
+	DialContext func(context.Context, string, string) (net.Conn, error)
 }
 
 // Proxy manages an active HTTP/WebSocket reverse proxy that forwards local
@@ -50,8 +65,11 @@ type Proxy struct {
 
 // New creates and initializes a new port-forward proxy but does not start it.
 func New(opts Options) (*Proxy, error) {
-	if opts.InstanceID == "" || opts.Token == "" || opts.Domain == "" {
-		return nil, fmt.Errorf("instanceID, token, and domain are required")
+	if opts.InstanceID == "" || opts.Domain == "" {
+		return nil, fmt.Errorf("instanceID and domain are required")
+	}
+	if opts.Token == "" && opts.TokenProvider == nil {
+		return nil, fmt.Errorf("token or tokenProvider is required")
 	}
 	if opts.RemotePort <= 0 || opts.RemotePort > 65535 {
 		return nil, fmt.Errorf("remotePort must be between 1 and 65535")
@@ -97,6 +115,7 @@ func (p *Proxy) Start() (string, error) {
 
 	// Customize the transport for TLS
 	reverseProxy.Transport = &http.Transport{
+		DialContext: p.options.DialContext,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
@@ -113,7 +132,9 @@ func (p *Proxy) Start() (string, error) {
 		// Set the correct Host header (changeOrigin equivalent)
 		req.Host = p.targetHost
 		// Inject access token. The sandbox gateway authenticates via X-Access-Token only.
-		req.Header.Set("X-Access-Token", p.options.Token)
+		token, _ := req.Context().Value(requestTokenKey{}).(string)
+		req.Header.Set("X-Access-Token", token)
+		p.normalizeOrigin(req.Header)
 		if p.options.Verbose {
 			p.logger.Printf("[HTTP] %s %s", req.Method, req.URL.Path)
 		}
@@ -145,6 +166,11 @@ func (p *Proxy) Start() (string, error) {
 
 	// Build the HTTP handler that routes between HTTP proxy and WebSocket proxy
 	mux := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, ok := p.acquireRequestToken(w, r)
+		if !ok {
+			return
+		}
+		r = r.WithContext(context.WithValue(r.Context(), requestTokenKey{}, token))
 		if isWebSocketRequest(r) {
 			p.handleWebSocket(w, r, wsUpgrader)
 			return
@@ -200,25 +226,18 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	// Build upstream WebSocket URL
 	upstreamURL := fmt.Sprintf("wss://%s%s", p.targetHost, r.URL.RequestURI())
 
-	// Prepare upstream headers with the pre-acquired token.
-	// The sandbox gateway authenticates via X-Access-Token only.
-	upstreamHeaders := http.Header{}
-	upstreamHeaders.Set("X-Access-Token", p.options.Token)
+	// Preserve application headers while replacing the gateway credential and
+	// removing client-side WebSocket handshake headers that gorilla generates.
+	token, _ := r.Context().Value(requestTokenKey{}).(string)
+	upstreamHeaders := p.webSocketUpstreamHeaders(r, token)
 	upstreamHeaders.Set("Host", p.targetHost)
-
-	// Copy relevant headers from the original request
-	if origin := r.Header.Get("Origin"); origin != "" {
-		upstreamHeaders.Set("Origin", origin)
-	}
-	for _, proto := range r.Header[http.CanonicalHeaderKey("Sec-WebSocket-Protocol")] {
-		upstreamHeaders.Add("Sec-WebSocket-Protocol", proto)
-	}
 
 	// Connect to upstream WebSocket
 	dialer := &websocket.Dialer{
 		HandshakeTimeout: 15 * time.Second,
 		ReadBufferSize:   65536,
 		WriteBufferSize:  65536,
+		NetDialContext:   p.options.DialContext,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
@@ -298,6 +317,74 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	if p.options.Verbose {
 		p.logger.Printf("[WS] WebSocket connection closed: %s", r.URL.Path)
 	}
+}
+
+type requestTokenKey struct{}
+
+func (p *Proxy) tokenForRequest(ctx context.Context) (string, error) {
+	if p.options.TokenProvider == nil {
+		return p.options.Token, nil
+	}
+	token, err := p.options.TokenProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if token == "" {
+		return "", fmt.Errorf("token provider returned an empty token")
+	}
+	return token, nil
+}
+
+func (p *Proxy) acquireRequestToken(w http.ResponseWriter, r *http.Request) (string, bool) {
+	token, err := p.tokenForRequest(r.Context())
+	if err != nil {
+		// Credential errors may contain sensitive response details. Keep both the
+		// client response and logs deliberately generic, including in verbose mode.
+		p.logger.Printf("[ERROR] Failed to acquire upstream access credential")
+		http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		return "", false
+	}
+	return token, true
+}
+
+func (p *Proxy) normalizeOrigin(headers http.Header) {
+	if !p.options.RewriteOrigin || headers.Get("Origin") == "" {
+		return
+	}
+	headers.Set("Origin", "https://"+p.targetHost)
+}
+
+func (p *Proxy) prepareUpstreamHeaders(r *http.Request, token string) http.Header {
+	headers := r.Header.Clone()
+	for _, name := range []string{
+		"Connection",
+		"Upgrade",
+		"Proxy-Connection",
+		"Keep-Alive",
+		"Sec-WebSocket-Key",
+		"Sec-WebSocket-Version",
+		"Sec-WebSocket-Extensions",
+	} {
+		headers.Del(name)
+	}
+	headers.Set("X-Access-Token", token)
+	p.normalizeOrigin(headers)
+	return headers
+}
+
+func (p *Proxy) webSocketUpstreamHeaders(r *http.Request, token string) http.Header {
+	if p.options.PreserveHeaders {
+		return p.prepareUpstreamHeaders(r, token)
+	}
+	headers := http.Header{}
+	headers.Set("X-Access-Token", token)
+	if origin := r.Header.Get("Origin"); origin != "" {
+		headers.Set("Origin", origin)
+	}
+	for _, protocol := range r.Header.Values("Sec-WebSocket-Protocol") {
+		headers.Add("Sec-WebSocket-Protocol", protocol)
+	}
+	return headers
 }
 
 // bridgeWebSocket copies messages from src to dst WebSocket connection.

@@ -444,6 +444,8 @@ func positionalDescription(name string) string {
 		return "API key ID."
 	case "image-digest":
 		return "Image digest."
+	case "deployment-id":
+		return "Deployment ID."
 	default:
 		return strings.TrimSpace(exported(name) + ".")
 	}
@@ -505,14 +507,31 @@ func outputDescription(cmd commandModel) string {
 		return "Sandbox tool list response."
 	case "tool.update":
 		return "Sandbox tool update response."
+	case "deployment.create":
+		return "Deployment create response."
+	case "deployment.delete":
+		return "Deployment delete response."
+	case "deployment.get":
+		return "Deployment details response."
+	case "deployment.list":
+		return "Deployment list response."
+	case "deployment.update":
+		return "Deployment update response."
 	default:
 		return cmd.Response + " response."
 	}
 }
 
 func outputEffects(cmd commandModel) []string {
-	if cmd.Command == "tool.create" {
+	switch cmd.Command {
+	case "tool.create":
 		return []string{"create:tool"}
+	case "deployment.create":
+		return []string{"create:deployment"}
+	case "deployment.delete":
+		return []string{"delete:deployment"}
+	case "deployment.update":
+		return []string{"update:deployment"}
 	}
 	return nil
 }
@@ -622,6 +641,7 @@ func mappedRegistryModule(cmd commandModel) (registryModule, error) {
 func staticWorkflowModules() []registryModule {
 	ids := []string{
 		"api.call",
+		"deployment.proxy",
 		"instance.browser.vnc",
 		"instance.code.run",
 		"instance.debug",

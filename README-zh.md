@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-AGR CLI 是腾讯云 Agent Runtime（AGR）的命令行工具，安装后的命令名为 `agr`。
+AGR CLI 是腾讯云 Agent Runtime（AGR）的命令行工具，用于管理 Deployment、实例、工具、API Key 与数据面操作；安装后的命令名为 `agr`。
 
 ## 安装
 
@@ -230,6 +230,49 @@ debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
   -o json --jq '.Data.InstanceId')
 ```
 
+## Deployment
+
+Deployment 是由 Sandbox Tool 支撑、具备稳定数据面 authority 的远端托管资源。
+嵌套配置可以直接传 JSON，也可以用 `@file` 或 `-` 从文件、stdin 读取：
+
+```bash
+deployment_id=$(agr deployment create \
+  --deployment-name workspace-service \
+  --tool-id "$tool_id" \
+  --scaling-configuration '{"MinInstanceCount":0,"MaxInstanceCount":10,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":300,"IdleAction":"PAUSE"}' \
+  -o json --jq '.Data.Deployment.DeploymentId')
+
+agr deployment get "$deployment_id"
+agr deployment list
+agr deployment update "$deployment_id" \
+  --tags '[{"Key":"env","Value":"test"}]'
+```
+
+create、get、update 的 text 输出采用类似 Kubernetes describe 的详情视图；
+list 固定展示 `ID NAME TOOL STATUS SCALING LIFECYCLE AFFINITY AGE`，其中
+`AGE` 是从创建时间起算的时长。需要完整 API 响应时使用 `-o json`。
+
+delete 默认等待异步删除完成，每秒查询一次，直到 Deployment 消失或进入
+`DELETE_FAILED`。默认超时为 10 分钟；`--wait=false` 会在删除请求被接受后
+立即返回，`--timeout 0` 表示不设等待期限：
+
+```bash
+agr deployment delete "$deployment_id"
+agr deployment delete "$deployment_id" --wait=false
+```
+
+`agr deployment proxy` 支持 HTTP、SSE、WebSocket，是七层代理而不是原始
+TCP 隧道，明确只推荐用于本地调试。默认监听 `127.0.0.1`；改为非 loopback
+地址时会输出暴露风险提示。代理按需获取 Deployment credential，只在内存中
+刷新；业务 header 会被保留，`X-Access-Token` 会被覆盖，非空 `Origin` 会
+规范化为远端 Deployment authority。
+
+```bash
+agr deployment proxy "$deployment_id" 8080
+agr deployment proxy "$deployment_id" 3000:8080
+```
+
 ## 控制面端点与数据面域名
 
 | Flag | 默认值 | 作用对象 |
@@ -281,6 +324,13 @@ agr instance login <id>          PTY 终端会话
 agr instance browser vnc <id>    显示 VNC URL
 agr instance proxy <id> PORT     端口转发到 localhost
 agr instance mobile ...          Mobile ADB 操作
+
+agr deployment create            创建 Deployment
+agr deployment list              列出 Deployment
+agr deployment get <id>          查看 Deployment 详情
+agr deployment update <id>       更新 Deployment 可变配置
+agr deployment delete <id>       删除并等待 Deployment
+agr deployment proxy <id> PORT   本地调试七层代理
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
