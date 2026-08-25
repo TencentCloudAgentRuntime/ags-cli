@@ -4,6 +4,7 @@
         "deployment.create": {
             "short": "Create a deployment",
             "long": "Create a remotely managed Deployment. Complex configuration fields accept a JSON value, @file, or - for stdin.",
+            "preserve_flag_order": true,
             "examples": [
                 "Example - Scale to zero after five idle minutes:\n  agr deployment create \\\n    --deployment-name workspace-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":0,\"MaxInstanceCount\":10,\"MaxInstanceRequestConcurrency\":100}' \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":300,\"IdleAction\":\"STOP\"}'",
                 "Example - Keep two instances active:\n  agr deployment create \\\n    --deployment-name latency-sensitive-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":2,\"MaxInstanceCount\":20,\"MaxInstanceRequestConcurrency\":200}'",
@@ -149,6 +150,7 @@
         "deployment.update": {
             "short": "Update a deployment",
             "long": "Update the mutable configuration of a remotely managed Deployment. Provided configuration objects replace their current values in full.",
+            "preserve_flag_order": true,
             "examples": [
                 "Example - Increase active capacity:\n  agr deployment update dpl-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":2,\"MaxInstanceCount\":20,\"MaxInstanceRequestConcurrency\":200}'",
                 "Example - Pause idle instances after ten minutes and retain their state:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":600,\"IdleAction\":\"PAUSE\"}'",

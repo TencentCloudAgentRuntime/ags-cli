@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -259,6 +260,38 @@ func TestDeploymentConfigurationHelpDocumentsFieldsAndDefaults(t *testing.T) {
 		}
 		if strings.Contains(affinity.Fields[1], mode) {
 			t.Errorf("HeaderName field unexpectedly contains %s: %q", mode, affinity.Fields[1])
+		}
+	}
+}
+
+func TestDeploymentConfigurationFlagsPreserveTaskOrder(t *testing.T) {
+	registry, err := Registry()
+	if err != nil {
+		t.Fatalf("Registry returned error: %v", err)
+	}
+	wants := map[string][]string{
+		"deployment.create": {
+			"deployment-name", "tool-id", "scaling-configuration", "lifecycle-configuration",
+			"affinity-configuration", "tags", "request",
+		},
+		"deployment.update": {
+			"scaling-configuration", "lifecycle-configuration", "tags", "request",
+		},
+	}
+	for commandID, want := range wants {
+		module, ok := registry.Lookup(commandID)
+		if !ok {
+			t.Fatalf("registry missing %s", commandID)
+		}
+		if !module.Descriptor.Spec.PreserveFlagOrder {
+			t.Errorf("%s must preserve declared flag order", commandID)
+		}
+		var got []string
+		for _, flag := range module.Descriptor.Spec.Flags {
+			got = append(got, flag.Name)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("%s flag order = %v, want %v", commandID, got, want)
 		}
 	}
 }

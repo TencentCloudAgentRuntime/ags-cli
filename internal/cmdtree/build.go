@@ -259,6 +259,9 @@ func BuildModuleCommand(module command.Module, deps command.Deps) (*cobra.Comman
 			return exitError(result.ExitCode)
 		},
 	}
+	if spec.PreserveFlagOrder {
+		cmd.Flags().SortFlags = false
+	}
 	if err := registerFlags(cmd.Flags(), spec.Flags); err != nil {
 		return nil, err
 	}

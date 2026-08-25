@@ -37,6 +37,8 @@ type commandModel struct {
 	Package  string
 	Dir      string
 	Fields   []fieldModel
+
+	PreserveFlagOrder bool
 }
 
 type fieldModel struct {
@@ -233,6 +235,7 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 			Package:  packageForCommand(parts),
 			Dir:      dirForCommand(parts),
 		}
+		cmd.PreserveFlagOrder = commandPreserveFlagOrderFromHelp(help, a.Command)
 		if obj != nil {
 			for _, m := range obj.Members {
 				if m.Disabled {
@@ -302,6 +305,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	fmt.Fprintf(&b, "\t\t\tShort: %s,\n", quote(cmd.Short))
 	if cmd.Long != "" {
 		fmt.Fprintf(&b, "\t\t\tLong: %s,\n", quote(cmd.Long))
+	}
+	if cmd.PreserveFlagOrder {
+		b.WriteString("\t\t\tPreserveFlagOrder: true,\n")
 	}
 	if len(cmd.Examples) > 0 {
 		fmt.Fprintf(&b, "\t\t\tExamples: []string{%s},\n", quotedList(cmd.Examples))

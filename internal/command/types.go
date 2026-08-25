@@ -56,6 +56,9 @@ type Spec struct {
 	Examples []string
 	Aliases  []string
 	Hidden   bool
+	// PreserveFlagOrder renders local flags in their declared task order instead
+	// of pflag's default alphabetical order.
+	PreserveFlagOrder bool
 	// Args and Flags describe the normalized command inputs before they are
 	// materialized as Cobra validators and pflag definitions.
 	Args           []ArgSpec

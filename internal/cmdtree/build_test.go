@@ -3,6 +3,7 @@ package cmdtree
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	toollist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/list"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type fakeControlPlane struct {
@@ -397,6 +399,40 @@ func TestBuildModuleCommand_FlagUsageIncludesStructuredHelp(t *testing.T) {
 	}
 	if f2.Usage != "Offset" {
 		t.Fatalf("--offset usage = %q, want Offset", f2.Usage)
+	}
+}
+
+func TestBuildModuleCommand_PreservesDeclaredFlagOrderWhenRequested(t *testing.T) {
+	module := command.Module{
+		Descriptor: command.Descriptor{Spec: command.Spec{
+			ID:                "test.ordered",
+			Path:              []string{"test", "ordered"},
+			PreserveFlagOrder: true,
+			Flags: []command.FlagSpec{
+				{Name: "primary", Type: command.FlagString},
+				{Name: "zeta", Type: command.FlagString},
+				{Name: "alpha", Type: command.FlagString},
+			},
+		}},
+		Build: func(command.Deps) (command.Runtime, error) {
+			return command.Runtime{Handler: command.HandlerFunc(func(context.Context, command.Request) (*command.Result, error) {
+				return &command.Result{}, nil
+			})}, nil
+		},
+	}
+
+	cmd, err := BuildModuleCommand(module, command.Deps{})
+	if err != nil {
+		t.Fatalf("BuildModuleCommand: %v", err)
+	}
+	cmd.InitDefaultHelpFlag()
+	var got []string
+	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		got = append(got, flag.Name)
+	})
+	want := []string{"primary", "zeta", "alpha", "help"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("flag order = %v, want %v", got, want)
 	}
 }
 

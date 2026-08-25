@@ -10,13 +10,14 @@ import (
 func APIDescriptor() apicli.APIDescriptor {
 	return apicli.APIDescriptor{
 		Spec: command.Spec{
-			ID:           "deployment.update",
-			Path:         []string{"deployment", "update"},
-			Use:          "update <deployment-id>",
-			Short:        "Update a deployment",
-			Long:         "Update the mutable configuration of a remotely managed Deployment. Provided configuration objects replace their current values in full.",
-			Examples:     []string{"Example - Increase active capacity:\n  agr deployment update dpl-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":2,\"MaxInstanceCount\":20,\"MaxInstanceRequestConcurrency\":200}'", "Example - Pause idle instances after ten minutes and retain their state:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":600,\"IdleAction\":\"PAUSE\"}'", "Example - Stop idle instances after five minutes:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":300,\"IdleAction\":\"STOP\"}'", "Example - Replace all tags:\n  agr deployment update dpl-a1b2c3d4 \\\n    --tags '[{\"Key\":\"env\",\"Value\":\"production\"},{\"Key\":\"team\",\"Value\":\"agent-platform\"}]'", "Example - Clear all tags:\n  agr deployment update dpl-a1b2c3d4 --tags '[]'"},
-			SupportsJSON: true,
+			ID:                "deployment.update",
+			Path:              []string{"deployment", "update"},
+			Use:               "update <deployment-id>",
+			Short:             "Update a deployment",
+			Long:              "Update the mutable configuration of a remotely managed Deployment. Provided configuration objects replace their current values in full.",
+			PreserveFlagOrder: true,
+			Examples:          []string{"Example - Increase active capacity:\n  agr deployment update dpl-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":2,\"MaxInstanceCount\":20,\"MaxInstanceRequestConcurrency\":200}'", "Example - Pause idle instances after ten minutes and retain their state:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":600,\"IdleAction\":\"PAUSE\"}'", "Example - Stop idle instances after five minutes:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":300,\"IdleAction\":\"STOP\"}'", "Example - Replace all tags:\n  agr deployment update dpl-a1b2c3d4 \\\n    --tags '[{\"Key\":\"env\",\"Value\":\"production\"},{\"Key\":\"team\",\"Value\":\"agent-platform\"}]'", "Example - Clear all tags:\n  agr deployment update dpl-a1b2c3d4 --tags '[]'"},
+			SupportsJSON:      true,
 			Args: []command.ArgSpec{
 				{Name: "deployment-id", Required: true, Description: "Deployment ID."},
 			},

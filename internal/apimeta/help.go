@@ -14,10 +14,11 @@ type Help struct {
 
 // CommandHelp is the human-authored help text for one generated command.
 type CommandHelp struct {
-	Short    string               `json:"short,omitempty"`
-	Long     string               `json:"long,omitempty"`
-	Examples []string             `json:"examples,omitempty"`
-	Fields   map[string]FieldHelp `json:"fields,omitempty"`
+	Short             string               `json:"short,omitempty"`
+	Long              string               `json:"long,omitempty"`
+	PreserveFlagOrder bool                 `json:"preserve_flag_order,omitempty"`
+	Examples          []string             `json:"examples,omitempty"`
+	Fields            map[string]FieldHelp `json:"fields,omitempty"`
 }
 
 // FieldHelp is the help text attached to one API request field.

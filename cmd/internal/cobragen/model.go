@@ -70,6 +70,14 @@ func commandLongFromHelp(help *apimeta.Help, commandID string) string {
 	return h.Long
 }
 
+func commandPreserveFlagOrderFromHelp(help *apimeta.Help, commandID string) bool {
+	h := apimeta.CommandHelpFor(commandID)
+	if help != nil {
+		h = help.Commands[commandID]
+	}
+	return h.PreserveFlagOrder
+}
+
 func commandExamplesFromHelp(help *apimeta.Help, commandID string) []string {
 	h := apimeta.CommandHelpFor(commandID)
 	if help != nil {
