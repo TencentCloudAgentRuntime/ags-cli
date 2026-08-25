@@ -252,9 +252,18 @@ debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
 
 ## Deployments
 
-A Deployment is a remotely managed, stable data-plane authority backed by a
-sandbox tool. Create and modify its nested configuration with JSON values,
-`@file`, or `-` for stdin:
+A Deployment gives a Sandbox Tool a stable remote endpoint and manages the
+Sandbox Instances behind it. Scaling settings control active capacity;
+lifecycle settings control what happens when those instances become idle.
+
+The examples below assume that `tool_id` contains the ID of an existing
+Sandbox Tool.
+
+### Create and inspect a Deployment
+
+A Deployment name must follow DNS-1123 naming rules, must be unique, and cannot
+be changed after creation. Complex configuration flags accept inline JSON,
+`@file`, or `-` to read JSON from stdin.
 
 ```bash
 deployment_id=$(agr deployment create \
@@ -266,35 +275,55 @@ deployment_id=$(agr deployment create \
 
 agr deployment get "$deployment_id"
 agr deployment list
-agr deployment update "$deployment_id" \
-  --tags '[{"Key":"env","Value":"test"}]'
 ```
 
-The text form of create, get, and update is a describe-style view. List uses
-the columns `ID NAME TOOL STATUS SCALING LIFECYCLE AFFINITY AGE`; `AGE` is the
-elapsed time since creation. Use `-o json` for the complete API response.
+By default, `create`, `get`, and `update` print a human-readable details view.
+`list` prints compact scaling, lifecycle, affinity, and age summaries. Use
+`-o json` when a script needs the complete API response.
 
-Delete waits for the asynchronous operation by default, polling once per
-second until the Deployment disappears or reports `DELETE_FAILED`. The default
-timeout is 10 minutes. Use `--wait=false` to return after the delete request is
-accepted, or `--timeout 0` to wait without a deadline:
+### Update configuration
+
+Scaling and lifecycle updates replace the existing configuration object; they
+are not partial patches. Include every member of an object when updating it.
+
+```bash
+agr deployment update "$deployment_id" \
+  --scaling-configuration '{"MinInstanceCount":1,"MaxInstanceCount":20,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":600,"IdleAction":"STOP"}'
+```
+
+When creating a Deployment, omitted configuration members are filled by the
+service. Run `agr deployment create --help` or
+`agr deployment update --help` for the accepted fields.
+
+### Delete a Deployment
+
+Delete waits until the remote Deployment is gone and reports the service's
+failure reason if asynchronous deletion fails. The default timeout is 10
+minutes. Use `--wait=false` to return as soon as the delete request is accepted,
+or `--timeout 0` to wait without a deadline.
 
 ```bash
 agr deployment delete "$deployment_id"
 agr deployment delete "$deployment_id" --wait=false
 ```
 
-`agr deployment proxy` forwards HTTP, SSE, and WebSocket traffic. It is an L7
-proxy, not a raw TCP tunnel, and is recommended only for local debugging. The
-default bind address is `127.0.0.1`; binding another address prints an exposure
-warning. The proxy acquires Deployment credentials lazily, refreshes them in
-memory, preserves application headers, replaces `X-Access-Token`, and
-normalizes non-empty `Origin` headers to the remote Deployment authority.
+### Proxy a Deployment port locally
+
+Use `deployment proxy` only for local debugging. A single port uses the same
+local and remote port; `local:remote` maps different ports.
 
 ```bash
+# http://127.0.0.1:8080 forwards to remote port 8080
 agr deployment proxy "$deployment_id" 8080
+
+# http://127.0.0.1:3000 forwards to remote port 8080
 agr deployment proxy "$deployment_id" 3000:8080
 ```
+
+The proxy supports HTTP, SSE, and WebSocket traffic, but not raw TCP. It binds
+to `127.0.0.1` by default. Using `--address` with a non-loopback address exposes
+the debugging proxy to the network and prints a warning.
 
 ## Cloud endpoint vs data-plane domain
 
