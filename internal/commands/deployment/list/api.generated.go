@@ -34,14 +34,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Offset",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "offset", Flag: "offset", Usage: "分页偏移量，默认 0，必须大于等于 0。", Type: command.FlagInt},
+					{Name: "offset", Flag: "offset", Usage: "Number of matching Deployments to skip. Defaults to 0; must be non-negative.", Type: command.FlagInt},
 				},
 			},
 			{
 				Name:   "Limit",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "limit", Flag: "limit", Usage: "分页返回数量，默认 20，范围 1..200。", Type: command.FlagInt},
+					{Name: "limit", Flag: "limit", Usage: "Maximum number of Deployments to return. Defaults to 20; allowed range: 1-200.", Type: command.FlagInt},
 				},
 			},
 			{

@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
@@ -667,6 +668,30 @@ func TestCharacterization_LeafHelpIncludesGroupedExamples(t *testing.T) {
 		help := commandHelp(t, cmd)
 		if !strings.Contains(help, "Example - ") {
 			t.Fatalf("help for %s missing grouped examples:\n%s", commandID, help)
+		}
+	}
+}
+
+func TestCharacterization_DeploymentHelpIsEnglish(t *testing.T) {
+	root := contractRoot()
+	for _, commandID := range []string{
+		"deployment",
+		"deployment.create",
+		"deployment.delete",
+		"deployment.get",
+		"deployment.list",
+		"deployment.update",
+		"deployment.proxy",
+	} {
+		cmd, ok := findCobraCommand(root, commandID)
+		if !ok {
+			t.Fatalf("command %s not found", commandID)
+		}
+		help := commandHelp(t, cmd)
+		if strings.IndexFunc(help, func(r rune) bool {
+			return unicode.Is(unicode.Han, r)
+		}) >= 0 {
+			t.Errorf("help for %s contains Chinese text:\n%s", commandID, help)
 		}
 	}
 }

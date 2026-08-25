@@ -106,6 +106,22 @@
                             ]
                         }
                     }
+                },
+                "Limit": {
+                    "description": "Pagination limit.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Maximum number of Deployments to return. Defaults to 20; allowed range: 1-200."
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Number of matching Deployments to skip. Defaults to 0; must be non-negative."
+                        }
+                    }
                 }
             }
         },
