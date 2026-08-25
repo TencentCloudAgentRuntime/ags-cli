@@ -30,6 +30,7 @@ type FieldHelp struct {
 type InputHelp struct {
 	Usage    string   `json:"usage,omitempty"`
 	Format   string   `json:"format,omitempty"`
+	Fields   []string `json:"fields,omitempty"`
 	Examples []string `json:"examples,omitempty"`
 	Values   []string `json:"values,omitempty"`
 }

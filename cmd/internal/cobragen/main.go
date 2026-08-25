@@ -59,6 +59,7 @@ type inputModel struct {
 	Shorthand string
 	Usage     string
 	Format    string
+	Fields    []string
 	Examples  []string
 	Values    []string
 	Aliases   []string
@@ -269,6 +270,7 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 						Shorthand: in.Shorthand,
 						Usage:     ih.Usage,
 						Format:    ih.Format,
+						Fields:    append([]string(nil), ih.Fields...),
 						Examples:  append([]string(nil), ih.Examples...),
 						Values:    append([]string(nil), ih.Values...),
 						Aliases:   append([]string(nil), in.Aliases...),
@@ -385,6 +387,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 					}
 					if input.Format != "" && !isPositionalInput(field, input) {
 						fmt.Fprintf(&b, ", Format: %s", quote(input.Format))
+					}
+					if len(input.Fields) > 0 && !isPositionalInput(field, input) {
+						fmt.Fprintf(&b, ", Fields: []string{%s}", quotedList(input.Fields))
 					}
 					if len(input.Examples) > 0 && !isPositionalInput(field, input) {
 						fmt.Fprintf(&b, ", Examples: []string{%s}", quotedList(input.Examples))

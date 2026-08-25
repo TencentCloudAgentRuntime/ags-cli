@@ -561,6 +561,9 @@ func flagUsage(spec command.FlagSpec) string {
 	if spec.Format != "" {
 		sections = append(sections, "Format:\n  "+strings.TrimSpace(spec.Format))
 	}
+	if len(spec.Fields) > 0 {
+		sections = append(sections, "Fields:\n  "+strings.Join(spec.Fields, "\n  "))
+	}
 	if len(spec.Values) > 0 {
 		sections = append(sections, "Values:\n  "+strings.Join(spec.Values, "\n  "))
 	}

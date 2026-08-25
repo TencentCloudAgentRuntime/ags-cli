@@ -222,13 +222,43 @@ func TestDeploymentConfigurationHelpDocumentsFieldsAndDefaults(t *testing.T) {
 			help := strings.Join([]string{
 				flag.Usage,
 				flag.Format,
+				strings.Join(flag.Fields, "\n"),
 				strings.Join(flag.Values, "\n"),
 			}, "\n")
+			if len(flag.Fields) == 0 {
+				t.Errorf("%s --%s must document object members under Fields", commandID, flagName)
+			}
+			if len(flag.Values) != 0 {
+				t.Errorf("%s --%s must not flatten object members under Values: %v", commandID, flagName, flag.Values)
+			}
 			for _, want := range required {
 				if !strings.Contains(help, want) {
 					t.Errorf("%s --%s help missing %q:\n%s", commandID, flagName, want, help)
 				}
 			}
+		}
+	}
+
+	module, ok := registry.Lookup("deployment.create")
+	if !ok {
+		t.Fatal("registry missing deployment.create")
+	}
+	affinity, ok := findFlag(module.Descriptor.Spec.Flags, "affinity-configuration")
+	if !ok {
+		t.Fatal("deployment.create missing --affinity-configuration")
+	}
+	if len(affinity.Fields) != 2 {
+		t.Fatalf("affinity must have exactly two top-level fields, got %v", affinity.Fields)
+	}
+	if !strings.HasPrefix(affinity.Fields[0], "Mode:") || !strings.HasPrefix(affinity.Fields[1], "HeaderName:") {
+		t.Fatalf("affinity fields must be Mode then HeaderName, got %v", affinity.Fields)
+	}
+	for _, mode := range []string{"BEST_EFFORT", "STRICT", "EXCLUSIVE"} {
+		if !strings.Contains(affinity.Fields[0], mode) {
+			t.Errorf("Mode field missing %s: %q", mode, affinity.Fields[0])
+		}
+		if strings.Contains(affinity.Fields[1], mode) {
+			t.Errorf("HeaderName field unexpectedly contains %s: %q", mode, affinity.Fields[1])
 		}
 	}
 }

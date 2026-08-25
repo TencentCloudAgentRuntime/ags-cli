@@ -124,6 +124,8 @@ type FlagSpec struct {
 	Annotations map[string][]string
 	// Format describes the expected shape for complex flag values.
 	Format string
+	// Fields documents the members of a structured flag value.
+	Fields []string
 	// Examples lists concrete invocations for complex flag values.
 	Examples []string
 	// Values lists supported values for enum-like flags.

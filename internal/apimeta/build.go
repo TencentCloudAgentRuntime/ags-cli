@@ -284,6 +284,7 @@ type FieldFlag struct {
 	Form        string   `json:"Form,omitempty"`
 	Default     string   `json:"Default,omitempty"`
 	Format      string   `json:"Format,omitempty"`
+	Fields      []string `json:"Fields,omitempty"`
 	Examples    []string `json:"Examples,omitempty"`
 	Values      []string `json:"Values,omitempty"`
 	NestedType  string   `json:"NestedType,omitempty"`
@@ -347,6 +348,7 @@ func buildRequestFlags(spec *Spec, mapping *Mapping) *FlagsReport {
 					Form:        in.Form,
 					Default:     in.Default,
 					Format:      inputHelp.Format,
+					Fields:      append([]string(nil), inputHelp.Fields...),
 					Examples:    append([]string(nil), inputHelp.Examples...),
 					Values:      append([]string(nil), inputHelp.Values...),
 					NestedType:  m.Member,
