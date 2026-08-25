@@ -19,9 +19,9 @@ func RenderDetails(w io.Writer, deployment *ags.Deployment) {
 		fmt.Fprintln(w, "Deployment: <none>")
 		return
 	}
-	labels := strings.Join(sortedTags(deployment.Tags), ", ")
-	if labels == "" {
-		labels = "<none>"
+	tags := strings.Join(sortedTags(deployment.Tags), ", ")
+	if tags == "" {
+		tags = "<none>"
 	}
 	writeField := func(key, value string) {
 		if value == "" {
@@ -36,7 +36,7 @@ func RenderDetails(w io.Writer, deployment *ags.Deployment) {
 	if reason := derefString(deployment.StatusReason); reason != "" {
 		writeField("Status Reason", reason)
 	}
-	writeField("Labels", labels)
+	writeField("Tags", tags)
 	writeField("Created", derefString(deployment.CreatedTime))
 	writeField("Updated", derefString(deployment.UpdatedTime))
 

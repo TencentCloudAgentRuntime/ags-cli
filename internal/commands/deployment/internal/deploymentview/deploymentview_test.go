@@ -20,7 +20,7 @@ func TestRenderDetailsKubernetesStyle(t *testing.T) {
 		"ID:            dpl-a1b2c3d4",
 		"Tool:          sdt-a1b2c3d4",
 		"Status:        ACTIVE",
-		"Labels:        env=test, owner=runtime",
+		"Tags:          env=test, owner=runtime",
 		"Created:       2026-08-22T08:00:00Z",
 		"Updated:       2026-08-24T08:00:00Z",
 		"Scaling:\n  Min Instances:                0\n  Max Instances:                10\n  Max Requests per Instance:    100",
