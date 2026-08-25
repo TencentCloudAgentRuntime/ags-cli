@@ -117,7 +117,6 @@ func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
 		"deployment.proxy": {
 			"Example - Forward the same local and remote port",
 			"Example - Avoid a local port conflict",
-			"curl -N http://127.0.0.1:3000/events",
 			"--verbose",
 		},
 	}
@@ -132,7 +131,34 @@ func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
 				t.Errorf("%s examples missing %q:\n%s", id, want, examples)
 			}
 		}
+		seen := map[string]bool{}
+		for _, example := range module.Descriptor.Spec.Examples {
+			invocation := primaryAgrInvocation(example)
+			if invocation == "" {
+				t.Errorf("%s example has no agr invocation:\n%s", id, example)
+				continue
+			}
+			if seen[invocation] {
+				t.Errorf("%s repeats the same agr invocation in multiple examples:\n%s", id, invocation)
+			}
+			seen[invocation] = true
+		}
 	}
+}
+
+func primaryAgrInvocation(example string) string {
+	var commandLines []string
+	for _, line := range strings.Split(example, "\n") {
+		line = strings.TrimSpace(line)
+		if len(commandLines) == 0 && !strings.Contains(line, "agr deployment ") {
+			continue
+		}
+		commandLines = append(commandLines, line)
+		if !strings.HasSuffix(line, `\`) {
+			break
+		}
+	}
+	return strings.Join(commandLines, " ")
 }
 
 func TestWaitFlagScope(t *testing.T) {

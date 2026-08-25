@@ -53,7 +53,6 @@ Port syntax:
 		Examples: []string{
 			"Example - Forward the same local and remote port:\n  agr deployment proxy dpl-a1b2c3d4 8080",
 			"Example - Avoid a local port conflict:\n  agr deployment proxy dpl-a1b2c3d4 3000:8080",
-			"Example - Read an SSE endpoint through the proxy:\n  agr deployment proxy dpl-a1b2c3d4 3000:8080\n\n  # In another terminal:\n  curl -N http://127.0.0.1:3000/events",
 			"Example - Log proxied requests without printing credentials:\n  agr deployment proxy dpl-a1b2c3d4 3000:8080 --verbose",
 		},
 		Args: []command.ArgSpec{
