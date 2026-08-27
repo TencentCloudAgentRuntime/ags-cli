@@ -298,14 +298,14 @@ service. Run `agr deployment create --help` or
 
 ### Delete a Deployment
 
-Delete waits until the remote Deployment is gone and reports the service's
-failure reason if asynchronous deletion fails. The default timeout is 10
-minutes. Use `--wait=false` to return as soon as the delete request is accepted,
-or `--timeout 0` to wait without a deadline.
+Delete returns after the service accepts the request. Add `--wait` to poll with
+the same wait behavior as Tool and Instance commands. A waited delete succeeds
+when the remote Deployment is gone and reports `StatusReason` if asynchronous
+deletion reaches `DELETE_FAILED`.
 
 ```bash
 agr deployment delete "$deployment_id"
-agr deployment delete "$deployment_id" --wait=false
+agr deployment delete "$deployment_id" --wait
 ```
 
 ### Proxy a Deployment port locally
@@ -392,7 +392,7 @@ agr deployment create            Create a Deployment
 agr deployment list              List Deployments
 agr deployment get <id>          Describe a Deployment
 agr deployment update <id>       Update mutable Deployment configuration
-agr deployment delete <id>       Delete and wait for a Deployment
+agr deployment delete <id>       Delete a Deployment
 agr deployment proxy <id> PORT   L7 proxy for local debugging
 
 agr tool list/create/fork/get/update/delete

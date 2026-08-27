@@ -45,3 +45,32 @@ func TestCreatedResourceID(t *testing.T) {
 		})
 	}
 }
+
+func TestCreatedDeploymentID(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		payload string
+		want    string
+	}{
+		{
+			name:    "success data",
+			payload: `{"Data":{"Deployment":{"DeploymentId":"dpl-1"}}}`,
+			want:    "dpl-1",
+		},
+		{
+			name:    "failure details",
+			payload: `{"Failure":{"Details":{"ResourceId":"dpl-2"}}}`,
+			want:    "dpl-2",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var env testutil.Envelope
+			if err := json.Unmarshal([]byte(tt.payload), &env); err != nil {
+				t.Fatalf("unmarshal envelope: %v", err)
+			}
+			if got := createdDeploymentID(env); got != tt.want {
+				t.Fatalf("createdDeploymentID() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

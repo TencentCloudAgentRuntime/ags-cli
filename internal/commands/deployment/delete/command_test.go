@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"net"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
-	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -51,18 +50,18 @@ func (f *fakeControlPlane) IsDeploymentNotFound(err error) bool {
 	return errors.Is(err, errDeploymentNotFound)
 }
 
-func TestModuleDefaultsToWaitingWithTenMinuteTimeout(t *testing.T) {
+func TestModuleUsesSharedOptionalWaitFlag(t *testing.T) {
 	module := Module()
 	waitIndex := slices.IndexFunc(module.Descriptor.Spec.Flags, func(flag command.FlagSpec) bool { return flag.Name == "wait" })
 	timeoutIndex := slices.IndexFunc(module.Descriptor.Spec.Flags, func(flag command.FlagSpec) bool { return flag.Name == "timeout" })
-	if waitIndex < 0 || module.Descriptor.Spec.Flags[waitIndex].Default != true {
-		t.Fatalf("wait flag = %#v, want default true", module.Descriptor.Spec.Flags)
+	if waitIndex < 0 || module.Descriptor.Spec.Flags[waitIndex].Default != nil {
+		t.Fatalf("wait flag = %#v, want opt-in shared flag", module.Descriptor.Spec.Flags)
 	}
-	if timeoutIndex < 0 || module.Descriptor.Spec.Flags[timeoutIndex].Default != "10m" {
-		t.Fatalf("timeout flag = %#v, want default 10m", module.Descriptor.Spec.Flags)
+	if timeoutIndex >= 0 {
+		t.Fatalf("timeout flag = %#v, want shared internal timing", module.Descriptor.Spec.Flags)
 	}
 	if module.Descriptor.Generated == nil || slices.ContainsFunc(module.Descriptor.Generated.Spec.Flags, func(flag command.FlagSpec) bool {
-		return flag.Name == "wait" || flag.Name == "timeout"
+		return flag.Name == "wait"
 	}) {
 		t.Fatal("workflow flags leaked into generated descriptor")
 	}
@@ -75,7 +74,9 @@ func TestModuleWaitsUntilExactDeploymentNotFound(t *testing.T) {
 		{err: errDeploymentNotFound},
 	}}
 	runtime := buildRuntime(t, cp)
-	result, err := runtime.Handler.Run(context.Background(), deleteRequest(nil))
+	result, err := runtime.Handler.Run(context.Background(), deleteRequest(map[string]command.FlagValue{
+		"wait": {Name: "wait", Type: command.FlagBool, Bool: true, Changed: true},
+	}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,12 +93,10 @@ func TestModuleWaitsUntilExactDeploymentNotFound(t *testing.T) {
 	}
 }
 
-func TestModuleWaitFalseReturnsAfterDeleteRequest(t *testing.T) {
+func TestModuleReturnsAfterDeleteRequestByDefault(t *testing.T) {
 	cp := &fakeControlPlane{}
 	runtime := buildRuntime(t, cp)
-	result, err := runtime.Handler.Run(context.Background(), deleteRequest(map[string]command.FlagValue{
-		"wait": {Name: "wait", Type: command.FlagBool, Bool: false, Changed: true},
-	}))
+	result, err := runtime.Handler.Run(context.Background(), deleteRequest(nil))
 	if err != nil || cp.getCalls != 0 {
 		t.Fatalf("error=%v getCalls=%d", err, cp.getCalls)
 	}
@@ -112,68 +111,33 @@ func TestModuleSurfacesDeleteFailedStatusReason(t *testing.T) {
 	status, reason := "DELETE_FAILED", "ProviderError: sandbox cleanup failed"
 	cp := &fakeControlPlane{gets: []getResult{{deployment: &ags.Deployment{Status: &status, StatusReason: &reason}}}}
 	runtime := buildRuntime(t, cp)
-	_, err := runtime.Handler.Run(context.Background(), deleteRequest(nil))
+	_, err := runtime.Handler.Run(context.Background(), deleteRequest(map[string]command.FlagValue{
+		"wait": {Name: "wait", Type: command.FlagBool, Bool: true, Changed: true},
+	}))
 	if err == nil || !strings.Contains(err.Error(), reason) {
 		t.Fatalf("error = %v, want status reason", err)
 	}
 }
 
-func TestModuleRetriesOnlyRetryablePollingErrors(t *testing.T) {
-	retryable := output.NewCLIError(&output.Failure{Code: "RequestLimitExceeded", Kind: output.KindRateLimit, Message: "slow down", Retryable: true})
-	cp := &fakeControlPlane{gets: []getResult{{err: retryable}, {err: errDeploymentNotFound}}}
+func TestModuleUsesSharedPollingErrorSemantics(t *testing.T) {
+	pollError := errors.New("describe failed")
+	cp := &fakeControlPlane{gets: []getResult{{err: pollError}, {err: errDeploymentNotFound}}}
 	runtime := buildRuntime(t, cp)
-	if _, err := runtime.Handler.Run(context.Background(), deleteRequest(nil)); err != nil {
-		t.Fatalf("retryable polling error should recover: %v", err)
-	}
-	if cp.getCalls != 2 {
-		t.Fatalf("getCalls = %d, want 2", cp.getCalls)
-	}
-
-	cp = &fakeControlPlane{gets: []getResult{{err: &net.DNSError{Err: "temporary", Name: "ags.tencentcloudapi.com", IsTemporary: true}}, {err: errDeploymentNotFound}}}
-	runtime = buildRuntime(t, cp)
-	if _, err := runtime.Handler.Run(context.Background(), deleteRequest(nil)); err != nil {
-		t.Fatalf("classified retryable network error should recover: %v", err)
-	}
-	if cp.getCalls != 2 {
-		t.Fatalf("network getCalls = %d, want 2", cp.getCalls)
-	}
-
-	nonRetryable := output.NewCLIError(&output.Failure{Code: "AuthFailure", Kind: output.KindAuthOrPermission, Message: "denied"})
-	cp = &fakeControlPlane{gets: []getResult{{err: nonRetryable}, {err: errDeploymentNotFound}}}
-	runtime = buildRuntime(t, cp)
-	if _, err := runtime.Handler.Run(context.Background(), deleteRequest(nil)); err == nil || err.Error() != "denied" {
-		t.Fatalf("error = %v, want denied", err)
+	_, err := runtime.Handler.Run(context.Background(), deleteRequest(map[string]command.FlagValue{
+		"wait": {Name: "wait", Type: command.FlagBool, Bool: true, Changed: true},
+	}))
+	if err == nil || !errors.Is(err, pollError) {
+		t.Fatalf("error = %v, want polling error", err)
 	}
 	if cp.getCalls != 1 {
 		t.Fatalf("getCalls = %d, want 1", cp.getCalls)
 	}
 }
 
-func TestParseTimeoutAcceptsZeroAsInfinite(t *testing.T) {
-	got, err := parseTimeout("0")
-	if err != nil || got != 0 {
-		t.Fatalf("parseTimeout(0) = (%s, %v), want zero", got, err)
-	}
-	if _, err := parseTimeout("-1s"); err == nil {
-		t.Fatal("negative timeout should fail")
-	}
-}
-
-func TestInvalidTimeoutDoesNotSubmitDelete(t *testing.T) {
-	cp := &fakeControlPlane{}
-	runtime := buildRuntime(t, cp)
-	_, err := runtime.Handler.Run(context.Background(), deleteRequest(map[string]command.FlagValue{
-		"timeout": {Name: "timeout", Type: command.FlagString, String: "later", Changed: true},
-	}))
-	if err == nil || cp.callAction != "" {
-		t.Fatalf("error=%v action=%q, want validation before mutation", err, cp.callAction)
-	}
-}
-
 func buildRuntime(t *testing.T, cp *fakeControlPlane) command.Runtime {
 	t.Helper()
 	runtime, err := Module().Build(command.Deps{ControlPlane: cp, Values: map[string]any{
-		waitIntervalKey: time.Millisecond,
+		resourcewait.OptionsKey: resourcewait.Options{Interval: time.Millisecond, Timeout: 100 * time.Millisecond},
 	}})
 	if err != nil {
 		t.Fatal(err)

@@ -14,8 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"deployment", "delete"},
 			Use:          "delete <deployment-id>",
 			Short:        "Delete a deployment",
-			Long:         "Delete a Deployment and wait for its asynchronous deletion to finish by default.",
-			Examples:     []string{"Example - Delete and wait for completion:\n  agr deployment delete dpl-a1b2c3d4", "Example - Allow up to 30 minutes for deletion:\n  agr deployment delete dpl-a1b2c3d4 --timeout 30m", "Example - Return as soon as the delete request is accepted:\n  agr deployment delete dpl-a1b2c3d4 --wait=false", "Example - Wait without a deadline:\n  agr deployment delete dpl-a1b2c3d4 --timeout 0"},
+			Long:         "Delete a remotely managed Deployment. By default, return after the delete request is accepted. Use --wait to poll until deletion completes or fails.",
+			Examples:     []string{"Example - Request deletion and return immediately:\n  agr deployment delete dpl-a1b2c3d4", "Example - Wait until deletion completes or fails:\n  agr deployment delete dpl-a1b2c3d4 --wait"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
 				{Name: "deployment-id", Required: true, Description: "Deployment ID."},

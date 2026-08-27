@@ -20,6 +20,7 @@ type LiveConfig struct {
 	CloudEndpoint     string
 	ToolID            string
 	ToolName          string
+	DeploymentToolID  string
 	KeepResources     bool
 	KeepBinary        bool
 	CommandTimeout    time.Duration
@@ -38,6 +39,7 @@ func LoadConfig() LiveConfig {
 		CloudEndpoint:     firstNonEmpty(os.Getenv("AGR_CLOUD_ENDPOINT"), fileCfg.CloudEndpoint),
 		ToolID:            os.Getenv("AGR_TEST_TOOL_ID"),
 		ToolName:          os.Getenv("AGR_TEST_TOOL_NAME"),
+		DeploymentToolID:  os.Getenv("AGR_TEST_DEPLOYMENT_TOOL_ID"),
 		KeepResources:     parseBoolEnv("AGR_TEST_KEEP_RESOURCES"),
 		KeepBinary:        parseBoolEnv("AGR_TEST_KEEP_BINARY"),
 		CommandTimeout:    getenvDuration("AGR_TEST_COMMAND_TIMEOUT", 2*time.Minute),

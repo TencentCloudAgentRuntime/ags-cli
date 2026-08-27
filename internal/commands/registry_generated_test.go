@@ -95,10 +95,9 @@ func TestDeploymentExamplesCoverOperationalScenarios(t *testing.T) {
 			"@scaling.json",
 		},
 		"deployment.delete": {
-			"Example - Delete and wait for completion",
-			"--wait=false",
-			"--timeout 30m",
-			"--timeout 0",
+			"Example - Request deletion and return immediately",
+			"Example - Wait until deletion completes or fails",
+			"--wait",
 		},
 		"deployment.get": {
 			"Example - Inspect the Deployment",

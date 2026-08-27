@@ -87,12 +87,10 @@
         },
         "deployment.delete": {
             "short": "Delete a deployment",
-            "long": "Delete a Deployment and wait for its asynchronous deletion to finish by default.",
+            "long": "Delete a remotely managed Deployment. By default, return after the delete request is accepted. Use --wait to poll until deletion completes or fails.",
             "examples": [
-                "Example - Delete and wait for completion:\n  agr deployment delete dpl-a1b2c3d4",
-                "Example - Allow up to 30 minutes for deletion:\n  agr deployment delete dpl-a1b2c3d4 --timeout 30m",
-                "Example - Return as soon as the delete request is accepted:\n  agr deployment delete dpl-a1b2c3d4 --wait=false",
-                "Example - Wait without a deadline:\n  agr deployment delete dpl-a1b2c3d4 --timeout 0"
+                "Example - Request deletion and return immediately:\n  agr deployment delete dpl-a1b2c3d4",
+                "Example - Wait until deletion completes or fails:\n  agr deployment delete dpl-a1b2c3d4 --wait"
             ]
         },
         "deployment.get": {
