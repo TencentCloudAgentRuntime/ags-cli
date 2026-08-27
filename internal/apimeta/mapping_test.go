@@ -10,7 +10,7 @@ import (
 func loadCheckedIn(t *testing.T) (*apimeta.Spec, *apimeta.Mapping) {
 	t.Helper()
 	root := filepath.Join("..", "..")
-	spec, err := apimeta.LoadSpec(filepath.Join(root, "api", "ags", "v20250920", "api.json"))
+	spec, err := apimeta.LoadEffectiveSpec(filepath.Join(root, "api", "ags", "v20250920"))
 	if err != nil {
 		t.Fatalf("load spec: %v", err)
 	}

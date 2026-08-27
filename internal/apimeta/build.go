@@ -510,7 +510,7 @@ type CommandSchemaEntry struct {
 	Flags    []FieldFlag `json:"Flags"`
 }
 
-// CommandSchemaActions surfaces every api.json action and its mapping
+// CommandSchemaActions surfaces every effective API action and its mapping
 // status (so the schema command can show raw_only and deferred entries).
 type CommandSchemaActions struct {
 	Action  string `json:"Action"`

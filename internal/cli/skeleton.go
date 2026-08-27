@@ -39,7 +39,7 @@ func supportsSkeleton(commandName string) bool {
 
 // skeletonResult emits an empty request body for the given command. The
 // preferred source is the API generator's per-command skeleton, which
-// is always derived from api.json + mapping.yaml. Hand-written schema
+// is always derived from the effective API + mapping.yaml. Hand-written schema
 // is only consulted as a fallback for commands that have no mapping yet.
 func skeletonResult(commandName string) (*CmdResult, error) {
 	if tmpl, ok := requestio.GeneratedSkeleton(commandName); ok {

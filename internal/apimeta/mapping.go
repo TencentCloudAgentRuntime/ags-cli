@@ -196,14 +196,14 @@ func (i Issue) String() string {
 func (m *Mapping) Validate(spec *Spec) []Issue {
 	var issues []Issue
 
-	// Every api.json action must appear in the mapping.
+	// Every effective API action must appear in the mapping.
 	for _, name := range spec.SortedActionNames() {
 		if _, ok := m.Actions[name]; !ok {
 			issues = append(issues, Issue{Action: name, Code: "MISSING_MAPPING", Detail: "action exists in api.json but not in mapping.yaml"})
 		}
 	}
 
-	// Every mapping action must reference an api.json action and meet status invariants.
+	// Every mapping action must reference an effective API action and meet status invariants.
 	for _, name := range m.SortedActionNames() {
 		a := m.Actions[name]
 		specAction, ok := spec.Actions[name]

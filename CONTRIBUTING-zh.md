@@ -129,9 +129,41 @@ ags-cli/
 ├── cmd/agr/       # CLI 入口
 ├── cmd/internal/  # 维护者工具
 ├── internal/      # 内部包
-├── api/           # 生成的 API 元数据
+├── api/           # 上游 API 元数据与临时补丁
 └── tests/         # CLI 与生命周期测试
 ```
+
+### 临时 API 补丁
+
+`api/ags/v20250920/api.json` 是 tccli 上游原始文件，不应在本仓库直接修改。
+已确认公开的 AGS 契约尚未进入上游时，仅在 `api.patch.json` 中用 RFC 6902
+JSON Patch 记录差异；无差异时保持为 `[]`。
+
+仅有后端代码不能作为依据。必须确认属于同一公开服务、API 版本、Endpoint 和资源命名空间；
+契约结构权威且已验证部署行为，或已获得 API Owner 批准；并明确允许在 tccli 发布前公开。
+
+- 新增 Action、Object 或参数使用 `add`，参数数组只使用 `/-` 追加。
+- `replace` 或 `remove` 前必须紧邻一个同路径的 `test` 操作。
+- 有效契约改变时，同步更新 `mapping.yaml`、生成命令、帮助和测试。
+
+提交补丁变更前运行：
+
+```bash
+go run ./cmd/internal/apipatch check
+go run ./cmd/internal/apipatch render > /tmp/ags-effective-api.json
+go run ./cmd/internal/cobragen check
+```
+
+下载新的上游文件后，先不覆盖仓库中的 `api.json`，使用以下命令判定补丁状态：
+
+```bash
+go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
+```
+
+`OBSOLETE` 表示应删除对应操作，`PARTIAL` 表示仅部分操作仍有效，
+`CONFLICT` 表示需要人工处理。
+上游吸收某个操作后，应在同一次变更中更新原始 `api.json` 并删除对应补丁，
+然后重新执行上述检查并审阅生成的 CLI 差异。
 
 ## 编码规范
 
