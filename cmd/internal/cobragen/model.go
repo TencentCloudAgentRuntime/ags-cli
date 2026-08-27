@@ -70,6 +70,14 @@ func commandLongFromHelp(help *apimeta.Help, commandID string) string {
 	return h.Long
 }
 
+func commandPreserveFlagOrderFromHelp(help *apimeta.Help, commandID string) bool {
+	h := apimeta.CommandHelpFor(commandID)
+	if help != nil {
+		h = help.Commands[commandID]
+	}
+	return h.PreserveFlagOrder
+}
+
 func commandExamplesFromHelp(help *apimeta.Help, commandID string) []string {
 	h := apimeta.CommandHelpFor(commandID)
 	if help != nil {
@@ -90,6 +98,8 @@ func groupShort(group string) string {
 		return "Manage images"
 	case "pre-cache-image-task":
 		return "Manage image pre-cache tasks"
+	case "deployment":
+		return "Manage deployments"
 	}
 	return "Manage " + group
 }
@@ -102,6 +112,8 @@ func groupLong(group string) string {
 		return "Manage sandbox tools (templates). Tools define the type and capabilities of sandbox instances."
 	case "apikey":
 		return "Manage API keys for AGR sandbox access."
+	case "deployment":
+		return "Manage deployments and related data-plane workflows."
 	}
 	return ""
 }
@@ -168,7 +180,7 @@ func argsForCommand(commandID string) string {
 	switch commandID {
 	case "instance.update", "instance.pause", "instance.resume", "tool.update":
 		return "cli.ArgsExactUnlessSkeleton(1)"
-	case "apikey.delete", "pre-cache-image-task.get":
+	case "apikey.delete", "pre-cache-image-task.get", "deployment.get", "deployment.update", "deployment.delete":
 		return "cli.ArgsExactUnlessSkeleton(1)"
 	case "instance.delete", "tool.delete":
 		return "func(cmd *cobra.Command, args []string) error { if cli.GenerateSkeletonEnabled() { return nil }; return cobra.MinimumNArgs(1)(cmd, args) }"
@@ -197,6 +209,12 @@ func useForCommand(commandID string) string {
 		return "create --image <image> --image-registry-type <type>"
 	case "pre-cache-image-task.get":
 		return "get <image-digest> --image <image> --image-registry-type <type>"
+	case "deployment.get":
+		return "get <deployment-id>"
+	case "deployment.update":
+		return "update <deployment-id>"
+	case "deployment.delete":
+		return "delete <deployment-id>"
 	}
 	parts := strings.Split(commandID, ".")
 	return parts[len(parts)-1]

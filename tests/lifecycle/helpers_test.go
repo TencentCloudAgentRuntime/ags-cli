@@ -45,9 +45,10 @@ func itemsField(data map[string]any) []any {
 }
 
 type ResourceTracker struct {
-	cli       *testutil.CLI
-	tools     []string
-	instances []string
+	cli         *testutil.CLI
+	deployments []string
+	tools       []string
+	instances   []string
 }
 
 func NewResourceTracker(cli *testutil.CLI) *ResourceTracker {
@@ -62,6 +63,12 @@ func (r *ResourceTracker) AddTool(id string) {
 	}
 }
 
+func (r *ResourceTracker) AddDeployment(id string) {
+	if id != "" {
+		r.deployments = append(r.deployments, id)
+	}
+}
+
 func (r *ResourceTracker) AddInstance(id string) {
 	if id != "" {
 		r.instances = append(r.instances, id)
@@ -72,18 +79,35 @@ func (r *ResourceTracker) ForgetTool(id string) {
 	r.tools = removeString(r.tools, id)
 }
 
+func (r *ResourceTracker) ForgetDeployment(id string) {
+	r.deployments = removeString(r.deployments, id)
+}
+
 func (r *ResourceTracker) ForgetInstance(id string) {
 	r.instances = removeString(r.instances, id)
 }
 
 func (r *ResourceTracker) Cleanup() {
+	for i := len(r.deployments) - 1; i >= 0; i-- {
+		ctx, cancel := context.WithTimeout(context.Background(), lifecycleCommandTimeout)
+		result := r.cli.Run(ctx, "--output", "json", "deployment", "delete", r.deployments[i], "--wait")
+		cancel()
+		if result.ExitCode != 0 {
+			GinkgoWriter.Printf("Warning: failed to delete test Deployment %s: %s\n", r.deployments[i], result.Diagnostics())
+		}
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	for i := len(r.instances) - 1; i >= 0; i-- {
 		r.cli.Run(ctx, "--output", "json", "instance", "delete", r.instances[i], "--ignore-not-found")
 	}
 	for i := len(r.tools) - 1; i >= 0; i-- {
-		r.cli.Run(ctx, "--output", "json", "tool", "delete", r.tools[i])
+		toolCtx, toolCancel := context.WithTimeout(context.Background(), lifecycleCommandTimeout)
+		result := r.cli.Run(toolCtx, "--output", "json", "tool", "delete", r.tools[i], "--wait", "--yes")
+		toolCancel()
+		if result.ExitCode != 0 {
+			GinkgoWriter.Printf("Warning: failed to delete test Tool %s: %s\n", r.tools[i], result.Diagnostics())
+		}
 	}
 }
 

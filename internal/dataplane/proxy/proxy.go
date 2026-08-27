@@ -29,11 +29,39 @@ type Options struct {
 	// Token is the access token for the sandbox. Its lifetime is bound to the
 	// sandbox instance lifecycle — it stays valid as long as the instance is
 	// running, so no refresh or 401-retry logic is required.
-	Token         string
+	Token string
+	// TokenProvider supplies a token for each incoming HTTP request or WebSocket
+	// connection. It enables lazy, refreshable Deployment credentials. When it
+	// is nil, Token retains the existing static instance-proxy behavior.
+	TokenProvider func(context.Context) (string, error)
+	// RewriteOrigin normalizes each non-empty Origin to the upstream authority.
+	// Deployment proxy enables it because that proxy is intended for local
+	// debugging; instance proxy leaves it disabled for compatibility.
+	RewriteOrigin bool
+	// PreserveHeaders enables Deployment WebSocket forwarding of application
+	// headers. When false, the legacy instance proxy forwards only Origin and
+	// Sec-WebSocket-Protocol in addition to its gateway token.
+	PreserveHeaders bool
+	// Affinity enables process-local Deployment session affinity. The proxy
+	// replaces any client-supplied affinity header with the currently tracked
+	// ID, then learns authoritative IDs from upstream responses.
+	Affinity      *AffinityOptions
 	ListenAddress string      // e.g. "127.0.0.1:3000"
 	Logger        *log.Logger // Optional logger; defaults to log.Default()
 	Insecure      bool        // Skip TLS verification
 	Verbose       bool        // Enable verbose request logging
+	// DialContext overrides upstream TCP dialing. Production leaves it nil;
+	// integration tests use it to route synthetic authorities to a local TLS server.
+	DialContext func(context.Context, string, string) (net.Conn, error)
+}
+
+// AffinityOptions configures process-local Deployment session affinity.
+type AffinityOptions struct {
+	HeaderName string
+	InitialID  string
+	// OnIDChange is called after the proxy learns a new non-empty ID from an
+	// upstream response. It is not called for InitialID.
+	OnIDChange func(string)
 }
 
 // Proxy manages an active HTTP/WebSocket reverse proxy that forwards local
@@ -46,18 +74,29 @@ type Proxy struct {
 	cancel     context.CancelFunc
 	logger     *log.Logger
 	targetHost string // e.g. "3000-sandbox-xxx.ap-guangzhou.tencentags.com"
+	affinity   *affinityState
 }
 
 // New creates and initializes a new port-forward proxy but does not start it.
 func New(opts Options) (*Proxy, error) {
-	if opts.InstanceID == "" || opts.Token == "" || opts.Domain == "" {
-		return nil, fmt.Errorf("instanceID, token, and domain are required")
+	if opts.InstanceID == "" || opts.Domain == "" {
+		return nil, fmt.Errorf("instanceID and domain are required")
+	}
+	if opts.Token == "" && opts.TokenProvider == nil {
+		return nil, fmt.Errorf("token or tokenProvider is required")
 	}
 	if opts.RemotePort <= 0 || opts.RemotePort > 65535 {
 		return nil, fmt.Errorf("remotePort must be between 1 and 65535")
 	}
 	if opts.ListenAddress == "" {
 		opts.ListenAddress = "127.0.0.1:0"
+	}
+	var affinity *affinityState
+	if opts.Affinity != nil {
+		if opts.Affinity.HeaderName == "" {
+			return nil, fmt.Errorf("affinity headerName is required")
+		}
+		affinity = newAffinityState(opts.Affinity.HeaderName, opts.Affinity.InitialID, opts.Affinity.OnIDChange)
 	}
 
 	logger := opts.Logger
@@ -75,6 +114,7 @@ func New(opts Options) (*Proxy, error) {
 		cancel:     cancel,
 		logger:     logger,
 		targetHost: targetHost,
+		affinity:   affinity,
 	}, nil
 }
 
@@ -97,6 +137,7 @@ func (p *Proxy) Start() (string, error) {
 
 	// Customize the transport for TLS
 	reverseProxy.Transport = &http.Transport{
+		DialContext: p.options.DialContext,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
@@ -113,10 +154,17 @@ func (p *Proxy) Start() (string, error) {
 		// Set the correct Host header (changeOrigin equivalent)
 		req.Host = p.targetHost
 		// Inject access token. The sandbox gateway authenticates via X-Access-Token only.
-		req.Header.Set("X-Access-Token", p.options.Token)
+		token, _ := req.Context().Value(requestTokenKey{}).(string)
+		req.Header.Set("X-Access-Token", token)
+		p.applyAffinityHeader(req.Header, requestAffinityID(req.Context()))
+		p.normalizeOrigin(req.Header)
 		if p.options.Verbose {
 			p.logger.Printf("[HTTP] %s %s", req.Method, req.URL.Path)
 		}
+	}
+	reverseProxy.ModifyResponse = func(response *http.Response) error {
+		p.captureAffinityResponse(response.Request.Context(), response.Header)
+		return nil
 	}
 
 	// Error handler: log the full error internally, but only expose details
@@ -145,6 +193,21 @@ func (p *Proxy) Start() (string, error) {
 
 	// Build the HTTP handler that routes between HTTP proxy and WebSocket proxy
 	mux := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestContext := r.Context()
+		if p.affinity != nil {
+			affinityRequest, err := p.affinity.acquire(requestContext)
+			if err != nil {
+				return
+			}
+			defer affinityRequest.complete("")
+			requestContext = context.WithValue(requestContext, requestAffinityRequestKey{}, affinityRequest)
+		}
+		r = r.WithContext(requestContext)
+		token, ok := p.acquireRequestToken(w, r)
+		if !ok {
+			return
+		}
+		r = r.WithContext(context.WithValue(r.Context(), requestTokenKey{}, token))
 		if isWebSocketRequest(r) {
 			p.handleWebSocket(w, r, wsUpgrader)
 			return
@@ -200,25 +263,19 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	// Build upstream WebSocket URL
 	upstreamURL := fmt.Sprintf("wss://%s%s", p.targetHost, r.URL.RequestURI())
 
-	// Prepare upstream headers with the pre-acquired token.
-	// The sandbox gateway authenticates via X-Access-Token only.
-	upstreamHeaders := http.Header{}
-	upstreamHeaders.Set("X-Access-Token", p.options.Token)
+	// Preserve application headers while replacing the gateway credential and
+	// removing client-side WebSocket handshake headers that gorilla generates.
+	token, _ := r.Context().Value(requestTokenKey{}).(string)
+	upstreamHeaders := p.webSocketUpstreamHeaders(r, token)
+	p.applyAffinityHeader(upstreamHeaders, requestAffinityID(r.Context()))
 	upstreamHeaders.Set("Host", p.targetHost)
-
-	// Copy relevant headers from the original request
-	if origin := r.Header.Get("Origin"); origin != "" {
-		upstreamHeaders.Set("Origin", origin)
-	}
-	for _, proto := range r.Header[http.CanonicalHeaderKey("Sec-WebSocket-Protocol")] {
-		upstreamHeaders.Add("Sec-WebSocket-Protocol", proto)
-	}
 
 	// Connect to upstream WebSocket
 	dialer := &websocket.Dialer{
 		HandshakeTimeout: 15 * time.Second,
 		ReadBufferSize:   65536,
 		WriteBufferSize:  65536,
+		NetDialContext:   p.options.DialContext,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: p.options.Insecure, //nolint:gosec
 		},
@@ -241,12 +298,22 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 		return
 	}
 	defer func() { _ = upstreamConn.Close() }()
+	var affinityHeaders http.Header
+	if upstreamResp != nil {
+		affinityHeaders = upstreamResp.Header
+	}
+	p.captureAffinityResponse(r.Context(), affinityHeaders)
 
 	// Pass negotiated subprotocol back to client
 	responseHeader := http.Header{}
 	if upstreamResp != nil {
 		if proto := upstreamResp.Header.Get("Sec-WebSocket-Protocol"); proto != "" {
 			responseHeader.Set("Sec-WebSocket-Protocol", proto)
+		}
+		if p.affinity != nil {
+			if id := upstreamResp.Header.Get(p.affinity.headerName); id != "" {
+				responseHeader.Set(p.affinity.headerName, id)
+			}
 		}
 	}
 
@@ -298,6 +365,206 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	if p.options.Verbose {
 		p.logger.Printf("[WS] WebSocket connection closed: %s", r.URL.Path)
 	}
+}
+
+type requestTokenKey struct{}
+
+type requestAffinityRequestKey struct{}
+
+func requestAffinityID(ctx context.Context) string {
+	request, _ := ctx.Value(requestAffinityRequestKey{}).(*affinityRequest)
+	if request == nil {
+		return ""
+	}
+	return request.sentID
+}
+
+type affinityState struct {
+	idMu          sync.RWMutex
+	headerName    string
+	id            string
+	discoveryGate chan struct{}
+	onChange      func(string)
+}
+
+func newAffinityState(headerName, initialID string, onChange func(string)) *affinityState {
+	return &affinityState{
+		headerName:    headerName,
+		id:            initialID,
+		discoveryGate: make(chan struct{}, 1),
+		onChange:      onChange,
+	}
+}
+
+func (s *affinityState) currentID() string {
+	s.idMu.RLock()
+	defer s.idMu.RUnlock()
+	return s.id
+}
+
+// acquire admits requests with a known affinity ID immediately. While the ID
+// is unknown, a separate discovery gate admits exactly one unbound request.
+// The ID is checked again after acquiring the gate because another request may
+// have populated it while this request was waiting.
+func (s *affinityState) acquire(ctx context.Context) (*affinityRequest, error) {
+	if id := s.currentID(); id != "" {
+		return &affinityRequest{state: s, sentID: id}, nil
+	}
+
+	select {
+	case s.discoveryGate <- struct{}{}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
+	if id := s.currentID(); id != "" {
+		<-s.discoveryGate
+		return &affinityRequest{state: s, sentID: id}, nil
+	}
+	return &affinityRequest{state: s, discovery: true}, nil
+}
+
+type affinityRequest struct {
+	state     *affinityState
+	sentID    string
+	discovery bool
+	once      sync.Once
+}
+
+func (r *affinityRequest) complete(responseID string) {
+	if r == nil {
+		return
+	}
+	r.once.Do(func() {
+		if r.discovery {
+			r.state.completeDiscovery(responseID)
+			return
+		}
+		r.state.observe(r.sentID, responseID)
+	})
+}
+
+func (s *affinityState) completeDiscovery(responseID string) {
+	s.idMu.Lock()
+	changed := responseID != "" && s.id == ""
+	if changed {
+		s.id = responseID
+	}
+	onChange := s.onChange
+	s.idMu.Unlock()
+	<-s.discoveryGate
+
+	if changed && onChange != nil {
+		onChange(responseID)
+	}
+}
+
+// observe accepts a response only when it corresponds to the currently tracked
+// request ID. For concurrent bound requests, the first response to rotate the
+// ID wins; late responses carrying the previous ID cannot replace it.
+func (s *affinityState) observe(sentID, responseID string) {
+	if responseID == "" {
+		return
+	}
+	s.idMu.Lock()
+	if (sentID == "" && s.id != "") || (sentID != "" && s.id != sentID) || s.id == responseID {
+		s.idMu.Unlock()
+		return
+	}
+	s.id = responseID
+	onChange := s.onChange
+	s.idMu.Unlock()
+	if onChange != nil {
+		onChange(responseID)
+	}
+}
+
+func (p *Proxy) applyAffinityHeader(headers http.Header, id string) {
+	if p.affinity == nil {
+		return
+	}
+	headers.Del(p.affinity.headerName)
+	if id != "" {
+		headers.Set(p.affinity.headerName, id)
+	}
+}
+
+func (p *Proxy) captureAffinityResponse(ctx context.Context, headers http.Header) {
+	request, _ := ctx.Value(requestAffinityRequestKey{}).(*affinityRequest)
+	if request == nil || headers == nil {
+		return
+	}
+	responseID := headers.Get(request.state.headerName)
+	if responseID == "" {
+		return
+	}
+	request.complete(responseID)
+}
+
+func (p *Proxy) tokenForRequest(ctx context.Context) (string, error) {
+	if p.options.TokenProvider == nil {
+		return p.options.Token, nil
+	}
+	token, err := p.options.TokenProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if token == "" {
+		return "", fmt.Errorf("token provider returned an empty token")
+	}
+	return token, nil
+}
+
+func (p *Proxy) acquireRequestToken(w http.ResponseWriter, r *http.Request) (string, bool) {
+	token, err := p.tokenForRequest(r.Context())
+	if err != nil {
+		// Credential errors may contain sensitive response details. Keep both the
+		// client response and logs deliberately generic, including in verbose mode.
+		p.logger.Printf("[ERROR] Failed to acquire upstream access credential")
+		http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		return "", false
+	}
+	return token, true
+}
+
+func (p *Proxy) normalizeOrigin(headers http.Header) {
+	if !p.options.RewriteOrigin || headers.Get("Origin") == "" {
+		return
+	}
+	headers.Set("Origin", "https://"+p.targetHost)
+}
+
+func (p *Proxy) prepareUpstreamHeaders(r *http.Request, token string) http.Header {
+	headers := r.Header.Clone()
+	for _, name := range []string{
+		"Connection",
+		"Upgrade",
+		"Proxy-Connection",
+		"Keep-Alive",
+		"Sec-WebSocket-Key",
+		"Sec-WebSocket-Version",
+		"Sec-WebSocket-Extensions",
+	} {
+		headers.Del(name)
+	}
+	headers.Set("X-Access-Token", token)
+	p.normalizeOrigin(headers)
+	return headers
+}
+
+func (p *Proxy) webSocketUpstreamHeaders(r *http.Request, token string) http.Header {
+	if p.options.PreserveHeaders {
+		return p.prepareUpstreamHeaders(r, token)
+	}
+	headers := http.Header{}
+	headers.Set("X-Access-Token", token)
+	if origin := r.Header.Get("Origin"); origin != "" {
+		headers.Set("Origin", origin)
+	}
+	for _, protocol := range r.Header.Values("Sec-WebSocket-Protocol") {
+		headers.Add("Sec-WebSocket-Protocol", protocol)
+	}
+	return headers
 }
 
 // bridgeWebSocket copies messages from src to dst WebSocket connection.

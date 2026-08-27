@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-AGR CLI 是腾讯云 Agent Runtime（AGR）的命令行工具，安装后的命令名为 `agr`。
+AGR CLI 是腾讯云 Agent Runtime（AGR）的命令行工具，用于管理 Deployment、实例、工具、API Key 与数据面操作；安装后的命令名为 `agr`。
 
 ## 安装
 
@@ -230,6 +230,76 @@ debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
   -o json --jq '.Data.InstanceId')
 ```
 
+## Deployment
+
+Deployment 为 Sandbox Tool 提供稳定的远端访问入口，并管理入口背后的
+Sandbox Instance。伸缩配置决定活跃容量，生命周期配置决定实例空闲后的处理方式。
+
+以下示例假设 `tool_id` 已保存一个现有 Sandbox Tool 的 ID。
+
+### 创建和查看 Deployment
+
+Deployment 名称必须符合 DNS-1123 规范、保持唯一，且创建后不可修改。
+复杂配置既可以直接传入 JSON，也可以用 `@file` 从文件读取，或用 `-` 从标准输入
+读取。
+
+```bash
+deployment_id=$(agr deployment create \
+  --deployment-name workspace-service \
+  --tool-id "$tool_id" \
+  --scaling-configuration '{"MinInstanceCount":0,"MaxInstanceCount":10,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":300,"IdleAction":"PAUSE"}' \
+  -o json --jq '.Data.Deployment.DeploymentId')
+
+agr deployment get "$deployment_id"
+agr deployment list
+```
+
+默认情况下，`create`、`get`、`update` 输出便于阅读的详情，`list` 紧凑展示
+伸缩、生命周期、亲和性和资源存续时间。脚本需要完整 API 响应时使用 `-o json`。
+
+### 更新配置
+
+更新伸缩或生命周期配置时，传入的对象会完整替换原配置，而不是局部修改。因此，
+被更新的配置对象必须包含它的全部字段。
+
+```bash
+agr deployment update "$deployment_id" \
+  --scaling-configuration '{"MinInstanceCount":1,"MaxInstanceCount":20,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":600,"IdleAction":"STOP"}'
+```
+
+创建 Deployment 时可以省略配置对象中的部分字段，服务端会补齐默认值。可通过
+`agr deployment create --help` 和 `agr deployment update --help` 查看字段说明。
+
+### 删除 Deployment
+
+删除命令默认等待远端 Deployment 完全消失；如果异步删除失败，命令会返回服务端
+提供的失败原因。默认等待上限为 10 分钟。使用 `--wait=false` 可在删除请求被
+接受后立即返回；`--timeout 0` 表示不设等待期限。
+
+```bash
+agr deployment delete "$deployment_id"
+agr deployment delete "$deployment_id" --wait=false
+```
+
+### 将 Deployment 端口代理到本机
+
+`deployment proxy` 只推荐用于本地调试。只写一个端口时，本地和远端使用相同
+端口；`本地端口:远端端口` 可映射不同端口。
+
+```bash
+# http://127.0.0.1:8080 转发到远端 8080 端口
+agr deployment proxy "$deployment_id" 8080
+
+# http://127.0.0.1:3000 转发到远端 8080 端口
+agr deployment proxy "$deployment_id" 3000:8080
+```
+
+代理支持 HTTP、SSE 和 WebSocket，不支持原始 TCP。默认只监听
+`127.0.0.1`；通过 `--address` 监听非回环地址会把调试代理暴露到网络，并输出
+风险提示。
+
 ## 控制面端点与数据面域名
 
 | Flag | 默认值 | 作用对象 |
@@ -281,6 +351,13 @@ agr instance login <id>          PTY 终端会话
 agr instance browser vnc <id>    显示 VNC URL
 agr instance proxy <id> PORT     端口转发到 localhost
 agr instance mobile ...          Mobile ADB 操作
+
+agr deployment create            创建 Deployment
+agr deployment list              列出 Deployment
+agr deployment get <id>          查看 Deployment 详情
+agr deployment update <id>       更新 Deployment 可变配置
+agr deployment delete <id>       删除并等待 Deployment
+agr deployment proxy <id> PORT   本地调试七层代理
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete

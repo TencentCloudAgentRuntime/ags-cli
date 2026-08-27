@@ -1,6 +1,204 @@
 {
     "api_version": "v20250920",
     "commands": {
+        "deployment.create": {
+            "short": "Create a deployment",
+            "long": "Create a remotely managed Deployment. Complex configuration fields accept a JSON value, @file, or - for stdin.",
+            "preserve_flag_order": true,
+            "examples": [
+                "Example - Scale to zero after five idle minutes:\n  agr deployment create \\\n    --deployment-name workspace-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":0,\"MaxInstanceCount\":10,\"MaxInstanceRequestConcurrency\":100}' \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":300,\"IdleAction\":\"STOP\"}'",
+                "Example - Keep two instances active:\n  agr deployment create \\\n    --deployment-name latency-sensitive-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":2,\"MaxInstanceCount\":20,\"MaxInstanceRequestConcurrency\":200}'",
+                "Example - Prefer the same instance for requests sharing an affinity ID:\n  agr deployment create \\\n    --deployment-name session-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --affinity-configuration '{\"Mode\":\"BEST_EFFORT\",\"HeaderName\":\"X-Tencent-Agr-Affinity-Id\"}'",
+                "Example - Fail instead of selecting another instance for an affinity ID:\n  agr deployment create \\\n    --deployment-name strict-session-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --affinity-configuration '{\"Mode\":\"STRICT\",\"HeaderName\":\"X-Tencent-Agr-Affinity-Id\"}'",
+                "Example - Give each affinity ID an exclusive, non-migrating instance:\n  agr deployment create \\\n    --deployment-name exclusive-session-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --affinity-configuration '{\"Mode\":\"EXCLUSIVE\",\"HeaderName\":\"X-Tencent-Agr-Affinity-Id\"}'",
+                "Example - Load configuration from files and capture the Deployment ID:\n  deployment_id=$(agr deployment create \\\n    --deployment-name workspace-service \\\n    --tool-id sdt-a1b2c3d4 \\\n    --scaling-configuration @scaling.json \\\n    --lifecycle-configuration @lifecycle.json \\\n    --tags @tags.json \\\n    -o json --jq '.Data.Deployment.DeploymentId')"
+            ],
+            "fields": {
+                "DeploymentName": {
+                    "description": "Unique DNS-1123 deployment name.",
+                    "inputs": {
+                        "deployment-name": {
+                            "usage": "Unique DNS-1123 deployment name (required)"
+                        }
+                    }
+                },
+                "ToolId": {
+                    "description": "Associated sandbox tool ID.",
+                    "inputs": {
+                        "tool-id": {
+                            "usage": "Associated sandbox tool ID"
+                        }
+                    }
+                },
+                "ScalingConfiguration": {
+                    "description": "Scaling configuration.",
+                    "inputs": {
+                        "scaling-configuration": {
+                            "usage": "Scaling configuration JSON object, @file, or - for stdin. The object and individual fields are optional; omitted fields use service defaults.",
+                            "format": "{\"MinInstanceCount\":<integer>,\"MaxInstanceCount\":<integer>,\"MaxInstanceRequestConcurrency\":<integer>}",
+                            "fields": [
+                                "MinInstanceCount: minimum number of active Sandbox Instances; >= 0; default: 0",
+                                "MaxInstanceCount: maximum number of active Sandbox Instances; >= 1 and >= MinInstanceCount; default: 10",
+                                "MaxInstanceRequestConcurrency: maximum concurrent Deployment request or connection leases per active Sandbox Instance; >= 1; default: 100"
+                            ]
+                        }
+                    }
+                },
+                "LifecycleConfiguration": {
+                    "description": "Idle lifecycle configuration.",
+                    "inputs": {
+                        "lifecycle-configuration": {
+                            "usage": "Idle lifecycle configuration JSON object, @file, or - for stdin. The object and individual fields are optional; omitted fields use service defaults.",
+                            "format": "{\"IdleTimeoutSeconds\":<integer>,\"IdleAction\":\"<action>\"}",
+                            "fields": [
+                                "IdleTimeoutSeconds: idle seconds after the last active Deployment request or connection before IdleAction; >= 30 with no fixed upper limit; default: 300",
+                                "IdleAction: STOP releases the Sandbox Instance; PAUSE preserves its state; default: STOP"
+                            ]
+                        }
+                    }
+                },
+                "AffinityConfiguration": {
+                    "description": "Session affinity configuration.",
+                    "inputs": {
+                        "affinity-configuration": {
+                            "usage": "Session affinity configuration JSON object, @file, or - for stdin. Affinity is disabled by default.",
+                            "format": "{\"Mode\":\"<mode>\",\"HeaderName\":\"<header-name>\"}",
+                            "fields": [
+                                "Mode: affinity behavior\n  - BEST_EFFORT: prefer the previous Sandbox Instance; select another one when unavailable\n  - STRICT: require the previous Sandbox Instance; fail instead of selecting another one\n  - EXCLUSIVE: dedicate one non-migrating Sandbox Instance to each affinity ID\n  - Empty or omitted: disable affinity",
+                                "HeaderName: request and response header carrying the affinity ID\n  - Default when Mode is enabled: X-Tencent-Agr-Affinity-Id\n  - Constraint: a non-reserved HTTP field name of 1-128 ASCII bytes; omit when affinity is disabled"
+                            ]
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Resource tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Resource tags as a JSON array, @file, or - for stdin. Omit for no tags.",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "fields": [
+                                "Key: tag key",
+                                "Value: tag value"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "deployment.delete": {
+            "short": "Delete a deployment",
+            "long": "Delete a remotely managed Deployment. By default, return after the delete request is accepted. Use --wait to poll until deletion completes or fails.",
+            "examples": [
+                "Example - Request deletion and return immediately:\n  agr deployment delete dpl-a1b2c3d4",
+                "Example - Wait until deletion completes or fails:\n  agr deployment delete dpl-a1b2c3d4 --wait"
+            ]
+        },
+        "deployment.get": {
+            "short": "Describe a deployment",
+            "examples": [
+                "Example - Inspect the Deployment in a human-readable form:\n  agr deployment get dpl-a1b2c3d4",
+                "Example - Print the complete API response:\n  agr deployment get dpl-a1b2c3d4 -o json",
+                "Example - Extract the current status for a script:\n  agr deployment get dpl-a1b2c3d4 -o json --jq '.Data.Deployment.Status'"
+            ]
+        },
+        "deployment.list": {
+            "short": "List deployments",
+            "examples": [
+                "Example - List Deployments with compact status and capacity summaries:\n  agr deployment list",
+                "Example - List active Deployments for one Sandbox Tool:\n  agr deployment list --filters '[{\"Name\":\"tool-id\",\"Values\":[\"sdt-a1b2c3d4\"]},{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]}]'",
+                "Example - Find Deployment names containing workspace:\n  agr deployment list --filters '[{\"Name\":\"deployment-name-like\",\"Values\":[\"workspace\"]}]'",
+                "Example - Find Deployments whose last deletion failed:\n  agr deployment list --filters '[{\"Name\":\"status\",\"Values\":[\"DELETE_FAILED\"]}]'",
+                "Example - Read the next page of Deployment IDs:\n  agr deployment list --offset 50 --limit 50 -o json --jq '(.Data.DeploymentSet // [])[].DeploymentId'"
+            ],
+            "fields": {
+                "Filters": {
+                    "description": "Deployment query filters.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters JSON array, @file, or - for stdin. Names and values are case-sensitive; different filters use AND, while Values within one filter use OR.",
+                            "format": "[{\"Name\":\"<filter>\",\"Values\":[\"<value>\"]}]",
+                            "values": [
+                                "deployment-id: exact Deployment ID",
+                                "deployment-name: exact Deployment name",
+                                "deployment-name-like: literal substring of the Deployment name; % and _ are not wildcards",
+                                "tool-id: exact Sandbox Tool ID",
+                                "status: exact status; ACTIVE, DELETING, or DELETE_FAILED"
+                            ]
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Pagination limit.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Maximum number of Deployments to return. Defaults to 20; allowed range: 1-200."
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Number of matching Deployments to skip. Defaults to 0; must be non-negative."
+                        }
+                    }
+                }
+            }
+        },
+        "deployment.update": {
+            "short": "Update a deployment",
+            "long": "Update the mutable configuration of a remotely managed Deployment. Provided configuration objects replace their current values in full.",
+            "preserve_flag_order": true,
+            "examples": [
+                "Example - Increase active capacity:\n  agr deployment update dpl-a1b2c3d4 \\\n    --scaling-configuration '{\"MinInstanceCount\":2,\"MaxInstanceCount\":20,\"MaxInstanceRequestConcurrency\":200}'",
+                "Example - Pause idle instances after ten minutes and retain their state:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":600,\"IdleAction\":\"PAUSE\"}'",
+                "Example - Stop idle instances after five minutes:\n  agr deployment update dpl-a1b2c3d4 \\\n    --lifecycle-configuration '{\"IdleTimeoutSeconds\":300,\"IdleAction\":\"STOP\"}'",
+                "Example - Replace all tags:\n  agr deployment update dpl-a1b2c3d4 \\\n    --tags '[{\"Key\":\"env\",\"Value\":\"production\"},{\"Key\":\"team\",\"Value\":\"agent-platform\"}]'",
+                "Example - Clear all tags:\n  agr deployment update dpl-a1b2c3d4 --tags '[]'"
+            ],
+            "fields": {
+                "ScalingConfiguration": {
+                    "description": "Complete replacement scaling configuration.",
+                    "inputs": {
+                        "scaling-configuration": {
+                            "usage": "Complete scaling configuration JSON object, @file, or - for stdin. Providing it replaces the current scaling configuration; include all three fields because update does not apply create defaults.",
+                            "format": "{\"MinInstanceCount\":<integer>,\"MaxInstanceCount\":<integer>,\"MaxInstanceRequestConcurrency\":<integer>}",
+                            "fields": [
+                                "MinInstanceCount: minimum number of active Sandbox Instances; >= 0",
+                                "MaxInstanceCount: maximum number of active Sandbox Instances; >= 1 and >= MinInstanceCount",
+                                "MaxInstanceRequestConcurrency: maximum concurrent Deployment request or connection leases per active Sandbox Instance; >= 1"
+                            ]
+                        }
+                    }
+                },
+                "LifecycleConfiguration": {
+                    "description": "Complete replacement idle lifecycle configuration.",
+                    "inputs": {
+                        "lifecycle-configuration": {
+                            "usage": "Complete idle lifecycle configuration JSON object, @file, or - for stdin. Providing it replaces the current lifecycle configuration; include both fields because update does not apply create defaults.",
+                            "format": "{\"IdleTimeoutSeconds\":<integer>,\"IdleAction\":\"<action>\"}",
+                            "fields": [
+                                "IdleTimeoutSeconds: idle seconds after the last active Deployment request or connection before IdleAction; >= 30 with no fixed upper limit",
+                                "IdleAction: STOP releases the Sandbox Instance; PAUSE preserves its state"
+                            ]
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Complete replacement resource tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Resource tags as a JSON array, @file, or - for stdin. Providing --tags replaces all tags; [] clears all tags; omit --tags to leave tags unchanged.",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "fields": [
+                                "Key: tag key",
+                                "Value: tag value"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "instance.create": {
             "short": "Create a new sandbox instance",
             "long": "Create a new sandbox instance from a tool template.\n\nThe referenced tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",

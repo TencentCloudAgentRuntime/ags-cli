@@ -82,6 +82,7 @@ type FlagSchema struct {
 	Type             string   `json:"Type"`
 	Description      string   `json:"Description,omitempty"`
 	Format           string   `json:"Format,omitempty"`
+	Fields           []string `json:"Fields,omitempty"`
 	Default          string   `json:"Default,omitempty"`
 	Examples         []string `json:"Examples,omitempty"`
 	Values           []string `json:"Values,omitempty"`
@@ -501,6 +502,7 @@ func commandFlagsToSchema(flags []command.FlagSpec) []FlagSchema {
 			Type:        schemaFlagType(flag.Type),
 			Description: flag.Usage,
 			Format:      flag.Format,
+			Fields:      append([]string(nil), flag.Fields...),
 			Examples:    append([]string(nil), flag.Examples...),
 			Values:      append([]string(nil), flag.Values...),
 		}
@@ -622,6 +624,9 @@ func mergeFlagSchema(base, override FlagSchema) FlagSchema {
 	if override.Format != "" {
 		merged.Format = override.Format
 	}
+	if len(override.Fields) > 0 {
+		merged.Fields = append([]string(nil), override.Fields...)
+	}
 	if override.Default != "" {
 		merged.Default = override.Default
 	}
@@ -646,6 +651,13 @@ func cloneCommandSchema(in CommandSchema) CommandSchema {
 	out.Subcommands = append([]string(nil), in.Subcommands...)
 	out.Args = cloneArgSchemas(in.Args)
 	out.Flags = append([]FlagSchema(nil), in.Flags...)
+	for i := range out.Flags {
+		out.Flags[i].Fields = append([]string(nil), in.Flags[i].Fields...)
+		out.Flags[i].Examples = append([]string(nil), in.Flags[i].Examples...)
+		out.Flags[i].Values = append([]string(nil), in.Flags[i].Values...)
+		out.Flags[i].IncompatibleWith = append([]string(nil), in.Flags[i].IncompatibleWith...)
+		out.Flags[i].AllowsOutput = append([]string(nil), in.Flags[i].AllowsOutput...)
+	}
 	out.Examples = append([]string(nil), in.Examples...)
 	out.Failures = append([]string(nil), in.Failures...)
 	out.RequestSchema = cloneRequestSchema(in.RequestSchema)
@@ -733,6 +745,7 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 					Type:        gf.Type,
 					Description: gf.Description,
 					Format:      gf.Format,
+					Fields:      append([]string(nil), gf.Fields...),
 					Examples:    append([]string(nil), gf.Examples...),
 					Values:      append([]string(nil), gf.Values...),
 				}

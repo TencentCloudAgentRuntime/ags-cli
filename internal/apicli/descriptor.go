@@ -46,6 +46,7 @@ type InputSpec struct {
 	Aliases    []string
 	Usage      string
 	Format     string
+	Fields     []string
 	Examples   []string
 	Values     []string
 	Type       command.FlagType
@@ -73,6 +74,7 @@ func (d APIDescriptor) CommandSpec() command.Spec {
 				Aliases:   input.Aliases,
 				Usage:     input.Usage,
 				Format:    input.Format,
+				Fields:    append([]string(nil), input.Fields...),
 				Examples:  append([]string(nil), input.Examples...),
 				Values:    append([]string(nil), input.Values...),
 				Type:      input.Type,

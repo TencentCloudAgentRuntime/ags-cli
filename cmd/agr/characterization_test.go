@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
@@ -671,6 +672,30 @@ func TestCharacterization_LeafHelpIncludesGroupedExamples(t *testing.T) {
 	}
 }
 
+func TestCharacterization_DeploymentHelpIsEnglish(t *testing.T) {
+	root := contractRoot()
+	for _, commandID := range []string{
+		"deployment",
+		"deployment.create",
+		"deployment.delete",
+		"deployment.get",
+		"deployment.list",
+		"deployment.update",
+		"deployment.proxy",
+	} {
+		cmd, ok := findCobraCommand(root, commandID)
+		if !ok {
+			t.Fatalf("command %s not found", commandID)
+		}
+		help := commandHelp(t, cmd)
+		if strings.IndexFunc(help, func(r rune) bool {
+			return unicode.Is(unicode.Han, r)
+		}) >= 0 {
+			t.Errorf("help for %s contains Chinese text:\n%s", commandID, help)
+		}
+	}
+}
+
 func schemaForCommand(t *testing.T, command string) commandSchemaSnapshot {
 	t.Helper()
 	snapshot := schemaSnapshotForCommand(t, command)
@@ -1147,11 +1172,52 @@ func runAGR(t *testing.T, args ...string) (string, error) {
 		"AGR_CHARACTERIZATION_HELPER=1",
 		"HOME="+t.TempDir(),
 		"USERPROFILE="+t.TempDir(),
+		"GORACE="+characterizationGORACE(os.Getenv("GORACE")),
 		"TENCENTCLOUD_SECRET_ID=",
 		"TENCENTCLOUD_SECRET_KEY=",
 	)
 	out, err := cmd.CombinedOutput()
 	return string(out), err
+}
+
+func characterizationGORACE(existing string) string {
+	options := strings.Fields(existing)
+	filtered := options[:0]
+	for _, option := range options {
+		if !strings.HasPrefix(option, "atexit_sleep_ms=") {
+			filtered = append(filtered, option)
+		}
+	}
+	return strings.Join(append(filtered, "atexit_sleep_ms=0"), " ")
+}
+
+func TestCharacterizationGORACEDisablesChildExitSleep(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		existing string
+		want     string
+	}{
+		{
+			name: "default",
+			want: "atexit_sleep_ms=0",
+		},
+		{
+			name:     "preserves other options",
+			existing: "halt_on_error=1 strip_path_prefix=/tmp",
+			want:     "halt_on_error=1 strip_path_prefix=/tmp atexit_sleep_ms=0",
+		},
+		{
+			name:     "overrides existing exit sleep",
+			existing: "atexit_sleep_ms=1000 halt_on_error=1",
+			want:     "halt_on_error=1 atexit_sleep_ms=0",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := characterizationGORACE(tc.existing); got != tc.want {
+				t.Fatalf("characterizationGORACE(%q) = %q, want %q", tc.existing, got, tc.want)
+			}
+		})
+	}
 }
 
 func TestCharacterizationHelperProcess(t *testing.T) {

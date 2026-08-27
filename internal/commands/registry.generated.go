@@ -19,6 +19,12 @@ import (
 	credentialsecretget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/get"
 	credentialsecretlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/list"
 	credentialsecretset "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential/secret/set"
+	deploymentcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/create"
+	deploymentdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/delete"
+	deploymentget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/get"
+	deploymentlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/list"
+	deploymentproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/proxy"
+	deploymentupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/update"
 	identitycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/create"
 	identitydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/delete"
 	identityget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/get"
@@ -73,6 +79,12 @@ func Registry() (*command.Registry, error) {
 		credentialsecretget.Module(),
 		credentialsecretlist.Module(),
 		credentialsecretset.Module(),
+		deploymentcreate.Module(),
+		deploymentdelete.Module(),
+		deploymentget.Module(),
+		deploymentlist.Module(),
+		deploymentproxy.Module(),
+		deploymentupdate.Module(),
 		identitycreate.Module(),
 		identitydelete.Module(),
 		identityget.Module(),

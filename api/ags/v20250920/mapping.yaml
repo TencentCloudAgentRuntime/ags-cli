@@ -26,6 +26,93 @@
 api_version: "v20250920"
 
 actions:
+  AcquireDeploymentToken:
+    request: AcquireDeploymentTokenRequest
+    response: AcquireDeploymentTokenResponse
+    status: raw_only
+    reason: Deployment tokens are short-lived data-plane credentials acquired transparently by `agr deployment proxy`; they are not exposed as a resource command.
+
+  CreateDeployment:
+    command: deployment.create
+    request: CreateDeploymentRequest
+    response: CreateDeploymentResponse
+    status: mapped
+    fields:
+      ScalingConfiguration:
+        inputs:
+          - flag: scaling-configuration
+            type: json
+      LifecycleConfiguration:
+        inputs:
+          - flag: lifecycle-configuration
+            type: json
+      AffinityConfiguration:
+        inputs:
+          - flag: affinity-configuration
+            type: json
+      Tags:
+        inputs:
+          - flag: tags
+            type: json
+
+  DeleteDeployment:
+    command: deployment.delete
+    request: DeleteDeploymentRequest
+    response: DeleteDeploymentResponse
+    status: mapped
+    fields:
+      DeploymentId:
+        positional: true
+
+  DescribeDeployment:
+    command: deployment.get
+    request: DescribeDeploymentRequest
+    response: DescribeDeploymentResponse
+    status: mapped
+    fields:
+      DeploymentId:
+        positional: true
+
+  DescribeDeploymentList:
+    command: deployment.list
+    request: DescribeDeploymentListRequest
+    response: DescribeDeploymentListResponse
+    status: mapped
+    fields:
+      Offset:
+        inputs:
+          - flag: offset
+            type: int
+      Limit:
+        inputs:
+          - flag: limit
+            type: int
+      Filters:
+        inputs:
+          - flag: filters
+            type: json
+
+  ModifyDeployment:
+    command: deployment.update
+    request: ModifyDeploymentRequest
+    response: ModifyDeploymentResponse
+    status: mapped
+    fields:
+      DeploymentId:
+        positional: true
+      ScalingConfiguration:
+        inputs:
+          - flag: scaling-configuration
+            type: json
+      LifecycleConfiguration:
+        inputs:
+          - flag: lifecycle-configuration
+            type: json
+      Tags:
+        inputs:
+          - flag: tags
+            type: json
+
   StartSandboxInstance:
     command: instance.create
     request: StartSandboxInstanceRequest

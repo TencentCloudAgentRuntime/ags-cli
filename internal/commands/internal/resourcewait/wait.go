@@ -1,4 +1,4 @@
-// Package resourcewait provides polling for Instance and Tool lifecycle states.
+// Package resourcewait provides polling for resource lifecycle states.
 package resourcewait
 
 import (
@@ -57,6 +57,7 @@ type Policy struct {
 	Decide            func(Observation) Decision
 	IsInProgress      func(string) bool
 	NotFoundIsSuccess bool
+	TimeoutHint       func(string) string
 }
 
 // Options controls one wait operation.
@@ -153,6 +154,22 @@ func ToolPolicy(operation Operation) Policy {
 	}
 }
 
+func deploymentDeletePolicy() Policy {
+	return Policy{
+		Operation: OperationDelete,
+		Decide: func(observation Observation) Decision {
+			if normalizeStatus(observation.Status) == "DELETE_FAILED" {
+				return Failed
+			}
+			return Continue
+		},
+		NotFoundIsSuccess: true,
+		TimeoutHint: func(deploymentID string) string {
+			return fmt.Sprintf("Inspect the resource with 'agr deployment get %s'.", deploymentID)
+		},
+	}
+}
+
 // WaitForInstance waits for an Instance to reach any non-failure terminal
 // state, which is the contract used by instance get --wait.
 func WaitForInstance(
@@ -177,7 +194,7 @@ func WaitForInstanceWithPolicy(
 			return ""
 		}
 		return *instance.Status
-	}, policy, options)
+	}, nil, policy, options)
 }
 
 // WaitForTool waits for a Tool to reach any non-failure terminal state, which
@@ -204,7 +221,28 @@ func WaitForToolWithPolicy(
 			return ""
 		}
 		return *tool.Status
-	}, policy, options)
+	}, nil, policy, options)
+}
+
+// WaitForDeploymentDeletion waits until a Deployment is absent or reports a
+// terminal deletion failure.
+func WaitForDeploymentDeletion(
+	ctx context.Context,
+	deploymentID string,
+	get func(context.Context, string) (*ags.Deployment, error),
+	options Options,
+) (*ags.Deployment, error) {
+	return waitFor(ctx, "deployment", deploymentID, get, func(deployment *ags.Deployment) string {
+		if deployment == nil || deployment.Status == nil {
+			return ""
+		}
+		return *deployment.Status
+	}, func(deployment *ags.Deployment) string {
+		if deployment == nil || deployment.StatusReason == nil {
+			return ""
+		}
+		return *deployment.StatusReason
+	}, deploymentDeletePolicy(), options)
 }
 
 func waitFor[T any](
@@ -213,6 +251,7 @@ func waitFor[T any](
 	resourceID string,
 	get func(context.Context, string) (T, error),
 	statusOf func(T) string,
+	statusReasonOf func(T) string,
 	policy Policy,
 	options Options,
 ) (T, error) {
@@ -236,7 +275,7 @@ func waitFor[T any](
 		resource, err := get(waitCtx, resourceID)
 		if err != nil {
 			if waitCtx.Err() != nil {
-				return zero, waitContextError(ctx, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+				return zero, waitContextError(ctx, resourceType, resourceID, policy, lastStatus, attempts, startedAt)
 			}
 			if policy.NotFoundIsSuccess && options.IsNotFound != nil && options.IsNotFound(err) {
 				return zero, nil
@@ -245,6 +284,10 @@ func waitFor[T any](
 		}
 
 		lastStatus = strings.TrimSpace(statusOf(resource))
+		statusReason := ""
+		if statusReasonOf != nil {
+			statusReason = strings.TrimSpace(statusReasonOf(resource))
+		}
 		if policy.IsInProgress != nil && policy.IsInProgress(lastStatus) {
 			inProgressObserved = true
 		}
@@ -252,14 +295,14 @@ func waitFor[T any](
 		case Success:
 			return resource, nil
 		case Failed:
-			return zero, waitStatusError("WAIT_FAILED", output.KindGenericError, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+			return zero, waitStatusError("WAIT_FAILED", output.KindGenericError, resourceType, resourceID, policy.Operation, lastStatus, statusReason, attempts, startedAt)
 		case Preempted:
-			return zero, waitStatusError("WAIT_PREEMPTED", output.KindConflict, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+			return zero, waitStatusError("WAIT_PREEMPTED", output.KindConflict, resourceType, resourceID, policy.Operation, lastStatus, statusReason, attempts, startedAt)
 		case Continue:
 		}
 
 		if err := waitForNextPoll(waitCtx, options.Interval); err != nil {
-			return zero, waitContextError(ctx, resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt)
+			return zero, waitContextError(ctx, resourceType, resourceID, policy, lastStatus, attempts, startedAt)
 		}
 	}
 }
@@ -421,6 +464,7 @@ func waitStatusError(
 	resourceID string,
 	operation Operation,
 	status string,
+	statusReason string,
 	attempts int,
 	startedAt time.Time,
 ) error {
@@ -429,12 +473,19 @@ func waitStatusError(
 	if code == "WAIT_PREEMPTED" {
 		message = fmt.Sprintf("%s %s %s was preempted; current status is %q", resourceType, resourceID, operation, status)
 	}
+	if statusReason != "" {
+		message += ": " + statusReason
+	}
+	details := waitDetails(resourceType, resourceID, operation, status, attempts, startedAt)
+	if statusReason != "" {
+		details["StatusReason"] = statusReason
+	}
 	return output.NewCLIError(&output.Failure{
 		Code:    code,
 		Kind:    kind,
 		Message: message,
 		Hint:    hint,
-		Details: waitDetails(resourceType, resourceID, operation, status, attempts, startedAt),
+		Details: details,
 	})
 }
 
@@ -453,7 +504,7 @@ func waitContextError(
 	parent context.Context,
 	resourceType string,
 	resourceID string,
-	operation Operation,
+	policy Policy,
 	lastStatus string,
 	attempts int,
 	startedAt time.Time,
@@ -461,13 +512,17 @@ func waitContextError(
 	if err := parent.Err(); err != nil {
 		return err
 	}
+	hint := fmt.Sprintf("Run 'agr %s get %s --wait' to continue waiting.", resourceType, resourceID)
+	if policy.TimeoutHint != nil {
+		hint = policy.TimeoutHint(resourceID)
+	}
 	return output.NewCLIError(&output.Failure{
 		Code:      "WAIT_TIMEOUT",
 		Kind:      output.KindTimeout,
-		Message:   fmt.Sprintf("timed out waiting for %s %s %s", resourceType, resourceID, operation),
-		Hint:      fmt.Sprintf("Run 'agr %s get %s --wait' to continue waiting.", resourceType, resourceID),
+		Message:   fmt.Sprintf("timed out waiting for %s %s %s", resourceType, resourceID, policy.Operation),
+		Hint:      hint,
 		Retryable: true,
-		Details:   waitDetails(resourceType, resourceID, operation, lastStatus, attempts, startedAt),
+		Details:   waitDetails(resourceType, resourceID, policy.Operation, lastStatus, attempts, startedAt),
 	})
 }
 

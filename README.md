@@ -2,7 +2,7 @@
 
 [中文文档](README-zh.md)
 
-AGR CLI manages Tencent Cloud Agent Runtime instances, tools, API keys, and data-plane operations from the `agr` command.
+AGR CLI manages Tencent Cloud Agent Runtime deployments, instances, tools, API keys, and data-plane operations from the `agr` command.
 
 ## Installation
 
@@ -250,6 +250,93 @@ debug_instance_id=$(agr instance debug --tool-id "$tool_id" \
   -o json --jq '.Data.InstanceId')
 ```
 
+## Deployments
+
+A Deployment gives a Sandbox Tool a stable remote endpoint and manages the
+Sandbox Instances behind it. Scaling settings control active capacity;
+lifecycle settings control what happens when those instances become idle.
+
+The examples below assume that `tool_id` contains the ID of an existing
+Sandbox Tool.
+
+### Create and inspect a Deployment
+
+A Deployment name must follow DNS-1123 naming rules, must be unique, and cannot
+be changed after creation. Complex configuration flags accept inline JSON,
+`@file`, or `-` to read JSON from stdin.
+
+```bash
+deployment_id=$(agr deployment create \
+  --deployment-name workspace-service \
+  --tool-id "$tool_id" \
+  --scaling-configuration '{"MinInstanceCount":0,"MaxInstanceCount":10,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":300,"IdleAction":"PAUSE"}' \
+  -o json --jq '.Data.Deployment.DeploymentId')
+
+agr deployment get "$deployment_id"
+agr deployment list
+```
+
+By default, `create`, `get`, and `update` print a human-readable details view.
+`list` prints compact scaling, lifecycle, affinity, and age summaries. Use
+`-o json` when a script needs the complete API response.
+
+### Update configuration
+
+Scaling and lifecycle updates replace the existing configuration object; they
+are not partial patches. Include every member of an object when updating it.
+
+```bash
+agr deployment update "$deployment_id" \
+  --scaling-configuration '{"MinInstanceCount":1,"MaxInstanceCount":20,"MaxInstanceRequestConcurrency":100}' \
+  --lifecycle-configuration '{"IdleTimeoutSeconds":600,"IdleAction":"STOP"}'
+```
+
+When creating a Deployment, omitted configuration members are filled by the
+service. Run `agr deployment create --help` or
+`agr deployment update --help` for the accepted fields.
+
+### Delete a Deployment
+
+Delete returns after the service accepts the request. Add `--wait` to poll with
+the same wait behavior as Tool and Instance commands. A waited delete succeeds
+when the remote Deployment is gone and reports `StatusReason` if asynchronous
+deletion reaches `DELETE_FAILED`.
+
+```bash
+agr deployment delete "$deployment_id"
+agr deployment delete "$deployment_id" --wait
+```
+
+### Proxy a Deployment port locally
+
+Use `deployment proxy` only for local debugging. A single port uses the same
+local and remote port; `local:remote` maps different ports.
+
+```bash
+# http://127.0.0.1:8080 forwards to remote port 8080
+agr deployment proxy "$deployment_id" 8080
+
+# http://127.0.0.1:3000 forwards to remote port 8080
+agr deployment proxy "$deployment_id" 3000:8080
+```
+
+The proxy supports HTTP, SSE, and WebSocket traffic, but not raw TCP. It binds
+to `127.0.0.1` by default. Using `--address` with a non-loopback address exposes
+the debugging proxy to the network and prints a warning.
+
+When Deployment affinity is enabled, the proxy captures the affinity ID from
+the upstream response, prints it, and automatically reuses it for later HTTP,
+SSE, and WebSocket requests during the lifetime of the proxy process. To resume
+a known affinity session after restarting the proxy, initialize it explicitly:
+
+```bash
+agr deployment proxy "$deployment_id" 3000:8080 --affinity-id "$affinity_id"
+```
+
+`--affinity-id` is rejected when the Deployment does not enable affinity. The
+proxy keeps affinity IDs only in memory and never persists them to disk.
+
 ## Cloud endpoint vs data-plane domain
 
 | Flag                         | Default                  | Controls                         |
@@ -300,6 +387,13 @@ agr instance login <id>          PTY terminal session
 agr instance browser vnc <id>    Show VNC URL
 agr instance proxy <id> PORT     Forward instance port to localhost
 agr instance mobile ...          Mobile ADB operations
+
+agr deployment create            Create a Deployment
+agr deployment list              List Deployments
+agr deployment get <id>          Describe a Deployment
+agr deployment update <id>       Update mutable Deployment configuration
+agr deployment delete <id>       Delete a Deployment
+agr deployment proxy <id> PORT   L7 proxy for local debugging
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete

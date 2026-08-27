@@ -3,6 +3,7 @@ package resourcewait
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -323,6 +324,68 @@ func TestWaitForToolDeleteTreatsOnlyNotFoundAsSuccess(t *testing.T) {
 			t.Fatalf("wait details = %#v", details)
 		}
 	})
+}
+
+func TestWaitForDeploymentDeleteTreatsNotFoundAsSuccess(t *testing.T) {
+	status := "DELETING"
+	calls := 0
+	options := testOptions()
+	options.IsNotFound = isNotFoundError
+	got, err := WaitForDeploymentDeletion(
+		context.Background(),
+		"dpl-1",
+		func(context.Context, string) (*ags.Deployment, error) {
+			calls++
+			if calls == 1 {
+				return &ags.Deployment{Status: &status}, nil
+			}
+			return nil, output.NewNotFoundError("DEPLOYMENT_NOT_FOUND", "missing", "hint")
+		},
+		options,
+	)
+	if err != nil || got != nil || calls != 2 {
+		t.Fatalf("deployment = %#v, calls = %d, error = %v", got, calls, err)
+	}
+}
+
+func TestWaitForDeploymentDeleteIncludesFailureReason(t *testing.T) {
+	status := "DELETE_FAILED"
+	reason := "ProviderError: sandbox cleanup failed"
+	_, err := WaitForDeploymentDeletion(
+		context.Background(),
+		"dpl-1",
+		func(context.Context, string) (*ags.Deployment, error) {
+			return &ags.Deployment{Status: &status, StatusReason: &reason}, nil
+		},
+		testOptions(),
+	)
+	assertWaitError(t, err, "WAIT_FAILED", status, OperationDelete)
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) {
+		t.Fatalf("error = %T %v, want *output.CLIError", err, err)
+	}
+	if !strings.Contains(cliErr.Failure.Message, reason) || cliErr.Failure.Details["StatusReason"] != reason {
+		t.Fatalf("failure = %#v, want status reason", cliErr.Failure)
+	}
+}
+
+func TestWaitForDeploymentDeleteTimeoutSuggestsAValidCommand(t *testing.T) {
+	status := "DELETING"
+	_, err := WaitForDeploymentDeletion(
+		context.Background(),
+		"dpl-1",
+		func(context.Context, string) (*ags.Deployment, error) {
+			return &ags.Deployment{Status: &status}, nil
+		},
+		Options{Interval: time.Millisecond, Timeout: 5 * time.Millisecond},
+	)
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) {
+		t.Fatalf("error = %T %v, want *output.CLIError", err, err)
+	}
+	if got, want := cliErr.Failure.Hint, "Inspect the resource with 'agr deployment get dpl-1'."; got != want {
+		t.Fatalf("hint = %q, want %q", got, want)
+	}
 }
 
 func TestWaitStopsWhenParentContextIsCanceled(t *testing.T) {

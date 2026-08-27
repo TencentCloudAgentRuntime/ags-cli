@@ -33,7 +33,7 @@ func LoadConfig() LiveConfig {
 	return LiveConfig{
 		SecretID:          firstNonEmpty(os.Getenv("TENCENTCLOUD_SECRET_ID"), fileCfg.SecretID),
 		SecretKey:         firstNonEmpty(os.Getenv("TENCENTCLOUD_SECRET_KEY"), fileCfg.SecretKey),
-		Region:            firstNonEmpty(os.Getenv("AGR_REGION"), fileCfg.Region, "ap-guangzhou"),
+		Region:            resolveRegion(fileCfg, "ap-guangzhou"),
 		Domain:            firstNonEmpty(os.Getenv("AGR_DOMAIN"), fileCfg.Domain),
 		CloudEndpoint:     firstNonEmpty(os.Getenv("AGR_CLOUD_ENDPOINT"), fileCfg.CloudEndpoint),
 		ToolID:            os.Getenv("AGR_TEST_TOOL_ID"),
@@ -43,6 +43,16 @@ func LoadConfig() LiveConfig {
 		CommandTimeout:    getenvDuration("AGR_TEST_COMMAND_TIMEOUT", 2*time.Minute),
 		EventuallyTimeout: getenvDuration("AGR_TEST_EVENTUALLY_TIMEOUT", 8*time.Minute),
 	}
+}
+
+// ResolveRegion applies the live-test region precedence with the supplied
+// fallback when neither AGR_REGION nor the user's AGR config selects a region.
+func ResolveRegion(fallback string) string {
+	return resolveRegion(loadUserAGRConfig(), fallback)
+}
+
+func resolveRegion(fileCfg userAGRConfig, fallback string) string {
+	return firstNonEmpty(os.Getenv("AGR_REGION"), fileCfg.Region, fallback)
 }
 
 // Missing returns required live-test settings that were not provided.

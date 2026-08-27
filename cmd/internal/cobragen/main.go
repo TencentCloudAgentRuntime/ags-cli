@@ -37,6 +37,8 @@ type commandModel struct {
 	Package  string
 	Dir      string
 	Fields   []fieldModel
+
+	PreserveFlagOrder bool
 }
 
 type fieldModel struct {
@@ -59,6 +61,7 @@ type inputModel struct {
 	Shorthand string
 	Usage     string
 	Format    string
+	Fields    []string
 	Examples  []string
 	Values    []string
 	Aliases   []string
@@ -232,6 +235,7 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 			Package:  packageForCommand(parts),
 			Dir:      dirForCommand(parts),
 		}
+		cmd.PreserveFlagOrder = commandPreserveFlagOrderFromHelp(help, a.Command)
 		if obj != nil {
 			for _, m := range obj.Members {
 				if m.Disabled {
@@ -269,6 +273,7 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 						Shorthand: in.Shorthand,
 						Usage:     ih.Usage,
 						Format:    ih.Format,
+						Fields:    append([]string(nil), ih.Fields...),
 						Examples:  append([]string(nil), ih.Examples...),
 						Values:    append([]string(nil), ih.Values...),
 						Aliases:   append([]string(nil), in.Aliases...),
@@ -300,6 +305,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	fmt.Fprintf(&b, "\t\t\tShort: %s,\n", quote(cmd.Short))
 	if cmd.Long != "" {
 		fmt.Fprintf(&b, "\t\t\tLong: %s,\n", quote(cmd.Long))
+	}
+	if cmd.PreserveFlagOrder {
+		b.WriteString("\t\t\tPreserveFlagOrder: true,\n")
 	}
 	if len(cmd.Examples) > 0 {
 		fmt.Fprintf(&b, "\t\t\tExamples: []string{%s},\n", quotedList(cmd.Examples))
@@ -386,6 +394,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 					if input.Format != "" && !isPositionalInput(field, input) {
 						fmt.Fprintf(&b, ", Format: %s", quote(input.Format))
 					}
+					if len(input.Fields) > 0 && !isPositionalInput(field, input) {
+						fmt.Fprintf(&b, ", Fields: []string{%s}", quotedList(input.Fields))
+					}
 					if len(input.Examples) > 0 && !isPositionalInput(field, input) {
 						fmt.Fprintf(&b, ", Examples: []string{%s}", quotedList(input.Examples))
 					}
@@ -444,6 +455,8 @@ func positionalDescription(name string) string {
 		return "API key ID."
 	case "image-digest":
 		return "Image digest."
+	case "deployment-id":
+		return "Deployment ID."
 	default:
 		return strings.TrimSpace(exported(name) + ".")
 	}
@@ -505,14 +518,31 @@ func outputDescription(cmd commandModel) string {
 		return "Sandbox tool list response."
 	case "tool.update":
 		return "Sandbox tool update response."
+	case "deployment.create":
+		return "Deployment create response."
+	case "deployment.delete":
+		return "Deployment delete response."
+	case "deployment.get":
+		return "Deployment details response."
+	case "deployment.list":
+		return "Deployment list response."
+	case "deployment.update":
+		return "Deployment update response."
 	default:
 		return cmd.Response + " response."
 	}
 }
 
 func outputEffects(cmd commandModel) []string {
-	if cmd.Command == "tool.create" {
+	switch cmd.Command {
+	case "tool.create":
 		return []string{"create:tool"}
+	case "deployment.create":
+		return []string{"create:deployment"}
+	case "deployment.delete":
+		return []string{"delete:deployment"}
+	case "deployment.update":
+		return []string{"update:deployment"}
 	}
 	return nil
 }
@@ -622,6 +652,7 @@ func mappedRegistryModule(cmd commandModel) (registryModule, error) {
 func staticWorkflowModules() []registryModule {
 	ids := []string{
 		"api.call",
+		"deployment.proxy",
 		"instance.browser.vnc",
 		"instance.code.run",
 		"instance.debug",
