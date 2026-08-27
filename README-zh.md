@@ -274,13 +274,13 @@ agr deployment update "$deployment_id" \
 
 ### 删除 Deployment
 
-删除命令默认等待远端 Deployment 完全消失；如果异步删除失败，命令会返回服务端
-提供的失败原因。默认等待上限为 10 分钟。使用 `--wait=false` 可在删除请求被
-接受后立即返回；`--timeout 0` 表示不设等待期限。
+删除命令默认在服务端接受请求后返回。添加 `--wait` 后，会复用 Tool 和 Instance
+命令的等待机制持续轮询；远端 Deployment 消失时视为成功，异步删除进入
+`DELETE_FAILED` 时会报告服务端返回的 `StatusReason`。
 
 ```bash
 agr deployment delete "$deployment_id"
-agr deployment delete "$deployment_id" --wait=false
+agr deployment delete "$deployment_id" --wait
 ```
 
 ### 将 Deployment 端口代理到本机
@@ -356,7 +356,7 @@ agr deployment create            创建 Deployment
 agr deployment list              列出 Deployment
 agr deployment get <id>          查看 Deployment 详情
 agr deployment update <id>       更新 Deployment 可变配置
-agr deployment delete <id>       删除并等待 Deployment
+agr deployment delete <id>       删除 Deployment
 agr deployment proxy <id> PORT   本地调试七层代理
 
 agr tool list/create/fork/get/update/delete
