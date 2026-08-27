@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.6] - 2026-08-27
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add generated `agr deployment create`, `get`, `list`, `update`, and `delete`
+  commands backed by the official AGS API metadata, with human-readable text
+  output, complete JSON responses for scripts, list filters, and opt-in waiting
+  for deletion.
+- Add `agr deployment proxy` for local HTTP, SSE, and WebSocket debugging, with
+  local-to-remote port mapping, lazy token refresh, and in-memory affinity
+  session discovery, reuse, and rotation.
+
+### Bug Fixes
+- This release has no Bug Fixes.
+
+### Docs
+- Add practical Deployment creation, update, filtering, deletion, and local
+  proxy guidance to README and README-zh.
+
 ## [0.6.5] - 2026-08-21
 
 ### Breaking Changes
