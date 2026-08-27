@@ -16,15 +16,34 @@ var _ = Describe("Deployment CLI lifecycle", func() {
 
 	BeforeEach(func() {
 		cli = newCLI()
+		cli.Config.Region = testutil.ResolveRegion("ap-shanghai")
 		cli.InitConfig()
 		tracker = NewResourceTracker(cli)
 	})
 
 	It("creates, gets, filters, updates, and deletes a Deployment", func() {
-		toolID := testutil.State().Config.DeploymentToolID
-		if toolID == "" {
-			Skip("Deployment lifecycle requires AGR_TEST_DEPLOYMENT_TOOL_ID for an ACTIVE persistent Sandbox Tool")
-		}
+		toolName := uniqueName("ags-cli-e2e-deployment-tool")
+		createTool := cli.Run(context.Background(), "--output", "json", "tool", "create",
+			"--wait",
+			"--tool-name", toolName,
+			"--tool-type", "mobile",
+			"--description", "AGR CLI Deployment lifecycle E2E tool",
+			"--default-timeout", "10m",
+			"--network-configuration", `{"NetworkMode":"PUBLIC"}`,
+			"--persistent",
+			"--tags", `[{"Key":"ags-cli-e2e","Value":"deployment-tool"}]`,
+		)
+		createToolEnv := createTool.Envelope()
+		toolID := createdResourceID(createToolEnv, "ToolId")
+		tracker.AddTool(toolID)
+		createTool.ExpectSuccess()
+		Expect(createToolEnv.Command).To(Equal("tool.create"))
+		Expect(createToolEnv.Status).To(Equal("succeeded"))
+		Expect(toolID).NotTo(BeEmpty())
+		Expect(stringField(createToolEnv.Data, "ToolName")).To(Equal(toolName))
+		Expect(stringField(createToolEnv.Data, "Status")).To(Equal("ACTIVE"))
+		Expect(createToolEnv.Data["Persistent"]).To(BeTrue())
+
 		deploymentName := uniqueName("ags-cli-e2e-deployment")
 
 		create := cli.Run(context.Background(), "--output", "json", "deployment", "create",
@@ -80,6 +99,10 @@ var _ = Describe("Deployment CLI lifecycle", func() {
 		Expect(missing.ExitCode).NotTo(Equal(0), missing.Diagnostics())
 		Expect(missing.Envelope().Failure).NotTo(BeNil())
 		Expect(missing.Envelope().Failure.Kind).To(Equal("not_found"))
+
+		deleteTool := cli.Run(context.Background(), "--output", "json", "tool", "delete", toolID, "--wait", "--yes")
+		deleteTool.ExpectSuccess()
+		tracker.ForgetTool(toolID)
 	})
 })
 

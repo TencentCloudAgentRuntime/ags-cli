@@ -102,7 +102,12 @@ func (r *ResourceTracker) Cleanup() {
 		r.cli.Run(ctx, "--output", "json", "instance", "delete", r.instances[i], "--ignore-not-found")
 	}
 	for i := len(r.tools) - 1; i >= 0; i-- {
-		r.cli.Run(ctx, "--output", "json", "tool", "delete", r.tools[i])
+		toolCtx, toolCancel := context.WithTimeout(context.Background(), lifecycleCommandTimeout)
+		result := r.cli.Run(toolCtx, "--output", "json", "tool", "delete", r.tools[i], "--wait", "--yes")
+		toolCancel()
+		if result.ExitCode != 0 {
+			GinkgoWriter.Printf("Warning: failed to delete test Tool %s: %s\n", r.tools[i], result.Diagnostics())
+		}
 	}
 }
 
