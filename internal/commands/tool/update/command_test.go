@@ -3,6 +3,9 @@ package update
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -101,6 +104,67 @@ func TestModuleBuildsUpdateRequest(t *testing.T) {
 	tag, ok := tags[0].(map[string]any)
 	if !ok || tag["Key"] != "env" || tag["Value"] != "unit" {
 		t.Fatalf("Tags = %#v", cp.request["Tags"])
+	}
+}
+
+func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
+	const payload = `{"WAAConfiguration":{"ImageId":"img-unit"}}`
+	filePath := filepath.Join(t.TempDir(), "computer-configuration.json")
+	if err := os.WriteFile(filePath, []byte(payload), 0o600); err != nil {
+		t.Fatalf("write ComputerConfiguration fixture: %v", err)
+	}
+
+	tests := []struct {
+		name  string
+		flag  command.FlagValue
+		stdin string
+	}{
+		{
+			name: "direct JSON",
+			flag: command.FlagValue{Name: "computer-configuration", Type: command.FlagString, String: payload, Changed: true},
+		},
+		{
+			name: "file",
+			flag: command.FlagValue{Name: "computer-configuration", Type: command.FlagString, String: "@" + filePath, Changed: true},
+		},
+		{
+			name:  "stdin",
+			flag:  command.FlagValue{Name: "computer-configuration", Type: command.FlagString, String: "-", Changed: true},
+			stdin: payload,
+		},
+		{
+			name: "request",
+			flag: command.FlagValue{Name: "request", Type: command.FlagString, String: `{"ComputerConfiguration":` + payload + `}`, Changed: true},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cp := &fakeControlPlane{}
+			runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+			if err != nil {
+				t.Fatalf("Build: %v", err)
+			}
+			req := command.Request{
+				Args:      []string{"sdt-unit"},
+				ArgValues: map[string]string{"tool-id": "sdt-unit"},
+				Flags:     map[string]command.FlagValue{tc.flag.Name: tc.flag},
+			}
+			if tc.stdin != "" {
+				req.Stdin = strings.NewReader(tc.stdin)
+			}
+			if _, err := runtime.Handler.Run(context.Background(), req); err != nil {
+				t.Fatalf("Run: %v", err)
+			}
+			configuration, ok := cp.request["ComputerConfiguration"].(map[string]any)
+			if !ok {
+				t.Fatalf("ComputerConfiguration = %#v", cp.request["ComputerConfiguration"])
+			}
+			waa, ok := configuration["WAAConfiguration"].(map[string]any)
+			if !ok || waa["ImageId"] != "img-unit" {
+				t.Fatalf("WAAConfiguration = %#v", configuration["WAAConfiguration"])
+			}
+		})
 	}
 }
 

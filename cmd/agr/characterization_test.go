@@ -77,19 +77,20 @@ func TestCharacterization_PublicCommandSurface(t *testing.T) {
 		{command: "instance.mobile.adb", use: "adb <instance-id> -- <adb-args...>"},
 		{command: "tool", aliases: []string{"t"}, use: "tool"},
 		{command: "tool.create", use: "create", flags: map[string]flagExpectation{
-			"tool-name":             {typ: "string", shorthand: "n"},
-			"tool-type":             {typ: "string", shorthand: "t"},
-			"description":           {typ: "string", shorthand: "d"},
-			"default-timeout":       {typ: "string"},
-			"network-configuration": {typ: "string"},
-			"tags":                  {typ: "string"},
-			"role-arn":              {typ: "string"},
-			"storage-mounts":        {typ: "string"},
-			"custom-configuration":  {typ: "string"},
-			"log-configuration":     {typ: "string"},
-			"persistent":            {typ: "bool", def: "false"},
-			"client-token":          {typ: "string"},
-			"request":               {typ: "string"},
+			"tool-name":              {typ: "string", shorthand: "n"},
+			"tool-type":              {typ: "string", shorthand: "t"},
+			"description":            {typ: "string", shorthand: "d"},
+			"default-timeout":        {typ: "string"},
+			"network-configuration":  {typ: "string"},
+			"tags":                   {typ: "string"},
+			"role-arn":               {typ: "string"},
+			"storage-mounts":         {typ: "string"},
+			"custom-configuration":   {typ: "string"},
+			"computer-configuration": {typ: "string"},
+			"log-configuration":      {typ: "string"},
+			"persistent":             {typ: "bool", def: "false"},
+			"client-token":           {typ: "string"},
+			"request":                {typ: "string"},
 		}},
 		{command: "tool.list", aliases: []string{"ls"}, use: "list", flags: map[string]flagExpectation{
 			"tool-ids": {typ: "stringArray"},
@@ -99,11 +100,12 @@ func TestCharacterization_PublicCommandSurface(t *testing.T) {
 			"request":  {typ: "string"},
 		}},
 		{command: "tool.update", use: "update <tool-id>", flags: map[string]flagExpectation{
-			"description":           {typ: "string", shorthand: "d"},
-			"network-configuration": {typ: "string"},
-			"tags":                  {typ: "string"},
-			"custom-configuration":  {typ: "string"},
-			"request":               {typ: "string"},
+			"description":            {typ: "string", shorthand: "d"},
+			"network-configuration":  {typ: "string"},
+			"tags":                   {typ: "string"},
+			"custom-configuration":   {typ: "string"},
+			"computer-configuration": {typ: "string"},
+			"request":                {typ: "string"},
 		}},
 		{command: "tool.delete", aliases: []string{"rm", "del"}, use: "delete <tool-id> [tool-id...]", flags: map[string]flagExpectation{
 			"request": {typ: "string"},
@@ -194,6 +196,8 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"NetworkMode",
 				"--tags string",
 				"--storage-mounts string",
+				"--computer-configuration string",
+				"WAAConfiguration",
 				"agr tool create -n my-tool -t custom --network-configuration",
 				"--persistent",
 			},
@@ -217,6 +221,8 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"Update a sandbox tool",
 				"--network-configuration string",
 				"--tags string",
+				"--computer-configuration string",
+				"WAAConfiguration",
 			},
 		},
 		{
@@ -288,17 +294,19 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 		{
 			command: "tool.create",
 			want: map[string]schemaFlagExpectation{
-				"default-timeout":       {typ: "string"},
-				"network-configuration": {typ: "json"},
-				"tags":                  {typ: "json"},
-				"storage-mounts":        {typ: "json"},
+				"default-timeout":        {typ: "string"},
+				"network-configuration":  {typ: "json"},
+				"tags":                   {typ: "json"},
+				"storage-mounts":         {typ: "json"},
+				"computer-configuration": {typ: "json"},
 			},
 		},
 		{
 			command: "tool.update",
 			want: map[string]schemaFlagExpectation{
-				"network-configuration": {typ: "json"},
-				"tags":                  {typ: "json"},
+				"network-configuration":  {typ: "json"},
+				"tags":                   {typ: "json"},
+				"computer-configuration": {typ: "json"},
 			},
 		},
 		{
@@ -448,6 +456,10 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			}
 			if tc.command == "tool.create" {
 				requireFailureCode(t, schema, "INVALID_JSON_FLAG")
+				flag := schema.Flags["computer-configuration"]
+				if flag.Format == "" || len(flag.Examples) == 0 {
+					t.Fatalf("schema %s computer-configuration metadata incomplete: %#v", tc.command, flag)
+				}
 			}
 			if tc.command == "instance.exec" {
 				requireIncompatibleWith(t, schema, "stream", "output=json")

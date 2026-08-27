@@ -42,7 +42,7 @@ func Module() command.Module {
 						return nil, err
 					}
 					if !requestFlag(req) && len(apiReq) <= 1 {
-						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --tags, --custom-configuration, or --request must be specified", "Provide at least one field to update.")
+						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --tags, --custom-configuration, --computer-configuration, or --request must be specified", "Provide at least one field to update.")
 					}
 					result, err := executor.Execute(ctx, apiReq)
 					if err != nil {

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -45,19 +47,86 @@ func (f *fakeMixedControlPlane) GetTool(_ context.Context, _ string) (*ags.Sandb
 // for `agr tool create`. Unset optional flags have Changed=false.
 func allToolCreateFlags() map[string]command.FlagValue {
 	return map[string]command.FlagValue{
-		"tool-name":             {Name: "tool-name", Type: command.FlagString},
-		"tool-type":             {Name: "tool-type", Type: command.FlagString},
-		"network-configuration": {Name: "network-configuration", Type: command.FlagString},
-		"description":           {Name: "description", Type: command.FlagString},
-		"default-timeout":       {Name: "default-timeout", Type: command.FlagString},
-		"tags":                  {Name: "tags", Type: command.FlagString},
-		"client-token":          {Name: "client-token", Type: command.FlagString},
-		"role-arn":              {Name: "role-arn", Type: command.FlagString},
-		"storage-mounts":        {Name: "storage-mounts", Type: command.FlagString},
-		"custom-configuration":  {Name: "custom-configuration", Type: command.FlagString},
-		"log-configuration":     {Name: "log-configuration", Type: command.FlagString},
-		"persistent":            {Name: "persistent", Type: command.FlagBool},
-		"request":               {Name: "request", Type: command.FlagString},
+		"tool-name":              {Name: "tool-name", Type: command.FlagString},
+		"tool-type":              {Name: "tool-type", Type: command.FlagString},
+		"network-configuration":  {Name: "network-configuration", Type: command.FlagString},
+		"description":            {Name: "description", Type: command.FlagString},
+		"default-timeout":        {Name: "default-timeout", Type: command.FlagString},
+		"tags":                   {Name: "tags", Type: command.FlagString},
+		"client-token":           {Name: "client-token", Type: command.FlagString},
+		"role-arn":               {Name: "role-arn", Type: command.FlagString},
+		"storage-mounts":         {Name: "storage-mounts", Type: command.FlagString},
+		"custom-configuration":   {Name: "custom-configuration", Type: command.FlagString},
+		"computer-configuration": {Name: "computer-configuration", Type: command.FlagString},
+		"log-configuration":      {Name: "log-configuration", Type: command.FlagString},
+		"persistent":             {Name: "persistent", Type: command.FlagBool},
+		"request":                {Name: "request", Type: command.FlagString},
+	}
+}
+
+func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
+	const payload = `{"WAAConfiguration":{"ImageId":"img-unit"}}`
+	requestPayload := `{"ToolName":"my-tool","ToolType":"waa","NetworkConfiguration":{"NetworkMode":"PUBLIC"},"ComputerConfiguration":` + payload + `}`
+	filePath := filepath.Join(t.TempDir(), "computer-configuration.json")
+	if err := os.WriteFile(filePath, []byte(payload), 0o600); err != nil {
+		t.Fatalf("write ComputerConfiguration fixture: %v", err)
+	}
+
+	tests := []struct {
+		name  string
+		flags func() map[string]command.FlagValue
+		stdin string
+	}{
+		{
+			name: "direct JSON",
+			flags: func() map[string]command.FlagValue {
+				return withChanged(minRequiredFlags(), "computer-configuration", payload)
+			},
+		},
+		{
+			name: "file",
+			flags: func() map[string]command.FlagValue {
+				return withChanged(minRequiredFlags(), "computer-configuration", "@"+filePath)
+			},
+		},
+		{
+			name: "stdin",
+			flags: func() map[string]command.FlagValue {
+				return withChanged(minRequiredFlags(), "computer-configuration", "-")
+			},
+			stdin: payload,
+		},
+		{
+			name: "request",
+			flags: func() map[string]command.FlagValue {
+				return withChanged(allToolCreateFlags(), "request", requestPayload)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cp := &fakeMixedControlPlane{}
+			runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+			if err != nil {
+				t.Fatalf("Build: %v", err)
+			}
+			req := command.Request{Flags: tc.flags()}
+			if tc.stdin != "" {
+				req.Stdin = strings.NewReader(tc.stdin)
+			}
+			if _, err := runtime.Handler.Run(context.Background(), req); err != nil {
+				t.Fatalf("Run: %v", err)
+			}
+			configuration, ok := cp.request["ComputerConfiguration"].(map[string]any)
+			if !ok {
+				t.Fatalf("ComputerConfiguration = %#v", cp.request["ComputerConfiguration"])
+			}
+			waa, ok := configuration["WAAConfiguration"].(map[string]any)
+			if !ok || waa["ImageId"] != "img-unit" {
+				t.Fatalf("WAAConfiguration = %#v", configuration["WAAConfiguration"])
+			}
+		})
 	}
 }
 
