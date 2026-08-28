@@ -129,9 +129,48 @@ ags-cli/
 ├── cmd/agr/       # CLI entrypoint
 ├── cmd/internal/  # Maintainer utilities
 ├── internal/      # Internal packages
-├── api/           # Generated API metadata
+├── api/           # Upstream API metadata and temporary patches
 └── tests/         # Live CLI and lifecycle coverage
 ```
+
+### Temporary API patches
+
+`api/ags/v20250920/api.json` is the canonical tccli upstream file and must not
+be edited locally. When an approved public AGS contract is temporarily missing
+from upstream, record only the delta in `api.patch.json` using RFC 6902 JSON
+Patch. Keep the patch as `[]` when no delta is needed.
+
+Backend code alone is not sufficient evidence. Confirm the same public service,
+API version, endpoint, and resource namespace; verify the authoritative shape
+and deployed behavior or obtain API-owner approval; and confirm that early
+public disclosure is allowed.
+
+- Use `add` for new actions, objects, or members. Append members with `/-`.
+- Guard every `replace` or `remove` with an immediately preceding `test` on the
+  same path.
+- Update `mapping.yaml`, generated command output, help, and tests when the
+  effective contract changes.
+
+Before submitting a patch change, run:
+
+```bash
+go run ./cmd/internal/apipatch check
+go run ./cmd/internal/apipatch render > /tmp/ags-effective-api.json
+go run ./cmd/internal/cobragen check
+```
+
+After downloading a refreshed upstream file without replacing the checked-in
+copy, classify the patch lifecycle with:
+
+```bash
+go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
+```
+
+`OBSOLETE` means the matching operations should be removed, `PARTIAL` means
+only some operations remain necessary, and `CONFLICT` requires manual review.
+When upstream absorbs an operation, update the canonical `api.json` and remove
+that operation in the same change, then rerun the checks above and review any
+generated CLI diff.
 
 ## Coding Guidelines
 

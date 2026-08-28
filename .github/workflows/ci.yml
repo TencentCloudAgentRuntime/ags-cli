@@ -105,11 +105,17 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Validate effective API metadata
+        run: go run ./cmd/internal/apipatch check
+
       - name: Mapping invariants
         run: go test ./internal/apimeta/... -count=1
 
       - name: Cobra flag contract (generated flags exist on commands)
         run: go test ./cmd/agr -run "TestContract_GeneratedFlagsArePresentOnCobraCommands|TestContract_RequestFlagOnEveryMappedRequestCommand" -count=1
+
+      - name: Command metadata contracts
+        run: go test ./internal/commands/... -count=1
 
       - name: Generator outputs are up to date
         run: go run ./cmd/internal/cobragen check

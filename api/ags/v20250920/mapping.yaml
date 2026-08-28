@@ -1,9 +1,9 @@
 # AGR CLI mapping.yaml
 #
-# Anti-corruption mapping between TencentCloud AGS API actions
-# (api/ags/v20250920/api.json) and AGR CLI resource commands.
+# Anti-corruption mapping between the effective TencentCloud AGS API actions
+# (api.json + api.patch.json) and AGR CLI resource commands.
 #
-# Status invariants (every action in api.json MUST appear here):
+# Status invariants (every action in the effective API MUST appear here):
 #   - mapped:               exposed as a stable resource command.
 #   - raw_only:             reachable only via `agr api call <Action>`.
 #                           A reason is required.
