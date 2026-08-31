@@ -219,6 +219,13 @@ func TestApplyAPIPatch_AllowsPrimitiveLists(t *testing.T) {
 	}
 }
 
+func TestApplyAPIPatch_AllowsDatetimeISOStringMember(t *testing.T) {
+	patch := `[{"op":"add","path":"/objects/ExistingRequest/members/-","value":{"name":"CreatedAt","type":"string","member":"datetime_iso","required":false}}]`
+	if _, err := apimeta.ApplyAPIPatch([]byte(effectiveTestBase), []byte(patch)); err != nil {
+		t.Fatalf("datetime_iso string member patch returned error: %v", err)
+	}
+}
+
 func TestApplyAPIPatch_RejectsInvalidMemberTypes(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -239,6 +246,11 @@ func TestApplyAPIPatch_RejectsInvalidMemberTypes(t *testing.T) {
 			name:  "unknown scalar member type",
 			value: `{"name":"Count","type":"int","member":"integer"}`,
 			want:  `unsupported scalar member type "integer"`,
+		},
+		{
+			name:  "datetime format on non-string type",
+			value: `{"name":"Count","type":"int","member":"datetime_iso"}`,
+			want:  `unsupported scalar member type "datetime_iso"`,
 		},
 	}
 	for _, tt := range tests {

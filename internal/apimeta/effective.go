@@ -465,7 +465,7 @@ func validateEffectiveJSON(data []byte) error {
 			if member.Member == "" {
 				return fmt.Errorf("effective API member %s.%s has empty member type", objectName, member.Name)
 			}
-			if IsScalar(memberType) && !IsScalar(strings.ToLower(member.Member)) {
+			if IsScalar(memberType) && !isSupportedScalarMemberType(memberType, strings.ToLower(member.Member)) {
 				return fmt.Errorf("effective API member %s.%s has unsupported scalar member type %q", objectName, member.Name, member.Member)
 			}
 			if referencesObject(member) && spec.Object(member.Member) == nil {
@@ -474,6 +474,13 @@ func validateEffectiveJSON(data []byte) error {
 		}
 	}
 	return nil
+}
+
+func isSupportedScalarMemberType(valueType, memberType string) bool {
+	if IsScalar(memberType) {
+		return true
+	}
+	return valueType == "string" && memberType == "datetime_iso"
 }
 
 func referencesObject(member Member) bool {
