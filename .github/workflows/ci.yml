@@ -3,11 +3,38 @@ name: CI
 on:
   push:
   pull_request:
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
 
 jobs:
+  pr-title:
+    name: Pull Request Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
+            exit 0
+          fi
+
+          pattern='^(feat|fix|docs|style|refactor|test|chore)(\([^()]*[^()[:space:]][^()]*\))?!?: [^[:space:]].*$'
+          if [[ "$PR_TITLE" =~ $pattern ]]; then
+            exit 0
+          fi
+
+          echo "::error title=Invalid pull request title::Expected '<type>(<scope>)!: <description>' (scope and ! are optional). Allowed types: feat, fix, docs, style, refactor, test, chore."
+          echo "Examples:"
+          echo "  feat(tool): support computer configuration"
+          echo "  fix: handle an empty response"
+          echo "  feat(api)!: remove the legacy request format"
+          echo "Actual title: $PR_TITLE"
+          exit 1
+
   workflow-lint:
     name: Workflow Lint
     runs-on: ubuntu-latest
@@ -200,6 +227,7 @@ jobs:
     name: CI Gate
     if: ${{ always() }}
     needs:
+      - pr-title
       - workflow-lint
       - fmt
       - test

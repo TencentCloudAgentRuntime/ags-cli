@@ -14,7 +14,7 @@
   - [提交 Pull Request](#提交-pull-request)
 - [开发环境设置](#开发环境设置)
 - [编码规范](#编码规范)
-- [提交信息规范](#提交信息规范)
+- [提交信息与 Pull Request 标题规范](#提交信息与-pull-request-标题规范)
 - [审核流程](#审核流程)
 
 ## 行为准则
@@ -186,17 +186,19 @@ go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
 - 保持注释与代码同步更新
 - 在适当的地方包含示例
 
-## 提交信息规范
+## 提交信息与 Pull Request 标题规范
 
-遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+提交信息须遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范，Pull Request 标题须使用相同的首行格式。仓库使用 squash merge，因此 Pull Request 标题会成为默认分支上的提交标题。
 
 ```
-<type>(<scope>): <description>
+<type>(<scope>)!: <description>
 
 [可选的正文]
 
 [可选的脚注]
 ```
+
+scope 和破坏性变更标记（`!`）均为可选项。
 
 ### 类型
 
@@ -220,7 +222,7 @@ docs(readme): 更新安装说明
 
 ## 审核流程
 
-1. **自动检查**：必需状态检查为 `CI Gate` 和 `gitleaks`。`CI Gate` 聚合工作流校验、格式、测试、代码检查、变更日志和生成结果校验、Overlay 冒烟测试及发布就绪校验。
+1. **自动检查**：必需状态检查为 `CI Gate` 和 `gitleaks`。`CI Gate` 聚合 Pull Request 标题与工作流校验、格式、测试、代码检查、变更日志和生成结果校验、Overlay 冒烟测试及发布就绪校验。
 2. **代码审核**：需要至少一位维护者批准
 3. **测试覆盖**：需要足够的测试覆盖率
 4. **文档更新**：如需要则更新文档
