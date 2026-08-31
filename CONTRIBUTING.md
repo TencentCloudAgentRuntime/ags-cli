@@ -14,7 +14,7 @@ Thank you for your interest in contributing to AGR CLI! This document provides g
   - [Submitting Pull Requests](#submitting-pull-requests)
 - [Development Setup](#development-setup)
 - [Coding Guidelines](#coding-guidelines)
-- [Commit Messages](#commit-messages)
+- [Commit Messages and Pull Request Titles](#commit-messages-and-pull-request-titles)
 - [Review Process](#review-process)
 
 ## Code of Conduct
@@ -193,17 +193,19 @@ generated CLI diff.
 - Keep comments up to date with code changes
 - Include examples where helpful
 
-## Commit Messages
+## Commit Messages and Pull Request Titles
 
-Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages. Pull request titles must use the same first-line format. Pull requests are squash merged, so the pull request title becomes the commit title on the default branch.
 
 ```
-<type>(<scope>): <description>
+<type>(<scope>)!: <description>
 
 [optional body]
 
 [optional footer(s)]
 ```
+
+The scope and breaking-change marker (`!`) are optional.
 
 ### Types
 
@@ -227,7 +229,7 @@ docs(readme): update installation instructions
 
 ## Review Process
 
-1. **Automated Checks**: The required status checks are `CI Gate` and `gitleaks`. `CI Gate` aggregates workflow validation, formatting, tests, linting, changelog and generated-output validation, overlay smoke tests, and release-readiness validation.
+1. **Automated Checks**: The required status checks are `CI Gate` and `gitleaks`. `CI Gate` aggregates pull request title and workflow validation, formatting, tests, linting, changelog and generated-output validation, overlay smoke tests, and release-readiness validation.
 2. **Code Review**: At least one maintainer approval required
 3. **Testing**: Adequate test coverage expected
 4. **Documentation**: Update docs if needed
