@@ -158,6 +158,7 @@ func canonicalToolData(t *ags.SandboxTool) map[string]any {
 		"RoleArn":               derefString(t.RoleArn),
 		"StorageMounts":         t.StorageMounts,
 		"CustomConfiguration":   t.CustomConfiguration,
+		"ComputerConfiguration": t.ComputerConfiguration,
 		"LogConfiguration":      t.LogConfiguration,
 	}
 }

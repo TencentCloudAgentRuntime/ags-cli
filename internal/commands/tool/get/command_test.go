@@ -172,6 +172,7 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 	bucket := "bucket"
 	bucketPath := "/src"
 	readOnly := true
+	waaImageID := "img-unit"
 	tool := &ags.SandboxTool{
 		ToolId:      &id,
 		ToolName:    &name,
@@ -192,6 +193,9 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 				BucketPath: &bucketPath,
 			}},
 		}},
+		ComputerConfiguration: &ags.ComputerConfiguration{
+			WAAConfiguration: &ags.WAAConfiguration{ImageId: &waaImageID},
+		},
 	}
 	var text bytes.Buffer
 	renderToolDetails(&text, tool)
@@ -204,6 +208,10 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 	data := canonicalToolData(tool)
 	if data["ToolId"] != id || data["Tags"].(map[string]string)["alpha"] != "1" {
 		t.Fatalf("data = %#v", data)
+	}
+	computer, ok := data["ComputerConfiguration"].(*ags.ComputerConfiguration)
+	if !ok || computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != waaImageID {
+		t.Fatalf("ComputerConfiguration = %#v", data["ComputerConfiguration"])
 	}
 }
 

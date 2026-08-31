@@ -36,6 +36,7 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 	network := "PUBLIC"
 	tagKey := "env"
 	tagValue := "unit"
+	waaImageID := "img-unit"
 	cp := &fakeMixedControlPlane{response: &ags.DescribeSandboxToolListResponseParams{
 		TotalCount: &total,
 		SandboxToolSet: []*ags.SandboxTool{{
@@ -48,6 +49,9 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 			Tags:        []*ags.Tag{{Key: &tagKey, Value: &tagValue}},
 			NetworkConfiguration: &ags.NetworkConfiguration{
 				NetworkMode: &network,
+			},
+			ComputerConfiguration: &ags.ComputerConfiguration{
+				WAAConfiguration: &ags.WAAConfiguration{ImageId: &waaImageID},
 			},
 		}},
 	}}
@@ -66,6 +70,10 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 	items := data["Items"].([]map[string]any)
 	if len(items) != 1 || items[0]["ToolId"] != id {
 		t.Fatalf("items = %#v", items)
+	}
+	computer, ok := items[0]["ComputerConfiguration"].(*ags.ComputerConfiguration)
+	if !ok || computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != waaImageID {
+		t.Fatalf("ComputerConfiguration = %#v", items[0]["ComputerConfiguration"])
 	}
 	var text bytes.Buffer
 	result.Text(&text)
