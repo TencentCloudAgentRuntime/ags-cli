@@ -144,6 +144,7 @@ func createLikeAPIDescriptor() apicli.APIDescriptor {
 			{Name: "RoleArn", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "role-arn", Flag: "role-arn", Usage: "Override role ARN for COS access", Type: command.FlagString}}},
 			{Name: "StorageMounts", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "storage-mounts", Flag: "storage-mounts", Usage: "Override StorageMounts as JSON array, @file, or - for stdin", Type: command.FlagString}}},
 			{Name: "CustomConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "custom-configuration", Flag: "custom-configuration", Usage: "Override CustomConfiguration JSON object, @file, or - for stdin", Type: command.FlagString}}},
+			{Name: "ComputerConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "computer-configuration", Flag: "computer-configuration", Usage: "Override ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}", Examples: []string{"agr tool fork sdt-xxxx -n my-copy --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"}, Type: command.FlagString}}},
 			{Name: "LogConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "log-configuration", Flag: "log-configuration", Usage: "Override LogConfiguration JSON object, @file, or - for stdin", Type: command.FlagString}}},
 			{Name: "Persistent", Parser: "common.default_bool", Inputs: []apicli.InputSpec{{Name: "persistent", Flag: "persistent", Usage: "Override whether the sandbox tool creates persistent sandboxes", Type: command.FlagBool}}},
 		},
@@ -193,6 +194,9 @@ func baseCreateRequestFromTool(tool *ags.SandboxTool) map[string]any {
 	}
 	if tool.CustomConfiguration != nil {
 		req["CustomConfiguration"] = createCustomConfiguration(tool.CustomConfiguration)
+	}
+	if tool.ComputerConfiguration != nil {
+		req["ComputerConfiguration"] = tool.ComputerConfiguration
 	}
 	if tool.LogConfiguration != nil {
 		req["LogConfiguration"] = tool.LogConfiguration

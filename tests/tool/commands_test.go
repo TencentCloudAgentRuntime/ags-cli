@@ -2,7 +2,10 @@ package tool_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -94,3 +97,100 @@ var _ = Describe("tool commands", Ordered, func() {
 		toolID = ""
 	})
 })
+
+var _ = Describe("WAA computer configuration", Ordered, func() {
+	var cli *testutil.CLI
+	var toolID string
+	var forkedToolID string
+	var imageID string
+	var updatedImageID string
+	var nameSuffix string
+
+	BeforeAll(func() {
+		imageID = strings.TrimSpace(os.Getenv("AGR_TEST_WAA_IMAGE_ID"))
+		updatedImageID = strings.TrimSpace(os.Getenv("AGR_TEST_WAA_UPDATED_IMAGE_ID"))
+		if imageID == "" || updatedImageID == "" {
+			Skip("AGR_TEST_WAA_IMAGE_ID and AGR_TEST_WAA_UPDATED_IMAGE_ID are required for WAA live coverage")
+		}
+		if imageID == updatedImageID {
+			Skip("AGR_TEST_WAA_IMAGE_ID and AGR_TEST_WAA_UPDATED_IMAGE_ID must differ")
+		}
+		cli = testutil.NewCLI()
+		cli.InitConfig()
+		nameSuffix = fmt.Sprintf("%d", time.Now().UnixNano())
+	})
+
+	AfterAll(func() {
+		if cli == nil {
+			return
+		}
+		if forkedToolID != "" && !testutil.State().Config.KeepResources {
+			_ = cli.Run(context.Background(), "--output", "json", "tool", "delete", forkedToolID)
+		}
+		if toolID != "" && !testutil.State().Config.KeepResources {
+			_ = cli.Run(context.Background(), "--output", "json", "tool", "delete", toolID)
+		}
+		cli.Cleanup()
+	})
+
+	It("creates and reads a WAA tool", func() {
+		result := cli.Run(context.Background(), "--output", "json", "tool", "create",
+			"--tool-name", "agr-live-waa-"+nameSuffix,
+			"--tool-type", "waa",
+			"--network-configuration", `{"NetworkMode":"PUBLIC"}`,
+			"--computer-configuration", computerConfigurationJSON(imageID),
+			"--wait",
+		)
+		result.ExpectSuccess()
+		toolID = testutil.StringField(result.Envelope().Data, "ToolId")
+		Expect(toolID).NotTo(BeEmpty())
+
+		getResult := cli.Run(context.Background(), "--output", "json", "tool", "get", toolID)
+		getResult.ExpectSuccess()
+		expectWAAImageID(getResult.Envelope().Data, imageID)
+	})
+
+	It("updates and reads the WAA image", func() {
+		result := cli.Run(context.Background(), "--output", "json", "tool", "update", toolID,
+			"--computer-configuration", computerConfigurationJSON(updatedImageID),
+			"--wait",
+		)
+		result.ExpectSuccess()
+		expectWAAImageID(result.Envelope().Data, updatedImageID)
+
+		getResult := cli.Run(context.Background(), "--output", "json", "tool", "get", toolID)
+		getResult.ExpectSuccess()
+		expectWAAImageID(getResult.Envelope().Data, updatedImageID)
+	})
+
+	It("forks the WAA configuration", func() {
+		result := cli.Run(context.Background(), "--output", "json", "tool", "fork", toolID,
+			"--tool-name", "agr-live-waa-fork-"+nameSuffix,
+			"--wait",
+		)
+		result.ExpectSuccess()
+		forkedToolID = testutil.StringField(result.Envelope().Data, "ToolId")
+		Expect(forkedToolID).NotTo(BeEmpty())
+		expectWAAImageID(result.Envelope().Data, updatedImageID)
+
+		getResult := cli.Run(context.Background(), "--output", "json", "tool", "get", forkedToolID)
+		getResult.ExpectSuccess()
+		expectWAAImageID(getResult.Envelope().Data, updatedImageID)
+	})
+})
+
+func computerConfigurationJSON(imageID string) string {
+	payload, err := json.Marshal(map[string]any{
+		"WAAConfiguration": map[string]string{"ImageId": imageID},
+	})
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	return string(payload)
+}
+
+func expectWAAImageID(data map[string]any, expected string) {
+	computer, ok := data["ComputerConfiguration"].(map[string]any)
+	ExpectWithOffset(1, ok).To(BeTrue(), "ComputerConfiguration should be an object: %#v", data["ComputerConfiguration"])
+	waa, ok := computer["WAAConfiguration"].(map[string]any)
+	ExpectWithOffset(1, ok).To(BeTrue(), "WAAConfiguration should be an object: %#v", computer["WAAConfiguration"])
+	ExpectWithOffset(1, testutil.StringField(waa, "ImageId")).To(Equal(expected))
+}
