@@ -68,6 +68,13 @@ func APIDescriptor() apicli.APIDescriptor {
 					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}", Examples: []string{"agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}],\"Resources\":{\"Storage\":\"10Gi\"}}'"}, Type: command.FlagString},
 				},
 			},
+			{
+				Name:   "ComputerConfiguration",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "computer-configuration", Flag: "computer-configuration", Usage: "ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}", Examples: []string{"agr tool update sdt-xxxx --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"}, Type: command.FlagString},
+				},
+			},
 		},
 	}
 }

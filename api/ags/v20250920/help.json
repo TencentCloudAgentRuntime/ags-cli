@@ -551,6 +551,18 @@
                         }
                     }
                 },
+                "ComputerConfiguration": {
+                    "description": "Desktop computer environment configuration.",
+                    "inputs": {
+                        "computer-configuration": {
+                            "usage": "ComputerConfiguration JSON object, @file, or - for stdin",
+                            "format": "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}",
+                            "examples": [
+                                "agr tool create -n my-tool -t waa --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"
+                            ]
+                        }
+                    }
+                },
                 "LogConfiguration": {
                     "description": "Log configuration.",
                     "inputs": {
@@ -678,6 +690,18 @@
                             "format": "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}",
                             "examples": [
                                 "agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}],\"Resources\":{\"Storage\":\"10Gi\"}}'"
+                            ]
+                        }
+                    }
+                },
+                "ComputerConfiguration": {
+                    "description": "Desktop computer environment configuration.",
+                    "inputs": {
+                        "computer-configuration": {
+                            "usage": "ComputerConfiguration JSON object, @file, or - for stdin",
+                            "format": "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}",
+                            "examples": [
+                                "agr tool update sdt-xxxx --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"
                             ]
                         }
                     }

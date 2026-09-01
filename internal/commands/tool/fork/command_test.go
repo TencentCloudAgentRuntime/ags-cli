@@ -116,7 +116,7 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if cp.request["ToolName"] != "copy" {
 		t.Fatalf("ToolName = %#v", cp.request["ToolName"])
 	}
-	for _, key := range []string{"ToolType", "NetworkConfiguration", "Description", "DefaultTimeout", "Tags", "RoleArn", "StorageMounts", "CustomConfiguration", "LogConfiguration", "Persistent"} {
+	for _, key := range []string{"ToolType", "NetworkConfiguration", "Description", "DefaultTimeout", "Tags", "RoleArn", "StorageMounts", "CustomConfiguration", "ComputerConfiguration", "LogConfiguration", "Persistent"} {
 		if _, ok := cp.request[key]; !ok {
 			t.Fatalf("request missing copied field %s: %#v", key, cp.request)
 		}
@@ -133,6 +133,10 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if custom.ImageRegistryType == nil || *custom.ImageRegistryType != "enterprise" {
 		t.Fatalf("ImageRegistryType = %#v, want enterprise", custom.ImageRegistryType)
 	}
+	computer := cp.request["ComputerConfiguration"].(*ags.ComputerConfiguration)
+	if computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != "img-source" {
+		t.Fatalf("ComputerConfiguration = %#v, want source WAA image", computer)
+	}
 }
 
 func TestModuleAppliesExplicitOverrides(t *testing.T) {
@@ -140,15 +144,16 @@ func TestModuleAppliesExplicitOverrides(t *testing.T) {
 	runFork(t, cp, command.Request{
 		Args: []string{"sdt-source"},
 		Flags: map[string]command.FlagValue{
-			"tool-name":             {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
-			"tool-type":             {Name: "tool-type", Type: command.FlagString, String: "custom", Changed: true},
-			"description":           {Name: "description", Type: command.FlagString, String: "", Changed: true},
-			"default-timeout":       {Name: "default-timeout", Type: command.FlagString, String: "1h", Changed: true},
-			"network-configuration": {Name: "network-configuration", Type: command.FlagString, String: `{"NetworkMode":"PUBLIC"}`, Changed: true},
-			"tags":                  {Name: "tags", Type: command.FlagString, String: `[{"Key":"team","Value":"qa"}]`, Changed: true},
-			"role-arn":              {Name: "role-arn", Type: command.FlagString, String: "", Changed: true},
-			"client-token":          {Name: "client-token", Type: command.FlagString, String: "tok", Changed: true},
-			"persistent":            {Name: "persistent", Type: command.FlagBool, Bool: false, Changed: true},
+			"tool-name":              {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
+			"tool-type":              {Name: "tool-type", Type: command.FlagString, String: "custom", Changed: true},
+			"description":            {Name: "description", Type: command.FlagString, String: "", Changed: true},
+			"default-timeout":        {Name: "default-timeout", Type: command.FlagString, String: "1h", Changed: true},
+			"network-configuration":  {Name: "network-configuration", Type: command.FlagString, String: `{"NetworkMode":"PUBLIC"}`, Changed: true},
+			"tags":                   {Name: "tags", Type: command.FlagString, String: `[{"Key":"team","Value":"qa"}]`, Changed: true},
+			"computer-configuration": {Name: "computer-configuration", Type: command.FlagString, String: `{"WAAConfiguration":{"ImageId":"img-override"}}`, Changed: true},
+			"role-arn":               {Name: "role-arn", Type: command.FlagString, String: "", Changed: true},
+			"client-token":           {Name: "client-token", Type: command.FlagString, String: "tok", Changed: true},
+			"persistent":             {Name: "persistent", Type: command.FlagBool, Bool: false, Changed: true},
 		},
 	})
 	if cp.request["ToolType"] != "custom" {
@@ -169,6 +174,11 @@ func TestModuleAppliesExplicitOverrides(t *testing.T) {
 	network := cp.request["NetworkConfiguration"].(map[string]any)
 	if network["NetworkMode"] != "PUBLIC" {
 		t.Fatalf("NetworkConfiguration = %#v", network)
+	}
+	computer := cp.request["ComputerConfiguration"].(map[string]any)
+	waa := computer["WAAConfiguration"].(map[string]any)
+	if waa["ImageId"] != "img-override" {
+		t.Fatalf("ComputerConfiguration = %#v", computer)
 	}
 }
 
@@ -325,6 +335,7 @@ func sourceTool(id string) *ags.SandboxTool {
 	imageDigest := "sha256:read-only"
 	commandValue := "serve"
 	logFile := "/logs/app.log"
+	waaImageID := "img-source"
 	persistent := true
 	status := "ACTIVE"
 	statusReason := "ready"
@@ -345,6 +356,7 @@ func sourceTool(id string) *ags.SandboxTool {
 		RoleArn:               &roleArn,
 		StorageMounts:         []*ags.StorageMount{{Name: &mountName, MountPath: &mountPath, ReadOnly: &readOnly}},
 		CustomConfiguration:   &ags.CustomConfigurationDetail{Image: &image, ImageRegistryType: &registryType, ImageDigest: &imageDigest, Command: []*string{&commandValue}},
+		ComputerConfiguration: &ags.ComputerConfiguration{WAAConfiguration: &ags.WAAConfiguration{ImageId: &waaImageID}},
 		LogConfiguration:      &ags.LogConfiguration{LogSources: &ags.LogSources{Files: []*string{&logFile}}},
 		StatusReason:          &statusReason,
 	}

@@ -106,6 +106,13 @@ func APIDescriptor() apicli.APIDescriptor {
 				},
 			},
 			{
+				Name:   "ComputerConfiguration",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "computer-configuration", Flag: "computer-configuration", Usage: "ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}", Examples: []string{"agr tool create -n my-tool -t waa --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"}, Type: command.FlagString},
+				},
+			},
+			{
 				Name:   "LogConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
