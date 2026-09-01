@@ -310,6 +310,12 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			},
 		},
 		{
+			command: "tool.fork",
+			want: map[string]schemaFlagExpectation{
+				"computer-configuration": {typ: "json"},
+			},
+		},
+		{
 			command: "pre-cache-image-task.create",
 			want: map[string]schemaFlagExpectation{
 				"request":             {typ: "string"},
@@ -456,6 +462,13 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 			}
 			if tc.command == "tool.create" {
 				requireFailureCode(t, schema, "INVALID_JSON_FLAG")
+				flag := schema.Flags["computer-configuration"]
+				if flag.Format == "" || len(flag.Examples) == 0 {
+					t.Fatalf("schema %s computer-configuration metadata incomplete: %#v", tc.command, flag)
+				}
+			}
+			if tc.command == "tool.fork" {
+				requirePropertyType(t, schema, "ComputerConfiguration", "object")
 				flag := schema.Flags["computer-configuration"]
 				if flag.Format == "" || len(flag.Examples) == 0 {
 					t.Fatalf("schema %s computer-configuration metadata incomplete: %#v", tc.command, flag)
