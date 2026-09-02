@@ -810,10 +810,10 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 				}
 				prop, exists := schema.RequestSchema.Properties[m.Name]
 				if !exists {
-					prop = PropertySchema{Type: m.Type}
+					prop = PropertySchema{Type: requestPropertyType(m.Type)}
 				}
 				if prop.Type == "" {
-					prop.Type = m.Type
+					prop.Type = requestPropertyType(m.Type)
 				}
 				flagName := propertyCLIFlag(m.Name, a.Fields[m.Name])
 				if flagName != "" {
@@ -837,6 +837,17 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 				ensureSchemaFlag(schema, FlagSchema{Name: "generate-skeleton", Type: "bool"})
 			}
 		}
+	}
+}
+
+func requestPropertyType(apiType string) string {
+	switch apiType {
+	case "list":
+		return "array"
+	case "int":
+		return "integer"
+	default:
+		return apiType
 	}
 }
 
