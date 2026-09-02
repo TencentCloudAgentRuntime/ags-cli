@@ -3,6 +3,10 @@ package fork
 import (
 	"context"
 	"errors"
+	"maps"
+	"reflect"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +26,14 @@ type fakeControlPlane struct {
 	request    map[string]any
 	getIDs     []string
 	callCount  int
+}
+
+var forkReplacementFields = map[string]string{
+	"ToolName": "a fork must use the new name supplied by --tool-name",
+}
+
+var forkOverrideOnlyFields = map[string]string{
+	"ClientToken": "an idempotency token must be newly supplied, never copied from the source tool",
 }
 
 func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
@@ -103,7 +115,8 @@ func TestModuleWaitReportsForkedToolIsolatedAsUnavailable(t *testing.T) {
 }
 
 func TestModuleCopiesCreateCapableFields(t *testing.T) {
-	cp := &fakeControlPlane{}
+	source := sourceTool("sdt-source")
+	cp := &fakeControlPlane{sourceTool: source}
 	runFork(t, cp, command.Request{
 		Args: []string{"sdt-source"},
 		Flags: map[string]command.FlagValue{
@@ -116,12 +129,63 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if cp.request["ToolName"] != "copy" {
 		t.Fatalf("ToolName = %#v", cp.request["ToolName"])
 	}
-	for _, key := range []string{"ToolType", "NetworkConfiguration", "Description", "DefaultTimeout", "Tags", "RoleArn", "StorageMounts", "CustomConfiguration", "ComputerConfiguration", "LogConfiguration", "Persistent"} {
-		if _, ok := cp.request[key]; !ok {
-			t.Fatalf("request missing copied field %s: %#v", key, cp.request)
+	module := Module()
+	api, ok := module.Descriptor.API.(apicli.APIDescriptor)
+	if !ok {
+		t.Fatalf("tool.fork descriptor API = %T, want apicli.APIDescriptor", module.Descriptor.API)
+	}
+	expectedInherited := baseCreateRequestFromTool(source)
+	descriptorFields := map[string]bool{}
+	for _, field := range api.Fields {
+		descriptorFields[field.Name] = true
+		if _, replaced := forkReplacementFields[field.Name]; replaced {
+			continue
+		}
+		if _, overrideOnly := forkOverrideOnlyFields[field.Name]; overrideOnly {
+			continue
+		}
+		for _, input := range field.Inputs {
+			if input.SendDefault {
+				t.Fatalf("inherited descriptor field %s uses SendDefault and can bypass source-copy coverage", field.Name)
+			}
+		}
+		want, copied := expectedInherited[field.Name]
+		if !copied {
+			t.Fatalf("source-copy policy missing inherited descriptor field %s", field.Name)
+		}
+		got, ok := cp.request[field.Name]
+		if !ok {
+			t.Fatalf("request missing copied descriptor field %s: %#v", field.Name, cp.request)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("copied descriptor field %s = %#v, want source-derived %#v", field.Name, got, want)
 		}
 	}
-	for _, key := range []string{"ToolId", "Status", "StatusReason", "CreateTime", "UpdateTime", "ClientToken"} {
+	checkPolicy := func(fieldName, reason string) {
+		t.Helper()
+		if strings.TrimSpace(reason) == "" {
+			t.Errorf("non-inherited descriptor field %s must include a reason", fieldName)
+		}
+		if !descriptorFields[fieldName] {
+			t.Errorf("non-inherited field %s is not present in the fork API descriptor", fieldName)
+		}
+	}
+	for _, fieldName := range slices.Sorted(maps.Keys(forkReplacementFields)) {
+		checkPolicy(fieldName, forkReplacementFields[fieldName])
+		if _, duplicate := forkOverrideOnlyFields[fieldName]; duplicate {
+			t.Errorf("field %s cannot be both replacement and override-only", fieldName)
+		}
+		if _, ok := cp.request[fieldName]; !ok {
+			t.Errorf("replacement field %s is missing from the create request", fieldName)
+		}
+	}
+	for _, fieldName := range slices.Sorted(maps.Keys(forkOverrideOnlyFields)) {
+		checkPolicy(fieldName, forkOverrideOnlyFields[fieldName])
+		if _, ok := cp.request[fieldName]; ok {
+			t.Errorf("override-only field %s was sent without an explicit override", fieldName)
+		}
+	}
+	for _, key := range []string{"ToolId", "Status", "StatusReason", "CreateTime", "UpdateTime"} {
 		if _, ok := cp.request[key]; ok {
 			t.Fatalf("request copied excluded field %s: %#v", key, cp.request)
 		}
