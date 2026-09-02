@@ -258,13 +258,18 @@ func checkAPIContractInvariants(t *testing.T, descriptor command.Descriptor, api
 			t.Errorf("schema %q request property %q: Type = %q, want %q", descriptor.Spec.ID, field.Name, property.Type, want)
 		}
 
+		hasFlagInput := false
 		for _, input := range field.Inputs {
 			if input.Positional || input.Flag == "" {
 				continue
 			}
+			hasFlagInput = true
 			if property.CliFlag == nil || *property.CliFlag != input.Flag {
 				t.Errorf("schema %q request property %q: CliFlag = %v, want %q", descriptor.Spec.ID, field.Name, property.CliFlag, input.Flag)
 			}
+		}
+		if !hasFlagInput && property.CliFlag != nil {
+			t.Errorf("schema %q request property %q: CliFlag = %q, want nil", descriptor.Spec.ID, field.Name, *property.CliFlag)
 		}
 	}
 	return requestPropertyCount
