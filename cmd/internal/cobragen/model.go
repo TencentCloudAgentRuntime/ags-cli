@@ -100,6 +100,10 @@ func groupShort(group string) string {
 		return "Manage image pre-cache tasks"
 	case "deployment":
 		return "Manage deployments"
+	case "session":
+		return "Manage sessions"
+	case "session-space":
+		return "Manage session spaces"
 	}
 	return "Manage " + group
 }
@@ -147,6 +151,9 @@ func subgroupShort(group, sub string) string {
 	if group == "image" && sub == "precache" {
 		return "Manage image pre-cache tasks"
 	}
+	if group == "session" && sub == "event" {
+		return "Manage session events"
+	}
 	return "Manage " + sub
 }
 
@@ -168,9 +175,9 @@ func aliasesForCommand(commandID string) []string {
 	switch commandID {
 	case "instance.create":
 		return []string{"c"}
-	case "instance.list", "tool.list", "apikey.list":
+	case "instance.list", "tool.list", "apikey.list", "session.list", "session-space.list", "session.event.list":
 		return []string{"ls"}
-	case "instance.delete", "tool.delete", "apikey.delete":
+	case "instance.delete", "tool.delete", "apikey.delete", "session.delete", "session-space.delete":
 		return []string{"rm", "del"}
 	}
 	return nil
