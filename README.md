@@ -41,6 +41,16 @@ To use GitHub Releases as a fallback source:
 curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/download/install.sh | AGR_DOWNLOAD_MIRROR=github sh
 ```
 
+Preview releases may include temporary API patch metadata that has not yet
+landed in the canonical upstream API. They are published only as explicit
+GitHub prereleases, are not selected by `latest`, and do not update Homebrew.
+Install a preview by specifying its exact version:
+
+```bash
+curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.7.0-preview.1/install.sh | \
+  VERSION=v0.7.0-preview.1 AGR_DOWNLOAD_MIRROR=github sh
+```
+
 ### Manual binary download
 
 Download the latest release from [GitHub Releases](https://github.com/TencentCloudAgentRuntime/ags-cli/releases) and install manually.

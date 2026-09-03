@@ -42,6 +42,15 @@ curl -fsSL https://dl.tencentags.com/agr-cli/latest/install.sh | VERSION=v0.6.2 
 curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/download/install.sh | AGR_DOWNLOAD_MIRROR=github sh
 ```
 
+预览版可能包含尚未进入上游官方 API 的临时 Patch 元数据，只会作为指定版本的
+GitHub Prerelease 发布，不会被 `latest` 选中，也不会更新 Homebrew。安装时必须
+明确指定版本：
+
+```bash
+curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v0.7.0-preview.1/install.sh | \
+  VERSION=v0.7.0-preview.1 AGR_DOWNLOAD_MIRROR=github sh
+```
+
 ### 手动下载二进制文件
 
 从 [GitHub Releases](https://github.com/TencentCloudAgentRuntime/ags-cli/releases) 下载最新版本并手动安装。

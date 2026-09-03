@@ -22,6 +22,8 @@ Usage:
   scripts/changelog.sh validate-release-notes <version>
   scripts/changelog.sh validate-release-notes-pair <version>
   scripts/changelog.sh validate-latest-release-notes
+  scripts/changelog.sh validate-latest-release-notes-pair
+  scripts/changelog.sh validate-optional-release-notes-pair
   scripts/changelog.sh extract <version> <output>
 
 Commands:
@@ -36,11 +38,16 @@ Commands:
   validate-latest-release-notes
                     Validate the latest changelog section uses the release-note
                     structure: Breaking Changes, Features, Bug Fixes, Docs.
+  validate-latest-release-notes-pair
+                    Validate the latest release-note section in both changelogs.
+  validate-optional-release-notes-pair
+                    Require both changelog files; if either has a version,
+                    validate the pair and their latest release-note sections.
   extract           Write the requested version section body to the output file.
 
 Notes:
-  - Versions use X.Y.Z format in CHANGELOG.md.
-  - Tags use vX.Y.Z; callers should strip the leading "v" before invoking.
+  - Versions use X.Y.Z or X.Y.Z-preview.N format in changelog files.
+  - Tags add a leading "v"; callers should strip it before invoking.
   - RELEASE_NOTE_SECTIONS can override the required section names, one per line.
   - ZH_CHANGELOG_FILE and ZH_RELEASE_NOTE_SECTIONS configure pair validation.
 EOF
@@ -163,6 +170,27 @@ validate_release_notes_pair() {
   with_changelog "$ZH_CHANGELOG_FILE" "$ZH_RELEASE_NOTE_SECTIONS" validate_release_notes "$1"
 }
 
+validate_latest_release_notes_pair() {
+  local version
+
+  version="$(latest_version)"
+  validate_release_notes "$version"
+  with_changelog "$ZH_CHANGELOG_FILE" "$ZH_RELEASE_NOTE_SECTIONS" validate_release_notes "$version"
+}
+
+validate_optional_release_notes_pair() {
+  ensure_changelog_exists
+  with_changelog "$ZH_CHANGELOG_FILE" "$ZH_RELEASE_NOTE_SECTIONS" ensure_changelog_exists
+
+  if ! grep -q '^## \[' "$CHANGELOG_FILE" &&
+     ! grep -q '^## \[' "$ZH_CHANGELOG_FILE"; then
+    return
+  fi
+
+  validate_pair
+  validate_latest_release_notes_pair
+}
+
 extract() {
   local version output
 
@@ -226,6 +254,22 @@ main() {
         exit 1
       fi
       validate_release_notes "$(latest_version)"
+      ;;
+    validate-latest-release-notes-pair)
+      shift
+      if [ "$#" -ne 0 ]; then
+        usage >&2
+        exit 1
+      fi
+      validate_latest_release_notes_pair
+      ;;
+    validate-optional-release-notes-pair)
+      shift
+      if [ "$#" -ne 0 ]; then
+        usage >&2
+        exit 1
+      fi
+      validate_optional_release_notes_pair
       ;;
     extract)
       shift
