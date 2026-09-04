@@ -119,7 +119,13 @@ jobs:
       - name: Validate changelog structure
         run: |
           bash scripts/changelog.sh validate
-          bash scripts/changelog.sh validate-latest-release-notes
+          bash scripts/changelog.sh validate-latest-release-notes-pair
+          CHANGELOG_FILE=CHANGELOG-preview.md \
+            ZH_CHANGELOG_FILE=CHANGELOG-preview-zh.md \
+            bash scripts/changelog.sh validate-optional-release-notes-pair
+
+      - name: Test release policy
+        run: bash scripts/test-release-policy.sh
 
   generator-gate:
     name: API Generator Gate
@@ -132,8 +138,14 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Validate effective API metadata
-        run: go run ./cmd/internal/apipatch check
+      - name: Validate all effective API metadata
+        run: go run ./cmd/internal/apipatch check-all
+
+      - name: Require canonical API metadata on main
+        if: >-
+          (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+          (github.event_name == 'push' && github.ref_name == 'main')
+        run: go run ./cmd/internal/apipatch check-all --require-empty
 
       - name: Mapping invariants
         run: go test ./internal/apimeta/... -count=1

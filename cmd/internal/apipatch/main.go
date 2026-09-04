@@ -8,8 +8,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 )
@@ -25,17 +27,19 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: apipatch <check|render|rebase> [flags]")
+		return fmt.Errorf("usage: apipatch <check|check-all|render|rebase> [flags]")
 	}
 	switch args[0] {
 	case "check":
 		return runCheck(args[1:], stdout)
+	case "check-all":
+		return runCheckAll(args[1:], stdout)
 	case "render":
 		return runRender(args[1:], stdout)
 	case "rebase":
 		return runRebase(args[1:], stdout)
 	default:
-		return fmt.Errorf("unknown subcommand %q (allowed: check, render, rebase)", args[0])
+		return fmt.Errorf("unknown subcommand %q (allowed: check, check-all, render, rebase)", args[0])
 	}
 }
 
@@ -43,18 +47,93 @@ func runCheck(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	apiDir := fs.String("api", defaultAPIDir, "directory containing api.json and api.patch.json")
+	requireEmpty := fs.Bool("require-empty", false, "reject non-empty API patches")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if fs.NArg() != 0 {
 		return fmt.Errorf("check does not accept positional arguments")
 	}
-	spec, err := apimeta.LoadEffectiveSpec(*apiDir)
+	return checkAPIDir(*apiDir, *requireEmpty, stdout)
+}
+
+func runCheckAll(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("check-all", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	apiRoot := flags.String("root", filepath.Join("api", "ags"), "root directory containing API versions")
+	requireEmpty := flags.Bool("require-empty", false, "reject non-empty API patches")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("check-all does not accept positional arguments")
+	}
+
+	apiDirs, err := findAPIDirs(*apiRoot)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(stdout, "API patch is valid: %d actions, %d objects\n", len(spec.Actions), len(spec.Objects))
+	for _, apiDir := range apiDirs {
+		if err := checkAPIDir(apiDir, *requireEmpty, stdout); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func findAPIDirs(root string) ([]string, error) {
+	var apiDirs []string
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || entry.Name() != "api.patch.json" {
+			return nil
+		}
+		apiDirs = append(apiDirs, filepath.Dir(path))
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("scan API patches under %s: %w", root, err)
+	}
+	if len(apiDirs) == 0 {
+		return nil, fmt.Errorf("no api.patch.json files found under %s", root)
+	}
+	slices.Sort(apiDirs)
+	return apiDirs, nil
+}
+
+func checkAPIDir(apiDir string, requireEmpty bool, stdout io.Writer) error {
+	spec, err := apimeta.LoadEffectiveSpec(apiDir)
+	if err != nil {
+		return fmt.Errorf("check API directory %s: %w", apiDir, err)
+	}
+	operationCount, err := apiPatchOperationCount(apiDir)
+	if err != nil {
+		return fmt.Errorf("check API directory %s: %w", apiDir, err)
+	}
+	if requireEmpty && operationCount != 0 {
+		return fmt.Errorf("API patch must be empty: %s contains %d operations", filepath.Join(apiDir, "api.patch.json"), operationCount)
+	}
+	operationLabel := "operations"
+	if operationCount == 1 {
+		operationLabel = "operation"
+	}
+	fmt.Fprintf(stdout, "API patch is valid: %s (%d %s, %d actions, %d objects)\n", filepath.ToSlash(apiDir), operationCount, operationLabel, len(spec.Actions), len(spec.Objects))
+	return nil
+}
+
+func apiPatchOperationCount(apiDir string) (int, error) {
+	path := filepath.Join(apiDir, "api.patch.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, fmt.Errorf("read API patch: %w", err)
+	}
+	var operations []json.RawMessage
+	if err := json.Unmarshal(data, &operations); err != nil {
+		return 0, fmt.Errorf("decode API patch %s: %w", path, err)
+	}
+	return len(operations), nil
 }
 
 func runRender(args []string, stdout io.Writer) error {

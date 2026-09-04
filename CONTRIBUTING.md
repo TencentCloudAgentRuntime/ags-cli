@@ -154,7 +154,7 @@ public disclosure is allowed.
 Before submitting a patch change, run:
 
 ```bash
-go run ./cmd/internal/apipatch check
+go run ./cmd/internal/apipatch check-all
 go run ./cmd/internal/apipatch render > /tmp/ags-effective-api.json
 go run ./cmd/internal/cobragen check
 ```
@@ -171,6 +171,38 @@ only some operations remain necessary, and `CONFLICT` requires manual review.
 When upstream absorbs an operation, update the canonical `api.json` and remove
 that operation in the same change, then rerun the checks above and review any
 generated CLI diff.
+
+#### Stable and preview branches
+
+`main` is the always-releasable stable branch. Every checked-in
+`api/ags/**/api.patch.json` must be empty there. Non-empty patches and their
+derived CLI output target the protected `preview` branch instead.
+
+- Ordinary changes and official API updates land on `main` first, then flow to
+  `preview` through a `main` to `preview` synchronization pull request.
+- Merge synchronization pull requests with a merge commit so `preview` retains
+  `main` ancestry; continue to squash patch-specific and release pull requests.
+- Patch-specific changes target `preview`. Never merge `preview` wholesale back
+  into `main`.
+- Stable release pull requests target `main` and use `vX.Y.Z`. Preview release
+  pull requests target `preview` and use `vX.Y.Z-preview.N`. Both use a
+  `release/<tag>` head branch and the title `chore(release): prepare <tag>`;
+  the tag must point to that pull request's exact merge commit.
+- Stable versions take priority. After `vX.Y.Z` exists, advance later previews
+  to the next available core version rather than publishing another
+  `vX.Y.Z-preview.N`.
+- Preview release notes belong in `CHANGELOG-preview.md` and
+  `CHANGELOG-preview-zh.md`; stable release notes remain in the existing
+  changelogs.
+
+CI validates every patch file on both branches and additionally runs:
+
+```bash
+go run ./cmd/internal/apipatch check-all --require-empty
+```
+
+for changes targeting `main`. Preview releases are GitHub prereleases, are not
+selected as `latest`, and do not update Homebrew.
 
 ## Coding Guidelines
 

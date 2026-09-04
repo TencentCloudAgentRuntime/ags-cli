@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   release:
@@ -23,31 +24,93 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Extract version from tag
+      - name: Extract version and release channel from tag
         id: version
+        shell: bash
         run: |
           TAG="${{ github.ref_name }}"
-          VERSION="${TAG#v}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Extracted version: $VERSION from tag: $TAG"
+          if [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+            CHANNEL="stable"
+            SOURCE_BRANCH="main"
+            PRERELEASE="false"
+            MAKE_LATEST="legacy"
+            CHANGELOG_FILE="CHANGELOG.md"
+            ZH_CHANGELOG_FILE="CHANGELOG-zh.md"
+          elif [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-preview\.([1-9][0-9]*)$ ]]; then
+            CORE_VERSION="${BASH_REMATCH[1]}"
+            VERSION="${CORE_VERSION}-preview.${BASH_REMATCH[2]}"
+            CHANNEL="preview"
+            SOURCE_BRANCH="preview"
+            PRERELEASE="true"
+            MAKE_LATEST="false"
+            CHANGELOG_FILE="CHANGELOG-preview.md"
+            ZH_CHANGELOG_FILE="CHANGELOG-preview-zh.md"
 
-      - name: Validate version format
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z]+(\.[0-9]+)?)?$ ]]; then
+            bash scripts/release-policy.sh validate-preview-core "$CORE_VERSION"
+          else
             echo "Error: Invalid tag format '$TAG'"
-            echo "Expected format: vX.Y.Z or vX.Y.Z-pre.N"
+            echo "Expected format: vX.Y.Z or vX.Y.Z-preview.N (N >= 1)"
             exit 1
           fi
 
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "channel=$CHANNEL"
+            echo "source_branch=$SOURCE_BRANCH"
+            echo "prerelease=$PRERELEASE"
+            echo "make_latest=$MAKE_LATEST"
+            echo "changelog_file=$CHANGELOG_FILE"
+            echo "zh_changelog_file=$ZH_CHANGELOG_FILE"
+          } >> "$GITHUB_OUTPUT"
+          echo "Release $TAG uses channel $CHANNEL from branch $SOURCE_BRANCH"
+
+      - name: Verify release source pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_BRANCH: ${{ steps.version.outputs.source_branch }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git fetch --no-tags origin \
+            "+refs/heads/${SOURCE_BRANCH}:refs/remotes/origin/${SOURCE_BRANCH}"
+          RELEASE_COMMIT="$(git rev-parse "${GITHUB_SHA}^{commit}")"
+          if ! git merge-base --is-ancestor \
+            "$RELEASE_COMMIT" "refs/remotes/origin/${SOURCE_BRANCH}"; then
+            echo "Error: release commit $RELEASE_COMMIT is not on $SOURCE_BRANCH"
+            exit 1
+          fi
+
+          PULLS_JSON="$(mktemp)"
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_COMMIT}/pulls" \
+            > "$PULLS_JSON"
+          bash scripts/release-policy.sh validate-release-pr \
+            "$RELEASE_COMMIT" "$SOURCE_BRANCH" "$TAG" "$PULLS_JSON"
+
       - name: Validate changelog entry
+        env:
+          CHANGELOG_FILE: ${{ steps.version.outputs.changelog_file }}
+          ZH_CHANGELOG_FILE: ${{ steps.version.outputs.zh_changelog_file }}
         run: |
           bash scripts/changelog.sh validate-pair "${{ steps.version.outputs.version }}"
           bash scripts/changelog.sh validate-release-notes-pair "${{ steps.version.outputs.version }}"
 
       - name: Extract release notes from changelog
+        env:
+          CHANGELOG_FILE: ${{ steps.version.outputs.changelog_file }}
         run: bash scripts/changelog.sh extract "${{ steps.version.outputs.version }}" RELEASE_NOTES.md
+
+      - name: Validate API release policy
+        env:
+          CHANNEL: ${{ steps.version.outputs.channel }}
+        run: |
+          if [ "$CHANNEL" = "stable" ]; then
+            go run ./cmd/internal/apipatch check-all --require-empty
+          else
+            go run ./cmd/internal/apipatch check-all
+          fi
 
       - name: Validate API generator outputs are up to date
         run: go run ./cmd/internal/cobragen check
@@ -116,11 +179,13 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           body_path: RELEASE_NOTES.md
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          make_latest: ${{ steps.version.outputs.make_latest }}
           files: |
             dist/*
 
       - name: Create Homebrew Tap app token
-        if: ${{ !contains(steps.version.outputs.version, '-') }}
+        if: ${{ steps.version.outputs.channel == 'stable' }}
         id: homebrew-tap-token
         uses: actions/create-github-app-token@v3
         with:
@@ -131,7 +196,7 @@ jobs:
           permission-actions: write
 
       - name: Trigger Homebrew Tap update
-        if: ${{ !contains(steps.version.outputs.version, '-') }}
+        if: ${{ steps.version.outputs.channel == 'stable' }}
         env:
           GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
           TAG: ${{ steps.version.outputs.tag }}

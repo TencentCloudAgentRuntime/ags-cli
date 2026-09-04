@@ -149,7 +149,7 @@ JSON Patch 记录差异；无差异时保持为 `[]`。
 提交补丁变更前运行：
 
 ```bash
-go run ./cmd/internal/apipatch check
+go run ./cmd/internal/apipatch check-all
 go run ./cmd/internal/apipatch render > /tmp/ags-effective-api.json
 go run ./cmd/internal/cobragen check
 ```
@@ -164,6 +164,32 @@ go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
 `CONFLICT` 表示需要人工处理。
 上游吸收某个操作后，应在同一次变更中更新原始 `api.json` 并删除对应补丁，
 然后重新执行上述检查并审阅生成的 CLI 差异。
+
+#### 稳定版与预览版分支
+
+`main` 是始终可发布的稳定分支，其中所有 `api/ags/**/api.patch.json` 都必须
+为空。非空 Patch 及其派生 CLI 产物只能提交到受保护的 `preview` 分支。
+
+- 普通改动和官方 API 更新先进入 `main`，再通过 `main` 到 `preview` 的同步 PR
+  单向进入 `preview`。
+- 同步 PR 使用 merge commit 合入，使 `preview` 保留 `main` 的祖先关系；Patch
+  专属 PR 和 Release PR 仍使用 squash。
+- Patch 专属改动直接以 `preview` 为目标；禁止把 `preview` 整体合回 `main`。
+- 稳定版 Release PR 以 `main` 为目标并使用 `vX.Y.Z`；预览版 Release PR 以
+  `preview` 为目标并使用 `vX.Y.Z-preview.N`。两者都使用 `release/<tag>` 源分支
+  和 `chore(release): prepare <tag>` 标题；tag 必须精确指向该 PR 的合入提交。
+- 稳定版本号优先。`vX.Y.Z` 已存在后，后续预览版必须推进到下一个可用的核心版本号，
+  不能继续发布 `vX.Y.Z-preview.N`。
+- 预览版发布说明写入 `CHANGELOG-preview.md` 和 `CHANGELOG-preview-zh.md`；
+  稳定版继续使用现有更新日志。
+
+CI 会在两个分支校验全部 Patch 文件，并针对以 `main` 为目标的改动额外执行：
+
+```bash
+go run ./cmd/internal/apipatch check-all --require-empty
+```
+
+预览版只作为 GitHub Prerelease 发布，不会被选为 `latest`，也不会更新 Homebrew。
 
 ## 编码规范
 
