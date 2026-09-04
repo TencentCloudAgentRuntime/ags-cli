@@ -113,6 +113,121 @@ actions:
           - flag: tags
             type: json
 
+  CreateSessionSpace:
+    command: session-space.create
+    request: CreateSessionSpaceRequest
+    response: CreateSessionSpaceResponse
+    status: mapped
+    fields:
+      Tags:
+        inputs:
+          - flag: tags
+            type: json
+
+  DeleteSessionSpace:
+    command: session-space.delete
+    request: DeleteSessionSpaceRequest
+    response: DeleteSessionSpaceResponse
+    status: mapped
+
+  DescribeSessionSpace:
+    command: session-space.get
+    request: DescribeSessionSpaceRequest
+    response: DescribeSessionSpaceResponse
+    status: mapped
+
+  DescribeSessionSpaces:
+    command: session-space.list
+    request: DescribeSessionSpacesRequest
+    response: DescribeSessionSpacesResponse
+    status: mapped
+
+  ModifySessionSpace:
+    command: session-space.update
+    request: ModifySessionSpaceRequest
+    response: ModifySessionSpaceResponse
+    status: mapped
+
+  CreateSession:
+    command: session.create
+    request: CreateSessionRequest
+    response: CreateSessionResponse
+    status: mapped
+    fields:
+      State:
+        inputs:
+          - flag: state
+            type: json
+      Metadata:
+        inputs:
+          - flag: metadata
+            type: json
+
+  DeleteSession:
+    command: session.delete
+    request: DeleteSessionRequest
+    response: DeleteSessionResponse
+    status: mapped
+
+  DescribeSession:
+    command: session.get
+    request: DescribeSessionRequest
+    response: DescribeSessionResponse
+    status: mapped
+
+  DescribeSessions:
+    command: session.list
+    request: DescribeSessionsRequest
+    response: DescribeSessionsResponse
+    status: mapped
+    fields:
+      UserIds:
+        inputs:
+          - flag: user-ids
+            type: string_array
+      SessionIds:
+        inputs:
+          - flag: session-ids
+            type: string_array
+      Filters:
+        inputs:
+          - flag: filters
+            type: json
+
+  ModifySession:
+    command: session.update
+    request: ModifySessionRequest
+    response: ModifySessionResponse
+    status: mapped
+    fields:
+      Metadata:
+        inputs:
+          - flag: metadata
+            type: json
+
+  ModifySessionTitle:
+    command: session.update-title
+    request: ModifySessionTitleRequest
+    response: ModifySessionTitleResponse
+    status: mapped
+
+  AppendEvent:
+    command: session.event.append
+    request: AppendEventRequest
+    response: AppendEventResponse
+    status: mapped
+    fields:
+      Event:
+        inputs:
+          - flag: event
+            type: json
+
+  DescribeEvents:
+    command: session.event.list
+    request: DescribeEventsRequest
+    response: DescribeEventsResponse
+    status: mapped
+
   StartSandboxInstance:
     command: instance.create
     request: StartSandboxInstanceRequest
