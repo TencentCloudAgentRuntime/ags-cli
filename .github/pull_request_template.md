@@ -1,14 +1,22 @@
 ## Summary
 
+<!-- What changed and why? Link related issues when applicable. -->
+
 ## Verification
 
-Commands run, results, and checks not run:
+<!-- List commands run and their results. Note checks not run and why. -->
 
-## API Patch changes (complete when the candidate contains a non-empty patch)
+<!-- Complete the section below only if the candidate contains a non-empty
+api/ags/**/api.patch.json, even if this PR does not edit that file.
+Otherwise leave it collapsed or remove it; no patch checklist/report is needed. -->
+
+<details>
+<summary>API patch verification — only for non-empty patches</summary>
+
+Complete before merging when the candidate contains a non-empty `api.patch.json`.
 
 No live-E2E CI workflow is being added in this phase. Attach a real local E2E
 report or link to it here before merging; CI coverage success is not a substitute.
-For an empty patch, mark this section not applicable rather than inventing evidence.
 
 Report attachment/link:
 
@@ -27,3 +35,5 @@ reproduction and source/disclosure verification remain required.
 
 See [Patch verification](https://github.com/TencentCloudAgentRuntime/ags-cli/blob/main/PATCH-VERIFICATION.md). Reports are manual
 evidence, not an automated authorization gate. A checked box alone is not proof.
+
+</details>
