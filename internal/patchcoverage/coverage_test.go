@@ -6,9 +6,110 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 )
 
 const baseAPI = `{"actions":{"Get":{"input":"Req","output":"Resp","status":"online"}},"objects":{"Req":{"members":[]},"Resp":{"members":[{"name":"Id","type":"string","member":"string","required":true}]}}}`
+
+// Exercise all raw Action/Object metadata, even when the production patch is
+// empty. A typed projection or a handwritten attribute list can hide omissions.
+func TestCanonicalMetadataClassification(t *testing.T) {
+	paths, err := filepath.Glob("../../api/ags/*/api.json")
+	if err != nil || len(paths) == 0 {
+		t.Fatalf("find canonical APIs: %v (%v)", paths, err)
+	}
+	for _, path := range paths {
+		t.Run(filepath.Base(filepath.Dir(path)), func(t *testing.T) {
+			base, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var doc map[string]json.RawMessage
+			if err := json.Unmarshal(base, &doc); err != nil {
+				t.Fatal(err)
+			}
+			contract := map[string]json.RawMessage{}
+			for _, key := range []string{"actions", "objects"} {
+				if len(doc[key]) == 0 {
+					t.Fatalf("missing canonical %s", key)
+				}
+				contract[key] = doc[key]
+			}
+			data, err := json.Marshal(contract)
+			if err != nil {
+				t.Fatal(err)
+			}
+			empty := []byte(`{"actions":{},"objects":{}}`)
+			for _, pair := range [][2][]byte{{empty, data}, {data, empty}} {
+				entries, err := Diff(pair[0], pair[1])
+				if err != nil || len(entries) == 0 {
+					t.Fatalf("canonical metadata must be classified: %v", err)
+				}
+				if Validate(entries, nil, nil) == nil {
+					t.Fatal("canonical contract escaped coverage")
+				}
+			}
+			// A newly introduced, unclassified peer must trip the same gate.
+			var objects map[string]map[string]any
+			if err := json.Unmarshal(doc["objects"], &objects); err != nil {
+				t.Fatal(err)
+			}
+			for _, object := range objects {
+				members, _ := object["members"].([]any)
+				if len(members) == 0 {
+					continue
+				}
+				members[0].(map[string]any)["unclassified_peer"] = true
+				changed, err := json.Marshal(map[string]any{"objects": objects})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := Diff([]byte(`{"objects":{}}`), changed); err == nil || !strings.Contains(err.Error(), "/unclassified_peer") {
+					t.Fatalf("new canonical attribute escaped classification: %v", err)
+				}
+				return
+			}
+			t.Fatal("canonical API has no members")
+		})
+	}
+}
+
+func TestCanonicalResponseConstraints(t *testing.T) {
+	base, err := os.ReadFile("../../api/ags/v20250920/api.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{"output_required", "value_allowed_null"} {
+		t.Run(field, func(t *testing.T) {
+			patch, err := json.Marshal([]map[string]any{
+				{"op": "test", "path": "/objects/APIKeyInfo/members/0/" + field, "value": false},
+				{"op": "replace", "path": "/objects/APIKeyInfo/members/0/" + field, "value": true},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			effective, err := apimeta.ApplyAPIPatch(base, patch)
+			if err != nil {
+				t.Fatal(err)
+			}
+			entries, err := Diff(base, effective)
+			if err != nil || len(entries) != 1 {
+				t.Fatalf("response constraint delta: %+v %v", entries, err)
+			}
+			e := entries[0]
+			if e.ID != "/objects/APIKeyInfo/members/Name/"+field || e.Kind != "change" || e.Documentation || e.Before != false || e.After != true {
+				t.Fatalf("incorrect response constraint: %+v", e)
+			}
+			if Validate(entries, []Binding{{Entry: e.ID, Review: "documentation only"}}, nil) == nil {
+				t.Fatal("response constraint accepted without a live scenario")
+			}
+			if err := Validate(entries, []Binding{{Entry: e.ID, Scenario: "response", Assertions: []string{"constraint"}}}, Registry{"response": {"constraint"}}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
 
 func TestDiffAndCoverageNewPeerFails(t *testing.T) {
 	effective := strings.Replace(baseAPI, `"members":[]`, `"members":[{"name":"Name","type":"string","member":"string","required":false}]`, 1)

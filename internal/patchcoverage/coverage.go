@@ -170,6 +170,7 @@ func classify(path string) (documentation, known bool) {
 		case "document", "example":
 			return true, true
 		case "@exists", "name", "type", "member", "required", "disabled",
+			"output_required", "value_allowed_null",
 			"enum", "minimum", "maximum", "minLength", "maxLength", "pattern", "minItems", "maxItems":
 			return false, true
 		}
