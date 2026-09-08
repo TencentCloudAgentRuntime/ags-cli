@@ -163,8 +163,12 @@ go run ./cmd/internal/cobragen check
 Every effective contract delta must map to registered scenario/assertion IDs in
 `e2e-coverage.yaml`. See [Patch verification](PATCH-VERIFICATION.md) for the strict
 `make api-patch-e2e` entrypoint, commit-bound reports, independent reproduction,
-cleanup, and the API-owner/CLI-maintainer approval prerequisites. Static coverage
+cleanup, and optional API-owner/CLI-maintainer dual-role review. Static coverage
 does not prove runtime correctness; empty patches do not count as live E2E passes.
+
+No live-E2E CI workflow is being added in this phase. PRs containing a non-empty
+patch must attach or link a real local E2E report before merging, with independent
+reviewer reproduction. Empty-patch tooling PRs do not require a live patch report.
 
 After downloading a refreshed upstream file without replacing the checked-in
 copy, classify the patch lifecycle with:

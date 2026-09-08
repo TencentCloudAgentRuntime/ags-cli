@@ -157,8 +157,12 @@ go run ./cmd/internal/cobragen check
 
 每个有效契约差异必须在 `e2e-coverage.yaml` 中映射到已注册的场景和断言 ID。
 严格入口 `make api-patch-e2e`、提交绑定报告、独立复现、清理及 API owner / CLI
-maintainer 双角色审核前置条件见[补丁验证规范](PATCH-VERIFICATION.md)。
+maintainer 可选双角色审核见[补丁验证规范](PATCH-VERIFICATION.md)。
 静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
+
+本阶段不新增真实 E2E 测试流水线。包含非空 Patch 的 PR 必须在合并前附上本地
+真实 E2E 测试报告或报告链接，并由可信 reviewer 独立复跑。空 Patch 的工具类 PR
+无需提供真实 Patch E2E 报告。
 
 下载新的上游文件后，先不覆盖仓库中的 `api.json`，使用以下命令判定补丁状态：
 

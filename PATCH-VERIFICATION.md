@@ -7,6 +7,23 @@ real API tests require a separate, reviewed local run.
 `api.json` is canonical; a passing test does not turn `api.patch.json` into an
 official contract. Non-empty patches belong only on `preview`.
 
+## Required evidence
+
+No live-E2E CI workflow is being added in this phase. CI automatically checks
+coverage mappings without cloud credentials; it does not run real API tests or
+verify that a report has been attached. Reviewers enforce the evidence requirement.
+
+Every PR whose candidate contains a non-empty `api.patch.json` must attach a
+real E2E report, or link to it from the PR description, before merging. Run the
+strict command below locally against the real backend in an isolated test
+environment. Include the exact command (without credentials), current head/base
+SHAs, source tree, patch/plan digests, environment alias, timestamps, executed
+scenarios/assertions, pass/fail/skip counts and confirmed cleanup results.
+Mocks, coverage mappings and checked boxes are not substitutes for this report.
+
+PRs with empty patches, including changes to verification tooling itself, do not
+require a real patch-E2E report. State that no live patch behavior was tested.
+
 ## Author workflow
 
 1. Run `go run ./cmd/internal/apipatch delta` to derive all current changes in
@@ -34,7 +51,7 @@ official contract. Non-empty patches belong only on `preview`.
    ```
 
 4. Documentation-only entries may instead have a nonempty `review` rationale.
-   **Prose can encode enums or constraints.** API owner must review every such
+   **Prose can encode enums or constraints.** The reviewer must review every such
    exemption; use scenario/assertion mapping instead when the prose changes a
    behavioral promise. `document`/`example` classification is not an automatic
    claim that live testing is unnecessary.
@@ -97,18 +114,20 @@ an interrupted/missing report is never usable passing evidence.
 
 ## Reviewer and ownership checklist
 
-Both an API owner and a CLI maintainer must approve non-empty Patch changes.
-Record actual reviewers and their roles; do not assume one code-owner approval
-means both roles approved. Administrators must verify the following protections
-before accepting non-empty patches:
+Non-empty Patch changes require maintainer approval under the repository's
+normal review rules and independent reproduction as described below. Separate
+API-owner and CLI-maintainer approvals are optional additional protection, not
+a prerequisite for accepting patches. Record actual reviewers and their roles.
 
-- Confirm actual API-owner and CLI-maintainer team slugs and repository access.
+Administrators may add the following protections:
+
+- If enabling dual-role review, confirm actual team slugs and repository access.
 - Configure review routing/protection for `api/ags/**`, `internal/patchcoverage/**`,
   `internal/patchtest/**`, `internal/patchscenarios/**`, `cmd/internal/apipatch/**`,
   `cmd/internal/patch-e2e/**`, affected generated/runtime files, `Makefile`,
   `.github/workflows/**`, the PR template and CODEOWNERS itself.
-- Enforce independent dual-role approvals with supported rules, and validate on
-  a canary PR. CODEOWNERS entries alone do not prove that both roles are required.
+- If choosing to require both roles, enforce independent approvals with supported
+  rules and validate on a canary PR. CODEOWNERS alone does not enforce both roles.
 - After the real CI job has run, optionally require `Patch Contract Coverage`
   with GitHub Actions as source; it is already transitively required by CI Gate.
 
@@ -121,8 +140,8 @@ behavior causes failure. Without independent reproduction, do not merge.
 New head commits invalidate approvals/reports. Base changes require comparing the
 new candidate merge result and rerunning when it changes. The local runner records
 identity but does not automatically query GitHub or publish a trusted check.
-Do not require a live-E2E status check unless an authorized CI workflow exists
-and its security controls have been tested.
+No live-E2E status check is required in this phase. Any future automation needs
+a separate design and security review; it is not a prerequisite for this workflow.
 
 Record public source/disclosure approval, API version and endpoint/namespace
 match, SDK or raw-call strategy, API owner, cleanup owner, expiry/review date and
