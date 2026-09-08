@@ -155,9 +155,16 @@ Before submitting a patch change, run:
 
 ```bash
 go run ./cmd/internal/apipatch check-all
+go run ./cmd/internal/apipatch coverage
 go run ./cmd/internal/apipatch render > /tmp/ags-effective-api.json
 go run ./cmd/internal/cobragen check
 ```
+
+Every effective contract delta must map to registered scenario/assertion IDs in
+`e2e-coverage.yaml`. See [Patch verification](PATCH-VERIFICATION.md) for the strict
+`make api-patch-e2e` entrypoint, commit-bound reports, independent reproduction,
+cleanup, and the API-owner/CLI-maintainer approval prerequisites. Static coverage
+does not prove runtime correctness; empty patches do not count as live E2E passes.
 
 After downloading a refreshed upstream file without replacing the checked-in
 copy, classify the patch lifecycle with:
