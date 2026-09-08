@@ -14,6 +14,8 @@ import (
 	"slices"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchcoverage"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchscenarios"
 )
 
 const defaultAPIDir = "api/ags/v20250920"
@@ -27,9 +29,23 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: apipatch <check|check-all|render|rebase> [flags]")
+		return fmt.Errorf("usage: apipatch <check|check-all|render|rebase|delta|coverage> [flags]")
 	}
 	switch args[0] {
+	case "coverage", "delta":
+		flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
+		root := flags.String("root", ".", "repository root")
+		if err := flags.Parse(args[1:]); err != nil {
+			return err
+		}
+		if flags.NArg() != 0 {
+			return fmt.Errorf("unexpected positional arguments")
+		}
+		plan, err := patchcoverage.Load(*root, patchscenarios.Registry.Coverage(), args[0] == "coverage")
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(stdout).Encode(plan)
 	case "check":
 		return runCheck(args[1:], stdout)
 	case "check-all":
@@ -39,7 +55,7 @@ func run(args []string, stdout io.Writer) error {
 	case "rebase":
 		return runRebase(args[1:], stdout)
 	default:
-		return fmt.Errorf("unknown subcommand %q (allowed: check, check-all, render, rebase)", args[0])
+		return fmt.Errorf("unknown subcommand %q (allowed: check, check-all, render, rebase, delta, coverage)", args[0])
 	}
 }
 

@@ -83,6 +83,14 @@ jobs:
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
 
+      - name: Set up Go 1.26 for archive compatibility
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.x'
+
+      - name: Test archived runner with Go 1.26 (no cloud credentials)
+        run: go test -v -race ./cmd/internal/patch-e2e -count=1
+
       - name: Test one-line installer
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
@@ -174,6 +182,17 @@ jobs:
           test -n "$(find "$tmpdocs" -mindepth 1 -maxdepth 1 -type f -print -quit)"
           test -n "$(find "$tmpman" -mindepth 1 -maxdepth 1 -type f -print -quit)"
 
+  patch-coverage:
+    name: Patch Contract Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Validate complete Patch coverage (no credentials)
+        run: go run ./cmd/internal/apipatch coverage
+
   overlay-smoke:
     name: CLI Overlay Smoke
     runs-on: ubuntu-latest
@@ -246,6 +265,7 @@ jobs:
       - lint
       - changelog-gate
       - generator-gate
+      - patch-coverage
       - overlay-smoke
       - integ-tests
       - release-ready

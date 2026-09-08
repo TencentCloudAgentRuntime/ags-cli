@@ -1,4 +1,4 @@
-.PHONY: build install go-install clean test lint fmt help man install-man e2e integ
+.PHONY: build install go-install clean test lint fmt help man install-man e2e integ api-patch-coverage api-patch-e2e
 
 # Binary name
 BINARY_NAME=agr
@@ -101,6 +101,14 @@ fmt:
 ## e2e: Run lifecycle tests (requires credentials via env or ~/.agr/config.toml)
 e2e:
 	$(GOTEST) -v -timeout 20m ./tests/lifecycle/...
+
+## api-patch-coverage: Validate complete Patch-to-scenario coverage (no credentials)
+api-patch-coverage:
+	$(GOCMD) run ./cmd/internal/apipatch coverage
+
+## api-patch-e2e: Run strict live Patch scenarios; pass identity flags in ARGS
+api-patch-e2e:
+	@$(GOCMD) run ./cmd/internal/patch-e2e $(ARGS)
 
 ## integ: Run integration tests (no credentials required,<30s)
 integ:
