@@ -66,6 +66,20 @@ func TestStrictPreflight(t *testing.T) {
 	if err != nil || r.Status != "not_applicable" || r.Tree == "" || r.Plan.PatchDigest == "" {
 		t.Fatal(r, err)
 	}
+	alias := filepath.Join(t.TempDir(), "repo-alias")
+	if err := os.Symlink(root, alias); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(alias)
+	t.Setenv("PWD", alias)
+	if r, err := runReport(); err != nil || r.Status != "not_applicable" {
+		t.Fatalf("repository alias rejected: %+v %v", r, err)
+	}
+	t.Chdir(dir)
+	if r, err := runReport(); err == nil || r.Reason != "run from the repository root" {
+		t.Fatalf("repository subdirectory accepted: %+v %v", r, err)
+	}
+	t.Chdir(root)
 	write("extra.txt", "untracked")
 	if _, err := runReport(); err == nil {
 		t.Fatal("untracked source accepted")

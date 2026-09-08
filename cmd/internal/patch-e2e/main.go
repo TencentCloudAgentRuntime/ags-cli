@@ -101,11 +101,17 @@ func run(ctx context.Context, args []string, out io.Writer) (retErr error) {
 	if err != nil {
 		return err
 	}
-	cwd, err := os.Getwd()
+	cwd, err := os.Stat(".")
 	if err != nil {
 		return fmt.Errorf("cannot determine working directory")
 	}
-	if cwd != root {
+	repoRoot, err := os.Stat(root)
+	if err != nil {
+		return fmt.Errorf("cannot determine repository root")
+	}
+	// macOS temporary directories can have both logical and physical paths.
+	// Compare directory identity so aliases work without accepting subdirectories.
+	if !os.SameFile(cwd, repoRoot) {
 		return fmt.Errorf("run from the repository root")
 	}
 	if err := clean(ctx, r.Head); err != nil {
