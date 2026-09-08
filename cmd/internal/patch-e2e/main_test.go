@@ -55,7 +55,7 @@ func TestStrictPreflight(t *testing.T) {
 		// Exercise worker preflight directly; archive_test drives the real launcher.
 		runnerCommit = head
 		var b bytes.Buffer
-		err := run(t.Context(), args(), &b)
+		err := run(t.Context(), args(), &b, &bytes.Buffer{})
 		var r Report
 		if e := json.Unmarshal(b.Bytes(), &r); e != nil {
 			t.Fatal(b.String(), e)

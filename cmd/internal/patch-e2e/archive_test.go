@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -90,9 +91,13 @@ func init() { Registry["fixture"] = patchtest.Scenario{Assertions: []string{"beh
 	t.Setenv("TENCENTCLOUD_SECRET_ID", "fixture-only")
 	t.Setenv("TENCENTCLOUD_SECRET_KEY", "fixture-only")
 	t.Setenv("AGR_REGION", "fixture")
+	var diagnostics bytes.Buffer
 	runBinary := func(binary, head string) (Report, error) {
 		t.Helper()
-		b, err := exec.CommandContext(t.Context(), binary, "--repository", "example/repo", "--pr", "1", "--head", head, "--base", headA, "--environment", "fixture").Output()
+		diagnostics.Reset()
+		cmd := exec.CommandContext(t.Context(), binary, "--repository", "example/repo", "--pr", "1", "--head", head, "--base", headA, "--environment", "fixture")
+		cmd.Stderr = &diagnostics
+		b, err := cmd.Output()
 		var report Report
 		if e := json.Unmarshal(b, &report); e != nil {
 			t.Fatalf("report: %s %v (process: %v)", b, e, err)
@@ -111,5 +116,23 @@ func init() { Registry["fixture"] = patchtest.Scenario{Assertions: []string{"beh
 	}
 	if r, err := runBinary(launcher, headB); err == nil || r.Status != "fail" || r.Failed != 1 || r.Source != headB {
 		t.Fatalf("launcher did not execute new committed assertion: %+v %v", r, err)
+	}
+	// Both archive builds must preserve compiler diagnostics on stderr only,
+	// including the candidate build performed inside the launcher child process.
+	for _, fixture := range []struct{ path, reason string }{
+		{"cmd/agr/main.go", "committed runner failed: candidate CLI build failed"},
+		{"cmd/internal/patch-e2e/broken.go", "committed runner build failed"},
+	} {
+		write(fixture.path, "package main\nvar _ = archiveBuildDiagnosticMarker\n")
+		command("git", "add", fixture.path)
+		command("git", "commit", "-m", "invalid-build-fixture")
+		head := command("git", "rev-parse", "HEAD")
+		r, err := runBinary(launcher, head)
+		if err == nil || r.Status != "fail" || r.Reason != fixture.reason {
+			t.Fatalf("build failure report: %+v %v", r, err)
+		}
+		if !strings.Contains(diagnostics.String(), "undefined: archiveBuildDiagnosticMarker") {
+			t.Fatalf("missing compiler diagnostic: %s", &diagnostics)
+		}
 	}
 }

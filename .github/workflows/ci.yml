@@ -83,6 +83,14 @@ jobs:
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
 
+      - name: Set up Go 1.26 for archive compatibility
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.x'
+
+      - name: Test archived runner with Go 1.26 (no cloud credentials)
+        run: go test -v -race ./cmd/internal/patch-e2e -count=1
+
       - name: Test one-line installer
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then

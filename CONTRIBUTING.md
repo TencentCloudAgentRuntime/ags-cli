@@ -163,7 +163,12 @@ go run ./cmd/internal/cobragen check
 Every effective contract delta must map to registered scenario/assertion IDs in
 `e2e-coverage.yaml`. See [Patch verification](PATCH-VERIFICATION.md) for the strict
 `make api-patch-e2e` entrypoint, commit-bound reports, independent reproduction,
-cleanup, and optional API-owner/CLI-maintainer dual-role review. Static coverage
+cleanup, and API review. All PRs targeting `preview` require two different
+approving maintainers with repository write access or higher, without fixed teams.
+For non-empty patches, the author also nominates an API reviewer whose identity,
+expertise and explicit acceptance are verified by the lead maintainer. The API
+reviewer need not have write access, but without it their approval does not count
+toward GitHub's two-vote requirement. Static coverage
 does not prove runtime correctness; empty patches do not count as live E2E passes.
 
 No live-E2E CI workflow is being added in this phase. PRs containing a non-empty
@@ -273,7 +278,7 @@ docs(readme): update installation instructions
 ## Review Process
 
 1. **Automated Checks**: The required status checks are `CI Gate` and `gitleaks`. `CI Gate` aggregates pull request title and workflow validation, formatting, tests, linting, changelog and generated-output validation, overlay smoke tests, and release-readiness validation.
-2. **Code Review**: At least one maintainer approval required
+2. **Code Review**: At least one maintainer approval required; PRs targeting `preview` require two different approving maintainers with repository write access or higher.
 3. **Testing**: Adequate test coverage expected
 4. **Documentation**: Update docs if needed
 5. **Merge**: Maintainers will merge approved PRs

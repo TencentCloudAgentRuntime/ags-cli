@@ -156,8 +156,11 @@ go run ./cmd/internal/cobragen check
 ```
 
 每个有效契约差异必须在 `e2e-coverage.yaml` 中映射到已注册的场景和断言 ID。
-严格入口 `make api-patch-e2e`、提交绑定报告、独立复现、清理及 API owner / CLI
-maintainer 可选双角色审核见[补丁验证规范](PATCH-VERIFICATION.md)。
+严格入口 `make api-patch-e2e`、提交绑定报告、独立复现、清理及 API 审核见
+[补丁验证规范](PATCH-VERIFICATION.md)。所有合入 `preview` 的 PR 均须获得两位
+具有仓库 write 或更高权限的维护者批准，不绑定固定团队。非空 Patch 的作者还须
+提名一位非本人的 API reviewer，由主审批人核实其身份、相关专业能力和明确同意意见。
+API reviewer 可以没有 write 权限，但此时其意见不计入 GitHub 强制要求的两票。
 静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
 
 本阶段不新增真实 E2E 测试流水线。包含非空 Patch 的 PR 必须在合并前附上本地
@@ -259,7 +262,7 @@ docs(readme): 更新安装说明
 ## 审核流程
 
 1. **自动检查**：必需状态检查为 `CI Gate` 和 `gitleaks`。`CI Gate` 聚合 Pull Request 标题与工作流校验、格式、测试、代码检查、变更日志和生成结果校验、Overlay 冒烟测试及发布就绪校验。
-2. **代码审核**：需要至少一位维护者批准
+2. **代码审核**：需要至少一位维护者批准；合入 `preview` 的 PR 须由两位具有仓库 write 或更高权限的维护者批准。
 3. **测试覆盖**：需要足够的测试覆盖率
 4. **文档更新**：如需要则更新文档
 5. **合并**：维护者将合并已批准的 PR

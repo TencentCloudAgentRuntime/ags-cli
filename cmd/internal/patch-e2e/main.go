@@ -52,7 +52,7 @@ func main() {
 	defer stop()
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()
-	if err := run(ctx, os.Args[1:], os.Stdout); err != nil {
+	if err := run(ctx, os.Args[1:], os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintln(os.Stderr, "patch-e2e:", err)
 		os.Exit(1)
 	}
@@ -66,7 +66,7 @@ func git(ctx context.Context, args ...string) (string, error) {
 	return strings.TrimSpace(string(b)), nil
 }
 
-func run(ctx context.Context, args []string, out io.Writer) (retErr error) {
+func run(ctx context.Context, args []string, out, diagnostics io.Writer) (retErr error) {
 	r := Report{Version: entrypointVersion, Started: time.Now().UTC(), Status: "fail"}
 	f := flag.NewFlagSet("patch-e2e", flag.ContinueOnError)
 	f.StringVar(&r.Repository, "repository", "", "public owner/repository")
@@ -143,13 +143,16 @@ func run(ctx context.Context, args []string, out io.Writer) (retErr error) {
 			return err
 		}
 		binary := filepath.Join(tmp, "patch-e2e-worker")
-		build := exec.CommandContext(ctx, "go", "build", "-mod=readonly", "-ldflags=-X main.runnerCommit="+r.Source, "-o", binary, "./cmd/internal/patch-e2e")
+		// The archive has no Git metadata; identity is bound explicitly above.
+		build := exec.CommandContext(ctx, "go", "build", "-buildvcs=false", "-mod=readonly", "-ldflags=-X main.runnerCommit="+r.Source, "-o", binary, "./cmd/internal/patch-e2e")
 		build.Dir = tmp
 		build.Env = append(os.Environ(), "GOWORK=off", "GOFLAGS=")
+		build.Stderr = diagnostics
 		if build.Run() != nil {
 			return fmt.Errorf("committed runner build failed")
 		}
 		worker := exec.CommandContext(ctx, binary, args...)
+		worker.Stderr = diagnostics
 		// Forward cancellation so the worker can run resource cleanup before
 		// a bounded forced termination, rather than killing it immediately.
 		worker.Cancel = func() error { return worker.Process.Signal(os.Interrupt) }
@@ -199,9 +202,10 @@ func run(ctx context.Context, args []string, out io.Writer) (retErr error) {
 		return err
 	}
 	binary := filepath.Join(tmp, "agr-candidate")
-	build := exec.CommandContext(ctx, "go", "build", "-mod=readonly", "-o", binary, "./cmd/agr")
+	build := exec.CommandContext(ctx, "go", "build", "-buildvcs=false", "-mod=readonly", "-o", binary, "./cmd/agr")
 	build.Dir = tmp
 	build.Env = append(os.Environ(), "GOWORK=off", "GOFLAGS=")
+	build.Stderr = diagnostics
 	if build.Run() != nil {
 		return fmt.Errorf("candidate CLI build failed")
 	}

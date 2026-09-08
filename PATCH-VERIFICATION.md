@@ -82,7 +82,8 @@ untracked files make the strict command fail. Do not hide changes with Git
 assume-unchanged/skip-worktree. The launcher rebuilds the test runner (including
 its scenario registry) from a temporary `git archive` of the recorded commit.
 That worker rejects a different head and builds the candidate CLI from the same
-commit. Both builds disable workspace mode and ambient Go flags. Source
+commit. Both builds disable workspace mode, ambient Go flags and automatic VCS
+stamping (`-buildvcs=false`), since the archives have no `.git` metadata. Source
 identity is checked again after testing. The runner itself is candidate code:
 its report is not cryptographically trusted and must be independently reproduced.
 Launcher cancellation forwards an interrupt to the worker for cleanup, with a
@@ -96,6 +97,10 @@ Compare plan digests with `apipatch coverage` on the same source; the public run
 report omits raw contract values and raw CLI output. Review aliases, IDs and review
 rationales for disclosure before posting. Repository/PR/base and environment alias
 are supplied context: reviewers must check them against GitHub and the real account.
+
+Build diagnostics are written to local stderr, separately from the JSON report.
+They may contain source excerpts or local paths: do not combine stderr into the
+public report or publish build logs without a disclosure review.
 
 Missing explicit credentials (for selected live scenarios), unexpected command failures or failed assertions,
 missing assertion execution, skip, panic, cancellation and cleanup failure cannot
@@ -114,22 +119,34 @@ an interrupted/missing report is never usable passing evidence.
 
 ## Reviewer and ownership checklist
 
-Non-empty Patch changes require maintainer approval under the repository's
-normal review rules and independent reproduction as described below. Separate
-API-owner and CLI-maintainer approvals are optional additional protection, not
-a prerequisite for accepting patches. Record actual reviewers and their roles.
+Every PR targeting `preview`, including sync and documentation PRs, requires
+approvals from two different maintainers with repository write access or higher.
+Use GitHub's native required-approval count; no fixed team or separate team quotas
+are required. Record approval links for the current head.
 
-Administrators may add the following protections:
+For a candidate containing a non-empty Patch, the author must also nominate an API
+reviewer other than themselves and link that reviewer's explicit acceptance of the
+API contract. The API reviewer may be any GitHub user; repository write access is
+not required. A lead maintainer must verify the reviewer's relevant expertise,
+identity and conclusions before approving. An external review without write
+access is supporting evidence, not one of GitHub's two required approvals. An API
+reviewer who has write access may also count as one of the two approving maintainers.
 
-- If enabling dual-role review, confirm actual team slugs and repository access.
-- Configure review routing/protection for `api/ags/**`, `internal/patchcoverage/**`,
-  `internal/patchtest/**`, `internal/patchscenarios/**`, `cmd/internal/apipatch/**`,
-  `cmd/internal/patch-e2e/**`, affected generated/runtime files, `Makefile`,
-  `.github/workflows/**`, the PR template and CODEOWNERS itself.
-- If choosing to require both roles, enforce independent approvals with supported
-  rules and validate on a canary PR. CODEOWNERS alone does not enforce both roles.
-- After the real CI job has run, optionally require `Patch Contract Coverage`
-  with GitHub Actions as source; it is already transitively required by CI Gate.
+Administrators must enforce the following on `preview` before accepting non-empty
+Patch candidates:
+
+- Require pull requests and two approving reviews; do not grant bypass access.
+- Dismiss stale approvals on new commits, require approval of the latest reviewable
+  push, and require resolution of review threads.
+- Require `CI Gate` and `gitleaks` from GitHub Actions. `Patch Contract Coverage`
+  is already transitively required by `CI Gate`.
+- Validate with canary PRs: one eligible approval, an external approval plus only
+  one eligible approval, and stale approvals must not satisfy the two-vote gate.
+  Two eligible approvals satisfy only the approval count, not the other merge checks.
+
+GitHub enforces the approval count, not API expertise or evidence quality. The
+lead maintainer must check API review, source/disclosure verification, the real
+E2E report and independent reproduction before approving and merging.
 
 Author report is supporting evidence. A trusted reviewer must independently rerun
 the strict command on the exact source in an isolated environment, then compare
