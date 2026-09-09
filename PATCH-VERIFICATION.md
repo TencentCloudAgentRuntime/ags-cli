@@ -5,7 +5,8 @@ reports, and review the evidence before merging. CI checks coverage mappings;
 real API tests require a separate, reviewed local run.
 
 `api.json` is canonical; a passing test does not turn `api.patch.json` into an
-official contract. Non-empty patches belong only on `preview`.
+official contract. All changes target `main`; patch evidence requirements apply
+regardless of whether the PR edits the patch file.
 
 ## Required evidence
 
@@ -119,30 +120,15 @@ an interrupted/missing report is never usable passing evidence.
 
 ## Reviewer and ownership checklist
 
-Every PR targeting `preview`, including sync and documentation PRs, requires
-approvals from two different maintainers with repository write access or higher.
-Use GitHub's native required-approval count; no fixed team or separate team quotas
-are required. Record approval links for the current head.
+All PRs follow the repository's normal required-review and CI rules on `main`.
+The retired `preview` branch's two-approval requirement no longer applies.
 
-For a candidate containing a non-empty Patch, the author must also nominate an API
+For a candidate containing a non-empty Patch, the author must nominate an API
 reviewer other than themselves and link that reviewer's explicit acceptance of the
 API contract. The API reviewer may be any GitHub user; repository write access is
 not required. A lead maintainer must verify the reviewer's relevant expertise,
-identity and conclusions before approving. An external review without write
-access is supporting evidence, not one of GitHub's two required approvals. An API
-reviewer who has write access may also count as one of the two approving maintainers.
-
-Administrators must enforce the following on `preview` before accepting non-empty
-Patch candidates:
-
-- Require pull requests and two approving reviews; do not grant bypass access.
-- Dismiss stale approvals on new commits, require approval of the latest reviewable
-  push, and require resolution of review threads.
-- Require `CI Gate` and `gitleaks` from GitHub Actions. `Patch Contract Coverage`
-  is already transitively required by `CI Gate`.
-- Validate with canary PRs: one eligible approval, an external approval plus only
-  one eligible approval, and stale approvals must not satisfy the two-vote gate.
-  Two eligible approvals satisfy only the approval count, not the other merge checks.
+identity and conclusions before approving. External API review is supporting
+evidence, not a substitute for required maintainer approval.
 
 GitHub enforces the approval count, not API expertise or evidence quality. The
 lead maintainer must check API review, source/disclosure verification, the real
@@ -166,5 +152,5 @@ official-absorption exit condition in each Patch PR. Do not paste internal sourc
 text, credentials, tenant IDs, private endpoints or raw sensitive responses into
 public GitHub. Use an auditable API-owner confirmation for nonpublic sources.
 
-Real patch scenarios belong with the preview-only capabilities they verify.
+Real patch scenarios belong with the patch-dependent capabilities they verify.
 Do not add fabricated passing scenarios to populate an otherwise empty registry.
