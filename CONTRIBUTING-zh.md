@@ -157,10 +157,9 @@ go run ./cmd/internal/cobragen check
 
 每个有效契约差异必须在 `e2e-coverage.yaml` 中映射到已注册的场景和断言 ID。
 严格入口 `make api-patch-e2e`、提交绑定报告、独立复现、清理及 API 审核见
-[补丁验证规范](PATCH-VERIFICATION.md)。所有合入 `preview` 的 PR 均须获得两位
-具有仓库 write 或更高权限的维护者批准，不绑定固定团队。非空 Patch 的作者还须
-提名一位非本人的 API reviewer，由主审批人核实其身份、相关专业能力和明确同意意见。
-API reviewer 可以没有 write 权限，但此时其意见不计入 GitHub 强制要求的两票。
+[补丁验证规范](PATCH-VERIFICATION.md)。非空 Patch 的作者须提名一位非本人的
+API reviewer，由主审批人核实其身份、相关专业能力和明确同意意见。
+API reviewer 可以没有 write 权限，其意见作为审核证据，不能替代所需的维护者批准。
 静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
 
 本阶段不新增真实 E2E 测试流水线。包含非空 Patch 的 PR 必须在合并前附上本地
@@ -178,31 +177,17 @@ go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
 上游吸收某个操作后，应在同一次变更中更新原始 `api.json` 并删除对应补丁，
 然后重新执行上述检查并审阅生成的 CLI 差异。
 
-#### 稳定版与预览版分支
+#### 单分支开发
 
-`main` 是始终可发布的稳定分支，其中所有 `api/ags/**/api.patch.json` 都必须
-为空。非空 Patch 及其派生 CLI 产物只能提交到受保护的 `preview` 分支。
+所有改动（包括 API Patch）均以 `main` 为目标。长期 `preview` 分支及其同步流程
+已退役。PR 遵守仓库常规审批和 CI 要求；非空 Patch 还须满足上述证据要求。
 
-- 普通改动和官方 API 更新先进入 `main`，再通过 `main` 到 `preview` 的同步 PR
-  单向进入 `preview`。
-- 同步 PR 使用 merge commit 合入，使 `preview` 保留 `main` 的祖先关系；Patch
-  专属 PR 和 Release PR 仍使用 squash。
-- Patch 专属改动直接以 `preview` 为目标；禁止把 `preview` 整体合回 `main`。
-- 稳定版 Release PR 以 `main` 为目标并使用 `vX.Y.Z`；预览版 Release PR 以
-  `preview` 为目标并使用 `vX.Y.Z-preview.N`。两者都使用 `release/<tag>` 源分支
-  和 `chore(release): prepare <tag>` 标题；tag 必须精确指向该 PR 的合入提交。
-- 稳定版本号优先。`vX.Y.Z` 已存在后，后续预览版必须推进到下一个可用的核心版本号，
-  不能继续发布 `vX.Y.Z-preview.N`。
-- 预览版发布说明写入 `CHANGELOG-preview.md` 和 `CHANGELOG-preview-zh.md`；
-  稳定版继续使用现有更新日志。
+CI 和发布流程校验有效 API 契约，不再强制 Patch 为空。在稳定版和预览版的独立构建
+实现前，生成代码仍包含有效契约（官方 API 加 Patch）。发布负责人须在发布前审核
+实际契约；流水线不保证稳定包排除 Patch 内容。
 
-CI 会在两个分支校验全部 Patch 文件，并针对以 `main` 为目标的改动额外执行：
-
-```bash
-go run ./cmd/internal/apipatch check-all --require-empty
-```
-
-预览版只作为 GitHub Prerelease 发布，不会被选为 `latest`，也不会更新 Homebrew。
+预览发布暂时停用。发布使用 `vX.Y.Z` 和现有双语更新日志。双构建变体属于后续工作，
+不包含在本次回退中。
 
 ## 编码规范
 
@@ -262,7 +247,7 @@ docs(readme): 更新安装说明
 ## 审核流程
 
 1. **自动检查**：必需状态检查为 `CI Gate` 和 `gitleaks`。`CI Gate` 聚合 Pull Request 标题与工作流校验、格式、测试、代码检查、变更日志和生成结果校验、Overlay 冒烟测试及发布就绪校验。
-2. **代码审核**：需要至少一位维护者批准；合入 `preview` 的 PR 须由两位具有仓库 write 或更高权限的维护者批准。
+2. **代码审核**：需要至少一位维护者批准。
 3. **测试覆盖**：需要足够的测试覆盖率
 4. **文档更新**：如需要则更新文档
 5. **合并**：维护者将合并已批准的 PR

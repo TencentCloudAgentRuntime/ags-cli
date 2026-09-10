@@ -163,12 +163,10 @@ go run ./cmd/internal/cobragen check
 Every effective contract delta must map to registered scenario/assertion IDs in
 `e2e-coverage.yaml`. See [Patch verification](PATCH-VERIFICATION.md) for the strict
 `make api-patch-e2e` entrypoint, commit-bound reports, independent reproduction,
-cleanup, and API review. All PRs targeting `preview` require two different
-approving maintainers with repository write access or higher, without fixed teams.
-For non-empty patches, the author also nominates an API reviewer whose identity,
-expertise and explicit acceptance are verified by the lead maintainer. The API
-reviewer need not have write access, but without it their approval does not count
-toward GitHub's two-vote requirement. Static coverage
+cleanup, and API review. For non-empty patches, the author nominates an API
+reviewer whose identity, expertise and explicit acceptance are verified by the
+lead maintainer. The API reviewer need not have write access; their review is
+supporting evidence, not a substitute for required maintainer approval. Static coverage
 does not prove runtime correctness; empty patches do not count as live E2E passes.
 
 No live-E2E CI workflow is being added in this phase. PRs containing a non-empty
@@ -188,37 +186,22 @@ When upstream absorbs an operation, update the canonical `api.json` and remove
 that operation in the same change, then rerun the checks above and review any
 generated CLI diff.
 
-#### Stable and preview branches
+#### Single-branch development
 
-`main` is the always-releasable stable branch. Every checked-in
-`api/ags/**/api.patch.json` must be empty there. Non-empty patches and their
-derived CLI output target the protected `preview` branch instead.
+All changes, including API patches, target `main`. The long-lived `preview`
+branch and its synchronization workflow have been retired. Normal repository
+review and CI requirements apply; non-empty patches additionally require the
+evidence described above.
 
-- Ordinary changes and official API updates land on `main` first, then flow to
-  `preview` through a `main` to `preview` synchronization pull request.
-- Merge synchronization pull requests with a merge commit so `preview` retains
-  `main` ancestry; continue to squash patch-specific and release pull requests.
-- Patch-specific changes target `preview`. Never merge `preview` wholesale back
-  into `main`.
-- Stable release pull requests target `main` and use `vX.Y.Z`. Preview release
-  pull requests target `preview` and use `vX.Y.Z-preview.N`. Both use a
-  `release/<tag>` head branch and the title `chore(release): prepare <tag>`;
-  the tag must point to that pull request's exact merge commit.
-- Stable versions take priority. After `vX.Y.Z` exists, advance later previews
-  to the next available core version rather than publishing another
-  `vX.Y.Z-preview.N`.
-- Preview release notes belong in `CHANGELOG-preview.md` and
-  `CHANGELOG-preview-zh.md`; stable release notes remain in the existing
-  changelogs.
+CI and release validation check the effective API contract but do not require
+empty patches. Until separate stable/preview builds are implemented, generated
+code includes the effective contract (official API plus patch). Release owners
+must inspect that contract before publishing; the pipeline does not guarantee
+that a stable package excludes patch content.
 
-CI validates every patch file on both branches and additionally runs:
-
-```bash
-go run ./cmd/internal/apipatch check-all --require-empty
-```
-
-for changes targeting `main`. Preview releases are GitHub prereleases, are not
-selected as `latest`, and do not update Homebrew.
+Preview publishing is temporarily disabled. Releases use `vX.Y.Z` and the
+existing bilingual changelogs. Dual build variants are a separate follow-up,
+not part of this rollback.
 
 ## Coding Guidelines
 
@@ -278,7 +261,7 @@ docs(readme): update installation instructions
 ## Review Process
 
 1. **Automated Checks**: The required status checks are `CI Gate` and `gitleaks`. `CI Gate` aggregates pull request title and workflow validation, formatting, tests, linting, changelog and generated-output validation, overlay smoke tests, and release-readiness validation.
-2. **Code Review**: At least one maintainer approval required; PRs targeting `preview` require two different approving maintainers with repository write access or higher.
+2. **Code Review**: At least one maintainer approval required.
 3. **Testing**: Adequate test coverage expected
 4. **Documentation**: Update docs if needed
 5. **Merge**: Maintainers will merge approved PRs
