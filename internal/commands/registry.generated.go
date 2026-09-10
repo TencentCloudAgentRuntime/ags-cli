@@ -53,6 +53,19 @@ import (
 	instanceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/update"
 	precacheimagetaskcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/create"
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
+	sessioncreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/create"
+	sessiondelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/delete"
+	sessioneventappend "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/event/append"
+	sessioneventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/event/list"
+	sessionget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/get"
+	sessionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/list"
+	sessionupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/update"
+	sessionupdatetitle "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/updatetitle"
+	sessionspacecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/create"
+	sessionspacedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/delete"
+	sessionspaceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/get"
+	sessionspacelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/list"
+	sessionspaceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/update"
 	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	tooldelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/delete"
 	toolfork "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/fork"
@@ -113,6 +126,19 @@ func Registry() (*command.Registry, error) {
 		instanceupdate.Module(),
 		precacheimagetaskcreate.Module(),
 		precacheimagetaskget.Module(),
+		sessionspacecreate.GeneratedModule(),
+		sessionspacedelete.GeneratedModule(),
+		sessionspaceget.GeneratedModule(),
+		sessionspacelist.GeneratedModule(),
+		sessionspaceupdate.GeneratedModule(),
+		sessioncreate.GeneratedModule(),
+		sessiondelete.GeneratedModule(),
+		sessioneventappend.GeneratedModule(),
+		sessioneventlist.GeneratedModule(),
+		sessionget.GeneratedModule(),
+		sessionlist.GeneratedModule(),
+		sessionupdate.GeneratedModule(),
+		sessionupdatetitle.GeneratedModule(),
 		toolcreate.Module(),
 		tooldelete.Module(),
 		toolfork.Module(),
