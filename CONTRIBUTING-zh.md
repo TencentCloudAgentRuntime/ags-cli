@@ -212,7 +212,7 @@ preview 必须保留所有 stable 命令路径。已有生成命令可以通过 
 正式 tag 使用 `vX.Y.Z`，预览 tag 使用 `vX.Y.Z-preview.N`；发布流水线选择构建 tag，
 并检查 `agr version` 的 `Channel`。版本号与构建通道不匹配会被拒绝。
 从源码安装 preview 必须显式使用 `go install -tags=preview github.com/TencentCloudAgentRuntime/ags-cli/cmd/agr@vX.Y.Z-preview.N`。
-每个正式/预览版本均在 `CHANGELOG.md` 与 `CHANGELOG-zh.md` 中记录对应条目。完整边界见[设计文档](PREVIEW-STABLE-DESIGN.md)。
+每个正式/预览版本均在 `CHANGELOG.md` 与 `CHANGELOG-zh.md` 中记录对应条目。
 
 ## 编码规范
 

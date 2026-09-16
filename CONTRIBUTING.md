@@ -230,7 +230,6 @@ release pipeline selects the corresponding build tag and verifies `version`'s
 `Channel`; a formal version stamped on the wrong projection is rejected.
 Source installation of preview requires `go install -tags=preview github.com/TencentCloudAgentRuntime/ags-cli/cmd/agr@vX.Y.Z-preview.N`.
 Record each stable/preview version in both `CHANGELOG.md` and `CHANGELOG-zh.md`.
-See [the design](PREVIEW-STABLE-DESIGN.md) for the complete boundaries.
 
 ## Coding Guidelines
 
