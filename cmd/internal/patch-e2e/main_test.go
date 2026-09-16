@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchscenarios"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 )
@@ -63,6 +64,12 @@ func TestStrictPreflight(t *testing.T) {
 		return r, err
 	}
 	r, err := runReport()
+	if apimeta.BuildChannel != apimeta.Preview {
+		if err == nil || !strings.Contains(err.Error(), "must be built with -tags=preview") {
+			t.Fatalf("stable worker accepted: %+v %v", r, err)
+		}
+		return
+	}
 	if err != nil || r.Status != "not_applicable" || r.Tree == "" || r.Plan.PatchDigest == "" {
 		t.Fatal(r, err)
 	}

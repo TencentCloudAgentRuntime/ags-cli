@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -190,9 +191,9 @@ type fakeControlPlane struct {
 	instance   *ags.SandboxInstance
 }
 
-func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
+func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (apivalue.Object, error) {
 	f.instanceID = instanceID
-	return f.instance, nil
+	return apivalue.Decode(f.instance)
 }
 
 type fakeSession struct {

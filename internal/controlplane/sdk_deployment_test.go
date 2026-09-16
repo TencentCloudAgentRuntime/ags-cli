@@ -125,11 +125,11 @@ func TestSDKDeploymentWorkflowCapabilities(t *testing.T) {
 	}
 
 	got, err := sdk.GetDeployment(context.Background(), id)
-	if err != nil || got != want {
+	if err != nil || got.String("DeploymentId") != id {
 		t.Fatalf("GetDeployment() = (%p, %v), want (%p, nil)", got, err, want)
 	}
 	credential, err := sdk.GetDeploymentToken(context.Background(), id)
-	if err != nil || derefTestString(credential.Token) != "dpt_secret" {
+	if err != nil || credential.String("Token") != "dpt_secret" {
 		t.Fatalf("GetDeploymentToken() = (%#v, %v)", credential, err)
 	}
 

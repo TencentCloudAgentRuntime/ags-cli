@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -34,10 +35,10 @@ func (f *fakeControlPlane) Call(_ context.Context, action string, request map[st
 	return map[string]any{"ok": true}, nil
 }
 
-func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (apivalue.Object, error) {
 	f.getCalls++
 	status := "ACTIVE"
-	return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
+	return apivalue.Decode(&ags.SandboxTool{ToolId: &toolID, Status: &status})
 }
 
 func TestModuleWaitsAfterUpdatingExactlyOnce(t *testing.T) {

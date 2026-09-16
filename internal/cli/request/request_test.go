@@ -24,7 +24,7 @@ func TestParseFlagAcceptsObject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseFlag error: %v", err)
 	}
-	if got["Limit"].(float64) != 1 {
+	if got["Limit"] != json.Number("1") {
 		t.Fatalf("Limit=%v", got["Limit"])
 	}
 }

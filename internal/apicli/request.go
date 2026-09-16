@@ -1,7 +1,6 @@
 package apicli
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -50,7 +49,7 @@ func (JSONRequestSource) Read(req command.Request) (map[string]any, bool, error)
 		return nil, false, err
 	}
 	var decoded any
-	if err := json.Unmarshal(raw, &decoded); err != nil {
+	if err := requestio.DecodeJSON(raw, &decoded); err != nil {
 		return nil, false, output.NewUsageError(
 			"INVALID_REQUEST_JSON",
 			fmt.Sprintf("invalid JSON in --request: %v", err),

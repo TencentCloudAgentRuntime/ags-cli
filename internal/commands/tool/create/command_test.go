@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
@@ -38,9 +39,9 @@ func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request m
 	return map[string]any{"ok": true}, nil
 }
 
-func (f *fakeMixedControlPlane) GetTool(_ context.Context, _ string) (*ags.SandboxTool, error) {
+func (f *fakeMixedControlPlane) GetTool(_ context.Context, _ string) (apivalue.Object, error) {
 	f.getCalls++
-	return f.finalTool, nil
+	return apivalue.Decode(f.finalTool)
 }
 
 // allToolCreateFlags returns a complete flag set mimicking what Cobra registers
@@ -106,7 +107,7 @@ func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cp := &fakeMixedControlPlane{}
+			cp := &fakeMixedControlPlane{resp: &ags.CreateSandboxToolResponseParams{ToolId: func() *string { s := "sdt-test"; return &s }()}}
 			runtime, err := Module().Build(command.Deps{ControlPlane: cp})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
@@ -481,7 +482,7 @@ func TestModuleBypassesConvenienceValidationWithRequestFlag(t *testing.T) {
 	}
 }
 
-func TestModuleReturnsResultWhenResponseNotTyped(t *testing.T) {
+func TestModuleRejectsMalformedResponse(t *testing.T) {
 	// Non-typed response (e.g. API schema change) should not panic.
 	cp := &fakeMixedControlPlane{} // returns map[string]any{"ok": true}
 	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
@@ -489,11 +490,8 @@ func TestModuleReturnsResultWhenResponseNotTyped(t *testing.T) {
 		t.Fatalf("Build returned error: %v", err)
 	}
 	result, err := runtime.Handler.Run(context.Background(), command.Request{Flags: minRequiredFlags()})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result == nil {
-		t.Fatalf("expected non-nil result")
+	if err == nil || result != nil {
+		t.Fatalf("malformed response: result=%#v err=%v", result, err)
 	}
 }
 

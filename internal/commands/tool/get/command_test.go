@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -20,7 +21,7 @@ type fakeControlPlane struct {
 	calls  int
 }
 
-func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (apivalue.Object, error) {
 	f.toolID = toolID
 	f.calls++
 	if f.err != nil {
@@ -31,10 +32,10 @@ func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.Sandb
 		if index >= len(f.tools) {
 			index = len(f.tools) - 1
 		}
-		return f.tools[index], nil
+		return apivalue.Decode(f.tools[index])
 	}
 	id := toolID
-	return &ags.SandboxTool{ToolId: &id}, nil
+	return apivalue.Decode(&ags.SandboxTool{ToolId: &id})
 }
 
 func TestModuleDescriptorIncludesWait(t *testing.T) {
@@ -209,9 +210,9 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 	if data["ToolId"] != id || data["Tags"].(map[string]string)["alpha"] != "1" {
 		t.Fatalf("data = %#v", data)
 	}
-	computer, ok := data["ComputerConfiguration"].(*ags.ComputerConfiguration)
-	if !ok || computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != waaImageID {
-		t.Fatalf("ComputerConfiguration = %#v", data["ComputerConfiguration"])
+	computer, _ := apivalue.Decode(data["ComputerConfiguration"])
+	if computer.Object("WAAConfiguration").String("ImageId") != waaImageID {
+		t.Fatalf("ComputerConfiguration = %#v", computer)
 	}
 }
 

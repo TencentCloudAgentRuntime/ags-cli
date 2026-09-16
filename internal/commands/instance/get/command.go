@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
@@ -15,7 +16,7 @@ import (
 
 // ControlPlane supplies the instance lookup used by the get workflow.
 type ControlPlane interface {
-	GetInstance(ctx context.Context, instanceID string) (*ags.SandboxInstance, error)
+	GetInstance(ctx context.Context, instanceID string) (apivalue.Object, error)
 }
 
 // Module returns this package's command module.
@@ -56,7 +57,7 @@ func Module() command.Module {
 				if strings.TrimSpace(instanceID) == "" {
 					return nil, output.NewUsageError("MISSING_REQUIRED_ARG", "missing instance id", "Provide <instance-id>.")
 				}
-				var instance *ags.SandboxInstance
+				var instance apivalue.Object
 				var err error
 				if resourcewait.Requested(req) {
 					instance, err = resourcewait.WaitForInstance(ctx, instanceID, cp.GetInstance, resourcewait.OptionsFromDeps(deps))
@@ -74,7 +75,7 @@ func Module() command.Module {
 
 // Result returns the canonical command result for an Instance. Lifecycle
 // mutation commands reuse it after --wait reaches the expected state.
-func Result(instance *ags.SandboxInstance) *command.Result {
+func Result(instance any) *command.Result {
 	return &command.Result{
 		Data: instanceview.CanonicalData(instance),
 		Text: func(w io.Writer) {
@@ -83,7 +84,12 @@ func Result(instance *ags.SandboxInstance) *command.Result {
 	}
 }
 
-func renderInstanceDetails(w io.Writer, instance *ags.SandboxInstance) {
+func renderInstanceDetails(w io.Writer, value any) {
+	var instance ags.SandboxInstance
+	if err := apivalue.Project(value, &instance); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
 	kvs := []instanceview.KeyValue{
 		{Key: "ID", Value: instanceview.DerefString(instance.InstanceId)},
 		{Key: "ToolID", Value: instanceview.DerefString(instance.ToolId)},

@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
+	requestio "github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
-	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/tooltags"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/toolcopy"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 const (
@@ -37,8 +37,8 @@ const (
 
 // ControlPlane supplies the resource operations used by the debug workflow.
 type ControlPlane interface {
-	GetTool(ctx context.Context, toolID string) (*ags.SandboxTool, error)
-	GetInstance(ctx context.Context, instanceID string) (*ags.SandboxInstance, error)
+	GetTool(ctx context.Context, toolID string) (apivalue.Object, error)
+	GetInstance(ctx context.Context, instanceID string) (apivalue.Object, error)
 	DeleteTool(ctx context.Context, toolID string) error
 	DeleteInstance(ctx context.Context, instanceID string) error
 	Call(ctx context.Context, action string, request map[string]any) (any, error)
@@ -149,10 +149,10 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDebugMountAvailable(sourceTool.StorageMounts); err != nil {
+	if err := validateDebugMountAvailable(sourceTool["StorageMounts"]); err != nil {
 		return nil, err
 	}
-	if sourceTool.RoleArn == nil || strings.TrimSpace(*sourceTool.RoleArn) == "" {
+	if strings.TrimSpace(sourceTool.String("RoleArn")) == "" {
 		return nil, output.NewUsageError(
 			"DEBUG_ROLE_ARN_REQUIRED",
 			"source tool must have RoleArn to add the envd image mount",
@@ -179,7 +179,7 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 		{"metadata", "Metadata"},
 	} {
 		if v := stringFlag(req, flagDef.flag); v != "" {
-			data, err := request.ReadFlagFrom(v, deps.IO.In)
+			data, err := requestio.ReadFlagFrom(v, deps.IO.In)
 			if err != nil {
 				return nil, err
 			}
@@ -195,7 +195,7 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 		}
 	}
 
-	debugToolName := defaultDebugToolName(derefString(sourceTool.ToolName), sourceToolID, deps.Now())
+	debugToolName := defaultDebugToolName(sourceTool.String("ToolName"), sourceToolID, deps.Now())
 	description := fmt.Sprintf("Debug tool for %s (%s)", displayToolName(sourceTool, sourceToolID), sourceToolID)
 
 	addedMount := envdMount()
@@ -249,12 +249,12 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	connection := connectionData(instanceID)
 	data := map[string]any{
 		"SourceToolId":   sourceToolID,
-		"SourceToolName": derefString(sourceTool.ToolName),
+		"SourceToolName": sourceTool.String("ToolName"),
 		"ToolId":         debugToolID,
 		"ToolName":       debugToolName,
 		"InstanceId":     instanceID,
 		"Instance":       instance,
-		"Status":         derefString(instance.Status),
+		"Status":         instance.String("Status"),
 		"Timeout":        instanceTimeout,
 		"Connection":     connection,
 		"Command":        []string{envdMountPath},
@@ -270,7 +270,7 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 			fmt.Fprintf(w, "Debug instance ready: %s\n", instanceID)
 			instanceview.PrintKV(w, []instanceview.KeyValue{
 				{Key: "InstanceID", Value: instanceID},
-				{Key: "Status", Value: derefString(instance.Status)},
+				{Key: "Status", Value: instance.String("Status")},
 				{Key: "ToolID", Value: debugToolID},
 				{Key: "ToolName", Value: debugToolName},
 				{Key: "SourceToolID", Value: sourceToolID},
@@ -284,7 +284,7 @@ func runDebug(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	}, nil
 }
 
-func waitForToolReady(ctx context.Context, cp ControlPlane, toolID string) (*ags.SandboxTool, error) {
+func waitForToolReady(ctx context.Context, cp ControlPlane, toolID string) (apivalue.Object, error) {
 	waitCtx, cancel := context.WithTimeout(ctx, debugReadyTimeout)
 	defer cancel()
 	for {
@@ -292,7 +292,7 @@ func waitForToolReady(ctx context.Context, cp ControlPlane, toolID string) (*ags
 		if err != nil {
 			return nil, err
 		}
-		status := strings.ToUpper(derefString(tool.Status))
+		status := strings.ToUpper(tool.String("Status"))
 		switch status {
 		case "ACTIVE", "READY":
 			return tool, nil
@@ -305,7 +305,7 @@ func waitForToolReady(ctx context.Context, cp ControlPlane, toolID string) (*ags
 	}
 }
 
-func waitForInstanceRunning(ctx context.Context, cp ControlPlane, instanceID string, options resourcewait.Options) (*ags.SandboxInstance, error) {
+func waitForInstanceRunning(ctx context.Context, cp ControlPlane, instanceID string, options resourcewait.Options) (apivalue.Object, error) {
 	return resourcewait.WaitForInstanceWithPolicy(
 		ctx,
 		instanceID,
@@ -348,46 +348,34 @@ func connectionData(instanceID string) map[string]string {
 	}
 }
 
-func buildCreateRequest(sourceTool *ags.SandboxTool, toolName, description, clientToken string, addedMount map[string]any) (map[string]any, error) {
-	customConfig, err := customConfigurationRequest(sourceTool.CustomConfiguration)
+func buildCreateRequest(value any, toolName, description, clientToken string, addedMount map[string]any) (map[string]any, error) {
+	sourceTool, err := apivalue.Decode(value)
 	if err != nil {
 		return nil, err
 	}
-	storageMounts, err := storageMountsRequest(sourceTool.StorageMounts, addedMount)
+	req, err := toolcopy.Request(sourceTool)
 	if err != nil {
 		return nil, err
 	}
-
-	req := map[string]any{
-		"ToolName":             toolName,
-		"ToolType":             derefString(sourceTool.ToolType),
-		"NetworkConfiguration": sourceTool.NetworkConfiguration,
-		"Description":          description,
-		"StorageMounts":        storageMounts,
-		"CustomConfiguration":  customConfig,
+	customConfig, err := customConfigurationRequest(req["CustomConfiguration"])
+	if err != nil {
+		return nil, err
 	}
-	if tags := tooltags.FilterInheritedTags(sourceTool.Tags); len(tags) > 0 {
-		req["Tags"] = tags
+	storageMounts, err := storageMountsRequest(req["StorageMounts"], addedMount)
+	if err != nil {
+		return nil, err
 	}
-	if sourceTool.RoleArn != nil && *sourceTool.RoleArn != "" {
-		req["RoleArn"] = *sourceTool.RoleArn
-	}
-	if sourceTool.LogConfiguration != nil {
-		req["LogConfiguration"] = sourceTool.LogConfiguration
-	}
-	if sourceTool.Persistent != nil {
-		req["Persistent"] = *sourceTool.Persistent
-	}
-	if sourceTool.DefaultTimeoutSeconds != nil {
-		req["DefaultTimeout"] = fmt.Sprintf("%ds", *sourceTool.DefaultTimeoutSeconds)
-	}
+	req["ToolName"] = toolName
+	req["Description"] = description
+	req["StorageMounts"] = storageMounts
+	req["CustomConfiguration"] = customConfig
 	if strings.TrimSpace(clientToken) != "" {
 		req["ClientToken"] = clientToken
 	}
 	return req, nil
 }
 
-func customConfigurationRequest(source *ags.CustomConfigurationDetail) (map[string]any, error) {
+func customConfigurationRequest(source any) (map[string]any, error) {
 	var custom map[string]any
 	if source != nil {
 		if err := jsonRoundTrip(source, &custom); err != nil {
@@ -428,7 +416,12 @@ func debugProbe() map[string]any {
 	}
 }
 
-func storageMountsRequest(source []*ags.StorageMount, addedMount map[string]any) ([]map[string]any, error) {
+func storageMountsRequest(value any, addedMount map[string]any) ([]map[string]any, error) {
+	wrapper, err := apivalue.Decode(map[string]any{"Mounts": value})
+	if err != nil {
+		return nil, err
+	}
+	source := wrapper.Objects("Mounts")
 	mounts := make([]map[string]any, 0, len(source)+1)
 	for _, mount := range source {
 		if mount == nil {
@@ -449,12 +442,17 @@ func storageMountsRequest(source []*ags.StorageMount, addedMount map[string]any)
 	return mounts, nil
 }
 
-func validateDebugMountAvailable(mounts []*ags.StorageMount) error {
+func validateDebugMountAvailable(value any) error {
+	wrapper, err := apivalue.Decode(map[string]any{"Mounts": value})
+	if err != nil {
+		return err
+	}
+	mounts := wrapper.Objects("Mounts")
 	for _, mount := range mounts {
 		if mount == nil {
 			continue
 		}
-		if strings.EqualFold(derefString(mount.Name), envdMountName) || derefString(mount.MountPath) == envdMountPath {
+		if strings.EqualFold(mount.String("Name"), envdMountName) || mount.String("MountPath") == envdMountPath {
 			return output.NewUsageError(
 				"DEBUG_MOUNT_CONFLICT",
 				"source tool already uses the debug mount name or path",
@@ -482,25 +480,11 @@ func envdMount() map[string]any {
 
 // resolveToolIDFromList extracts the ToolId of the first tool matching toolName
 // from a DescribeSandboxToolList response.
-func resolveToolIDFromList(resp any, toolName string) string {
-	switch v := resp.(type) {
-	case *ags.DescribeSandboxToolListResponseParams:
-		for _, t := range v.SandboxToolSet {
-			if t.ToolName != nil && *t.ToolName == toolName && t.ToolId != nil {
-				return *t.ToolId
-			}
-		}
-	case map[string]any:
-		if set, ok := v["SandboxToolSet"].([]any); ok {
-			for _, item := range set {
-				if m, ok := item.(map[string]any); ok {
-					name, _ := m["ToolName"].(string)
-					id, _ := m["ToolId"].(string)
-					if name == toolName && id != "" {
-						return id
-					}
-				}
-			}
+func resolveToolIDFromList(value any, toolName string) string {
+	response, _ := apivalue.Decode(value)
+	for _, tool := range response.Objects("SandboxToolSet") {
+		if tool.String("ToolName") == toolName {
+			return tool.String("ToolId")
 		}
 	}
 	return ""
@@ -525,47 +509,23 @@ func defaultDebugToolName(sourceName, sourceToolID string, now time.Time) string
 	return base + suffix
 }
 
-func displayToolName(tool *ags.SandboxTool, fallbackID string) string {
-	if name := derefString(tool.ToolName); name != "" {
+func displayToolName(value any, fallbackID string) string {
+	tool, _ := apivalue.Decode(value)
+	if name := tool.String("ToolName"); name != "" {
 		return name
 	}
 	return fallbackID
 }
 
-func responseToolID(resp any) string {
-	switch value := resp.(type) {
-	case *ags.CreateSandboxToolResponseParams:
-		return derefString(value.ToolId)
-	case map[string]any:
-		return fmt.Sprint(value["ToolId"])
-	default:
-		return ""
-	}
+func responseToolID(value any) string {
+	response, _ := apivalue.Decode(value)
+	return response.String("ToolId")
 }
 
-func responseInstance(resp any) (string, *ags.SandboxInstance) {
-	switch value := resp.(type) {
-	case *ags.StartSandboxInstanceResponseParams:
-		if value.Instance == nil {
-			return "", nil
-		}
-		return derefString(value.Instance.InstanceId), value.Instance
-	case map[string]any:
-		instanceValue, ok := value["Instance"]
-		if !ok {
-			if id, ok := value["InstanceId"]; ok && id != nil {
-				return fmt.Sprint(id), nil
-			}
-			return "", nil
-		}
-		var instance ags.SandboxInstance
-		if err := jsonRoundTrip(instanceValue, &instance); err != nil {
-			return "", nil
-		}
-		return derefString(instance.InstanceId), &instance
-	default:
-		return "", nil
-	}
+func responseInstance(value any) (string, apivalue.Object) {
+	response, _ := apivalue.Decode(value)
+	instance := response.Object("Instance")
+	return instance.String("InstanceId"), instance
 }
 
 func jsonRoundTrip(src any, dst any) error {
@@ -573,7 +533,7 @@ func jsonRoundTrip(src any, dst any) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(raw, dst)
+	return requestio.DecodeJSON(raw, dst)
 }
 
 func stringFlag(req command.Request, name string) string {
@@ -582,11 +542,4 @@ func stringFlag(req command.Request, name string) string {
 		return ""
 	}
 	return flag.String
-}
-
-func derefString(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }

@@ -5,6 +5,7 @@
 package apimeta
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
@@ -79,10 +80,20 @@ func LoadMapping(path string) (*Mapping, error) {
 // ParseMapping parses raw mapping.yaml bytes.
 func ParseMapping(data []byte) (*Mapping, error) {
 	m := &Mapping{}
-	if err := yaml.Unmarshal(data, m); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(m); err != nil {
 		return nil, fmt.Errorf("parse mapping: %w", err)
 	}
 	for name, a := range m.Actions {
+		if a == nil {
+			return nil, fmt.Errorf("mapping action %s must be an object", name)
+		}
+		for field, value := range a.Fields {
+			if value == nil {
+				return nil, fmt.Errorf("mapping %s.%s must be an object", name, field)
+			}
+		}
 		a.Name = name
 	}
 	return m, nil

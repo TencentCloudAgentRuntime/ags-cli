@@ -9,23 +9,7 @@ import (
 )
 
 func inputsFor(m apimeta.Member, fm *apimeta.FieldMapping) []apimeta.InputMapping {
-	if fm != nil && len(fm.Inputs) > 0 {
-		out := append([]apimeta.InputMapping(nil), fm.Inputs...)
-		for i := range out {
-			if out[i].Type == "" {
-				out[i].Type = apimeta.ScalarFlagType(m)
-			}
-		}
-		return out
-	}
-	in := apimeta.InputMapping{Flag: apimeta.KebabCase(m.Name), Type: apimeta.ScalarFlagType(m)}
-	if fm != nil {
-		if fm.Flag != "" {
-			in.Flag = fm.Flag
-		}
-		in.Shorthand = fm.Shorthand
-	}
-	return []apimeta.InputMapping{in}
+	return apimeta.FieldInputs(m, fm)
 }
 
 func inputHelp(h *apimeta.Help, commandID, fieldName, flagName, fallback string) apimeta.InputHelp {
@@ -56,8 +40,10 @@ func commandShortFromHelp(help *apimeta.Help, commandID string) string {
 			return h.Short
 		}
 	}
-	if h := apimeta.CommandHelpFor(commandID); h.Short != "" {
-		return h.Short
+	if help == nil {
+		if h := apimeta.CommandHelpFor(commandID); h.Short != "" {
+			return h.Short
+		}
 	}
 	return "Run " + commandID
 }

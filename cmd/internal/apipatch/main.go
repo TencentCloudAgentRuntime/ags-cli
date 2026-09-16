@@ -120,10 +120,18 @@ func findAPIDirs(root string) ([]string, error) {
 }
 
 func checkAPIDir(apiDir string, requireEmpty bool, stdout io.Writer) error {
-	spec, err := apimeta.LoadEffectiveSpec(apiDir)
+	stable, err := apimeta.LoadContract(apiDir, apimeta.Stable)
 	if err != nil {
 		return fmt.Errorf("check API directory %s: %w", apiDir, err)
 	}
+	preview, err := apimeta.LoadContract(apiDir, apimeta.Preview)
+	if err != nil {
+		return fmt.Errorf("check API directory %s: %w", apiDir, err)
+	}
+	if err := apimeta.ValidateCommandRetention(stable, preview); err != nil {
+		return err
+	}
+	spec := preview.Spec
 	operationCount, err := apiPatchOperationCount(apiDir)
 	if err != nil {
 		return fmt.Errorf("check API directory %s: %w", apiDir, err)

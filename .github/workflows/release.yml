@@ -70,7 +70,11 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           COMMIT: ${{ github.sha }}
+          CHANNEL: ${{ steps.version.outputs.channel }}
+          GOFLAGS: ""
         run: |
+          BUILD_TAGS=()
+          if [ "$CHANNEL" = "preview" ]; then BUILD_TAGS=(-tags=preview); fi
           mkdir -p dist
           BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           LDFLAGS="-s -w -X main.Version=${VERSION} -X main.Commit=${COMMIT} -X main.BuildTime=${BUILD_TIME}"
@@ -82,7 +86,10 @@ jobs:
             if [ "$GOOS" = "windows" ]; then ext=".zip"; bin="agr.exe"; fi
             work="dist/agr-${VERSION}-${GOOS}-${GOARCH}"
             mkdir -p "$work"
-            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags "$LDFLAGS" -o "$work/$bin" ./cmd/agr
+            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build "${BUILD_TAGS[@]}" -ldflags "$LDFLAGS" -o "$work/$bin" ./cmd/agr
+            if [ "$GOOS/$GOARCH" = "linux/amd64" ]; then
+              "$work/$bin" version -o json | jq -e --arg channel "$CHANNEL" '.Data.Channel == $channel'
+            fi
             if [ "$GOOS" = "windows" ]; then
               (cd "$work" && zip -q "../agr-${VERSION}-${GOOS}-${GOARCH}${ext}" "$bin")
             else

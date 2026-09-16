@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	dataplaneproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/dataplane/proxy"
@@ -19,7 +20,7 @@ type fakeControlPlane struct {
 	deployment      *ags.Deployment
 }
 
-func (f *fakeControlPlane) GetDeployment(ctx context.Context, deploymentID string) (*ags.Deployment, error) {
+func (f *fakeControlPlane) GetDeployment(ctx context.Context, deploymentID string) (apivalue.Object, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -28,12 +29,12 @@ func (f *fakeControlPlane) GetDeployment(ctx context.Context, deploymentID strin
 		panic("unexpected deployment id")
 	}
 	if f.deployment != nil {
-		return f.deployment, nil
+		return apivalue.Decode(f.deployment)
 	}
-	return &ags.Deployment{}, nil
+	return apivalue.Decode(&ags.Deployment{})
 }
 
-func (f *fakeControlPlane) GetDeploymentToken(ctx context.Context, deploymentID string) (*ags.AcquireDeploymentTokenResponseParams, error) {
+func (f *fakeControlPlane) GetDeploymentToken(ctx context.Context, deploymentID string) (apivalue.Object, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -42,7 +43,7 @@ func (f *fakeControlPlane) GetDeploymentToken(ctx context.Context, deploymentID 
 	if deploymentID != "dpl-a1b2c3d4" {
 		panic("unexpected deployment id")
 	}
-	return &ags.AcquireDeploymentTokenResponseParams{Token: &token, ExpiresAt: &expires}, nil
+	return apivalue.Decode(&ags.AcquireDeploymentTokenResponseParams{Token: &token, ExpiresAt: &expires})
 }
 
 func TestModuleIsTextOnlyLocalDebuggingWorkflow(t *testing.T) {

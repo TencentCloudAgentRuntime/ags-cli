@@ -104,7 +104,7 @@ func init() { Registry["fixture"] = patchtest.Scenario{Assertions: []string{"beh
 		}
 		return report, err
 	}
-	if r, err := runBinary(launcher, headA); err != nil || r.Status != "pass" {
+	if r, err := runBinary(launcher, headA); err != nil || r.Status != "pass" || r.Channel != "preview" || r.BuildTags != "preview" || len(r.CandidateSHA256) != 64 {
 		t.Fatalf("ignored source contaminated archived runner: %+v %v", r, err)
 	}
 	write("internal/patchscenarios/registry.go", strings.Replace(registry, `s.Assert("behavior", true)`, `s.Assert("behavior", false)`, 1))

@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -20,7 +21,12 @@ type KeyValue struct {
 
 // CanonicalData converts an SDK SandboxInstance into the JSON shape shared by
 // instance get/list commands.
-func CanonicalData(inst *ags.SandboxInstance) map[string]any {
+func CanonicalData(value any) map[string]any {
+	var inst ags.SandboxInstance
+	if err := apivalue.Project(value, &inst); err != nil {
+		raw, _ := apivalue.Decode(value)
+		return map[string]any(raw)
+	}
 	data := map[string]any{
 		"InstanceId":          DerefString(inst.InstanceId),
 		"ToolId":              DerefString(inst.ToolId),
@@ -43,7 +49,7 @@ func CanonicalData(inst *ags.SandboxInstance) map[string]any {
 	if inst.TimeoutSeconds != nil {
 		data["TimeoutSeconds"] = *inst.TimeoutSeconds
 	}
-	return data
+	return apivalue.Extend(data, value)
 }
 
 // PrintKV renders aligned key/value rows for text output.

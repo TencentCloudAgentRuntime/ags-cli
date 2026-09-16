@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
@@ -32,22 +33,22 @@ type fakeControlPlane struct {
 	deleteInstanceErr error
 }
 
-func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (apivalue.Object, error) {
 	f.getIDs = append(f.getIDs, "tool:"+toolID)
 	if f.err != nil {
 		return nil, f.err
 	}
 	if toolID == "sdt-source" {
-		return f.sourceTool, nil
+		return apivalue.Decode(f.sourceTool)
 	}
 	if f.toolReadyErr != nil {
 		return nil, f.toolReadyErr
 	}
 	if f.debugTool != nil {
-		return f.debugTool, nil
+		return apivalue.Decode(f.debugTool)
 	}
 	active := "ACTIVE"
-	return &ags.SandboxTool{ToolId: strPtr(toolID), ToolName: strPtr("source-debug"), Status: &active}, nil
+	return apivalue.Decode(&ags.SandboxTool{ToolId: strPtr(toolID), ToolName: strPtr("source-debug"), Status: &active})
 }
 
 func (f *fakeControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
@@ -75,16 +76,16 @@ func (f *fakeControlPlane) Call(_ context.Context, action string, request map[st
 	}
 }
 
-func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
+func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (apivalue.Object, error) {
 	f.getIDs = append(f.getIDs, "instance:"+instanceID)
 	if f.instanceReadyErr != nil {
 		return nil, f.instanceReadyErr
 	}
 	if f.instance != nil {
-		return f.instance, nil
+		return apivalue.Decode(f.instance)
 	}
 	running := "RUNNING"
-	return &ags.SandboxInstance{InstanceId: strPtr(instanceID), ToolId: strPtr("sdt-debug"), ToolName: strPtr("source-debug"), Status: &running}, nil
+	return apivalue.Decode(&ags.SandboxInstance{InstanceId: strPtr(instanceID), ToolId: strPtr("sdt-debug"), ToolName: strPtr("source-debug"), Status: &running})
 }
 
 func (f *fakeControlPlane) DeleteTool(_ context.Context, toolID string) error {
@@ -330,8 +331,8 @@ func TestModuleFiltersInheritedQcsTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Run returned error: %v", err)
 	}
-	tags := cp.requests[0]["Tags"].([]*ags.Tag)
-	if len(tags) != 1 || *tags[0].Key != "env" {
+	tags := cp.requests[0]["Tags"].([]map[string]any)
+	if len(tags) != 1 || tags[0]["Key"] != "env" {
 		t.Fatalf("Tags = %#v, want only env tag", tags)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -37,13 +38,16 @@ func (f *fakeControlPlane) Call(_ context.Context, action string, request map[st
 	return f.response, nil
 }
 
-func (f *fakeControlPlane) GetDeployment(_ context.Context, _ string) (*ags.Deployment, error) {
+func (f *fakeControlPlane) GetDeployment(_ context.Context, _ string) (apivalue.Object, error) {
 	index := f.getCalls
 	f.getCalls++
 	if index >= len(f.gets) {
 		index = len(f.gets) - 1
 	}
-	return f.gets[index].deployment, f.gets[index].err
+	if resourceErr := f.gets[index].err; resourceErr != nil {
+		return nil, resourceErr
+	}
+	return apivalue.Decode(f.gets[index].deployment)
 }
 
 func (f *fakeControlPlane) IsDeploymentNotFound(err error) bool {

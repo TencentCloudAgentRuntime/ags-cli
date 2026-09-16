@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
-	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/tooltags"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/toolcopy"
+	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -17,7 +19,7 @@ import (
 
 // ControlPlane supplies the source lookup and create call used by tool fork.
 type ControlPlane interface {
-	GetTool(ctx context.Context, toolID string) (*ags.SandboxTool, error)
+	GetTool(ctx context.Context, toolID string) (apivalue.Object, error)
 	Call(ctx context.Context, action string, request map[string]any) (any, error)
 }
 
@@ -65,13 +67,19 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					createReq := baseCreateRequestFromTool(source)
+					createReq, err := toolcopy.Request(source)
+					if err != nil {
+						return nil, err
+					}
 					for key, value := range overrides {
 						createReq[key] = value
 					}
 					result, err := cp.Call(ctx, "CreateSandboxTool", createReq)
 					if err != nil {
 						return nil, err
+					}
+					if createdToolID(result) == "" {
+						return nil, fmt.Errorf("create response is missing ToolId")
 					}
 					mutationResult := createResult(result, req)
 					if !resourcewait.Requested(req) {
@@ -105,6 +113,18 @@ func Module() command.Module {
 
 func forkAPIDescriptor() apicli.APIDescriptor {
 	createAPI := createLikeAPIDescriptor()
+	// Existing fork-specific inputs are intentional overrides; new create fields
+	// inherit the channel descriptor automatically.
+	known := map[string]bool{}
+	for _, field := range createAPI.Fields {
+		known[field.Name] = true
+	}
+	for _, field := range toolcreate.APIDescriptor().Fields {
+		if !known[field.Name] {
+			field.Required = false
+			createAPI.Fields = append(createAPI.Fields, field)
+		}
+	}
 	createAPI.Spec = command.Spec{
 		ID:           "tool.fork",
 		Path:         []string{"tool", "fork"},
@@ -175,70 +195,9 @@ func applyExplicitEmptyStringOverrides(overrides map[string]any, req command.Req
 	}
 }
 
-func baseCreateRequestFromTool(tool *ags.SandboxTool) map[string]any {
-	req := map[string]any{}
-	setString(req, "ToolType", tool.ToolType)
-	setString(req, "Description", tool.Description)
-	setString(req, "RoleArn", tool.RoleArn)
-	if tool.NetworkConfiguration != nil {
-		req["NetworkConfiguration"] = tool.NetworkConfiguration
-	}
-	if tool.DefaultTimeoutSeconds != nil {
-		req["DefaultTimeout"] = fmt.Sprintf("%ds", *tool.DefaultTimeoutSeconds)
-	}
-	if tags := tooltags.FilterInheritedTags(tool.Tags); len(tags) > 0 {
-		req["Tags"] = tags
-	}
-	if len(tool.StorageMounts) > 0 {
-		req["StorageMounts"] = tool.StorageMounts
-	}
-	if tool.CustomConfiguration != nil {
-		req["CustomConfiguration"] = createCustomConfiguration(tool.CustomConfiguration)
-	}
-	if tool.ComputerConfiguration != nil {
-		req["ComputerConfiguration"] = tool.ComputerConfiguration
-	}
-	if tool.LogConfiguration != nil {
-		req["LogConfiguration"] = tool.LogConfiguration
-	}
-	if tool.Persistent != nil {
-		req["Persistent"] = *tool.Persistent
-	}
+func baseCreateRequestFromTool(value any) map[string]any {
+	req, _ := toolcopy.Request(value)
 	return req
-}
-
-func createCustomConfiguration(detail *ags.CustomConfigurationDetail) *ags.CustomConfiguration {
-	return &ags.CustomConfiguration{
-		Image:             detail.Image,
-		ImageRegistryType: createImageRegistryType(detail.ImageRegistryType),
-		Command:           detail.Command,
-		Args:              detail.Args,
-		Env:               detail.Env,
-		Ports:             detail.Ports,
-		Resources:         detail.Resources,
-		Probe:             detail.Probe,
-		DNSConfig:         detail.DNSConfig,
-	}
-}
-
-func createImageRegistryType(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	converted := *value
-	switch strings.ToUpper(*value) {
-	case "TCR":
-		converted = "enterprise"
-	case "CCR":
-		converted = "personal"
-	}
-	return &converted
-}
-
-func setString(req map[string]any, key string, value *string) {
-	if value != nil {
-		req[key] = *value
-	}
 }
 
 func stringValue(value any) string {

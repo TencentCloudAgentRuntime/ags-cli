@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	requestio "github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/client"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
@@ -16,8 +18,10 @@ import (
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
-// SDK adapts typed TencentCloud SDK operations to command dependency interfaces.
+// SDK routes contract-validated operations through typed or lossless JSON transport.
 type SDK struct {
+	// Contract overrides embedded metadata for isolated contract tests. CLI wiring leaves it nil.
+	Contract                    *apimeta.Spec
 	Client                      *ags.Client
 	NewClient                   func() (*ags.Client, error)
 	StartSandboxInstance        func(context.Context, *ags.Client, *ags.StartSandboxInstanceRequest) (*ags.StartSandboxInstanceResponseParams, error)
@@ -31,11 +35,9 @@ type SDK struct {
 	TokenCache                  *token.Cache
 	TokenCacheReady             bool
 	Warnf                       func(format string, args ...any)
-	// RawSender, when set, is used by the default-case fallback to send raw
-	// HTTP for actions not yet covered by typed SDK wrappers (e.g. identity/
-	// credential modules in workflow-adapter mode). When nil the fallback
-	// builds its own cloudapi.Caller from config. Injecting a sender makes the
-	// fallback path unit-testable without a live network.
+	// RawSender overrides the signed JSON transport in isolated tests. It is
+	// used before typed decoding when the active request or response contract
+	// cannot be represented by the AGS SDK, including workflow-only Actions.
 	RawSender RawAPISender
 }
 
@@ -45,6 +47,25 @@ type jsonRequest interface {
 
 // Call executes a generated API action using a map-based request payload.
 func (s *SDK) Call(ctx context.Context, action string, request map[string]any) (any, error) {
+	spec := s.Contract
+	if spec == nil {
+		catalog, err := apimeta.Get()
+		if err != nil {
+			return nil, err
+		}
+		spec = catalog.Spec
+	}
+	_, known := spec.Actions[action]
+	validationSpec := spec
+	if !known {
+		validationSpec = apimeta.WorkflowSpec()
+	}
+	if err := validationSpec.ValidateRequest(action, request); err != nil {
+		return nil, output.NewUsageError("INVALID_REQUEST_JSON", invalidContractRequest(action, err).Error(), "Use agr schema for the installed channel's fields.")
+	}
+	if needsDynamic(spec, action) {
+		return s.callDynamic(ctx, action, request)
+	}
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -53,6 +74,24 @@ func (s *SDK) Call(ctx context.Context, action string, request map[string]any) (
 		return nil, err
 	}
 	switch action {
+	case "DeleteSandboxTool":
+		req := ags.NewDeleteSandboxToolRequest()
+		if err := fillRequest("tool.delete", request, req); err != nil {
+			return nil, err
+		}
+		return callDeleteSandboxTool(ctx, apiClient, req)
+	case "StopSandboxInstance":
+		req := ags.NewStopSandboxInstanceRequest()
+		if err := fillRequest("instance.delete", request, req); err != nil {
+			return nil, err
+		}
+		return callStopSandboxInstance(ctx, apiClient, req)
+	case "AcquireSandboxInstanceToken":
+		req := ags.NewAcquireSandboxInstanceTokenRequest()
+		if err := fillRequest("instance.token", request, req); err != nil {
+			return nil, err
+		}
+		return s.acquireSandboxInstanceToken(ctx, apiClient, req)
 	case "CreateDeployment":
 		req := ags.NewCreateDeploymentRequest()
 		if err := fillRequest("deployment.create", request, req); err != nil {
@@ -182,72 +221,22 @@ func (s *SDK) Call(ctx context.Context, action string, request map[string]any) (
 		}
 		return callDescribePreCacheImageTask(ctx, apiClient, req)
 	default:
-		// Fallback: for Actions not yet in the typed SDK (e.g. identity/credential
-		// modules added via workflow adapter before SDK sync), send as raw HTTP
-		// using the same path as `agr api call`. This ensures commands are
-		// functional immediately without waiting for SDK updates.
-		raw, err := json.Marshal(request)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal request for %s: %w", action, err)
-		}
-		result, err := RawAPIClient{Sender: s.RawSender}.RawCall(ctx, action, raw)
-		if err != nil {
-			// Classify TencentCloud SDK errors into typed CLIErrors so callers
-			// see the real API code (e.g. AuthFailure, ResourceNotFound) and
-			// kind/retryable flags, mirroring the typed call wrappers below.
-			return nil, client.ClassifyCloudError(err)
-		}
-		// Extract the inner Response object for consistency with typed calls.
-		if respMap, ok := result.Response.(map[string]any); ok {
-			if inner, ok := respMap["Response"].(map[string]any); ok {
-				// Remove RequestId from the data payload (it's metadata).
-				delete(inner, "RequestId")
-				return inner, nil
-			}
-		}
-		return result.Response, nil
+		return s.callDynamic(ctx, action, request)
 	}
 }
 
 // DeleteTool deletes a sandbox tool by ID.
 func (s *SDK) DeleteTool(ctx context.Context, toolID string) error {
-	client, err := s.cloudClient()
-	if err != nil {
-		return err
-	}
-	req := ags.NewDeleteSandboxToolRequest()
-	req.ToolId = &toolID
-	_, err = callDeleteSandboxTool(ctx, client, req)
+	_, err := s.Call(ctx, "DeleteSandboxTool", map[string]any{"ToolId": toolID})
 	return err
 }
 
-// GetTool returns a sandbox tool by ID or a structured not-found error.
-func (s *SDK) GetTool(ctx context.Context, toolID string) (*ags.SandboxTool, error) {
-	client, err := s.cloudClient()
-	if err != nil {
-		return nil, err
-	}
-	req := ags.NewDescribeSandboxToolListRequest()
-	req.ToolIds = []*string{&toolID}
-	resp, err := callDescribeSandboxToolList(ctx, client, req)
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.SandboxToolSet) == 0 {
-		return nil, output.NewNotFoundError("TOOL_NOT_FOUND", fmt.Sprintf("tool not found: %s", toolID), "Run 'agr tool list' to find available tools.")
-	}
-	return resp.SandboxToolSet[0], nil
+func (s *SDK) GetTool(ctx context.Context, toolID string) (apivalue.Object, error) {
+	return s.getResource(ctx, "DescribeSandboxToolList", map[string]any{"ToolIds": []string{toolID}}, "SandboxToolSet", "TOOL_NOT_FOUND", toolID)
 }
 
-// DeleteInstance stops a sandbox instance and removes its cached token.
 func (s *SDK) DeleteInstance(ctx context.Context, instanceID string) error {
-	client, err := s.cloudClient()
-	if err != nil {
-		return err
-	}
-	req := ags.NewStopSandboxInstanceRequest()
-	req.InstanceId = &instanceID
-	if _, err := callStopSandboxInstance(ctx, client, req); err != nil {
+	if _, err := s.Call(ctx, "StopSandboxInstance", map[string]any{"InstanceId": instanceID}); err != nil {
 		return err
 	}
 	if cache := s.cache(); cache != nil {
@@ -256,52 +245,21 @@ func (s *SDK) DeleteInstance(ctx context.Context, instanceID string) error {
 	return nil
 }
 
-// GetInstance returns a sandbox instance by ID or a structured not-found error.
-func (s *SDK) GetInstance(ctx context.Context, instanceID string) (*ags.SandboxInstance, error) {
-	client, err := s.cloudClient()
-	if err != nil {
-		return nil, err
-	}
-	req := ags.NewDescribeSandboxInstanceListRequest()
-	req.InstanceIds = []*string{&instanceID}
-	resp, err := callDescribeSandboxInstanceList(ctx, client, req)
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.InstanceSet) == 0 {
-		return nil, output.NewNotFoundError("INSTANCE_NOT_FOUND", fmt.Sprintf("instance not found: %s", instanceID), "Run 'agr instance list' to find active instances.")
-	}
-	return resp.InstanceSet[0], nil
+func (s *SDK) GetInstance(ctx context.Context, instanceID string) (apivalue.Object, error) {
+	return s.getResource(ctx, "DescribeSandboxInstanceList", map[string]any{"InstanceIds": []string{instanceID}}, "InstanceSet", "INSTANCE_NOT_FOUND", instanceID)
 }
 
-// GetDeployment returns a Deployment by ID using the typed control-plane API.
-func (s *SDK) GetDeployment(ctx context.Context, deploymentID string) (*ags.Deployment, error) {
-	apiClient, err := s.cloudClient()
-	if err != nil {
-		return nil, err
-	}
-	req := ags.NewDescribeDeploymentRequest()
-	req.DeploymentId = &deploymentID
-	response, err := s.describeDeployment(ctx, apiClient, req)
-	if err != nil {
-		return nil, err
-	}
-	if response == nil || response.Deployment == nil {
-		return nil, output.NewNotFoundError("ResourceNotFound.Deployment", fmt.Sprintf("deployment not found: %s", deploymentID), "Run 'agr deployment list' to find available Deployments.")
-	}
-	return response.Deployment, nil
+func (s *SDK) GetDeployment(ctx context.Context, deploymentID string) (apivalue.Object, error) {
+	return s.getResource(ctx, "DescribeDeployment", map[string]any{"DeploymentId": deploymentID}, "Deployment", "ResourceNotFound.Deployment", deploymentID)
 }
 
-// GetDeploymentToken acquires a short-lived data-plane credential. Callers
-// must keep the returned token in memory and must not log or persist it.
-func (s *SDK) GetDeploymentToken(ctx context.Context, deploymentID string) (*ags.AcquireDeploymentTokenResponseParams, error) {
-	apiClient, err := s.cloudClient()
+// GetDeploymentToken retains the SDK-independent complete response in memory.
+func (s *SDK) GetDeploymentToken(ctx context.Context, deploymentID string) (apivalue.Object, error) {
+	response, err := s.Call(ctx, "AcquireDeploymentToken", map[string]any{"DeploymentId": deploymentID})
 	if err != nil {
 		return nil, err
 	}
-	req := ags.NewAcquireDeploymentTokenRequest()
-	req.DeploymentId = &deploymentID
-	return s.acquireDeploymentToken(ctx, apiClient, req)
+	return apivalue.Decode(response)
 }
 
 // IsDeploymentNotFound reports only the exact structured API terminal used by
@@ -353,30 +311,12 @@ func (s *SDK) cache() *token.Cache {
 	return s.TokenCache
 }
 
-func (s *SDK) cacheInstanceToken(ctx context.Context, apiClient *ags.Client, instance *ags.SandboxInstance) error {
-	if instance.AuthMode != nil && *instance.AuthMode == "NONE" {
-		return nil
-	}
-	if instance.InstanceId == nil || *instance.InstanceId == "" {
-		return nil
-	}
-	cache := s.cache()
-	if cache == nil {
-		return nil
-	}
-	req := ags.NewAcquireSandboxInstanceTokenRequest()
-	req.InstanceId = instance.InstanceId
-	resp, err := s.acquireSandboxInstanceToken(ctx, apiClient, req)
+func (s *SDK) cacheInstanceToken(ctx context.Context, _ *ags.Client, instance *ags.SandboxInstance) error {
+	value, err := apivalue.Decode(instance)
 	if err != nil {
-		return fmt.Errorf("failed to acquire token: %w", err)
+		return err
 	}
-	if resp.Token == nil || *resp.Token == "" {
-		return fmt.Errorf("no access token available")
-	}
-	if err := cache.Set(*instance.InstanceId, *resp.Token); err != nil {
-		return fmt.Errorf("failed to save token: %w", err)
-	}
-	return nil
+	return s.cacheResourceToken(ctx, value)
 }
 
 func (s *SDK) warnf(format string, args ...any) {

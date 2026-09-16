@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -54,13 +56,13 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					response, ok := result.Data.(*ags.DescribeSandboxToolListResponseParams)
-					if !ok {
-						return result, nil
+					response, decodeErr := apivalue.Decode(result.Data)
+					if decodeErr != nil {
+						return nil, decodeErr
 					}
 					offset := intFlag(req, "offset")
 					limit := effectiveLimit(req)
-					return toolListResult(response, offset, limit, result), nil
+					return toolListResult(response, offset, limit, result)
 				}),
 			}, nil
 		},
@@ -81,14 +83,18 @@ func validateRequest(req command.Request) error {
 	return nil
 }
 
-func toolListResult(response *ags.DescribeSandboxToolListResponseParams, offset int, limit *int, base *command.Result) *command.Result {
-	items := make([]map[string]any, len(response.SandboxToolSet))
-	for i, tool := range response.SandboxToolSet {
+func toolListResult(response apivalue.Object, offset int, limit *int, base *command.Result) (*command.Result, error) {
+	tools, err := response.ReadObjects("SandboxToolSet")
+	if err != nil {
+		return nil, err
+	}
+	items := make([]map[string]any, len(tools))
+	for i, tool := range tools {
 		items[i] = canonicalToolData(tool)
 	}
 	pagination := map[string]any{
 		"Offset":     offset,
-		"Total":      derefInt64(response.TotalCount),
+		"Total":      int(response.Int64("TotalCount")),
 		"NextCursor": nil,
 	}
 	if limit != nil {
@@ -98,6 +104,7 @@ func toolListResult(response *ags.DescribeSandboxToolListResponseParams, offset 
 		"Items":      items,
 		"Pagination": pagination,
 	}
+	apivalue.ExtendResponse(data, response, "SandboxToolSet", "TotalCount", "RequestId")
 	return &command.Result{
 		Data:      data,
 		Warnings:  base.Warnings,
@@ -108,10 +115,16 @@ func toolListResult(response *ags.DescribeSandboxToolListResponseParams, offset 
 		Text: func(w io.Writer) {
 			renderToolList(w, response)
 		},
-	}
+	}, nil
 }
 
-func renderToolList(w io.Writer, response *ags.DescribeSandboxToolListResponseParams) {
+func renderToolList(w io.Writer, value any) {
+	var response ags.DescribeSandboxToolListResponseParams
+	if err := apivalue.Project(value, &response); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
+
 	if len(response.SandboxToolSet) == 0 {
 		fmt.Fprintln(w, "No tools found")
 		return
@@ -141,27 +154,7 @@ func renderToolList(w io.Writer, response *ags.DescribeSandboxToolListResponsePa
 	printTableWithPagination(w, headers, rows, len(rows), derefInt64(response.TotalCount))
 }
 
-func canonicalToolData(t *ags.SandboxTool) map[string]any {
-	return map[string]any{
-		"ToolId":                derefString(t.ToolId),
-		"ToolName":              derefString(t.ToolName),
-		"ToolType":              derefString(t.ToolType),
-		"Status":                derefString(t.Status),
-		"StatusReason":          derefString(t.StatusReason),
-		"Persistent":            t.Persistent,
-		"DefaultTimeoutSeconds": t.DefaultTimeoutSeconds,
-		"NetworkConfiguration":  t.NetworkConfiguration,
-		"Description":           derefString(t.Description),
-		"Tags":                  sdkTagsToMap(t.Tags),
-		"CreateTime":            derefString(t.CreateTime),
-		"UpdateTime":            derefString(t.UpdateTime),
-		"RoleArn":               derefString(t.RoleArn),
-		"StorageMounts":         t.StorageMounts,
-		"CustomConfiguration":   t.CustomConfiguration,
-		"ComputerConfiguration": t.ComputerConfiguration,
-		"LogConfiguration":      t.LogConfiguration,
-	}
-}
+func canonicalToolData(value any) map[string]any { return toolget.CanonicalData(value) }
 
 func printTableWithPagination(w io.Writer, headers []string, rows [][]string, shown, total int) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)

@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -45,11 +46,15 @@ func Module() command.Module {
 				if err != nil {
 					return nil, err
 				}
-				response, ok := result.Data.(*ags.DescribeAPIKeyListResponseParams)
-				if !ok {
-					return result, nil
+				response, decodeErr := apivalue.Decode(result.Data)
+				if decodeErr != nil {
+					return nil, decodeErr
 				}
-				result.Data = apiKeyListData(response)
+				data, err := apiKeyListData(response)
+				if err != nil {
+					return nil, err
+				}
+				result.Data = data
 				result.Text = func(w io.Writer) {
 					renderAPIKeyList(w, response)
 				}
@@ -59,22 +64,29 @@ func Module() command.Module {
 	}
 }
 
-func apiKeyListData(result *ags.DescribeAPIKeyListResponseParams) map[string]any {
-	keys := result.APIKeySet
+func apiKeyListData(response apivalue.Object) (map[string]any, error) {
+	keys, err := response.ReadObjects("APIKeySet")
+	if err != nil {
+		return nil, err
+	}
 	items := make([]map[string]any, len(keys))
-	for i, k := range keys {
-		items[i] = map[string]any{
-			"KeyId":     derefString(k.KeyId),
-			"Name":      derefString(k.Name),
-			"Status":    derefString(k.Status),
-			"MaskedKey": derefString(k.MaskedKey),
-			"CreatedAt": derefString(k.CreatedAt),
+	for i, key := range keys {
+		items[i] = map[string]any(key)
+		for _, field := range []string{"KeyId", "Name", "Status", "MaskedKey", "CreatedAt"} {
+			if key[field] == nil {
+				items[i][field] = ""
+			}
 		}
 	}
-	return map[string]any{"Items": items}
+	return apivalue.ExtendResponse(map[string]any{"Items": items}, response, "APIKeySet", "RequestId"), nil
 }
 
-func renderAPIKeyList(w io.Writer, result *ags.DescribeAPIKeyListResponseParams) {
+func renderAPIKeyList(w io.Writer, value any) {
+	var result ags.DescribeAPIKeyListResponseParams
+	if err := apivalue.Project(value, &result); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
 	keys := result.APIKeySet
 	if len(keys) == 0 {
 		fmt.Fprintln(w, "No API keys found")

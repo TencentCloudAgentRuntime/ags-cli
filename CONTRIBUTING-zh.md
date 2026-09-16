@@ -182,12 +182,37 @@ go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
 所有改动（包括 API Patch）均以 `main` 为目标。长期 `preview` 分支及其同步流程
 已退役。PR 遵守仓库常规审批和 CI 要求；非空 Patch 还须满足上述证据要求。
 
-CI 和发布流程校验有效 API 契约，不再强制 Patch 为空。在稳定版和预览版的独立构建
-实现前，生成代码仍包含有效契约（官方 API 加 Patch）。发布负责人须在发布前审核
-实际契约；流水线不保证稳定包排除 Patch 内容。
+默认构建为 **stable**，只读取基础 `api.json`、`mapping.yaml` 和 `help.json`。
+preview 构建叠加对应的三份 `*.patch.json`；空补丁保留 `[]`，缺文件直接报错。
+官方字段进入基础文件后即允许 stable 使用。`agr api call` 保留显式原始透传能力，
+不受普通资源命令的字段校验约束。
 
-预览发布暂时停用。发布使用 `vX.Y.Z` 和现有双语更新日志。双构建变体属于后续工作，
-不包含在本次回退中。
+```bash
+go run ./cmd/internal/apipatch check-all
+go run ./cmd/internal/cobragen          # 同时生成两种渠道，清理过期生成文件
+go run ./cmd/internal/cobragen check
+go build -o /tmp/agr-stable ./cmd/agr
+go build -tags=preview -o /tmp/agr-preview ./cmd/agr
+go run ./cmd/internal/apigen --channel preview coverage
+GOFLAGS=-tags=preview go test ./cmd/... ./internal/... ./tests/integ
+go test ./tests/channels               # 非空补丁验收，仅访问本地模拟 HTTP
+```
+
+现有 stable 文件不改名；只有产生差异的生成文件拆成互斥 `!preview` / `preview`
+版本。手写 preview 代码及测试使用 `//go:build preview`；独立新工作流在
+`cmd/internal/cobragen/main.go` 的 `previewWorkflowIDs` 中显式登记。
+preview 必须保留所有 stable 命令路径。已有生成命令可以通过 `command_preview.go`
+提供 preview 的 `Module()`，但每种渠道只能有一个生效实现。
+
+补丁新增操作只能添加新键；修改/删除须紧邻前置 `test`，元数据数组整体替换。
+已有字段修改要同步 API、mapping、help。转正和撤回都要重新生成并执行 `check`；
+生成器不会删除手写文件。工作流接口契约放在 `internal/apimeta/workflow.go`，不写入
+官方基础快照。SDK 无法表达的契约使用通用签名 JSON 传输，字段转正后仍保持该路由。
+
+正式 tag 使用 `vX.Y.Z`，预览 tag 使用 `vX.Y.Z-preview.N`；发布流水线选择构建 tag，
+并检查 `agr version` 的 `Channel`。版本号与构建通道不匹配会被拒绝。
+从源码安装 preview 必须显式使用 `go install -tags=preview github.com/TencentCloudAgentRuntime/ags-cli/cmd/agr@vX.Y.Z-preview.N`。
+每个正式/预览版本均在 `CHANGELOG.md` 与 `CHANGELOG-zh.md` 中记录对应条目。完整边界见[设计文档](PREVIEW-STABLE-DESIGN.md)。
 
 ## 编码规范
 

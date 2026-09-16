@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -36,7 +37,7 @@ var forkOverrideOnlyFields = map[string]string{
 	"ClientToken": "an idempotency token must be newly supplied, never copied from the source tool",
 }
 
-func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (apivalue.Object, error) {
 	f.getIDs = append(f.getIDs, toolID)
 	if f.getErr != nil {
 		return nil, f.getErr
@@ -46,12 +47,12 @@ func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.Sandb
 		if status == "" {
 			status = "ACTIVE"
 		}
-		return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
+		return apivalue.Decode(&ags.SandboxTool{ToolId: &toolID, Status: &status})
 	}
 	if f.sourceTool != nil {
-		return f.sourceTool, nil
+		return apivalue.Decode(f.sourceTool)
 	}
-	return sourceTool(toolID), nil
+	return apivalue.Decode(sourceTool(toolID))
 }
 
 func (f *fakeControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
@@ -193,14 +194,15 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if cp.request["DefaultTimeout"] != "300s" {
 		t.Fatalf("DefaultTimeout = %#v", cp.request["DefaultTimeout"])
 	}
-	custom := cp.request["CustomConfiguration"].(*ags.CustomConfiguration)
-	if custom.ImageRegistryType == nil || *custom.ImageRegistryType != "enterprise" {
-		t.Fatalf("ImageRegistryType = %#v, want enterprise", custom.ImageRegistryType)
+	custom, _ := apivalue.Decode(cp.request["CustomConfiguration"])
+	if custom.String("ImageRegistryType") != "enterprise" {
+		t.Fatalf("custom = %#v", custom)
 	}
-	computer := cp.request["ComputerConfiguration"].(*ags.ComputerConfiguration)
-	if computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != "img-source" {
-		t.Fatalf("ComputerConfiguration = %#v, want source WAA image", computer)
+	computer, _ := apivalue.Decode(cp.request["ComputerConfiguration"])
+	if computer.Object("WAAConfiguration").String("ImageId") != "img-source" {
+		t.Fatalf("computer = %#v", computer)
 	}
+
 }
 
 func TestModuleAppliesExplicitOverrides(t *testing.T) {
@@ -287,8 +289,8 @@ func TestModuleFiltersInheritedQcsTags(t *testing.T) {
 			"tool-name": {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
 		},
 	})
-	tags := cp.request["Tags"].([]*ags.Tag)
-	if len(tags) != 1 || *tags[0].Key != "env" {
+	tags := cp.request["Tags"].([]map[string]any)
+	if len(tags) != 1 || tags[0]["Key"] != "env" {
 		t.Fatalf("Tags = %#v, want only env tag", tags)
 	}
 }

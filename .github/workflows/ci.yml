@@ -71,11 +71,14 @@ jobs:
           fi
 
   test:
-    name: Unit Tests (${{ matrix.os }})
+    name: Unit Tests (${{ matrix.os }}, ${{ matrix.channel }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        channel: [stable, preview]
+    env:
+      GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -134,8 +137,13 @@ jobs:
           bash scripts/changelog.sh validate-latest-release-notes-pair
 
   generator-gate:
-    name: API Generator Gate
+    name: API Generator Gate (${{ matrix.channel }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        channel: [stable, preview]
+    env:
+      GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -215,8 +223,13 @@ jobs:
         run: go test ./tests/integ/ -v -count=1 -timeout 30s
 
   release-ready:
-    name: Release Ready
+    name: Release Ready (${{ matrix.channel }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        channel: [stable, preview]
+    env:
+      GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
     steps:
       - uses: actions/checkout@v6
 

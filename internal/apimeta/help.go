@@ -1,6 +1,7 @@
 package apimeta
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -48,7 +49,9 @@ func LoadHelp(path string) (*Help, error) {
 // ParseHelp parses raw help.json bytes.
 func ParseHelp(data []byte) (*Help, error) {
 	h := &Help{}
-	if err := json.Unmarshal(data, h); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(h); err != nil {
 		return nil, fmt.Errorf("parse help: %w", err)
 	}
 	if h.Commands == nil {

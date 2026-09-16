@@ -6,11 +6,11 @@ import (
 	"io"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // Module returns this package's command module.
@@ -81,7 +81,7 @@ func applyUpdateResultText(result *command.Result, req command.Request) {
 	if result == nil {
 		return
 	}
-	if _, ok := result.Data.(*ags.UpdateSandboxToolResponseParams); !ok {
+	if _, err := apivalue.Decode(result.Data); err != nil {
 		return
 	}
 	toolID, _ := ToolID(req)

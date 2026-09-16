@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/get"
@@ -64,13 +65,12 @@ func Module() command.Module {
 					sp.Stop("✗", "Failed to create instance")
 					return nil, err
 				}
-				response, ok := result.Data.(*ags.StartSandboxInstanceResponseParams)
-				if !ok {
-					// Response type mismatch — we cannot confirm creation succeeded.
+				response, decodeErr := apivalue.Decode(result.Data)
+				if decodeErr != nil {
 					sp.Cleanup()
-					return result, nil
+					return nil, decodeErr
 				}
-				if response.Instance == nil {
+				if response.Object("Instance") == nil || response.Object("Instance").String("InstanceId") == "" {
 					sp.Stop("✗", "Failed to create instance")
 					return nil, output.NewCLIError(&output.Failure{
 						Code:    "INTERNAL_ERROR",
@@ -88,7 +88,7 @@ func Module() command.Module {
 				if !ok {
 					return nil, fmt.Errorf("instance.create --wait requires GetInstance support")
 				}
-				instanceID := instanceview.DerefString(response.Instance.InstanceId)
+				instanceID := response.Object("Instance").String("InstanceId")
 				if instanceID == "" {
 					return nil, missingInstanceIDError()
 				}
@@ -112,7 +112,7 @@ func missingInstanceIDError() error {
 	return output.NewCLIError(&output.Failure{
 		Code:    "INTERNAL_ERROR",
 		Kind:    output.KindGenericError,
-		Message: "cannot wait because the create response did not include an instance id",
+		Message: "the create response did not include an instance id",
 		Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
 	})
 }
@@ -129,12 +129,14 @@ func validateToolSelection(req command.Request) error {
 	return nil
 }
 
-func instanceCreateResult(response *ags.StartSandboxInstanceResponseParams, base *command.Result) *command.Result {
-	instance := response.Instance
+func instanceCreateResult(value any, base *command.Result) *command.Result {
+	response, _ := apivalue.Decode(value)
+	instance := response.Object("Instance")
 	data := instanceview.CanonicalData(instance)
 	data["Instance"] = instance
-	data["RequestId"] = instanceview.DerefString(response.RequestId)
-	instanceID := instanceview.DerefString(instance.InstanceId)
+	data["RequestId"] = response.String("RequestId")
+	apivalue.ExtendResponse(data, response, "Instance", "RequestId")
+	instanceID := instance.String("InstanceId")
 	return &command.Result{
 		Data:      data,
 		Warnings:  base.Warnings,
@@ -148,7 +150,12 @@ func instanceCreateResult(response *ags.StartSandboxInstanceResponseParams, base
 	}
 }
 
-func renderCreatedInstance(w io.Writer, instance *ags.SandboxInstance) {
+func renderCreatedInstance(w io.Writer, value any) {
+	var instance ags.SandboxInstance
+	if err := apivalue.Project(value, &instance); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
 	instanceID := instanceview.DerefString(instance.InstanceId)
 	fmt.Fprintf(w, "Instance created: %s\n", instanceID)
 	kvs := []instanceview.KeyValue{

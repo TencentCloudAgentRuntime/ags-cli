@@ -2,12 +2,13 @@ package get
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	deploymentview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/internal/deploymentview"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // Module returns the generated API command with Deployment text rendering.
@@ -27,9 +28,15 @@ func Module() command.Module {
 				if err != nil {
 					return nil, err
 				}
-				if response, ok := result.Data.(*ags.DescribeDeploymentResponseParams); ok && response.Deployment != nil {
-					result.Text = func(w io.Writer) { deploymentview.RenderDetails(w, response.Deployment) }
+				response, decodeErr := apivalue.Decode(result.Data)
+				if decodeErr != nil {
+					return nil, decodeErr
 				}
+				deployment := response.Object("Deployment")
+				if deployment == nil || deployment.String("DeploymentId") == "" {
+					return nil, fmt.Errorf("deployment response is missing DeploymentId")
+				}
+				result.Text = func(w io.Writer) { deploymentview.RenderDetails(w, deployment) }
 				return result, nil
 			})}, nil
 		},

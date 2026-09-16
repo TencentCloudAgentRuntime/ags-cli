@@ -74,6 +74,7 @@ type DeleteData struct {
 
 // VersionData is the canonical JSON shape for version output.
 type VersionData struct {
+	Channel   string `json:"Channel"`
 	Version   string `json:"Version"`
 	Commit    string `json:"Commit"`
 	BuildTime string `json:"BuildTime"`

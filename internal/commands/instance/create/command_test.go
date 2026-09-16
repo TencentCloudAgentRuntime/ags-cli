@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
@@ -36,9 +37,9 @@ func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request m
 	return map[string]any{"ok": true}, nil
 }
 
-func (f *fakeMixedControlPlane) GetInstance(_ context.Context, _ string) (*ags.SandboxInstance, error) {
+func (f *fakeMixedControlPlane) GetInstance(_ context.Context, _ string) (apivalue.Object, error) {
 	f.getCalls++
-	return f.finalInstance, nil
+	return apivalue.Decode(f.finalInstance)
 }
 
 // allInstanceCreateFlags returns a complete flag set mimicking what Cobra registers
@@ -332,7 +333,7 @@ func TestModuleBypassesValidationWithRequestFlag(t *testing.T) {
 	}
 }
 
-func TestModuleReturnsResultWhenResponseNotTyped(t *testing.T) {
+func TestModuleRejectsMalformedResponse(t *testing.T) {
 	// When the fake CP returns a non-typed response, the handler should not panic.
 	cp := &fakeMixedControlPlane{} // no resp → returns map[string]any{"ok": true}
 	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
@@ -341,11 +342,8 @@ func TestModuleReturnsResultWhenResponseNotTyped(t *testing.T) {
 	}
 	flags := withChanged(allInstanceCreateFlags(), "tool-name", "t")
 	result, err := runtime.Handler.Run(context.Background(), command.Request{Flags: flags})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result == nil {
-		t.Fatalf("expected non-nil result")
+	if err == nil || result != nil {
+		t.Fatalf("malformed response: result=%#v err=%v", result, err)
 	}
 }
 
