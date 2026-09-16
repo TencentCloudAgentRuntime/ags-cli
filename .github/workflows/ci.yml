@@ -48,7 +48,7 @@ jobs:
           # Keep the exception narrow; release routing tests assert queue: max.
           args: >-
             -color
-            -ignore 'unexpected key "queue" for "concurrency" section'
+            -ignore "unexpected key \"queue\" for \"concurrency\" section"
 
   fmt:
     name: Format Check
