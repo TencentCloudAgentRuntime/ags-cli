@@ -1,1 +1,230 @@
-[]
+[
+  {
+    "op": "add",
+    "path": "/commands/session-space.create",
+    "value": {
+      "short": "Create a session space (preview)",
+      "examples": [
+        "Example - Create a session space:\n  agr session-space create --name customer-support --description 'Customer support sessions'"
+      ],
+      "fields": {
+        "Tags": {
+          "description": "Resource tags.",
+          "inputs": {
+            "tags": {
+              "usage": "Resource tags as a JSON array, @file, or - for stdin.",
+              "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Key: tag key",
+                "Value: tag value"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session-space.delete",
+    "value": {
+      "short": "Delete a session space (preview)",
+      "examples": [
+        "Example - Delete an empty session space:\n  agr session-space delete --space-id space-a1b2c3d4"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session-space.get",
+    "value": {
+      "short": "Describe a session space (preview)",
+      "examples": [
+        "Example - Describe a session space:\n  agr session-space get --space-id space-a1b2c3d4"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session-space.list",
+    "value": {
+      "short": "List session spaces (preview)",
+      "examples": [
+        "Example - List session spaces:\n  agr session-space list --limit 20"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session-space.update",
+    "value": {
+      "short": "Update a session space (preview)",
+      "examples": [
+        "Example - Rename a session space:\n  agr session-space update --space-id space-a1b2c3d4 --name customer-support-production"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.create",
+    "value": {
+      "short": "Create a session (preview)",
+      "long": "Create a session in a session space. Complex state and metadata fields accept inline JSON, @file, or - for stdin.",
+      "examples": [
+        "Example - Create a session with a stable ID:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request'"
+      ],
+      "fields": {
+        "State": {
+          "description": "Initial session state.",
+          "inputs": {
+            "state": {
+              "usage": "Initial session state as a JSON object, @file, or - for stdin.",
+              "format": "{\"CustomState\":\"<json-string>\"}",
+              "fields": [
+                "CustomState: serialized custom state JSON"
+              ]
+            }
+          }
+        },
+        "Metadata": {
+          "description": "Initial session metadata.",
+          "inputs": {
+            "metadata": {
+              "usage": "Initial session metadata as a JSON array, @file, or - for stdin.",
+              "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Name: metadata name",
+                "Value: metadata value"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.delete",
+    "value": {
+      "short": "Delete a session (preview)",
+      "examples": [
+        "Example - Delete a session:\n  agr session delete --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.get",
+    "value": {
+      "short": "Describe a session (preview)",
+      "examples": [
+        "Example - Describe a session:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.list",
+    "value": {
+      "short": "List sessions (preview)",
+      "examples": [
+        "Example - List sessions in a session space:\n  agr session list --space-id space-a1b2c3d4 --limit 20"
+      ],
+      "fields": {
+        "UserIds": {
+          "inputs": {
+            "user-ids": {
+              "usage": "User ID filter; repeat --user-ids for multiple values."
+            }
+          }
+        },
+        "SessionIds": {
+          "inputs": {
+            "session-ids": {
+              "usage": "Session ID filter; repeat --session-ids for multiple values."
+            }
+          }
+        },
+        "Filters": {
+          "description": "Session metadata filters.",
+          "inputs": {
+            "filters": {
+              "usage": "Session metadata filters as a JSON array, @file, or - for stdin.",
+              "format": "[{\"Name\":\"metadata:<key>\",\"Values\":[\"<value>\"]}]",
+              "fields": [
+                "Name: metadata:<key>",
+                "Values: accepted values for the metadata key"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.update",
+    "value": {
+      "short": "Update a session (preview)",
+      "long": "Update a session title or replace its complete metadata array. Provide at least one of --title or --metadata.",
+      "examples": [
+        "Example - Update a session title:\n  agr session update --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Resolved request'"
+      ],
+      "fields": {
+        "Metadata": {
+          "description": "Complete replacement session metadata.",
+          "inputs": {
+            "metadata": {
+              "usage": "Complete session metadata as a JSON array, @file, or - for stdin. [] clears all metadata.",
+              "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Name: metadata name",
+                "Value: metadata value"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.event.append",
+    "value": {
+      "short": "Append an event to a session (preview)",
+      "long": "Append an event to a session. The event accepts inline JSON, @file, or - for stdin.",
+      "examples": [
+        "Example - Append a user event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event '{\"EventId\":\"event-123\",\"Author\":\"user\",\"Content\":{\"Role\":\"user\",\"Parts\":[{\"Text\":\"Hello\"}]}}'"
+      ],
+      "fields": {
+        "Event": {
+          "description": "Event content.",
+          "inputs": {
+            "event": {
+              "usage": "Event content as a JSON object, @file, or - for stdin.",
+              "format": "{\"EventId\":\"<id>\",\"Author\":\"<author>\",\"Content\":{\"Role\":\"<role>\",\"Parts\":[{\"Text\":\"<text>\"}]}}",
+              "fields": [
+                "EventId: optional stable event ID for idempotent retries",
+                "Author: event author",
+                "Content: structured event content",
+                "Actions: optional state delta",
+                "Metadata: optional event metadata JSON string",
+                "Extensions: optional extension JSON string"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/session.event.list",
+    "value": {
+      "short": "List events in a session (preview)",
+      "examples": [
+        "Example - List recent session events:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50"
+      ]
+    }
+  }
+]

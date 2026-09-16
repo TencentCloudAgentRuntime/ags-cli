@@ -1,2 +1,1215 @@
 version: 1
-coverage: []
+coverage:
+  - {"entry": "/actions/AppendEvent/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/actions/AppendEvent/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/actions/AppendEvent/input", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/actions/AppendEvent/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/actions/AppendEvent/output", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/actions/AppendEvent/status", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/actions/CreateSession/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/actions/CreateSession/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/actions/CreateSession/input", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/actions/CreateSession/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/actions/CreateSession/output", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/actions/CreateSession/status", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/actions/CreateSessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/actions/CreateSessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/actions/CreateSessionSpace/input", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/actions/CreateSessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/actions/CreateSessionSpace/output", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/actions/CreateSessionSpace/status", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/actions/DeleteSession/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/actions/DeleteSession/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/actions/DeleteSession/input", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/actions/DeleteSession/name", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/actions/DeleteSession/output", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/actions/DeleteSession/status", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/actions/DeleteSessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/actions/DeleteSessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/actions/DeleteSessionSpace/input", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/actions/DeleteSessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/actions/DeleteSessionSpace/output", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/actions/DeleteSessionSpace/status", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/actions/DescribeEvents/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/actions/DescribeEvents/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/actions/DescribeEvents/input", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/actions/DescribeEvents/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/actions/DescribeEvents/output", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/actions/DescribeEvents/status", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/actions/DescribeSession/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/actions/DescribeSession/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/actions/DescribeSession/input", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/actions/DescribeSession/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/actions/DescribeSession/output", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/actions/DescribeSession/status", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/actions/DescribeSessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/actions/DescribeSessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/actions/DescribeSessionSpace/input", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/actions/DescribeSessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/actions/DescribeSessionSpace/output", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/actions/DescribeSessionSpace/status", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/actions/DescribeSessionSpaces/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/actions/DescribeSessionSpaces/document", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/actions/DescribeSessionSpaces/input", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/actions/DescribeSessionSpaces/name", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/actions/DescribeSessionSpaces/output", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/actions/DescribeSessionSpaces/status", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/actions/DescribeSessions/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/actions/DescribeSessions/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/actions/DescribeSessions/input", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/actions/DescribeSessions/name", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/actions/DescribeSessions/output", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/actions/DescribeSessions/status", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/actions/ModifySession/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/actions/ModifySession/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/actions/ModifySession/input", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/actions/ModifySession/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/actions/ModifySession/output", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/actions/ModifySession/status", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/actions/ModifySessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/actions/ModifySessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/actions/ModifySessionSpace/input", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/actions/ModifySessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/actions/ModifySessionSpace/output", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/actions/ModifySessionSpace/status", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/AppendEventRequest/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/AgentId/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/Event/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventRequest/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventRequest/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/members/Event/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/AppendEventResponse/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/CreateSessionRequest/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/AgentId/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Metadata/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/State/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/Title/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionRequest/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionRequest/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/@exists", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/disabled", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/document", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/example", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/member", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/name", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/output_required", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/required", "scenario": "session.lifecycle", "assertions": ["session.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/members/Session/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionResponse/type", "scenario": "session.lifecycle", "assertions": ["session.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/disabled", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/example", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/member", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/name", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/required", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Description/type", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/disabled", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/example", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/member", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/name", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/required", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Name/type", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/disabled", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/example", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/member", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/name", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/required", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/members/Tags/type", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceRequest/type", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/disabled", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/example", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/member", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/output_required", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/required", "scenario": "session.lifecycle", "assertions": ["space.create", "input.validation"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/type", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/members/SessionSpace/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/CreateSessionSpaceResponse/type", "scenario": "session.lifecycle", "assertions": ["space.create"]}
+  - {"entry": "/objects/DeleteSessionRequest/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/disabled", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/example", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/member", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/name", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/required", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/AgentId/type", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["session.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionRequest/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionRequest/type", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionResponse/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionResponse/document", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionResponse/type", "scenario": "session.lifecycle", "assertions": ["session.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/@exists", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/document", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["space.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["space.delete", "input.validation"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceRequest/type", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceResponse/@exists", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceResponse/document", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DeleteSessionSpaceResponse/type", "scenario": "session.lifecycle", "assertions": ["space.delete"]}
+  - {"entry": "/objects/DescribeEventsRequest/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/@exists", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/disabled", "scenario": "session.lifecycle", "assertions": ["event.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/document", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/example", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/member", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/name", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/required", "scenario": "session.lifecycle", "assertions": ["event.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AfterTimestamp/type", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/AgentId/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/@exists", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/disabled", "scenario": "session.lifecycle", "assertions": ["event.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/document", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/example", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/member", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/name", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/required", "scenario": "session.lifecycle", "assertions": ["event.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Author/type", "scenario": "session.lifecycle", "assertions": ["event.filters"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/@exists", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/disabled", "scenario": "session.lifecycle", "assertions": ["event.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/document", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/example", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/member", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/name", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/required", "scenario": "session.lifecycle", "assertions": ["event.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Limit/type", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/@exists", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/disabled", "scenario": "session.lifecycle", "assertions": ["event.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/document", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/example", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/member", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/name", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/required", "scenario": "session.lifecycle", "assertions": ["event.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/Offset/type", "scenario": "session.lifecycle", "assertions": ["event.pagination"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsRequest/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsRequest/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/Events/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/members/TotalCount/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeEventsResponse/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/DescribeSessionRequest/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/AgentId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionRequest/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionRequest/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/members/Session/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionResponse/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceRequest/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/members/SessionSpace/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpaceResponse/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/document", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/@exists", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/disabled", "scenario": "session.lifecycle", "assertions": ["space.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/document", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/example", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/member", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/name", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/required", "scenario": "session.lifecycle", "assertions": ["space.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Limit/type", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/@exists", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/disabled", "scenario": "session.lifecycle", "assertions": ["space.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/document", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/example", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/member", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/name", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/required", "scenario": "session.lifecycle", "assertions": ["space.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Offset/type", "scenario": "session.lifecycle", "assertions": ["space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/type", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/document", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/disabled", "scenario": "session.lifecycle", "assertions": ["space.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/document", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/example", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/member", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/name", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/output_required", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/required", "scenario": "session.lifecycle", "assertions": ["space.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/type", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/SessionSpaces/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/@exists", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/disabled", "scenario": "session.lifecycle", "assertions": ["space.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/document", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/example", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/member", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/name", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/output_required", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/required", "scenario": "session.lifecycle", "assertions": ["space.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/type", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/members/TotalCount/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionSpacesResponse/type", "scenario": "session.lifecycle", "assertions": ["space.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/disabled", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/example", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/member", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/name", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/required", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/@exists", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/disabled", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/document", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/example", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/member", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/name", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/required", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/type", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/@exists", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/disabled", "scenario": "session.lifecycle", "assertions": ["session.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/document", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/example", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/member", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/name", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/required", "scenario": "session.lifecycle", "assertions": ["session.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Limit/type", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/@exists", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/disabled", "scenario": "session.lifecycle", "assertions": ["session.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/document", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/example", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/member", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/name", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/required", "scenario": "session.lifecycle", "assertions": ["session.pagination", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Offset/type", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/@exists", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/disabled", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/document", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/example", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/member", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/name", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/required", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SessionIds/type", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/@exists", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/disabled", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/document", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/example", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/member", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/name", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/required", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/UserIds/type", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/disabled", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/example", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/member", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/name", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/output_required", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/required", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/Sessions/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/@exists", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/disabled", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/document", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/example", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/member", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/name", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/output_required", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/required", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/members/TotalCount/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/DescribeSessionsResponse/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
+  - {"entry": "/objects/EventActionsInfo/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/members/StateDelta/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventActionsInfo/usage", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Parts/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/members/Role/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventContentInfo/usage", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Actions/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Actions/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Actions/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Actions/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Actions/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Actions/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Author/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Author/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Author/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Author/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Author/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Author/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Content/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Content/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Content/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Content/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Content/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Content/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorCode/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorCode/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/ErrorMessage/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/ErrorMessage/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/EventId/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/EventId/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/EventId/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/EventId/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/EventId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/EventId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Extensions/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Extensions/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Extensions/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Extensions/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/InvocationId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/InvocationId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/@exists", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Metadata/disabled", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/document", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/example", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/member", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/name", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/output_required", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInput/members/Metadata/required", "scenario": "session.lifecycle", "assertions": ["event.append", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Metadata/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/members/Metadata/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/members/Timestamp/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInfo/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/type", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventInfo/usage", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventInput/usage", "scenario": "session.lifecycle", "assertions": ["event.append"]}
+  - {"entry": "/objects/EventPartInfo/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionCall/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/FunctionResponse/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/InlineData/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Text/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/members/Thought/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/EventPartInfo/usage", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/Data/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/@exists", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/disabled", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/document", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/example", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/member", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/name", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/output_required", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/required", "scenario": "session.lifecycle", "assertions": ["event.list", "input.validation"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/members/MimeType/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/type", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/InlineDataInfo/usage", "scenario": "session.lifecycle", "assertions": ["event.list"]}
+  - {"entry": "/objects/ModifySessionRequest/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/disabled", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/example", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/member", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/required", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Metadata/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/disabled", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/example", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/member", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/required", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/Title/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionRequest/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionRequest/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/@exists", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/disabled", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/document", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/example", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/member", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/name", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/output_required", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/required", "scenario": "session.lifecycle", "assertions": ["session.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/members/Session/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionResponse/type", "scenario": "session.lifecycle", "assertions": ["session.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/disabled", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/example", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/member", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/name", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/required", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Description/type", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/disabled", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/example", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/member", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/name", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/required", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/Name/type", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceRequest/type", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/@exists", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/disabled", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/document", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/example", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/member", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/name", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/output_required", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/required", "scenario": "session.lifecycle", "assertions": ["space.update", "input.validation"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/type", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/members/SessionSpace/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/ModifySessionSpaceResponse/type", "scenario": "session.lifecycle", "assertions": ["space.update"]}
+  - {"entry": "/objects/SessionInfo/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/AgentId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/CreateTime/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Metadata/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SessionId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/SpaceId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/State/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/State/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/State/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/Title/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/Title/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/Title/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UpdateTime/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/UserId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/usage", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/CreateTime/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Default/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Description/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Name/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/SpaceId/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/Status/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/@exists", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/disabled", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/document", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/example", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/member", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/name", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/output_required", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/required", "scenario": "session.lifecycle", "assertions": ["space.get", "input.validation"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/members/UpdateTime/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/type", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionSpaceInfo/usage", "scenario": "session.lifecycle", "assertions": ["space.get"]}
+  - {"entry": "/objects/SessionState/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionState/members/CustomState/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
+  - {"entry": "/objects/SessionState/members/CustomState/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/members/CustomState/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionState/usage", "scenario": "session.lifecycle", "assertions": ["session.get"]}
