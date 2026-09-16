@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -79,9 +80,36 @@ func TestChannelBinaries(t *testing.T) {
 		add("/objects/PreviewProbeRequest", map[string]any{"type": "object", "members": []any{member("Value", "string", "string")}}),
 		add("/objects/PreviewProbeResponse", map[string]any{"type": "object", "members": []any{member("Echo", "string", "string")}}),
 	}
+	// Change an existing field's parser and exclude an unrelated dedicated flag.
+	// Stable keeps its original contract; preview must update all wrapper layers.
+	baseData, err := os.ReadFile(filepath.Join(work, "api/ags/v20250920/api.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var originalBase map[string]any
+	if err := json.Unmarshal(baseData, &originalBase); err != nil {
+		t.Fatal(err)
+	}
+	members := originalBase["objects"].(map[string]any)["CreateSandboxToolRequest"].(map[string]any)["members"].([]any)
+	descriptionIndex := -1
+	for i, value := range members {
+		if value.(map[string]any)["name"] == "Description" {
+			descriptionIndex = i
+			break
+		}
+	}
+	if descriptionIndex < 0 {
+		t.Fatal("Description fixture missing")
+	}
+	descriptionPath := "/objects/CreateSandboxToolRequest/members/" + strconv.Itoa(descriptionIndex)
+	patch = append(patch,
+		map[string]any{"op": "test", "path": descriptionPath, "value": members[descriptionIndex]},
+		map[string]any{"op": "replace", "path": descriptionPath, "value": member("Description", "object", "NetworkConfiguration")},
+	)
+
 	write("api.patch.json", patch)
-	write("mapping.patch.json", []any{add("/actions/PreviewProbe", map[string]any{"command": "workspace.probe", "request": "PreviewProbeRequest", "response": "PreviewProbeResponse", "status": "mapped"}), add("/actions/StartSandboxInstance/fields/PreviewProbe", map[string]any{"flag": "preview-probe-alias"})})
-	write("help.patch.json", []any{add("/commands/workspace.probe", map[string]any{"short": "Preview module fixture"}), add("/commands/instance.create/fields/PreviewProbe", map[string]any{"description": "Preview input fixture"})})
+	write("mapping.patch.json", []any{map[string]any{"op": "test", "path": "/actions/CreateSandboxTool/fields/Description/inputs/0/type", "value": "string"}, map[string]any{"op": "replace", "path": "/actions/CreateSandboxTool/fields/Description/inputs/0/type", "value": "json"}, add("/actions/StartSandboxInstance/fields/ClientToken", map[string]any{"excluded": true}), add("/actions/PreviewProbe", map[string]any{"command": "workspace.probe", "request": "PreviewProbeRequest", "response": "PreviewProbeResponse", "status": "mapped"}), add("/actions/StartSandboxInstance/fields/PreviewProbe", map[string]any{"flag": "preview-probe-alias"})})
+	write("help.patch.json", []any{map[string]any{"op": "test", "path": "/commands/instance.create/fields/ClientToken/inputs", "value": map[string]any{"client-token": map[string]any{"usage": "Client token for duplicate creation protection"}}}, map[string]any{"op": "remove", "path": "/commands/instance.create/fields/ClientToken/inputs"}, add("/commands/workspace.probe", map[string]any{"short": "Preview module fixture"}), add("/commands/instance.create/fields/PreviewProbe", map[string]any{"description": "Preview input fixture"})})
 	goRun := func(args ...string) []byte {
 		t.Helper()
 		cmd := exec.CommandContext(t.Context(), "go", args...)
@@ -138,7 +166,10 @@ func Module() command.Module {
 		}
 	}
 	goRun("test", "./internal/commands", "./cmd/agr")
-	goRun("test", "-tags=preview", "./internal/commands", "./cmd/agr")
+	goRun("test", "-tags=preview", "./internal/commands")
+	// Stable characterization freezes flags that this fixture intentionally excludes.
+	// Run contract-derived checks here; the binary assertions below verify the changes.
+	goRun("test", "-tags=preview", "./cmd/agr", "-run", "TestContract_")
 	goRun("test", "./tests/integ", "-run", "TestSchema_RegistryInvariants")
 	goRun("test", "-tags=preview", "./tests/integ", "-run", "TestSchema_RegistryInvariants")
 	stable, preview := filepath.Join(work, "agr-stable"), filepath.Join(work, "agr-preview")
@@ -226,10 +257,44 @@ func Module() command.Module {
 		t.Fatal(err)
 	}
 	for _, flag := range schema.Data.Flags {
-		if (flag.Name == "preview-object" || flag.Name == "preview-array") && flag.Type != "json" {
+		if (flag.Name == "preview-object" || flag.Name == "preview-array" || flag.Name == "description") && flag.Type != "json" {
 			t.Errorf("%s uses JSON parser but schema Flag.Type=%s", flag.Name, flag.Type)
 		}
 	}
+	for _, binary := range []string{stable, preview} {
+		var result struct {
+			Data struct {
+				Flags         []struct{ Name string }
+				RequestSchema struct {
+					Properties map[string]struct {
+						Type    string
+						CliFlag *string
+					}
+				}
+			}
+		}
+		if err := json.Unmarshal(run(binary, true, "schema", "instance.create", "-o", "json"), &result); err != nil {
+			t.Fatal(err)
+		}
+		property, ok := result.Data.RequestSchema.Properties["ClientToken"]
+		if !ok || property.Type != "string" || (property.CliFlag != nil) != (binary == stable) {
+			t.Fatalf("request-only contract mismatch: %+v", result)
+		}
+		found := false
+		for _, flag := range result.Data.Flags {
+			if flag.Name == "client-token" {
+				found = true
+			}
+		}
+		if found != (binary == stable) {
+			t.Fatal("excluded flag leaked into schema")
+		}
+		help := run(binary, true, "instance", "create", "--help")
+		if bytes.Contains(help, []byte("--client-token")) != (binary == stable) {
+			t.Fatal("excluded flag leaked into help")
+		}
+	}
+
 	stableNames, previewNames := commandNames(stable), commandNames(preview)
 	for name := range stableNames {
 		if !previewNames[name] {
@@ -296,10 +361,14 @@ func Module() command.Module {
 			t.Fatalf("resource response truncated: %s", out)
 		}
 	}
-	run(preview, true, "tool", "fork", "sdt-source", "--tool-name", "copy", "-o", "json")
+	run(preview, true, "tool", "fork", "sdt-source", "--tool-name", "copy", "--description", `{"NetworkMode":"PUBLIC"}`, "-o", "json")
 	mu.Lock()
 	last := requests[len(requests)-1]
 	custom, _ := last["CustomConfiguration"].(map[string]any)
+	description, _ := last["Description"].(map[string]any)
+	if description["NetworkMode"] != "PUBLIC" {
+		t.Errorf("fork retained old Description parser: %#v", last)
+	}
 	if last["PreviewSetting"] != "inherited" || custom["PreviewNested"] != "nested" || custom["ImageDigest"] != nil {
 		t.Errorf("fork lost/crossed fields: %#v", last)
 	}
@@ -337,6 +406,8 @@ func Module() command.Module {
 	delete(base["actions"].(map[string]any), "PreviewProbe")
 	delete(base["objects"].(map[string]any), "PreviewProbeRequest")
 	delete(base["objects"].(map[string]any), "PreviewProbeResponse")
+	// Restore the type-change fixture before promoting only additions.
+	base["objects"].(map[string]any)["CreateSandboxToolRequest"].(map[string]any)["members"].([]any)[descriptionIndex] = members[descriptionIndex]
 	write("api.json", base)
 	for _, name := range []string{"api.patch.json", "mapping.patch.json", "help.patch.json"} {
 		write(name, []any{})

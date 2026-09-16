@@ -14,6 +14,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -434,3 +435,57 @@ func strPtr(value string) *string {
 
 var _ ControlPlane = (*fakeControlPlane)(nil)
 var _ apicli.ControlPlane = (*fakeControlPlane)(nil)
+
+// Mutate every existing field, not only a newly added fixture field. This catches
+// wrappers that accidentally freeze any current parser or flag definition.
+func TestForkInheritsCurrentCreateFields(t *testing.T) {
+	base := toolcreate.APIDescriptor()
+	for index, original := range base.Fields {
+		t.Run(original.Name, func(t *testing.T) {
+			create := toolcreate.APIDescriptor()
+			field := &create.Fields[index]
+			field.Parser = "common.default_json"
+			field.Required = true
+			field.Inputs = []apicli.InputSpec{{Name: "replacement", Flag: "replacement", Type: command.FlagString, Usage: "Changed contract", Default: `{"default":true}`, SendDefault: true}}
+			fork := forkDescriptor(create)
+			inherited := fork.Fields[index]
+			if inherited.Parser != field.Parser || inherited.Inputs[0].Flag != "replacement" || inherited.Inputs[0].Usage != "Changed contract" || inherited.Required != (original.Name == "ToolName") {
+				t.Fatalf("stale fork field: %+v", inherited)
+			}
+			builder := apicli.NewRequestBuilder(apicli.APIDescriptor{Fields: []apicli.FieldSpec{inherited}})
+			request, err := builder.Build(command.Request{Flags: map[string]command.FlagValue{"replacement": {String: `{"value":true}`, Changed: true, Type: command.FlagString}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(request[original.Name], map[string]any{"value": true}) {
+				t.Fatalf("parser did not follow contract: %#v", request)
+			}
+			if inherited.Inputs[0].Default != nil || inherited.Inputs[0].SendDefault {
+				t.Fatal("fork default would overwrite source values")
+			}
+			if create.Fields[index].Inputs[0].Default == nil {
+				t.Fatal("fork mutated create descriptor")
+			}
+			create.Fields = slices.Delete(create.Fields, index, index+1)
+			for _, retained := range forkDescriptor(create).Fields {
+				if retained.Name == original.Name {
+					t.Fatal("fork resurrected excluded field")
+				}
+			}
+		})
+	}
+}
+
+func TestEmptyStringOverridesFollowCurrentParser(t *testing.T) {
+	fields := []apicli.FieldSpec{
+		{Name: "Description", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Flag: "description"}}},
+		{Name: "NewString", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Flag: "renamed-string"}}},
+	}
+	overrides := map[string]any{}
+	applyExplicitEmptyStringOverrides(overrides, command.Request{Flags: map[string]command.FlagValue{
+		"description": {Changed: true}, "renamed-string": {Changed: true}, "role-arn": {Changed: true},
+	}}, fields)
+	if !reflect.DeepEqual(overrides, map[string]any{"NewString": ""}) {
+		t.Fatalf("stale empty string overrides: %#v", overrides)
+	}
+}

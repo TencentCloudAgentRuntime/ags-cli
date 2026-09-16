@@ -1491,20 +1491,45 @@ func refreshAPIRequestSchemas(schemas []CommandSchema) {
 		if object == nil {
 			continue
 		}
-		members := map[string]apimeta.Member{}
-		for _, member := range object.Members {
-			if !member.Disabled {
-				members[member.Name] = member
+		// Editorial overrides cannot resurrect flags excluded by this channel.
+		if seed, ok := registrySchemaSeedsByID[schema.Name]; ok {
+			flags := make([]FlagSchema, 0, len(seed.Flags))
+			for _, current := range seed.Flags {
+				for _, editorial := range schema.Flags {
+					if editorial.Name == current.Name {
+						typ := current.Type
+						if editorial.Type == "enum" && typ == "string" {
+							typ = "enum"
+						}
+						editorial.Type = typ
+						editorial.Shorthand = current.Shorthand
+						editorial.Default = current.Default
+						current = editorial
+						break
+					}
+				}
+				flags = append(flags, current)
 			}
+			schema.Flags = flags
+			if !api.DisableRequestFlag {
+				if supports, ok := requestio.SupportsGeneratedSkeleton(schema.Name); !ok || supports {
+					ensureSchemaFlag(schema, FlagSchema{Name: "generate-skeleton", Type: "bool"})
+				}
+			}
+		}
+		schema.SupportsRequest = !api.DisableRequestFlag
+		fields := map[string]apicli.FieldSpec{}
+		for _, field := range api.Fields {
+			fields[field.Name] = field
 		}
 		if schema.RequestSchema == nil {
 			schema.RequestSchema = &RequestSchema{Type: "object"}
 		}
 		properties := map[string]PropertySchema{}
 		required := []string{}
-		for _, field := range api.Fields {
-			member, ok := members[field.Name]
-			if !ok {
+		for _, member := range object.Members {
+			field, hasField := fields[member.Name]
+			if member.Disabled || (api.DisableRequestFlag && !hasField) {
 				continue
 			}
 			// JSON is carried by string Cobra flags, including inherited wrapper inputs.
@@ -1517,7 +1542,7 @@ func refreshAPIRequestSchemas(schemas []CommandSchema) {
 					}
 				}
 			}
-			property := schema.RequestSchema.Properties[field.Name]
+			property := schema.RequestSchema.Properties[member.Name]
 			kind := requestPropertyType(member.Type)
 			if property.Type != "enum" || kind != "string" {
 				property.Type = kind
@@ -1531,9 +1556,13 @@ func refreshAPIRequestSchemas(schemas []CommandSchema) {
 					break
 				}
 			}
-			properties[field.Name] = property
-			if field.Required {
-				required = append(required, field.Name)
+			properties[member.Name] = property
+			isRequired := member.Required
+			if api.DisableRequestFlag {
+				isRequired = field.Required
+			}
+			if isRequired {
+				required = append(required, member.Name)
 			}
 		}
 		schema.RequestSchema.Properties = properties

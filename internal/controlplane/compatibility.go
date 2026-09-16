@@ -109,10 +109,12 @@ func sdkValueSupports(spec *apimeta.Spec, kind, member string, typ reflect.Type,
 		return typ.Kind() == reflect.String
 	case "bool":
 		return typ.Kind() == reflect.Bool
-	case "int", "int64", "uint", "uint64", "integer":
-		return typ.Kind() >= reflect.Int && typ.Kind() <= reflect.Uint64
+	case "int", "int64", "integer":
+		return typ.Kind() == reflect.Int64
+	case "uint", "uint64":
+		return typ.Kind() == reflect.Uint64
 	case "float", "double":
-		return typ.Kind() == reflect.Float32 || typ.Kind() == reflect.Float64
+		return typ.Kind() == reflect.Float64
 	}
 	return false
 }
