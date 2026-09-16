@@ -8,10 +8,19 @@ on:
 permissions:
   contents: write
 
+# Serialize the read/compare/promote and downstream dispatch across all release tags.
+concurrency:
+  group: agr-release-distribution
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   release:
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      channel: ${{ steps.version.outputs.channel }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -23,21 +32,20 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Extract version from tag
+      - name: Validate tag and select release channel
         id: version
-        run: |
-          TAG="${{ github.ref_name }}"
-          VERSION="${TAG#v}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Extracted version: $VERSION from tag: $TAG"
+        env:
+          TAG: ${{ github.ref_name }}
+        run: bash scripts/release-channel.sh "$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Validate version format
+      - name: Refuse to rewrite a published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Invalid tag format '$TAG'"
-            echo "Expected format: vX.Y.Z (preview publishing is currently disabled)"
+          RELEASES="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[] | [.tag_name, .draft] | @tsv')"
+          if printf '%s\n' "$RELEASES" | awk -v tag="$TAG" '$1 == tag && $2 == "false" { found = 1 } END { exit !found }'; then
+            echo "Release $TAG is already published; retry downstream delivery without rebuilding this tag." >&2
             exit 1
           fi
 
@@ -82,8 +90,8 @@ jobs:
             fi
             rm -rf "$work"
           done
-          (cd dist && shasum -a 256 -- * > checksums.txt)
           cp install.sh dist/install.sh
+          (cd dist && shasum -a 256 -- * > checksums.txt)
 
       - name: Install smoke test
         env:
@@ -113,17 +121,55 @@ jobs:
             grep -q "  ${ARTIFACT}$" dist/checksums.txt
           done
 
-      - name: Create GitHub Release and upload artifacts
+      - name: Create draft GitHub Release and upload artifacts
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           body_path: RELEASE_NOTES.md
+          draft: true
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          make_latest: "false"
           files: |
             dist/*
 
+      # Publish only after all assets exist, so release.published consumers can sync them.
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          CHANNEL: ${{ steps.version.outputs.channel }}
+        run: |
+          if [[ "$CHANNEL" == "stable" ]]; then
+            LATEST="$(python3 scripts/release-latest.py "$TAG")"
+            gh release edit "$TAG" --draft=false --latest="$LATEST"
+          else
+            gh release edit "$TAG" --draft=false --latest=false
+          fi
+
+  homebrew:
+    needs: release
+    if: ${{ needs.release.outputs.channel == 'stable' }}
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # Re-evaluate on retries: a newer release may have completed in the meantime.
+      - name: Check Homebrew target is still current
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          ELIGIBLE="$(python3 scripts/release-latest.py "$TAG")"
+          echo "eligible=$ELIGIBLE" >> "$GITHUB_OUTPUT"
+
       - name: Create Homebrew Tap app token
-        if: ${{ !contains(steps.version.outputs.version, '-') }}
+        if: ${{ steps.current.outputs.eligible == 'true' }}
         id: homebrew-tap-token
         uses: actions/create-github-app-token@v3
         with:
@@ -134,10 +180,10 @@ jobs:
           permission-actions: write
 
       - name: Trigger Homebrew Tap update
-        if: ${{ !contains(steps.version.outputs.version, '-') }}
+        if: ${{ steps.current.outputs.eligible == 'true' }}
         env:
           GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
-          TAG: ${{ steps.version.outputs.tag }}
+          TAG: ${{ needs.release.outputs.tag }}
         run: |
           gh workflow run update-agr-cli.yml \
             --repo TencentCloudAgentRuntime/homebrew-tap \

@@ -44,7 +44,11 @@ jobs:
       - name: Check workflow files
         uses: docker://rhysd/actionlint:1.7.12
         with:
-          args: -color
+          # actionlint 1.7.12 predates GitHub's concurrency.queue support.
+          # Keep the exception narrow; release routing tests assert queue: max.
+          args: >-
+            -color
+            -ignore 'unexpected key "queue" for "concurrency" section'
 
   fmt:
     name: Format Check
@@ -220,6 +224,9 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+
+      - name: Test release channel routing (no credentials)
+        run: python3 scripts/test-release.py
 
       - name: Build all platforms
         run: |
