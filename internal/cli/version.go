@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -37,11 +38,13 @@ func versionFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 	version, commit, buildTime := resolvedVersionInfo()
 	data := &output.VersionData{
 		Version:   version,
+		Channel:   string(apimeta.BuildChannel),
 		Commit:    commit,
 		BuildTime: buildTime,
 	}
 	return OK(data, func(w io.Writer) {
 		fmt.Fprintf(w, "agr version %s\n", version)
+		fmt.Fprintf(w, "  channel: %s\n", apimeta.BuildChannel)
 		fmt.Fprintf(w, "  commit: %s\n", commit)
 		fmt.Fprintf(w, "  built:  %s\n", buildTime)
 	}), nil
@@ -133,4 +136,22 @@ func parsePseudoVersion(version string) (commit string, buildTime string) {
 			strings.Join([]string{ts[8:10], ts[10:12], ts[12:14]}, ":") + "Z"
 	}
 	return commit, buildTime
+}
+
+// ValidateBuildChannel rejects release versions stamped onto the wrong projection.
+// Development and pseudo versions remain usable; their Channel is always explicit.
+func ValidateBuildChannel() error {
+	version, _, _ := resolvedVersionInfo()
+	match := regexp.MustCompile(`^v?[0-9]+\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$`).FindStringSubmatch(version)
+	if match == nil {
+		return nil
+	}
+	expected := apimeta.Stable
+	if match[1] != "" {
+		expected = apimeta.Preview
+	}
+	if apimeta.BuildChannel != expected {
+		return fmt.Errorf("version %s requires %s build channel; rebuild with the correct -tags", version, expected)
+	}
+	return nil
 }

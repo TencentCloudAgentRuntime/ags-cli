@@ -97,27 +97,35 @@ func main() {
 }
 
 func run(apiDir string, check bool) error {
-	spec, err := apimeta.LoadEffectiveSpec(apiDir)
+	stable, err := apimeta.LoadContract(apiDir, apimeta.Stable)
 	if err != nil {
 		return err
 	}
-	mapping, err := apimeta.LoadMapping(filepath.Join(apiDir, "mapping.yaml"))
+	preview, err := apimeta.LoadContract(apiDir, apimeta.Preview)
 	if err != nil {
 		return err
 	}
-	help, err := apimeta.LoadHelp(filepath.Join(apiDir, "help.json"))
-	if err != nil {
+	if err := apimeta.ValidateCommandRetention(stable, preview); err != nil {
 		return err
 	}
-	if err := validate(spec, mapping); err != nil {
-		return err
+	outputs := make([]map[string][]byte, 0, 2)
+	for _, contract := range []*apimeta.Contract{stable, preview} {
+		if err := validate(contract.Spec, contract.Mapping); err != nil {
+			return err
+		}
+		files, err := renderAll(contract.Spec, contract.Mapping, contract.Help, contract.Channel)
+		if err != nil {
+			return err
+		}
+		outputs = append(outputs, files)
 	}
-	files, err := renderAll(spec, mapping, help)
+	files := channelOutputs(outputs[0], outputs[1])
+	obsolete, err := obsoleteOutputs(files)
 	if err != nil {
 		return err
 	}
 	if check {
-		var stale []string
+		stale := append([]string(nil), obsolete...)
 		for path, want := range files {
 			got, err := os.ReadFile(path)
 			if err != nil || !bytes.Equal(got, want) {
@@ -133,6 +141,11 @@ func run(apiDir string, check bool) error {
 		}
 		fmt.Println("cobragen outputs are up to date.")
 		return nil
+	}
+	for _, path := range obsolete {
+		if err := os.Remove(path); err != nil {
+			return err
+		}
 	}
 	for path, data := range files {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -168,7 +181,7 @@ func validate(spec *apimeta.Spec, mapping *apimeta.Mapping) error {
 	return nil
 }
 
-func renderAll(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.Help) (map[string][]byte, error) {
+func renderAll(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.Help, channels ...apimeta.Channel) (map[string][]byte, error) {
 	files := map[string][]byte{}
 	model, err := renderGeneratedModel(spec, mapping, help)
 	if err != nil {
@@ -177,7 +190,7 @@ func renderAll(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.Help)
 	files[filepath.Join("internal", "apimeta", "generated_model.go")] = model
 
 	commands := buildCommands(spec, mapping, help)
-	registry, err := renderCommandRegistry(commands)
+	registry, err := renderCommandRegistry(commands, channels...)
 	if err != nil {
 		return nil, err
 	}
@@ -584,14 +597,36 @@ func quotedList(items []string) string {
 }
 
 type registryModule struct {
-	ID     string
-	Alias  string
-	Path   string
-	Symbol string
+	PreviewOnly bool
+	ID          string
+	Alias       string
+	Path        string
+	Symbol      string
 }
 
-func renderCommandRegistry(commands []commandModel) ([]byte, error) {
+func renderCommandRegistry(commands []commandModel, channels ...apimeta.Channel) ([]byte, error) {
 	modules := staticWorkflowModules()
+	channel := selectedChannel(channels)
+	filtered := modules[:0]
+	for _, module := range modules {
+		if module.PreviewOnly && channel != apimeta.Preview {
+			continue
+		}
+		dir := strings.TrimPrefix(module.Path, "github.com/TencentCloudAgentRuntime/ags-cli/")
+		if _, err := os.Stat(dir); err == nil {
+			symbol, err := registrySymbolForCommandDir(dir, channel)
+			if err != nil {
+				return nil, err
+			}
+			if symbol != "Module" {
+				return nil, fmt.Errorf("%s: handwritten module missing for %s", module.ID, channel)
+			}
+		} else if !os.IsNotExist(err) {
+			return nil, err
+		}
+		filtered = append(filtered, module)
+	}
+	modules = filtered
 	seen := map[string]bool{}
 	for _, module := range modules {
 		seen[module.ID] = true
@@ -600,7 +635,7 @@ func renderCommandRegistry(commands []commandModel) ([]byte, error) {
 		if seen[cmd.Command] {
 			continue
 		}
-		module, err := mappedRegistryModule(cmd)
+		module, err := mappedRegistryModule(cmd, channels...)
 		if err != nil {
 			return nil, err
 		}
@@ -631,13 +666,13 @@ func renderCommandRegistry(commands []commandModel) ([]byte, error) {
 	return gofmt("internal/commands/registry.generated.go", []byte(b.String()))
 }
 
-func mappedRegistryModule(cmd commandModel) (registryModule, error) {
+func mappedRegistryModule(cmd commandModel, channels ...apimeta.Channel) (registryModule, error) {
 	parts := strings.Split(cmd.Command, ".")
 	dirParts := make([]string, len(parts))
 	for i, p := range parts {
 		dirParts[i] = strings.ReplaceAll(p, "-", "")
 	}
-	symbol, err := registrySymbolForCommandDir(filepath.Join("internal", "commands", filepath.Join(dirParts...)))
+	symbol, err := registrySymbolForCommandDir(filepath.Join("internal", "commands", filepath.Join(dirParts...)), channels...)
 	if err != nil {
 		return registryModule{}, err
 	}
@@ -648,6 +683,9 @@ func mappedRegistryModule(cmd commandModel) (registryModule, error) {
 		Symbol: symbol,
 	}, nil
 }
+
+// Explicit registration keeps preview-only workflows out of stable imports.
+var previewWorkflowIDs = []string{}
 
 func staticWorkflowModules() []registryModule {
 	ids := []string{
@@ -689,32 +727,20 @@ func staticWorkflowModules() []registryModule {
 		"identity.token.create",
 		"identity.update",
 	}
+	stableCount := len(ids)
+	ids = append(ids, previewWorkflowIDs...)
 	modules := make([]registryModule, 0, len(ids))
-	for _, id := range ids {
+	for index, id := range ids {
 		parts := strings.Split(id, ".")
 		modules = append(modules, registryModule{
-			ID:     id,
-			Alias:  registryAlias(parts),
-			Path:   "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/" + strings.Join(parts, "/"),
-			Symbol: "Module",
+			PreviewOnly: index >= stableCount,
+			ID:          id,
+			Alias:       registryAlias(parts),
+			Path:        "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/" + strings.Join(parts, "/"),
+			Symbol:      "Module",
 		})
 	}
 	return modules
-}
-
-func registrySymbolForCommandDir(dir string) (string, error) {
-	commandFile := filepath.Join(dir, "command.go")
-	data, err := os.ReadFile(commandFile)
-	if err == nil {
-		if bytes.Contains(data, []byte("func Module(")) {
-			return "Module", nil
-		}
-		return "", fmt.Errorf("%s exists but does not export Module()", commandFile)
-	}
-	if !os.IsNotExist(err) {
-		return "", err
-	}
-	return "GeneratedModule", nil
 }
 
 func registryAlias(parts []string) string {

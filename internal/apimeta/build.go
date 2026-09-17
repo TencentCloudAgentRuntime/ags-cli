@@ -176,6 +176,7 @@ func catalogInputs(inputs []InputMapping) []CatalogInputEntry {
 
 // CoverageReport is the structured coverage info the CI gate consumes.
 type CoverageReport struct {
+	Channel          string                  `json:"Channel,omitempty"`
 	APIVersion       string                  `json:"ApiVersion"`
 	TotalActions     int                     `json:"TotalActions"`
 	MappedActions    int                     `json:"MappedActions"`
@@ -322,7 +323,7 @@ func buildRequestFlags(spec *Spec, mapping *Mapping) *FlagsReport {
 				continue
 			}
 			fm := a.Fields[m.Name]
-			inputs := fieldInputs(m, fm)
+			inputs := FieldInputs(m, fm)
 			for _, in := range inputs {
 				if in.Flag == "" {
 					continue
@@ -370,7 +371,8 @@ func buildRequestFlags(spec *Spec, mapping *Mapping) *FlagsReport {
 	return rep
 }
 
-func fieldInputs(m Member, fm *FieldMapping) []InputMapping {
+// FieldInputs is the shared mapping projection for generators and runtime metadata.
+func FieldInputs(m Member, fm *FieldMapping) []InputMapping {
 	canonical := KebabCase(m.Name)
 	if fm != nil && len(fm.Inputs) > 0 {
 		out := make([]InputMapping, 0, len(fm.Inputs))

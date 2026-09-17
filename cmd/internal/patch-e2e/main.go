@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"debug/buildinfo"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchcoverage"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchscenarios"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
@@ -28,23 +31,26 @@ const entrypointVersion = "patch-e2e/v1"
 var runnerCommit string
 
 type Report struct {
-	Version     string             `json:"entrypoint_version"`
-	Repository  string             `json:"repository"`
-	PR          int                `json:"pr"`
-	Head        string             `json:"head_sha"`
-	Base        string             `json:"base_sha"`
-	Source      string             `json:"source_commit"`
-	Tree        string             `json:"source_tree"`
-	Environment string             `json:"environment"`
-	Started     time.Time          `json:"started"`
-	Finished    time.Time          `json:"finished"`
-	Status      string             `json:"status"`
-	Reason      string             `json:"reason,omitempty"`
-	Plan        patchcoverage.Plan `json:"plan"`
-	Results     []patchtest.Result `json:"results"`
-	Passed      int                `json:"pass"`
-	Failed      int                `json:"fail"`
-	Skipped     int                `json:"skip"`
+	Channel         string             `json:"channel"`
+	CandidateSHA256 string             `json:"candidate_sha256,omitempty"`
+	BuildTags       string             `json:"build_tags,omitempty"`
+	Version         string             `json:"entrypoint_version"`
+	Repository      string             `json:"repository"`
+	PR              int                `json:"pr"`
+	Head            string             `json:"head_sha"`
+	Base            string             `json:"base_sha"`
+	Source          string             `json:"source_commit"`
+	Tree            string             `json:"source_tree"`
+	Environment     string             `json:"environment"`
+	Started         time.Time          `json:"started"`
+	Finished        time.Time          `json:"finished"`
+	Status          string             `json:"status"`
+	Reason          string             `json:"reason,omitempty"`
+	Plan            patchcoverage.Plan `json:"plan"`
+	Results         []patchtest.Result `json:"results"`
+	Passed          int                `json:"pass"`
+	Failed          int                `json:"fail"`
+	Skipped         int                `json:"skip"`
 }
 
 func main() {
@@ -67,7 +73,7 @@ func git(ctx context.Context, args ...string) (string, error) {
 }
 
 func run(ctx context.Context, args []string, out, diagnostics io.Writer) (retErr error) {
-	r := Report{Version: entrypointVersion, Started: time.Now().UTC(), Status: "fail"}
+	r := Report{Channel: string(apimeta.BuildChannel), Version: entrypointVersion, Started: time.Now().UTC(), Status: "fail"}
 	f := flag.NewFlagSet("patch-e2e", flag.ContinueOnError)
 	f.StringVar(&r.Repository, "repository", "", "public owner/repository")
 	f.IntVar(&r.PR, "pr", 0, "pull request number")
@@ -144,7 +150,7 @@ func run(ctx context.Context, args []string, out, diagnostics io.Writer) (retErr
 		}
 		binary := filepath.Join(tmp, "patch-e2e-worker")
 		// The archive has no Git metadata; identity is bound explicitly above.
-		build := exec.CommandContext(ctx, "go", "build", "-buildvcs=false", "-mod=readonly", "-ldflags=-X main.runnerCommit="+r.Source, "-o", binary, "./cmd/internal/patch-e2e")
+		build := exec.CommandContext(ctx, "go", "build", "-tags=preview", "-buildvcs=false", "-mod=readonly", "-ldflags=-X main.runnerCommit="+r.Source, "-o", binary, "./cmd/internal/patch-e2e")
 		build.Dir = tmp
 		build.Env = append(os.Environ(), "GOWORK=off", "GOFLAGS=")
 		build.Stderr = diagnostics
@@ -165,6 +171,9 @@ func run(ctx context.Context, args []string, out, diagnostics io.Writer) (retErr
 			return fmt.Errorf("committed runner failed: %s", r.Reason)
 		}
 		return clean(ctx, r.Head)
+	}
+	if apimeta.BuildChannel != apimeta.Preview {
+		return fmt.Errorf("committed runner must be built with -tags=preview")
 	}
 	r.Plan, err = patchcoverage.Load(root, patchscenarios.Registry.Coverage(), true)
 	if err != nil {
@@ -202,13 +211,30 @@ func run(ctx context.Context, args []string, out, diagnostics io.Writer) (retErr
 		return err
 	}
 	binary := filepath.Join(tmp, "agr-candidate")
-	build := exec.CommandContext(ctx, "go", "build", "-buildvcs=false", "-mod=readonly", "-o", binary, "./cmd/agr")
+	build := exec.CommandContext(ctx, "go", "build", "-tags=preview", "-buildvcs=false", "-mod=readonly", "-o", binary, "./cmd/agr")
 	build.Dir = tmp
 	build.Env = append(os.Environ(), "GOWORK=off", "GOFLAGS=")
 	build.Stderr = diagnostics
 	if build.Run() != nil {
 		return fmt.Errorf("candidate CLI build failed")
 	}
+	info, err := buildinfo.ReadFile(binary)
+	if err != nil {
+		return fmt.Errorf("read candidate build info: %w", err)
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == "-tags" {
+			r.BuildTags = setting.Value
+		}
+	}
+	if r.BuildTags != "preview" {
+		return fmt.Errorf("candidate must be built with -tags=preview")
+	}
+	candidate, err := os.ReadFile(binary)
+	if err != nil {
+		return fmt.Errorf("read candidate: %w", err)
+	}
+	r.CandidateSHA256 = fmt.Sprintf("%x", sha256.Sum256(candidate))
 	home := filepath.Join(tmp, "test-home")
 	if os.Mkdir(home, 0700) != nil {
 		return fmt.Errorf("create isolated CLI home failed")

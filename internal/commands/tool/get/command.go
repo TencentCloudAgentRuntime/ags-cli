@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -16,7 +17,7 @@ import (
 
 // ControlPlane supplies the tool lookup used by the get workflow.
 type ControlPlane interface {
-	GetTool(ctx context.Context, toolID string) (*ags.SandboxTool, error)
+	GetTool(ctx context.Context, toolID string) (apivalue.Object, error)
 }
 
 // Module returns this package's command module.
@@ -65,7 +66,7 @@ func Module() command.Module {
 					if strings.TrimSpace(toolID) == "" {
 						return nil, output.NewUsageError("MISSING_REQUIRED_ARG", "missing tool id", "Provide <tool-id>.")
 					}
-					var tool *ags.SandboxTool
+					var tool apivalue.Object
 					var err error
 					if resourcewait.Requested(req) {
 						tool, err = resourcewait.WaitForTool(ctx, toolID, cp.GetTool, resourcewait.OptionsFromDeps(deps))
@@ -84,7 +85,7 @@ func Module() command.Module {
 
 // Result returns the canonical command result for a Tool. Lifecycle mutation
 // commands reuse it after --wait reaches ACTIVE.
-func Result(tool *ags.SandboxTool) *command.Result {
+func Result(tool any) *command.Result {
 	return &command.Result{
 		Data: canonicalToolData(tool),
 		Text: func(w io.Writer) {
@@ -93,7 +94,12 @@ func Result(tool *ags.SandboxTool) *command.Result {
 	}
 }
 
-func renderToolDetails(w io.Writer, tool *ags.SandboxTool) {
+func renderToolDetails(w io.Writer, value any) {
+	var tool ags.SandboxTool
+	if err := apivalue.Project(value, &tool); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
 	tagsStr := strings.Join(sortedTagStrings(tool.Tags), ", ")
 	if tagsStr == "" {
 		tagsStr = "-"
@@ -124,8 +130,13 @@ func renderToolDetails(w io.Writer, tool *ags.SandboxTool) {
 	printKV(w, kvs)
 }
 
-func canonicalToolData(t *ags.SandboxTool) map[string]any {
-	return map[string]any{
+func canonicalToolData(value any) map[string]any {
+	var t ags.SandboxTool
+	if err := apivalue.Project(value, &t); err != nil {
+		raw, _ := apivalue.Decode(value)
+		return map[string]any(raw)
+	}
+	data := map[string]any{
 		"ToolId":                derefString(t.ToolId),
 		"ToolName":              derefString(t.ToolName),
 		"ToolType":              derefString(t.ToolType),
@@ -144,6 +155,20 @@ func canonicalToolData(t *ags.SandboxTool) map[string]any {
 		"ComputerConfiguration": t.ComputerConfiguration,
 		"LogConfiguration":      t.LogConfiguration,
 	}
+	data = apivalue.Extend(data, value)
+	raw, _ := apivalue.Decode(value)
+	extendedTags := false
+	for _, tag := range raw.Objects("Tags") {
+		for name := range tag {
+			if name != "Key" && name != "Value" {
+				extendedTags = true
+			}
+		}
+	}
+	if !extendedTags {
+		data["Tags"] = sdkTagsToMap(t.Tags)
+	}
+	return data
 }
 
 type keyValue struct {
@@ -227,3 +252,6 @@ func derefString(s *string) string {
 	}
 	return *s
 }
+
+// CanonicalData is shared by get, list and waited mutation results.
+func CanonicalData(value any) map[string]any { return canonicalToolData(value) }

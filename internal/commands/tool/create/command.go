@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/progress"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // Module returns this package's command module.
@@ -66,10 +66,11 @@ func Module() command.Module {
 					} else {
 						// Response type mismatch or missing ToolId — cannot confirm success.
 						sp.Cleanup()
+						return nil, missingToolIDError()
 					}
 					if resourcewait.Requested(req) {
-						response, ok := result.Data.(*ags.CreateSandboxToolResponseParams)
-						if !ok || derefString(response.ToolId) == "" {
+						response, decodeErr := apivalue.Decode(result.Data)
+						if decodeErr != nil || response.String("ToolId") == "" {
 							return nil, missingToolIDError()
 						}
 						getter, ok := deps.ControlPlane.(resourcewait.ToolGetter)
@@ -78,7 +79,7 @@ func Module() command.Module {
 						}
 						tool, err := resourcewait.WaitForToolWithPolicy(
 							ctx,
-							derefString(response.ToolId),
+							response.String("ToolId"),
 							getter.GetTool,
 							resourcewait.ToolPolicy(resourcewait.OperationCreate),
 							resourcewait.OptionsFromDeps(deps),
@@ -99,7 +100,7 @@ func missingToolIDError() error {
 	return output.NewCLIError(&output.Failure{
 		Code:    "INTERNAL_ERROR",
 		Kind:    output.KindGenericError,
-		Message: "cannot wait because the create response did not include a tool id",
+		Message: "the create response did not include a tool id",
 		Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
 	})
 }
@@ -111,11 +112,11 @@ func applyCreateResultText(result *command.Result, req command.Request) bool {
 	if result == nil {
 		return false
 	}
-	response, ok := result.Data.(*ags.CreateSandboxToolResponseParams)
-	if !ok {
+	response, decodeErr := apivalue.Decode(result.Data)
+	if decodeErr != nil {
 		return false
 	}
-	toolID := derefString(response.ToolId)
+	toolID := response.String("ToolId")
 	if toolID == "" {
 		return false
 	}
@@ -155,13 +156,6 @@ func stringFlag(req command.Request, name string) string {
 		return ""
 	}
 	return flag.String
-}
-
-func derefString(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }
 
 func validateConvenienceRequest(req map[string]any) error {

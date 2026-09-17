@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
-	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/tooltags"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/toolcopy"
+	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -17,7 +20,7 @@ import (
 
 // ControlPlane supplies the source lookup and create call used by tool fork.
 type ControlPlane interface {
-	GetTool(ctx context.Context, toolID string) (*ags.SandboxTool, error)
+	GetTool(ctx context.Context, toolID string) (apivalue.Object, error)
 	Call(ctx context.Context, action string, request map[string]any) (any, error)
 }
 
@@ -57,7 +60,7 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					applyExplicitEmptyStringOverrides(overrides, req)
+					applyExplicitEmptyStringOverrides(overrides, req, api.Fields)
 					if strings.TrimSpace(stringValue(overrides["ToolName"])) == "" {
 						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "tool name (-n/--tool-name) is required", "Provide a non-empty value for --tool-name.")
 					}
@@ -65,13 +68,19 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					createReq := baseCreateRequestFromTool(source)
+					createReq, err := toolcopy.Request(source)
+					if err != nil {
+						return nil, err
+					}
 					for key, value := range overrides {
 						createReq[key] = value
 					}
 					result, err := cp.Call(ctx, "CreateSandboxTool", createReq)
 					if err != nil {
 						return nil, err
+					}
+					if createdToolID(result) == "" {
+						return nil, fmt.Errorf("create response is missing ToolId")
 					}
 					mutationResult := createResult(result, req)
 					if !resourcewait.Requested(req) {
@@ -104,7 +113,40 @@ func Module() command.Module {
 }
 
 func forkAPIDescriptor() apicli.APIDescriptor {
-	createAPI := createLikeAPIDescriptor()
+	return forkDescriptor(toolcreate.APIDescriptor())
+}
+
+func forkDescriptor(createAPI apicli.APIDescriptor) apicli.APIDescriptor {
+	// The channel descriptor owns field presence, parsing and flag names. Fork
+	// changes only required/default behavior and compatible editorial help.
+	helpFields := forkHelpFields()
+	createAPI.Fields = slices.Clone(createAPI.Fields)
+	for i := range createAPI.Fields {
+		field := &createAPI.Fields[i]
+		field.Required = field.Name == "ToolName"
+		field.Inputs = slices.Clone(field.Inputs)
+		for j := range field.Inputs {
+			input := &field.Inputs[j]
+			input.Default = nil
+			input.SendDefault = false
+			for _, help := range helpFields {
+				if help.Name != field.Name || help.Parser != field.Parser {
+					continue
+				}
+				for _, editorial := range help.Inputs {
+					if editorial.Flag == input.Flag && editorial.Type == input.Type {
+						input.Usage = editorial.Usage
+						if editorial.Format != "" {
+							input.Format = editorial.Format
+						}
+						if len(editorial.Examples) > 0 {
+							input.Examples = slices.Clone(editorial.Examples)
+						}
+					}
+				}
+			}
+		}
+	}
 	createAPI.Spec = command.Spec{
 		ID:           "tool.fork",
 		Path:         []string{"tool", "fork"},
@@ -126,28 +168,22 @@ func forkAPIDescriptor() apicli.APIDescriptor {
 	return createAPI
 }
 
-func createLikeAPIDescriptor() apicli.APIDescriptor {
-	return apicli.APIDescriptor{
-		API: apicli.APISpec{
-			Action:       "CreateSandboxTool",
-			RequestType:  "CreateSandboxToolRequest",
-			ResponseType: "CreateSandboxToolResponse",
-		},
-		Fields: []apicli.FieldSpec{
-			{Name: "ToolName", Parser: "common.default_string", Required: true, Inputs: []apicli.InputSpec{{Name: "tool-name", Flag: "tool-name", Shorthand: "n", Usage: "New tool name (required)", Type: command.FlagString}}},
-			{Name: "ToolType", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "tool-type", Flag: "tool-type", Shorthand: "t", Usage: "Override tool type", Type: command.FlagString}}},
-			{Name: "NetworkConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "network-configuration", Flag: "network-configuration", Usage: "Override NetworkConfiguration as JSON object, @file, or - for stdin", Type: command.FlagString}}},
-			{Name: "Description", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "description", Flag: "description", Shorthand: "d", Usage: "Override tool description", Type: command.FlagString}}},
-			{Name: "DefaultTimeout", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "default-timeout", Flag: "default-timeout", Usage: "Override default timeout, for example 5m, 300s, or 1h", Type: command.FlagString}}},
-			{Name: "Tags", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "tags", Flag: "tags", Usage: "Override tags as JSON array, @file, or - for stdin", Type: command.FlagString}}},
-			{Name: "ClientToken", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "client-token", Flag: "client-token", Usage: "Client token for duplicate creation protection", Type: command.FlagString}}},
-			{Name: "RoleArn", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "role-arn", Flag: "role-arn", Usage: "Override role ARN for COS access", Type: command.FlagString}}},
-			{Name: "StorageMounts", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "storage-mounts", Flag: "storage-mounts", Usage: "Override StorageMounts as JSON array, @file, or - for stdin", Type: command.FlagString}}},
-			{Name: "CustomConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "custom-configuration", Flag: "custom-configuration", Usage: "Override CustomConfiguration JSON object, @file, or - for stdin", Type: command.FlagString}}},
-			{Name: "ComputerConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "computer-configuration", Flag: "computer-configuration", Usage: "Override ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}", Examples: []string{"agr tool fork sdt-xxxx -n my-copy --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"}, Type: command.FlagString}}},
-			{Name: "LogConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "log-configuration", Flag: "log-configuration", Usage: "Override LogConfiguration JSON object, @file, or - for stdin", Type: command.FlagString}}},
-			{Name: "Persistent", Parser: "common.default_bool", Inputs: []apicli.InputSpec{{Name: "persistent", Flag: "persistent", Usage: "Override whether the sandbox tool creates persistent sandboxes", Type: command.FlagBool}}},
-		},
+// forkHelpFields supplies editorial overrides only; it never adds fields or inputs.
+func forkHelpFields() []apicli.FieldSpec {
+	return []apicli.FieldSpec{
+		{Name: "ToolName", Parser: "common.default_string", Required: true, Inputs: []apicli.InputSpec{{Name: "tool-name", Flag: "tool-name", Shorthand: "n", Usage: "New tool name (required)", Type: command.FlagString}}},
+		{Name: "ToolType", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "tool-type", Flag: "tool-type", Shorthand: "t", Usage: "Override tool type", Type: command.FlagString}}},
+		{Name: "NetworkConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "network-configuration", Flag: "network-configuration", Usage: "Override NetworkConfiguration as JSON object, @file, or - for stdin", Type: command.FlagString}}},
+		{Name: "Description", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "description", Flag: "description", Shorthand: "d", Usage: "Override tool description", Type: command.FlagString}}},
+		{Name: "DefaultTimeout", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "default-timeout", Flag: "default-timeout", Usage: "Override default timeout, for example 5m, 300s, or 1h", Type: command.FlagString}}},
+		{Name: "Tags", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "tags", Flag: "tags", Usage: "Override tags as JSON array, @file, or - for stdin", Type: command.FlagString}}},
+		{Name: "ClientToken", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "client-token", Flag: "client-token", Usage: "Client token for duplicate creation protection", Type: command.FlagString}}},
+		{Name: "RoleArn", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Name: "role-arn", Flag: "role-arn", Usage: "Override role ARN for COS access", Type: command.FlagString}}},
+		{Name: "StorageMounts", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "storage-mounts", Flag: "storage-mounts", Usage: "Override StorageMounts as JSON array, @file, or - for stdin", Type: command.FlagString}}},
+		{Name: "CustomConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "custom-configuration", Flag: "custom-configuration", Usage: "Override CustomConfiguration JSON object, @file, or - for stdin", Type: command.FlagString}}},
+		{Name: "ComputerConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "computer-configuration", Flag: "computer-configuration", Usage: "Override ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}", Examples: []string{"agr tool fork sdt-xxxx -n my-copy --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"}, Type: command.FlagString}}},
+		{Name: "LogConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "log-configuration", Flag: "log-configuration", Usage: "Override LogConfiguration JSON object, @file, or - for stdin", Type: command.FlagString}}},
+		{Name: "Persistent", Parser: "common.default_bool", Inputs: []apicli.InputSpec{{Name: "persistent", Flag: "persistent", Usage: "Override whether the sandbox tool creates persistent sandboxes", Type: command.FlagBool}}},
 	}
 }
 
@@ -159,86 +195,26 @@ func sourceToolID(req command.Request) string {
 	return sourceID
 }
 
-func applyExplicitEmptyStringOverrides(overrides map[string]any, req command.Request) {
-	for flag, field := range map[string]string{
-		"tool-name":       "ToolName",
-		"tool-type":       "ToolType",
-		"description":     "Description",
-		"default-timeout": "DefaultTimeout",
-		"client-token":    "ClientToken",
-		"role-arn":        "RoleArn",
-	} {
-		value, ok := req.Flags[flag]
-		if ok && value.Changed && value.String == "" {
-			overrides[field] = ""
+func applyExplicitEmptyStringOverrides(overrides map[string]any, req command.Request, fields []apicli.FieldSpec) {
+	for _, field := range fields {
+		if field.Parser != "common.default_string" {
+			continue
+		}
+		for _, input := range field.Inputs {
+			if input.Positional {
+				continue
+			}
+			value, ok := req.Flags[input.Flag]
+			if ok && value.Changed && value.String == "" {
+				overrides[field.Name] = ""
+			}
 		}
 	}
 }
 
-func baseCreateRequestFromTool(tool *ags.SandboxTool) map[string]any {
-	req := map[string]any{}
-	setString(req, "ToolType", tool.ToolType)
-	setString(req, "Description", tool.Description)
-	setString(req, "RoleArn", tool.RoleArn)
-	if tool.NetworkConfiguration != nil {
-		req["NetworkConfiguration"] = tool.NetworkConfiguration
-	}
-	if tool.DefaultTimeoutSeconds != nil {
-		req["DefaultTimeout"] = fmt.Sprintf("%ds", *tool.DefaultTimeoutSeconds)
-	}
-	if tags := tooltags.FilterInheritedTags(tool.Tags); len(tags) > 0 {
-		req["Tags"] = tags
-	}
-	if len(tool.StorageMounts) > 0 {
-		req["StorageMounts"] = tool.StorageMounts
-	}
-	if tool.CustomConfiguration != nil {
-		req["CustomConfiguration"] = createCustomConfiguration(tool.CustomConfiguration)
-	}
-	if tool.ComputerConfiguration != nil {
-		req["ComputerConfiguration"] = tool.ComputerConfiguration
-	}
-	if tool.LogConfiguration != nil {
-		req["LogConfiguration"] = tool.LogConfiguration
-	}
-	if tool.Persistent != nil {
-		req["Persistent"] = *tool.Persistent
-	}
+func baseCreateRequestFromTool(value any) map[string]any {
+	req, _ := toolcopy.Request(value)
 	return req
-}
-
-func createCustomConfiguration(detail *ags.CustomConfigurationDetail) *ags.CustomConfiguration {
-	return &ags.CustomConfiguration{
-		Image:             detail.Image,
-		ImageRegistryType: createImageRegistryType(detail.ImageRegistryType),
-		Command:           detail.Command,
-		Args:              detail.Args,
-		Env:               detail.Env,
-		Ports:             detail.Ports,
-		Resources:         detail.Resources,
-		Probe:             detail.Probe,
-		DNSConfig:         detail.DNSConfig,
-	}
-}
-
-func createImageRegistryType(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	converted := *value
-	switch strings.ToUpper(*value) {
-	case "TCR":
-		converted = "enterprise"
-	case "CCR":
-		converted = "personal"
-	}
-	return &converted
-}
-
-func setString(req map[string]any, key string, value *string) {
-	if value != nil {
-		req[key] = *value
-	}
 }
 
 func stringValue(value any) string {

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -48,7 +49,7 @@ func (f *fakeControlPlane) DeleteTool(_ context.Context, toolID string) error {
 	return nil
 }
 
-func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (apivalue.Object, error) {
 	f.events = append(f.events, "get:"+toolID)
 	if f.notFoundOnGet[toolID] {
 		return nil, output.NewNotFoundError("TOOL_NOT_FOUND", "missing", "hint")
@@ -57,7 +58,7 @@ func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.Sandb
 		return nil, err
 	}
 	status := "DELETING"
-	return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
+	return apivalue.Decode(&ags.SandboxTool{ToolId: &toolID, Status: &status})
 }
 
 func (f *fakeControlPlane) IsNotFound(err error) bool {

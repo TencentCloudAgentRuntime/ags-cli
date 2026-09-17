@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -27,9 +28,9 @@ func (f *fakeMixedControlPlane) Call(_ context.Context, action string, request m
 	return &ags.UpdateSandboxInstanceResponseParams{}, nil
 }
 
-func (f *fakeMixedControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
+func (f *fakeMixedControlPlane) GetInstance(_ context.Context, instanceID string) (apivalue.Object, error) {
 	f.getCalls++
-	return &ags.SandboxInstance{InstanceId: &instanceID, Status: &f.status}, nil
+	return apivalue.Decode(&ags.SandboxInstance{InstanceId: &instanceID, Status: &f.status})
 }
 
 func TestModuleUpdatesInstanceAndRendersText(t *testing.T) {

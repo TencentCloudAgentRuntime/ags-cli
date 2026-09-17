@@ -10,11 +10,17 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // RenderDetails writes a Kubernetes describe-style Deployment view.
-func RenderDetails(w io.Writer, deployment *ags.Deployment) {
+func RenderDetails(w io.Writer, value any) {
+	var deployment *ags.Deployment
+	if err := apivalue.Project(value, &deployment); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
 	if deployment == nil {
 		fmt.Fprintln(w, "Deployment: <none>")
 		return
@@ -55,7 +61,12 @@ func RenderDetails(w io.Writer, deployment *ags.Deployment) {
 }
 
 // RenderList writes the frozen Deployment list columns and pagination hint.
-func RenderList(w io.Writer, deployments []*ags.Deployment, total int, now time.Time) {
+func RenderList(w io.Writer, value any, total int, now time.Time) {
+	var deployments []*ags.Deployment
+	if err := apivalue.Project(value, &deployments); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
 	if len(deployments) == 0 {
 		fmt.Fprintln(w, "No deployments found")
 		return

@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // Module returns this package's command module.
@@ -53,24 +53,27 @@ func Module() command.Module {
 				if err != nil {
 					return nil, err
 				}
-				response, ok := result.Data.(*ags.CreateAPIKeyResponseParams)
-				if !ok {
-					return result, nil
+				response, decodeErr := apivalue.Decode(result.Data)
+				if decodeErr != nil {
+					return nil, decodeErr
 				}
-				keyID := derefString(response.KeyId)
-				result.Data = map[string]any{
+				if response.String("KeyId") == "" || response.String("APIKey") == "" {
+					return nil, fmt.Errorf("API key response is missing KeyId or APIKey")
+				}
+				keyID := response.String("KeyId")
+				result.Data = apivalue.ExtendResponse(map[string]any{
 					"KeyId":  keyID,
-					"Name":   derefString(response.Name),
-					"ApiKey": derefString(response.APIKey),
-				}
+					"Name":   response.String("Name"),
+					"ApiKey": response.String("APIKey"),
+				}, response, "APIKey", "RequestId")
 				result.Effects = append(result.Effects, output.Effect{Kind: "create", Resource: "apikey", Id: keyID})
 				result.Text = func(w io.Writer) {
 					fmt.Fprintf(w, "API key created: %s\n", keyID)
 					fmt.Fprintf(deps.IO.ErrOut, "Warning: Save this API key securely - it will not be shown again!\n")
 					printKV(w, []keyValue{
 						{key: "KeyID", value: keyID},
-						{key: "Name", value: derefString(response.Name)},
-						{key: "APIKey", value: derefString(response.APIKey)},
+						{key: "Name", value: response.String("Name")},
+						{key: "APIKey", value: response.String("APIKey")},
 					})
 				}
 				return result, nil
@@ -107,11 +110,4 @@ func printKV(w io.Writer, pairs []keyValue) {
 	for _, kv := range pairs {
 		fmt.Fprintf(w, "%-*s  %s\n", maxLen, kv.key+":", kv.value)
 	}
-}
-
-func derefString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

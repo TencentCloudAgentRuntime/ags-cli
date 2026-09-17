@@ -151,6 +151,10 @@ func EvaluateAPIPatch(upstream, patchData []byte) (PatchReport, error) {
 }
 
 func decodeAndValidatePatch(data []byte) (jsonpatch.Patch, error) {
+	return decodePatch(data, true)
+}
+
+func decodePatch(data []byte, api bool) (jsonpatch.Patch, error) {
 	trimmed := bytes.TrimSpace(data)
 	if len(trimmed) == 0 || trimmed[0] != '[' {
 		return nil, fmt.Errorf("RFC 6902 API patch must be a JSON array")
@@ -183,7 +187,7 @@ func decodeAndValidatePatch(data []byte) (jsonpatch.Patch, error) {
 				return nil, fmt.Errorf("patch operation %d %s %s has test guard for %s", i, kind, path, guardPath)
 			}
 		}
-		if kind == "add" {
+		if kind == "add" && api {
 			tokens, _ := pointerTokens(path)
 			for _, token := range tokens {
 				if isArrayIndex(token) {

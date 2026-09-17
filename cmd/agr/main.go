@@ -35,6 +35,10 @@ func attachCommands() error {
 
 func main() {
 	cli.SetVersionInfo(Version, Commit, BuildTime)
+	if err := cli.ValidateBuildChannel(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	if err := attachCommands(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to build command tree: %v\n", err)
 		os.Exit(1)

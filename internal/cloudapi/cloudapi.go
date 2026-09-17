@@ -1,13 +1,13 @@
 // Package cloudapi exposes a thin wrapper around the Tencent Cloud
 // common client. It is the runtime backend for `agr api call`, which
-// sends arbitrary JSON payloads to AGS without going through the typed
-// SDK requests.
+// sends JSON payloads to AGS without typed SDK models. Resource commands
+// also use this transport when the SDK cannot express their active contract.
 //
 // The wrapper deliberately keeps the surface small: caller passes an
 // Action name and a raw JSON byte slice, the package returns the raw
 // JSON response. No field validation is applied beyond confirming the
 // payload's top-level value is a JSON object - resource commands stay
-// in charge of strict typed validation.
+// in charge of channel contract validation.
 package cloudapi
 
 import (
@@ -46,12 +46,20 @@ type Caller struct {
 
 // New constructs a Caller bound to a specific control-plane endpoint.
 func New(secretID, secretKey, region, cloudEndpoint string) (*Caller, error) {
+	return NewWithToken(secretID, secretKey, "", region, cloudEndpoint)
+}
+
+// NewWithToken supports both permanent and temporary Tencent Cloud credentials.
+func NewWithToken(secretID, secretKey, token, region, cloudEndpoint string) (*Caller, error) {
 	if cloudEndpoint == "" {
 		return nil, fmt.Errorf("cloud endpoint must not be empty")
 	}
-	credential := common.NewCredential(secretID, secretKey)
+	credential := common.NewTokenCredential(secretID, secretKey, token)
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = cloudEndpoint
+	cpf.NetworkFailureMaxRetries = 0
+	cpf.RateLimitExceededMaxRetries = 0
+	cpf.DisableRegionBreaker = true
 
 	client := common.NewCommonClient(credential, region, cpf)
 
@@ -92,25 +100,17 @@ func (c *Caller) Call(ctx context.Context, action string, request []byte) ([]byt
 		return nil, fmt.Errorf("request payload must be a JSON object")
 	}
 
-	req := tchttp.NewCommonRequest(Service, Version, action)
-	if err := req.SetActionParameters(request); err != nil {
-		return nil, fmt.Errorf("failed to set action parameters: %w", err)
-	}
-	resp := tchttp.NewCommonResponse()
-	if err := c.client.SendOctetStream(req, resp); err != nil {
-		// fall back to ordinary Send when octet-stream is not supported
-		_ = err
-		req2 := tchttp.NewCommonRequest(Service, Version, action)
-		if err := req2.SetActionParameters(request); err != nil {
-			return nil, fmt.Errorf("failed to set action parameters: %w", err)
+	req := &wireRequest{BaseRequest: &tchttp.BaseRequest{}, payload: request}
+	req.Init().WithApiInfo(Service, Version, action)
+	req.SetContext(ctx)
+	resp := &wireResponse{}
+	if err := c.client.Send(req, resp); err != nil {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
 		}
-		resp2 := tchttp.NewCommonResponse()
-		if err := c.client.Send(req2, resp2); err != nil {
-			return nil, err
-		}
-		return resp2.GetBody(), nil
+		return nil, err
 	}
-	return resp.GetBody(), nil
+	return resp.body, nil
 }
 
 // isJSONObject reports whether data is a JSON object. Used to reject
@@ -123,3 +123,24 @@ func isJSONObject(data []byte) bool {
 	_, ok := raw.(map[string]any)
 	return ok
 }
+
+// CommonResponse decodes into float64 maps. Keep the original JSON instead so
+// extension fields and integer precision survive the SDK transport.
+type wireResponse struct {
+	tchttp.BaseResponse
+	body []byte
+}
+
+func (r *wireResponse) UnmarshalJSON(data []byte) error {
+	r.body = append(r.body[:0], data...)
+	return nil
+}
+
+// Marshal through the SDK's request interface without its map decoder, whose
+// Number type differs from encoding/json.Number and can stringify numbers.
+type wireRequest struct {
+	*tchttp.BaseRequest
+	payload []byte
+}
+
+func (r *wireRequest) MarshalJSON() ([]byte, error) { return r.payload, nil }

@@ -2,6 +2,7 @@
 package request
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,10 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/spf13/cobra"
 )
 
 // ReadFlag reads a --request-style value from inline JSON, @file, or stdin.
@@ -56,7 +56,7 @@ func ParseFlag(value string) (map[string]any, error) {
 		return nil, err
 	}
 	var raw any
-	if err := json.Unmarshal(data, &raw); err != nil {
+	if err := DecodeJSON(data, &raw); err != nil {
 		return nil, output.NewUsageError("INVALID_REQUEST_JSON",
 			fmt.Sprintf("invalid JSON in --request: %v", err),
 			"Provide valid JSON as a string, @file, or - for stdin.")
@@ -76,7 +76,7 @@ func ParseJSONFlagValue(flagName, value string, target any) error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, target); err != nil {
+	if err := DecodeJSON(data, target); err != nil {
 		return output.NewUsageError("INVALID_JSON_FLAG",
 			fmt.Sprintf("invalid JSON for --%s: %v", flagName, err),
 			fmt.Sprintf("Provide a valid JSON value for --%s, @file, or - for stdin.", flagName))
@@ -91,7 +91,7 @@ func MergePositional(rawRequest, fieldName, positional string) ([]byte, error) {
 		return nil, err
 	}
 	var probe map[string]any
-	if err := json.Unmarshal(raw, &probe); err != nil {
+	if err := DecodeJSON(raw, &probe); err != nil {
 		return nil, output.NewUsageError("INVALID_REQUEST_JSON",
 			fmt.Sprintf("invalid JSON in --request: %v", err),
 			"Provide a valid JSON object as --request.")
@@ -118,7 +118,7 @@ func ValidatePayload(commandID string, raw []byte) error {
 		return output.NewUsageError("INVALID_REQUEST_JSON", "--request payload is empty", "Provide a JSON object as --request.")
 	}
 	var probe any
-	if err := json.Unmarshal(raw, &probe); err != nil {
+	if err := DecodeJSON(raw, &probe); err != nil {
 		return output.NewUsageError("INVALID_REQUEST_JSON",
 			fmt.Sprintf("invalid JSON in --request: %v", err),
 			fmt.Sprintf("Provide a valid JSON object as --request. Run 'agr schema %s -o json' for the field reference.", commandID))
@@ -231,4 +231,20 @@ func GeneratedSkeleton(commandID string) (map[string]any, bool) {
 	rep := apimeta.BuildSkeletons(cat.Spec, cat.Mapping)
 	tmpl, ok := rep.Skeletons[commandID]
 	return tmpl, ok
+}
+
+// DecodeJSON retains integer precision while requiring exactly one JSON value.
+func DecodeJSON(data []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("multiple JSON values")
+	}
+	return nil
 }

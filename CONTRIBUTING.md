@@ -193,15 +193,43 @@ branch and its synchronization workflow have been retired. Normal repository
 review and CI requirements apply; non-empty patches additionally require the
 evidence described above.
 
-CI and release validation check the effective API contract but do not require
-empty patches. Until separate stable/preview builds are implemented, generated
-code includes the effective contract (official API plus patch). Release owners
-must inspect that contract before publishing; the pipeline does not guarantee
-that a stable package excludes patch content.
+The default build is **stable** and uses the unpatched `api.json`, `mapping.yaml`
+and `help.json`. Preview builds use all three corresponding `*.patch.json`
+overlays. Keep empty overlays as `[]`; missing files fail validation. Official
+fields entering the base are available to stable immediately. `agr api call`
+remains an explicit raw passthrough, outside resource-command validation.
 
-Preview publishing is temporarily disabled. Releases use `vX.Y.Z` and the
-existing bilingual changelogs. Dual build variants are a separate follow-up,
-not part of this rollback.
+```bash
+go run ./cmd/internal/apipatch check-all
+go run ./cmd/internal/cobragen          # generates both projections; removes stale generated variants
+go run ./cmd/internal/cobragen check
+go build -o /tmp/agr-stable ./cmd/agr
+go build -tags=preview -o /tmp/agr-preview ./cmd/agr
+go run ./cmd/internal/apigen --channel preview coverage
+GOFLAGS=-tags=preview go test ./cmd/... ./internal/... ./tests/integ
+go test ./tests/channels               # nonempty overlays, local fake-credential HTTP only
+```
+
+Existing stable filenames stay unchanged. Only differing generated files gain
+mutually exclusive `!preview` / `preview` variants. Handwritten preview code and
+its tests must use `//go:build preview`; declare new standalone workflows in
+`previewWorkflowIDs` in `cmd/internal/cobragen/main.go`. Existing command paths
+must remain available in preview. A preview wrapper may provide `Module()` in
+`command_preview.go`; ensure only one implementation is active per channel.
+
+Patch additions must target new keys. Replacements/removals require an adjacent
+`test` guard. Metadata arrays are replaced as a whole. Update API, mapping and
+help together when changing existing fields. Promotion and withdrawal both
+require regeneration and `check`; never delete handwritten files to clean
+outputs. New workflow-only API contracts belong in `internal/apimeta/workflow.go`,
+not the official snapshot. SDK-incompatible contracts use signed JSON transport
+in both channels, including after promotion.
+
+Release tags are `vX.Y.Z` for stable and `vX.Y.Z-preview.N` for preview. The
+release pipeline selects the corresponding build tag and verifies `version`'s
+`Channel`; a formal version stamped on the wrong projection is rejected.
+Source installation of preview requires `go install -tags=preview github.com/TencentCloudAgentRuntime/ags-cli/cmd/agr@vX.Y.Z-preview.N`.
+Record each stable/preview version in both `CHANGELOG.md` and `CHANGELOG-zh.md`.
 
 ## Coding Guidelines
 

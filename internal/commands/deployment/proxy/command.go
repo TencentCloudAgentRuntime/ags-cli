@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
@@ -20,8 +21,8 @@ import (
 
 // ControlPlane supplies Deployment configuration and short-lived data-plane credentials.
 type ControlPlane interface {
-	GetDeployment(context.Context, string) (*ags.Deployment, error)
-	GetDeploymentToken(context.Context, string) (*ags.AcquireDeploymentTokenResponseParams, error)
+	GetDeployment(context.Context, string) (apivalue.Object, error)
+	GetDeploymentToken(context.Context, string) (apivalue.Object, error)
 }
 
 // Proxy is the local L7 proxy lifecycle managed by the command.
@@ -142,7 +143,15 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	tokenLifecycle, cancelTokens := context.WithCancel(ctx)
 	defer cancelTokens()
 	manager := newTokenManager(tokenLifecycle, func(tokenCtx context.Context) (*ags.AcquireDeploymentTokenResponseParams, error) {
-		return cp.GetDeploymentToken(tokenCtx, deploymentID)
+		value, err := cp.GetDeploymentToken(tokenCtx, deploymentID)
+		if err != nil {
+			return nil, err
+		}
+		var token ags.AcquireDeploymentTokenResponseParams
+		if err := apivalue.Project(value, &token); err != nil {
+			return nil, err
+		}
+		return &token, nil
 	}, runtime.Now)
 	cfg := config.Get()
 	domain := fmt.Sprintf("%s.agents.%s", cfg.Region, cfg.DataPlaneDomain())
@@ -194,15 +203,17 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 
 const defaultAffinityHeader = "X-Tencent-Agr-Affinity-Id"
 
-func deploymentAffinity(deployment *ags.Deployment) (string, bool) {
-	if deployment == nil || deployment.AffinityConfiguration == nil || deployment.AffinityConfiguration.Mode == nil || strings.TrimSpace(*deployment.AffinityConfiguration.Mode) == "" {
+func deploymentAffinity(value any) (string, bool) {
+	deployment, _ := apivalue.Decode(value)
+	affinity := deployment.Object("AffinityConfiguration")
+	if strings.TrimSpace(affinity.String("Mode")) == "" {
 		return "", false
 	}
-	headerName := defaultAffinityHeader
-	if configured := deployment.AffinityConfiguration.HeaderName; configured != nil && *configured != "" {
-		headerName = *configured
+	header := affinity.String("HeaderName")
+	if header == "" {
+		header = defaultAffinityHeader
 	}
-	return headerName, true
+	return header, true
 }
 
 func parsePortSpec(spec string) (int, int, error) {

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
@@ -115,7 +116,7 @@ type fakeControlPlane struct {
 	calls      int
 }
 
-func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
+func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (apivalue.Object, error) {
 	f.instanceID = instanceID
 	f.calls++
 	if len(f.instances) > 0 {
@@ -123,9 +124,9 @@ func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*a
 		if index >= len(f.instances) {
 			index = len(f.instances) - 1
 		}
-		return f.instances[index], nil
+		return apivalue.Decode(f.instances[index])
 	}
-	return f.instance, nil
+	return apivalue.Decode(f.instance)
 }
 
 func TestModuleWaitsForInstanceTerminalState(t *testing.T) {

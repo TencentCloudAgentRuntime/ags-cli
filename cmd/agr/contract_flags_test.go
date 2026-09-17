@@ -73,14 +73,11 @@ func TestContract_GeneratedFlagTypesMatchCobraTypes(t *testing.T) {
 
 func TestContract_RequestFlagOnEveryMappedRequestCommand(t *testing.T) {
 	root := filepath.Join("..", "..", "api", "ags", "v20250920")
-	spec, err := apimeta.LoadEffectiveSpec(root)
+	contract, err := apimeta.LoadContract(root, apimeta.BuildChannel)
 	if err != nil {
-		t.Fatalf("load spec: %v", err)
+		t.Fatal(err)
 	}
-	mapping, err := apimeta.LoadMapping(filepath.Join(root, "mapping.yaml"))
-	if err != nil {
-		t.Fatalf("load mapping: %v", err)
-	}
+	spec, mapping := contract.Spec, contract.Mapping
 	for _, name := range mapping.MappedActionNames() {
 		a := mapping.Actions[name]
 		obj := spec.Object(a.Request)
@@ -131,14 +128,11 @@ func expectedCobraType(f apimeta.FieldFlag) (string, bool) {
 func loadGeneratedFlags(t *testing.T) []apimeta.FieldFlag {
 	t.Helper()
 	root := filepath.Join("..", "..", "api", "ags", "v20250920")
-	spec, err := apimeta.LoadEffectiveSpec(root)
+	contract, err := apimeta.LoadContract(root, apimeta.BuildChannel)
 	if err != nil {
-		t.Fatalf("load spec: %v", err)
+		t.Fatal(err)
 	}
-	mapping, err := apimeta.LoadMapping(filepath.Join(root, "mapping.yaml"))
-	if err != nil {
-		t.Fatalf("load mapping: %v", err)
-	}
+	spec, mapping := contract.Spec, contract.Mapping
 	return apimeta.BuildFlags(spec, mapping).Flags
 }
 

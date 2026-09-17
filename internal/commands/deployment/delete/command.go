@@ -7,16 +7,16 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // ControlPlane supplies the generated delete call and status polling seam.
 type ControlPlane interface {
 	apicli.ControlPlane
-	GetDeployment(context.Context, string) (*ags.Deployment, error)
+	GetDeployment(context.Context, string) (apivalue.Object, error)
 	IsDeploymentNotFound(error) bool
 }
 

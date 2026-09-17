@@ -3,6 +3,7 @@ package tooltags
 import (
 	"strings"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
@@ -24,4 +25,16 @@ func FilterInheritedTags(tags []*ags.Tag) []*ags.Tag {
 		return nil
 	}
 	return filtered
+}
+
+// FilterInheritedValue keeps the complete tag objects while dropping platform tags.
+func FilterInheritedValue(value any) []map[string]any {
+	wrapper, _ := apivalue.Decode(map[string]any{"Tags": value})
+	var result []map[string]any
+	for _, tag := range wrapper.Objects("Tags") {
+		if !strings.HasPrefix(tag.String("Key"), internalTagPrefix) {
+			result = append(result, map[string]any(tag))
+		}
+	}
+	return result
 }

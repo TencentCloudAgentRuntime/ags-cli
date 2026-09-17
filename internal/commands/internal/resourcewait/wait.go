@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 const (
@@ -69,12 +69,12 @@ type Options struct {
 
 // InstanceGetter is the control-plane capability needed by Instance waiters.
 type InstanceGetter interface {
-	GetInstance(context.Context, string) (*ags.SandboxInstance, error)
+	GetInstance(context.Context, string) (apivalue.Object, error)
 }
 
 // ToolGetter is the control-plane capability needed by Tool waiters.
 type ToolGetter interface {
-	GetTool(context.Context, string) (*ags.SandboxTool, error)
+	GetTool(context.Context, string) (apivalue.Object, error)
 }
 
 // Flag returns the shared workflow flag used by supported commands.
@@ -172,76 +172,68 @@ func deploymentDeletePolicy() Policy {
 
 // WaitForInstance waits for an Instance to reach any non-failure terminal
 // state, which is the contract used by instance get --wait.
-func WaitForInstance(
+func WaitForInstance[T any](
 	ctx context.Context,
 	instanceID string,
-	get func(context.Context, string) (*ags.SandboxInstance, error),
+	get func(context.Context, string) (T, error),
 	options Options,
-) (*ags.SandboxInstance, error) {
+) (T, error) {
 	return WaitForInstanceWithPolicy(ctx, instanceID, get, InstancePolicy(OperationGet), options)
 }
 
 // WaitForInstanceWithPolicy waits for an Instance operation-specific outcome.
-func WaitForInstanceWithPolicy(
+func WaitForInstanceWithPolicy[T any](
 	ctx context.Context,
 	instanceID string,
-	get func(context.Context, string) (*ags.SandboxInstance, error),
+	get func(context.Context, string) (T, error),
 	policy Policy,
 	options Options,
-) (*ags.SandboxInstance, error) {
-	return waitFor(ctx, "instance", instanceID, get, func(instance *ags.SandboxInstance) string {
-		if instance == nil || instance.Status == nil {
-			return ""
-		}
-		return *instance.Status
+) (T, error) {
+	return waitFor(ctx, "instance", instanceID, get, func(instance T) string {
+		value, _ := apivalue.Decode(instance)
+		return value.String("Status")
 	}, nil, policy, options)
 }
 
 // WaitForTool waits for a Tool to reach any non-failure terminal state, which
 // is the contract used by tool get --wait.
-func WaitForTool(
+func WaitForTool[T any](
 	ctx context.Context,
 	toolID string,
-	get func(context.Context, string) (*ags.SandboxTool, error),
+	get func(context.Context, string) (T, error),
 	options Options,
-) (*ags.SandboxTool, error) {
+) (T, error) {
 	return WaitForToolWithPolicy(ctx, toolID, get, ToolPolicy(OperationGet), options)
 }
 
 // WaitForToolWithPolicy waits for a Tool operation-specific outcome.
-func WaitForToolWithPolicy(
+func WaitForToolWithPolicy[T any](
 	ctx context.Context,
 	toolID string,
-	get func(context.Context, string) (*ags.SandboxTool, error),
+	get func(context.Context, string) (T, error),
 	policy Policy,
 	options Options,
-) (*ags.SandboxTool, error) {
-	return waitFor(ctx, "tool", toolID, get, func(tool *ags.SandboxTool) string {
-		if tool == nil || tool.Status == nil {
-			return ""
-		}
-		return *tool.Status
+) (T, error) {
+	return waitFor(ctx, "tool", toolID, get, func(tool T) string {
+		value, _ := apivalue.Decode(tool)
+		return value.String("Status")
 	}, nil, policy, options)
 }
 
 // WaitForDeploymentDeletion waits until a Deployment is absent or reports a
 // terminal deletion failure.
-func WaitForDeploymentDeletion(
+func WaitForDeploymentDeletion[T any](
 	ctx context.Context,
 	deploymentID string,
-	get func(context.Context, string) (*ags.Deployment, error),
+	get func(context.Context, string) (T, error),
 	options Options,
-) (*ags.Deployment, error) {
-	return waitFor(ctx, "deployment", deploymentID, get, func(deployment *ags.Deployment) string {
-		if deployment == nil || deployment.Status == nil {
-			return ""
-		}
-		return *deployment.Status
-	}, func(deployment *ags.Deployment) string {
-		if deployment == nil || deployment.StatusReason == nil {
-			return ""
-		}
-		return *deployment.StatusReason
+) (T, error) {
+	return waitFor(ctx, "deployment", deploymentID, get, func(deployment T) string {
+		value, _ := apivalue.Decode(deployment)
+		return value.String("Status")
+	}, func(deployment T) string {
+		value, _ := apivalue.Decode(deployment)
+		return value.String("StatusReason")
 	}, deploymentDeletePolicy(), options)
 }
 

@@ -3,9 +3,11 @@ package list
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -71,9 +73,9 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 	if len(items) != 1 || items[0]["ToolId"] != id {
 		t.Fatalf("items = %#v", items)
 	}
-	computer, ok := items[0]["ComputerConfiguration"].(*ags.ComputerConfiguration)
-	if !ok || computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != waaImageID {
-		t.Fatalf("ComputerConfiguration = %#v", items[0]["ComputerConfiguration"])
+	computer, _ := apivalue.Decode(items[0]["ComputerConfiguration"])
+	if computer.Object("WAAConfiguration").String("ImageId") != waaImageID {
+		t.Fatalf("ComputerConfiguration = %#v", computer)
 	}
 	var text bytes.Buffer
 	result.Text(&text)
@@ -188,10 +190,10 @@ func TestModuleSkipsPaginationValidationForRequestFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Run returned error: %v", err)
 	}
-	if got := cp.request["Offset"]; got != float64(1) {
+	if got := cp.request["Offset"]; got != json.Number("1") {
 		t.Fatalf("Offset = %#v, want raw request value", got)
 	}
-	if got := cp.request["Limit"]; got != float64(5) {
+	if got := cp.request["Limit"]; got != json.Number("5") {
 		t.Fatalf("Limit = %#v, want raw request value", got)
 	}
 }

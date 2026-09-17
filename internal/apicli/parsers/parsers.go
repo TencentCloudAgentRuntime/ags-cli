@@ -3,13 +3,13 @@
 package parsers
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 
+	requestio "github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
@@ -125,7 +125,7 @@ func parseJSONValue(ctx FieldContext, flag, value string, target any) error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, target); err != nil {
+	if err := requestio.DecodeJSON(data, target); err != nil {
 		return output.NewUsageError(
 			"INVALID_JSON_FLAG",
 			fmt.Sprintf("invalid JSON for --%s: %v", flag, err),

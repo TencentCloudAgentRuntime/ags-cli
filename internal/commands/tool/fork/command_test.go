@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -36,7 +38,7 @@ var forkOverrideOnlyFields = map[string]string{
 	"ClientToken": "an idempotency token must be newly supplied, never copied from the source tool",
 }
 
-func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.SandboxTool, error) {
+func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (apivalue.Object, error) {
 	f.getIDs = append(f.getIDs, toolID)
 	if f.getErr != nil {
 		return nil, f.getErr
@@ -46,12 +48,12 @@ func (f *fakeControlPlane) GetTool(_ context.Context, toolID string) (*ags.Sandb
 		if status == "" {
 			status = "ACTIVE"
 		}
-		return &ags.SandboxTool{ToolId: &toolID, Status: &status}, nil
+		return apivalue.Decode(&ags.SandboxTool{ToolId: &toolID, Status: &status})
 	}
 	if f.sourceTool != nil {
-		return f.sourceTool, nil
+		return apivalue.Decode(f.sourceTool)
 	}
-	return sourceTool(toolID), nil
+	return apivalue.Decode(sourceTool(toolID))
 }
 
 func (f *fakeControlPlane) Call(_ context.Context, action string, request map[string]any) (any, error) {
@@ -193,14 +195,15 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if cp.request["DefaultTimeout"] != "300s" {
 		t.Fatalf("DefaultTimeout = %#v", cp.request["DefaultTimeout"])
 	}
-	custom := cp.request["CustomConfiguration"].(*ags.CustomConfiguration)
-	if custom.ImageRegistryType == nil || *custom.ImageRegistryType != "enterprise" {
-		t.Fatalf("ImageRegistryType = %#v, want enterprise", custom.ImageRegistryType)
+	custom, _ := apivalue.Decode(cp.request["CustomConfiguration"])
+	if custom.String("ImageRegistryType") != "enterprise" {
+		t.Fatalf("custom = %#v", custom)
 	}
-	computer := cp.request["ComputerConfiguration"].(*ags.ComputerConfiguration)
-	if computer.WAAConfiguration == nil || computer.WAAConfiguration.ImageId == nil || *computer.WAAConfiguration.ImageId != "img-source" {
-		t.Fatalf("ComputerConfiguration = %#v, want source WAA image", computer)
+	computer, _ := apivalue.Decode(cp.request["ComputerConfiguration"])
+	if computer.Object("WAAConfiguration").String("ImageId") != "img-source" {
+		t.Fatalf("computer = %#v", computer)
 	}
+
 }
 
 func TestModuleAppliesExplicitOverrides(t *testing.T) {
@@ -287,8 +290,8 @@ func TestModuleFiltersInheritedQcsTags(t *testing.T) {
 			"tool-name": {Name: "tool-name", Type: command.FlagString, String: "copy", Changed: true},
 		},
 	})
-	tags := cp.request["Tags"].([]*ags.Tag)
-	if len(tags) != 1 || *tags[0].Key != "env" {
+	tags := cp.request["Tags"].([]map[string]any)
+	if len(tags) != 1 || tags[0]["Key"] != "env" {
 		t.Fatalf("Tags = %#v, want only env tag", tags)
 	}
 }
@@ -432,3 +435,57 @@ func strPtr(value string) *string {
 
 var _ ControlPlane = (*fakeControlPlane)(nil)
 var _ apicli.ControlPlane = (*fakeControlPlane)(nil)
+
+// Mutate every existing field, not only a newly added fixture field. This catches
+// wrappers that accidentally freeze any current parser or flag definition.
+func TestForkInheritsCurrentCreateFields(t *testing.T) {
+	base := toolcreate.APIDescriptor()
+	for index, original := range base.Fields {
+		t.Run(original.Name, func(t *testing.T) {
+			create := toolcreate.APIDescriptor()
+			field := &create.Fields[index]
+			field.Parser = "common.default_json"
+			field.Required = true
+			field.Inputs = []apicli.InputSpec{{Name: "replacement", Flag: "replacement", Type: command.FlagString, Usage: "Changed contract", Default: `{"default":true}`, SendDefault: true}}
+			fork := forkDescriptor(create)
+			inherited := fork.Fields[index]
+			if inherited.Parser != field.Parser || inherited.Inputs[0].Flag != "replacement" || inherited.Inputs[0].Usage != "Changed contract" || inherited.Required != (original.Name == "ToolName") {
+				t.Fatalf("stale fork field: %+v", inherited)
+			}
+			builder := apicli.NewRequestBuilder(apicli.APIDescriptor{Fields: []apicli.FieldSpec{inherited}})
+			request, err := builder.Build(command.Request{Flags: map[string]command.FlagValue{"replacement": {String: `{"value":true}`, Changed: true, Type: command.FlagString}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(request[original.Name], map[string]any{"value": true}) {
+				t.Fatalf("parser did not follow contract: %#v", request)
+			}
+			if inherited.Inputs[0].Default != nil || inherited.Inputs[0].SendDefault {
+				t.Fatal("fork default would overwrite source values")
+			}
+			if create.Fields[index].Inputs[0].Default == nil {
+				t.Fatal("fork mutated create descriptor")
+			}
+			create.Fields = slices.Delete(create.Fields, index, index+1)
+			for _, retained := range forkDescriptor(create).Fields {
+				if retained.Name == original.Name {
+					t.Fatal("fork resurrected excluded field")
+				}
+			}
+		})
+	}
+}
+
+func TestEmptyStringOverridesFollowCurrentParser(t *testing.T) {
+	fields := []apicli.FieldSpec{
+		{Name: "Description", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Flag: "description"}}},
+		{Name: "NewString", Parser: "common.default_string", Inputs: []apicli.InputSpec{{Flag: "renamed-string"}}},
+	}
+	overrides := map[string]any{}
+	applyExplicitEmptyStringOverrides(overrides, command.Request{Flags: map[string]command.FlagValue{
+		"description": {Changed: true}, "renamed-string": {Changed: true}, "role-arn": {Changed: true},
+	}}, fields)
+	if !reflect.DeepEqual(overrides, map[string]any{"NewString": ""}) {
+		t.Fatalf("stale empty string overrides: %#v", overrides)
+	}
+}

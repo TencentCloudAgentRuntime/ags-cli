@@ -31,9 +31,11 @@ const (
 func main() {
 	// Top-level flags (also accepted on the legacy form `apigen --check`).
 	var (
+		channel     = string(apimeta.Stable)
 		legacyCheck bool
 		apiDir      string
 	)
+	flag.StringVar(&channel, "channel", string(apimeta.Stable), "metadata channel: stable or preview")
 	flag.BoolVar(&legacyCheck, "check", false, "deprecated: use `cobragen check` instead")
 	flag.StringVar(&apiDir, "api", filepath.Join("api", apiService, apiVersion), "directory containing api.json, api.patch.json and mapping.yaml")
 	flag.Parse()
@@ -54,11 +56,11 @@ func main() {
 	case "check":
 		err = fmt.Errorf("generation checks moved to: go run ./cmd/internal/cobragen check")
 	case "coverage":
-		err = runCoverage(apiDir, args)
+		err = runCoverage(apiDir, args, apimeta.Channel(channel))
 	case "list-actions":
-		err = runListActions(apiDir, args)
+		err = runListActions(apiDir, args, apimeta.Channel(channel))
 	case "schema":
-		err = runSchema(apiDir, args)
+		err = runSchema(apiDir, args, apimeta.Channel(channel))
 	default:
 		err = fmt.Errorf("unknown subcommand %q (allowed: coverage, list-actions, schema)", sub)
 	}
@@ -68,43 +70,27 @@ func main() {
 	}
 }
 
-func loadInputs(apiDir string) (*apimeta.Spec, *apimeta.Mapping, error) {
-	mappingPath := filepath.Join(apiDir, "mapping.yaml")
-
-	spec, err := apimeta.LoadEffectiveSpec(apiDir)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load spec: %w", err)
+func metadataChannel(channels []apimeta.Channel) apimeta.Channel {
+	if len(channels) > 0 {
+		return channels[0]
 	}
-	mapping, err := apimeta.LoadMapping(mappingPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load mapping: %w", err)
-	}
-	issues := mapping.Validate(spec)
-	if len(issues) > 0 {
-		// Split into hard errors (fail CI) and soft warnings (advisory).
-		// Per NextPlan §8.4 / §8.8, OVERRIDE_FLAG_EQUALS_DEFAULT and
-		// any future warning-severity invariants surface to the
-		// maintainer without blocking the pipeline.
-		var errs []apimeta.Issue
-		for _, issue := range issues {
-			if issue.IsError() {
-				errs = append(errs, issue)
-				continue
-			}
-			fmt.Fprintf(os.Stderr, "WARN  %s\n", issue.String())
-		}
-		if len(errs) > 0 {
-			fmt.Fprintln(os.Stderr, "Mapping invariant violations:")
-			for _, issue := range errs {
-				fmt.Fprintf(os.Stderr, "  - %s\n", issue.String())
-			}
-			return nil, nil, fmt.Errorf("%d mapping invariant violation(s)", len(errs))
-		}
-	}
-	return spec, mapping, nil
+	return apimeta.Stable
 }
 
-func runCoverage(apiDir string, args []string) error {
+func loadInputs(apiDir string, channels ...apimeta.Channel) (*apimeta.Spec, *apimeta.Mapping, error) {
+	contract, err := apimeta.LoadContract(apiDir, metadataChannel(channels))
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, issue := range contract.Mapping.Validate(contract.Spec) {
+		if !issue.IsError() {
+			fmt.Fprintf(os.Stderr, "WARN  %s\n", issue.String())
+		}
+	}
+	return contract.Spec, contract.Mapping, nil
+}
+
+func runCoverage(apiDir string, args []string, channels ...apimeta.Channel) error {
 	format := "text"
 	asJSON := false
 	fs := flag.NewFlagSet("coverage", flag.ContinueOnError)
@@ -116,16 +102,18 @@ func runCoverage(apiDir string, args []string) error {
 	if asJSON {
 		format = "json"
 	}
-	spec, mapping, err := loadInputs(apiDir)
+	spec, mapping, err := loadInputs(apiDir, channels...)
 	if err != nil {
 		return err
 	}
 	rep := apimeta.BuildCoverage(spec, mapping)
+	rep.Channel = string(metadataChannel(channels))
 	if format == "json" {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(rep)
 	}
+	fmt.Printf("Channel: %s\n", metadataChannel(channels))
 	fmt.Printf("API version: %s\n", rep.APIVersion)
 	fmt.Printf("Total actions: %d\n", rep.TotalActions)
 	fmt.Printf("  mapped:   %d\n", rep.MappedActions)
@@ -153,14 +141,14 @@ func runCoverage(apiDir string, args []string) error {
 	return nil
 }
 
-func runListActions(apiDir string, args []string) error {
+func runListActions(apiDir string, args []string, channels ...apimeta.Channel) error {
 	asJSON := false
 	fs := flag.NewFlagSet("list-actions", flag.ContinueOnError)
 	fs.BoolVar(&asJSON, "json", false, "emit JSON instead of text")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	spec, mapping, err := loadInputs(apiDir)
+	spec, mapping, err := loadInputs(apiDir, channels...)
 	if err != nil {
 		return err
 	}
@@ -183,8 +171,9 @@ func runListActions(apiDir string, args []string) error {
 	if asJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(map[string]any{"ApiVersion": mapping.APIVersion, "Actions": rows})
+		return enc.Encode(map[string]any{"Channel": metadataChannel(channels), "ApiVersion": mapping.APIVersion, "Actions": rows})
 	}
+	fmt.Printf("Channel: %s\n", metadataChannel(channels))
 	fmt.Println("ACTION                              STATUS               COMMAND")
 	for _, r := range rows {
 		fmt.Printf("%-35s %-20s %s\n", r.Action, r.Status, r.Command)
@@ -192,8 +181,9 @@ func runListActions(apiDir string, args []string) error {
 	return nil
 }
 
-func runSchema(apiDir string, args []string) error {
-	spec, _, err := loadInputs(apiDir)
+func runSchema(apiDir string, args []string, channels ...apimeta.Channel) error {
+	fmt.Fprintf(os.Stderr, "Channel: %s\n", metadataChannel(channels))
+	spec, _, err := loadInputs(apiDir, channels...)
 	if err != nil {
 		return err
 	}

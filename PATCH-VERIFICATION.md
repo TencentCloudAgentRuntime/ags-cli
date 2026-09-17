@@ -20,6 +20,11 @@ strict command below locally against the real backend in an isolated test
 environment. Include the exact command (without credentials), current head/base
 SHAs, source tree, patch/plan digests, environment alias, timestamps, executed
 scenarios/assertions, pass/fail/skip counts and confirmed cleanup results.
+The archived worker and candidate CLI are both built with `-tags=preview`.
+Reports include the actual `channel`, candidate `build_tags` and
+`candidate_sha256` when a candidate is executed; a stable worker is rejected.
+Mapping/help-only overlays and handwritten preview commands are covered by
+channel tests; an empty API patch report is not evidence for those surfaces.
 Mocks, coverage mappings and checked boxes are not substitutes for this report.
 
 PRs with empty patches, including changes to verification tooling itself, do not

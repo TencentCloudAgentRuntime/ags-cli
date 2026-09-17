@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	deploymentview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/internal/deploymentview"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // Module returns the generated API command with Deployment table rendering.
@@ -28,13 +28,19 @@ func Module() command.Module {
 				if err != nil {
 					return nil, err
 				}
-				if response, ok := result.Data.(*ags.DescribeDeploymentListResponseParams); ok {
-					total := len(response.DeploymentSet)
-					if response.TotalCount != nil {
-						total = int(*response.TotalCount)
-					}
-					result.Text = func(w io.Writer) { deploymentview.RenderList(w, response.DeploymentSet, total, time.Now()) }
+				response, decodeErr := apivalue.Decode(result.Data)
+				if decodeErr != nil {
+					return nil, decodeErr
 				}
+				deployments, err := response.ReadObjects("DeploymentSet")
+				if err != nil {
+					return nil, err
+				}
+				total := len(deployments)
+				if response["TotalCount"] != nil {
+					total = int(response.Int64("TotalCount"))
+				}
+				result.Text = func(w io.Writer) { deploymentview.RenderList(w, deployments, total, time.Now()) }
 				return result, nil
 			})}, nil
 		},

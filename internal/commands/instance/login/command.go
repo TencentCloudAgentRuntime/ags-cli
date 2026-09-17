@@ -7,18 +7,18 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/dataplane/pty"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
-	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
 
 // ControlPlane supplies the instance lookup needed before opening an
 // interactive login session.
 type ControlPlane interface {
-	GetInstance(ctx context.Context, instanceID string) (*ags.SandboxInstance, error)
+	GetInstance(ctx context.Context, instanceID string) (apivalue.Object, error)
 }
 
 // Session is the interactive PTY connection opened against a sandbox instance.
@@ -126,7 +126,7 @@ func runLogin(ctx context.Context, req command.Request, cp ControlPlane, rt Runt
 	}
 
 	var accessToken string
-	if !isAuthModeNone(instance.AuthMode) {
+	if !strings.EqualFold(strings.TrimSpace(instance.String("AuthMode")), "NONE") {
 		accessToken, err = rt.GetToken(ctx, instanceID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get access token: %w", err)
@@ -170,8 +170,12 @@ func classifySessionError(err error) error {
 	})
 }
 
-func validateRunning(instanceID string, instance *ags.SandboxInstance) error {
-	status := strings.ToUpper(derefString(instance.Status))
+func validateRunning(instanceID string, value any) error {
+	instance, err := apivalue.Decode(value)
+	if err != nil {
+		return err
+	}
+	status := strings.ToUpper(instance.String("Status"))
 	if status == "RUNNING" {
 		return nil
 	}
@@ -183,7 +187,7 @@ func validateRunning(instanceID string, instance *ags.SandboxInstance) error {
 	case "ERROR", "FAILED":
 		return fmt.Errorf("instance %s is in error state. Please contact support or create a new instance", instanceID)
 	default:
-		return fmt.Errorf("instance %s is not running (status: %s). Please wait for it to be ready", instanceID, derefString(instance.Status))
+		return fmt.Errorf("instance %s is not running (status: %s). Please wait for it to be ready", instanceID, instance.String("Status"))
 	}
 }
 
@@ -221,15 +225,4 @@ func stringFlag(req command.Request, name string) string {
 
 func resolveUser(flagValue string) string {
 	return cli.ResolveUser(flagValue)
-}
-
-func isAuthModeNone(authMode *string) bool {
-	return cli.IsAuthModeNone(authMode)
-}
-
-func derefString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

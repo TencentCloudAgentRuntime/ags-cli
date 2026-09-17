@@ -1,6 +1,7 @@
 package controlplane
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -37,7 +38,7 @@ func (c RawAPIClient) RawCall(ctx context.Context, action string, raw []byte) (*
 	if c.Sender != nil {
 		respBody, err = c.Sender(ctx, action, cloudEndpoint, raw)
 	} else {
-		caller, cerr := cloudapi.New(config.GetSecretID(), config.GetSecretKey(), config.GetRegion(), cloudEndpoint)
+		caller, cerr := cloudapi.NewWithToken(config.GetSecretID(), config.GetSecretKey(), config.GetToken(), config.GetRegion(), cloudEndpoint)
 		if cerr != nil {
 			return nil, cerr
 		}
@@ -48,7 +49,9 @@ func (c RawAPIClient) RawCall(ctx context.Context, action string, raw []byte) (*
 	}
 
 	var parsed any
-	if uerr := json.Unmarshal(respBody, &parsed); uerr != nil {
+	decoder := json.NewDecoder(bytes.NewReader(respBody))
+	decoder.UseNumber()
+	if uerr := decoder.Decode(&parsed); uerr != nil {
 		parsed = string(respBody)
 	}
 	return &RawCallResult{

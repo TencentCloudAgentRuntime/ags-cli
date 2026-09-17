@@ -114,6 +114,15 @@ func writeCommandTestFile(t *testing.T, path, contents string) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("create directory for %s: %v", path, err)
 	}
+	if filepath.Base(path) == "api.json" {
+		for name, value := range map[string]string{
+			"mapping.yaml":       "api_version: v1\nactions:\n  Ping:\n    status: raw_only\n    reason: diagnostic\n",
+			"help.json":          `{"api_version":"v1","commands":{}}`,
+			"mapping.patch.json": "[]", "help.patch.json": "[]",
+		} {
+			writeCommandTestFile(t, filepath.Join(filepath.Dir(path), name), value)
+		}
+	}
 	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -229,7 +230,7 @@ func (f *fakeControlPlane) DeleteInstance(_ context.Context, instanceID string) 
 	return nil
 }
 
-func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*ags.SandboxInstance, error) {
+func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (apivalue.Object, error) {
 	if f.getCalls == nil {
 		f.getCalls = map[string]int{}
 	}
@@ -244,7 +245,7 @@ func (f *fakeControlPlane) GetInstance(_ context.Context, instanceID string) (*a
 		index = len(statuses) - 1
 	}
 	status := statuses[index]
-	return &ags.SandboxInstance{InstanceId: &instanceID, Status: &status}, nil
+	return apivalue.Decode(&ags.SandboxInstance{InstanceId: &instanceID, Status: &status})
 }
 
 func (f *fakeControlPlane) IsNotFound(err error) bool {

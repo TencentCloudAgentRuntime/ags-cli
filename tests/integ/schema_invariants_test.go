@@ -41,7 +41,7 @@ type schemaFlagSnapshot struct {
 	Type string `json:"Type"`
 }
 
-// apiDescriptorFieldExclusions is the only escape hatch for API request
+// apiDescriptorFieldExclusions supplements mapping.excluded for API request
 // members that an API-backed command intentionally omits from its descriptor.
 // It is keyed by command ID because multiple wrappers may share one API action
 // while exposing different contracts. Every exclusion must carry a reason;
@@ -424,7 +424,16 @@ func checkAPIFieldCoverageInvariants(t *testing.T, descriptor command.Descriptor
 		t.Errorf("descriptor %q: API request type %q not found in metadata", descriptor.Spec.ID, action.Request)
 		return
 	}
-	for _, issue := range apiFieldCoverageIssues(api.Fields, requestObject.Members, apiDescriptorFieldExclusions[descriptor.Spec.ID]) {
+	exclusions := map[string]string{}
+	maps.Copy(exclusions, apiDescriptorFieldExclusions[descriptor.Spec.ID])
+	if mapping, ok := catalog.Mapping.Action(api.API.Action); ok {
+		for name, field := range mapping.Fields {
+			if field.Excluded {
+				exclusions[name] = "mapping.excluded suppresses the flag"
+			}
+		}
+	}
+	for _, issue := range apiFieldCoverageIssues(api.Fields, requestObject.Members, exclusions) {
 		t.Errorf("descriptor %q action %q: %s", descriptor.Spec.ID, api.API.Action, issue)
 	}
 }
@@ -477,6 +486,34 @@ func checkAPISchemaInvariants(t *testing.T, descriptor command.Descriptor, api a
 			t.Errorf("schema %q request property %q: CliFlag = %q, want nil", descriptor.Spec.ID, field.Name, *property.CliFlag)
 		}
 	}
+	if !api.DisableRequestFlag {
+		for _, member := range requestObject.Members {
+			if schema.RequestSchema == nil {
+				t.Errorf("schema %q: missing raw request schema", descriptor.Spec.ID)
+				break
+			}
+			property, ok := schema.RequestSchema.Properties[member.Name]
+			if !ok {
+				t.Errorf("schema %q: missing raw request property %q", descriptor.Spec.ID, member.Name)
+				continue
+			}
+			if want := requestPropertyType(member.Type); property.Type != want && (want != "string" || property.Type != "enum") {
+				t.Errorf("schema %q property %q: type %q, want %q", descriptor.Spec.ID, member.Name, property.Type, want)
+			}
+			if !slices.ContainsFunc(api.Fields, func(field apicli.FieldSpec) bool { return field.Name == member.Name }) && property.CliFlag != nil {
+				t.Errorf("schema %q: request-only %q has a stale CliFlag", descriptor.Spec.ID, member.Name)
+			}
+		}
+	}
+	if schema.RequestSchema != nil {
+		for name := range schema.RequestSchema.Properties {
+			_, exists := membersByName[name]
+			if !exists {
+				t.Errorf("schema %q: stale request property %q", descriptor.Spec.ID, name)
+			}
+		}
+	}
+
 	return requestPropertyCount
 }
 

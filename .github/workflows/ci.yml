@@ -44,7 +44,11 @@ jobs:
       - name: Check workflow files
         uses: docker://rhysd/actionlint:1.7.12
         with:
-          args: -color
+          # actionlint 1.7.12 predates GitHub's concurrency.queue support.
+          # Keep the exception narrow; release routing tests assert queue: max.
+          args: >-
+            -color
+            -ignore "unexpected key \"queue\" for \"concurrency\" section"
 
   fmt:
     name: Format Check
@@ -67,11 +71,14 @@ jobs:
           fi
 
   test:
-    name: Unit Tests (${{ matrix.os }})
+    name: Unit Tests (${{ matrix.os }}, ${{ matrix.channel }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        channel: [stable, preview]
+    env:
+      GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -130,8 +137,13 @@ jobs:
           bash scripts/changelog.sh validate-latest-release-notes-pair
 
   generator-gate:
-    name: API Generator Gate
+    name: API Generator Gate (${{ matrix.channel }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        channel: [stable, preview]
+    env:
+      GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -211,8 +223,13 @@ jobs:
         run: go test ./tests/integ/ -v -count=1 -timeout 30s
 
   release-ready:
-    name: Release Ready
+    name: Release Ready (${{ matrix.channel }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        channel: [stable, preview]
+    env:
+      GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -220,6 +237,9 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+
+      - name: Test release channel routing (no credentials)
+        run: python3 scripts/test-release.py
 
       - name: Build all platforms
         run: |

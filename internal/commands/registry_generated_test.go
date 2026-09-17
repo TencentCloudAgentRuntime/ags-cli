@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 )
 
@@ -75,8 +76,16 @@ func TestRegistryIncludesAllKnownCommandModules(t *testing.T) {
 			t.Fatalf("registry missing %s", id)
 		}
 	}
-	if got := len(registry.Modules()); got != len(want) {
-		t.Fatalf("module count = %d, want %d", got, len(want))
+	// The known stable set must remain, while each channel may add commands.
+	catalog, err := apimeta.Get()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range catalog.Mapping.MappedActionNames() {
+		id := catalog.Mapping.Actions[action].Command
+		if _, ok := registry.Lookup(id); !ok {
+			t.Fatalf("registry missing mapped %s", id)
+		}
 	}
 }
 

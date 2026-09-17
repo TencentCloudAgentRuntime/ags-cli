@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
@@ -66,13 +67,13 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					response, ok := result.Data.(*ags.DescribeSandboxInstanceListResponseParams)
-					if !ok {
-						return result, nil
+					response, decodeErr := apivalue.Decode(result.Data)
+					if decodeErr != nil {
+						return nil, decodeErr
 					}
 					offset := intFlag(req, "offset")
 					limit := effectiveLimit(req)
-					return instanceListResult(response, offset, limit, result), nil
+					return instanceListResult(response, offset, limit, result)
 				}),
 			}, nil
 		},
@@ -101,7 +102,7 @@ func listAllInstances(ctx context.Context, executor *apicli.Executor, baseReques
 	request["Limit"] = allPageLimit
 	request["Offset"] = 0
 
-	var all []*ags.SandboxInstance
+	var all []apivalue.Object
 	var total int
 	var base *command.Result
 	for {
@@ -112,19 +113,23 @@ func listAllInstances(ctx context.Context, executor *apicli.Executor, baseReques
 		if base == nil {
 			base = result
 		}
-		response, ok := result.Data.(*ags.DescribeSandboxInstanceListResponseParams)
-		if !ok {
-			return result, nil
+		response, decodeErr := apivalue.Decode(result.Data)
+		if decodeErr != nil {
+			return nil, decodeErr
 		}
-		all = append(all, response.InstanceSet...)
-		total = instanceview.DerefInt64(response.TotalCount)
-		if len(response.InstanceSet) == 0 || (total > 0 && len(all) >= total) || len(response.InstanceSet) < allPageLimit {
-			response.InstanceSet = all
-			response.TotalCount = int64Ptr(total)
+		instances, err := response.ReadObjects("InstanceSet")
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, instances...)
+		total = int(response.Int64("TotalCount"))
+		if len(instances) == 0 || (total > 0 && len(all) >= total) || len(instances) < allPageLimit {
+			response["InstanceSet"] = all
+			response["TotalCount"] = total
 			return instanceListResult(response, 0, intPtr(allPageLimit), base, listRenderOptions{
 				All:    true,
 				Region: config.GetRegion(),
-			}), nil
+			})
 		}
 		request["Offset"] = len(all)
 	}
@@ -142,23 +147,22 @@ func intPtr(value int) *int {
 	return &value
 }
 
-func int64Ptr(value int) *int64 {
-	out := int64(value)
-	return &out
-}
-
 type listRenderOptions struct {
 	All    bool
 	Region string
 }
 
-func instanceListResult(response *ags.DescribeSandboxInstanceListResponseParams, offset int, limit *int, base *command.Result, opts ...listRenderOptions) *command.Result {
+func instanceListResult(response apivalue.Object, offset int, limit *int, base *command.Result, opts ...listRenderOptions) (*command.Result, error) {
+	instances, err := response.ReadObjects("InstanceSet")
+	if err != nil {
+		return nil, err
+	}
 	var renderOpts listRenderOptions
 	if len(opts) > 0 {
 		renderOpts = opts[0]
 	}
-	items := make([]map[string]any, len(response.InstanceSet))
-	for i, instance := range response.InstanceSet {
+	items := make([]map[string]any, len(instances))
+	for i, instance := range instances {
 		items[i] = instanceview.CanonicalData(instance)
 		if renderOpts.Region != "" {
 			items[i]["Region"] = renderOpts.Region
@@ -166,7 +170,7 @@ func instanceListResult(response *ags.DescribeSandboxInstanceListResponseParams,
 	}
 	pagination := map[string]any{
 		"Offset":     offset,
-		"Total":      instanceview.DerefInt64(response.TotalCount),
+		"Total":      int(response.Int64("TotalCount")),
 		"NextCursor": nil,
 	}
 	if limit != nil {
@@ -176,6 +180,7 @@ func instanceListResult(response *ags.DescribeSandboxInstanceListResponseParams,
 		"Items":      items,
 		"Pagination": pagination,
 	}
+	apivalue.ExtendResponse(data, response, "InstanceSet", "TotalCount", "RequestId")
 	return &command.Result{
 		Data:      data,
 		Warnings:  base.Warnings,
@@ -186,7 +191,7 @@ func instanceListResult(response *ags.DescribeSandboxInstanceListResponseParams,
 		Text: func(w io.Writer) {
 			renderInstanceList(w, response, renderOpts)
 		},
-	}
+	}, nil
 }
 
 func effectiveLimit(req command.Request) *int {
@@ -225,7 +230,13 @@ func flagChanged(req command.Request, name string) bool {
 	return ok && flag.Changed
 }
 
-func renderInstanceList(w io.Writer, response *ags.DescribeSandboxInstanceListResponseParams, opts ...listRenderOptions) {
+func renderInstanceList(w io.Writer, value any, opts ...listRenderOptions) {
+	var response ags.DescribeSandboxInstanceListResponseParams
+	if err := apivalue.Project(value, &response); err != nil {
+		fmt.Fprintln(w, value)
+		return
+	}
+
 	if len(response.InstanceSet) == 0 {
 		fmt.Fprintln(w, "No instances found")
 		return

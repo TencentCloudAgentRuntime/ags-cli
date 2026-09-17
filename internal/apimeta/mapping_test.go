@@ -10,14 +10,11 @@ import (
 func loadCheckedIn(t *testing.T) (*apimeta.Spec, *apimeta.Mapping) {
 	t.Helper()
 	root := filepath.Join("..", "..")
-	spec, err := apimeta.LoadEffectiveSpec(filepath.Join(root, "api", "ags", "v20250920"))
+	contract, err := apimeta.LoadContract(filepath.Join(root, "api", "ags", "v20250920"), apimeta.BuildChannel)
 	if err != nil {
-		t.Fatalf("load spec: %v", err)
+		t.Fatal(err)
 	}
-	mapping, err := apimeta.LoadMapping(filepath.Join(root, "api", "ags", "v20250920", "mapping.yaml"))
-	if err != nil {
-		t.Fatalf("load mapping: %v", err)
-	}
+	spec, mapping := contract.Spec, contract.Mapping
 	return spec, mapping
 }
 

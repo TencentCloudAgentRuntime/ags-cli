@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	requestio "github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
@@ -271,6 +272,7 @@ func getAllSchemas() []CommandSchema {
 	schemas := registeredSchemaSeeds()
 	schemas = mergeSchemaOverrides(schemas, buildHandwrittenSchemas())
 	enrichSchemasFromGenerator(schemas)
+	refreshAPIRequestSchemas(schemas)
 	for i := range schemas {
 		schemas[i] = finalizeSchema(schemas[i])
 	}
@@ -320,15 +322,6 @@ func buildSchemaCatalog(root *cobra.Command) schemaCatalog {
 	walkPublicCommands(root, addCommand)
 	if helpCmd, _, err := root.Find([]string{"help"}); err == nil && helpCmd != root {
 		addCommand(helpCmd)
-	}
-
-	for _, schema := range schemas {
-		if seen[schema.Name] {
-			continue
-		}
-		schema = finalizeSchema(schema)
-		catalog.Ordered = append(catalog.Ordered, schema)
-		catalog.byName[schema.Name] = schema
 	}
 
 	return catalog
@@ -388,15 +381,20 @@ func isPublicCommand(cmd *cobra.Command) bool {
 
 var (
 	registrySchemaSeedOrder []string
+	registryAPIDescriptors  = map[string]apicli.APIDescriptor{}
 	registrySchemaSeedsByID = map[string]CommandSchema{}
 )
 
 func registerRegistrySchemaDescriptors(descriptors []command.Descriptor) {
 	registrySchemaSeedOrder = registrySchemaSeedOrder[:0]
 	registrySchemaSeedsByID = map[string]CommandSchema{}
+	registryAPIDescriptors = map[string]apicli.APIDescriptor{}
 	for _, desc := range descriptors {
 		if desc.Spec.Hidden {
 			continue
+		}
+		if api, ok := desc.API.(apicli.APIDescriptor); ok {
+			registryAPIDescriptors[desc.Spec.ID] = api
 		}
 		schema := schemaFromDescriptor(desc)
 		registrySchemaSeedOrder = append(registrySchemaSeedOrder, schema.Name)
@@ -1474,4 +1472,100 @@ func appendUniqueStrings(items []string, values ...string) []string {
 		}
 	}
 	return items
+}
+
+// Refresh every API-backed wrapper from its active descriptor after editorial
+// overrides. This includes workflows such as fork that are absent from mapping.
+func refreshAPIRequestSchemas(schemas []CommandSchema) {
+	catalog, err := apimeta.Get()
+	if err != nil {
+		return
+	}
+	for i := range schemas {
+		schema := &schemas[i]
+		api, ok := registryAPIDescriptors[schema.Name]
+		if !ok {
+			continue
+		}
+		object := catalog.Spec.Object(api.API.RequestType)
+		if object == nil {
+			continue
+		}
+		// Editorial overrides cannot resurrect flags excluded by this channel.
+		if seed, ok := registrySchemaSeedsByID[schema.Name]; ok {
+			flags := make([]FlagSchema, 0, len(seed.Flags))
+			for _, current := range seed.Flags {
+				for _, editorial := range schema.Flags {
+					if editorial.Name == current.Name {
+						typ := current.Type
+						if editorial.Type == "enum" && typ == "string" {
+							typ = "enum"
+						}
+						editorial.Type = typ
+						editorial.Shorthand = current.Shorthand
+						editorial.Default = current.Default
+						current = editorial
+						break
+					}
+				}
+				flags = append(flags, current)
+			}
+			schema.Flags = flags
+			if !api.DisableRequestFlag {
+				if supports, ok := requestio.SupportsGeneratedSkeleton(schema.Name); !ok || supports {
+					ensureSchemaFlag(schema, FlagSchema{Name: "generate-skeleton", Type: "bool"})
+				}
+			}
+		}
+		schema.SupportsRequest = !api.DisableRequestFlag
+		fields := map[string]apicli.FieldSpec{}
+		for _, field := range api.Fields {
+			fields[field.Name] = field
+		}
+		if schema.RequestSchema == nil {
+			schema.RequestSchema = &RequestSchema{Type: "object"}
+		}
+		properties := map[string]PropertySchema{}
+		required := []string{}
+		for _, member := range object.Members {
+			field, hasField := fields[member.Name]
+			if member.Disabled || (api.DisableRequestFlag && !hasField) {
+				continue
+			}
+			// JSON is carried by string Cobra flags, including inherited wrapper inputs.
+			if field.Parser == "common.default_json" {
+				for _, input := range field.Inputs {
+					for j := range schema.Flags {
+						if !input.Positional && schema.Flags[j].Name == input.Flag {
+							schema.Flags[j].Type = "json"
+						}
+					}
+				}
+			}
+			property := schema.RequestSchema.Properties[member.Name]
+			kind := requestPropertyType(member.Type)
+			if property.Type != "enum" || kind != "string" {
+				property.Type = kind
+			}
+			property.CliFlag = nil
+			property.Aliases = nil
+			for _, input := range field.Inputs {
+				if !input.Positional && input.Flag != "" {
+					property.CliFlag = cliFlag(input.Flag)
+					property.Aliases = append([]string(nil), input.Aliases...)
+					break
+				}
+			}
+			properties[member.Name] = property
+			isRequired := member.Required
+			if api.DisableRequestFlag {
+				isRequired = field.Required
+			}
+			if isRequired {
+				required = append(required, member.Name)
+			}
+		}
+		schema.RequestSchema.Properties = properties
+		schema.RequestSchema.Required = required
+	}
 }
