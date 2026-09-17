@@ -382,3 +382,33 @@ func TestRequiredStringAllowEmptyIsExplicit(t *testing.T) {
 		}
 	}
 }
+
+func TestRequestBuilderPreservesStringPresence(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		changed, sendDefault bool
+		value                string
+		present              bool
+	}{
+		{"omitted", false, false, "", false},
+		{"explicit-empty", true, false, "", true},
+		{"explicit-value", true, false, "value", true},
+		{"unsent-default", false, false, "default", false},
+		{"empty-default", false, true, "", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			builder := NewRequestBuilder(APIDescriptor{
+				Spec:   command.Spec{ID: "test.update"},
+				Fields: []FieldSpec{{Name: "Value", Parser: "common.default_string", Inputs: []InputSpec{{Name: "value", Flag: "value", Type: command.FlagString, SendDefault: tc.sendDefault}}}},
+			})
+			request, err := builder.Build(command.Request{Flags: map[string]command.FlagValue{"value": {Type: command.FlagString, String: tc.value, Changed: tc.changed}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			value, present := request["Value"]
+			if present != tc.present || (present && value != tc.value) {
+				t.Fatalf("Value = %#v, present=%v; want %q, present=%v", value, present, tc.value, tc.present)
+			}
+		})
+	}
+}

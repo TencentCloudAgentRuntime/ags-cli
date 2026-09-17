@@ -2,6 +2,7 @@ package apimeta_test
 
 import (
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
@@ -52,6 +53,39 @@ func TestLoadAndSortedActionNames(t *testing.T) {
 		if spec.Object(a.Input) == nil {
 			t.Errorf("action %s input %s does not exist", name, a.Input)
 		}
+	}
+}
+
+func TestPublishedOSWorldAndTokenPaginationContract(t *testing.T) {
+	root := repoRoot(t)
+	spec, err := apimeta.LoadSpec(filepath.Join(root, "api", "ags", "v20250920", "api.json"))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	hasMember := func(object *apimeta.Object, name string) bool {
+		return object != nil && slices.ContainsFunc(object.Members, func(member apimeta.Member) bool {
+			return member.Name == name
+		})
+	}
+
+	computer := spec.Object("ComputerConfiguration")
+	osWorld := spec.Object("OSWorldConfiguration")
+	if !hasMember(computer, "OSWorldConfiguration") {
+		t.Fatal("ComputerConfiguration is missing OSWorldConfiguration")
+	}
+	if !hasMember(osWorld, "Version") {
+		t.Fatal("OSWorldConfiguration is missing Version")
+	}
+
+	request := spec.Object("DescribeSandboxInstanceListRequest")
+	for _, name := range []string{"MaxResults", "NextToken", "NeedTotalCount"} {
+		if !hasMember(request, name) {
+			t.Fatalf("DescribeSandboxInstanceListRequest is missing %s", name)
+		}
+	}
+	response := spec.Object("DescribeSandboxInstanceListResponse")
+	if !hasMember(response, "NextToken") {
+		t.Fatal("DescribeSandboxInstanceListResponse is missing NextToken")
 	}
 }
 

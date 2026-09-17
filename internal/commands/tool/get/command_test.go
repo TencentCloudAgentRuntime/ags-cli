@@ -174,6 +174,7 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 	bucketPath := "/src"
 	readOnly := true
 	waaImageID := "img-unit"
+	osWorldVersion := "osworld2"
 	tool := &ags.SandboxTool{
 		ToolId:      &id,
 		ToolName:    &name,
@@ -195,7 +196,8 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 			}},
 		}},
 		ComputerConfiguration: &ags.ComputerConfiguration{
-			WAAConfiguration: &ags.WAAConfiguration{ImageId: &waaImageID},
+			WAAConfiguration:     &ags.WAAConfiguration{ImageId: &waaImageID},
+			OSWorldConfiguration: &ags.OSWorldConfiguration{Version: &osWorldVersion},
 		},
 	}
 	var text bytes.Buffer
@@ -212,6 +214,9 @@ func TestRenderToolDetailsIncludesOptionalFields(t *testing.T) {
 	}
 	computer, _ := apivalue.Decode(data["ComputerConfiguration"])
 	if computer.Object("WAAConfiguration").String("ImageId") != waaImageID {
+		t.Fatalf("ComputerConfiguration = %#v", computer)
+	}
+	if computer.Object("OSWorldConfiguration").String("Version") != osWorldVersion {
 		t.Fatalf("ComputerConfiguration = %#v", computer)
 	}
 }

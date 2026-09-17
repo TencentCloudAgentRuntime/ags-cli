@@ -66,7 +66,7 @@ func allToolCreateFlags() map[string]command.FlagValue {
 }
 
 func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
-	const payload = `{"WAAConfiguration":{"ImageId":"img-unit"}}`
+	const payload = `{"WAAConfiguration":{"ImageId":"img-unit"},"OSWorldConfiguration":{"Version":"osworld2"}}`
 	requestPayload := `{"ToolName":"my-tool","ToolType":"waa","NetworkConfiguration":{"NetworkMode":"PUBLIC"},"ComputerConfiguration":` + payload + `}`
 	filePath := filepath.Join(t.TempDir(), "computer-configuration.json")
 	if err := os.WriteFile(filePath, []byte(payload), 0o600); err != nil {
@@ -126,6 +126,10 @@ func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
 			waa, ok := configuration["WAAConfiguration"].(map[string]any)
 			if !ok || waa["ImageId"] != "img-unit" {
 				t.Fatalf("WAAConfiguration = %#v", configuration["WAAConfiguration"])
+			}
+			osWorld, ok := configuration["OSWorldConfiguration"].(map[string]any)
+			if !ok || osWorld["Version"] != "osworld2" {
+				t.Fatalf("OSWorldConfiguration = %#v", configuration["OSWorldConfiguration"])
 			}
 		})
 	}

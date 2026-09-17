@@ -578,6 +578,20 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"delete:deployment"}
 	case "deployment.update":
 		return []string{"update:deployment"}
+	case "session-space.create":
+		return []string{"create:session-space"}
+	case "session-space.delete":
+		return []string{"delete:session-space"}
+	case "session-space.update":
+		return []string{"update:session-space"}
+	case "session.create":
+		return []string{"create:session"}
+	case "session.delete":
+		return []string{"delete:session"}
+	case "session.update":
+		return []string{"update:session"}
+	case "session.event.append":
+		return []string{"create:event"}
 	}
 	if strings.HasPrefix(cmd.Command, "registry.") {
 		return []string{"read:registry"}

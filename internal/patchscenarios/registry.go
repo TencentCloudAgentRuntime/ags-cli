@@ -6,6 +6,8 @@ import "github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 
 // Scenarios remain ordinary Go source, subject to independent assertion review.
 var Registry = patchtest.Registry{
+	"session.event-count":       {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
+	"session.lifecycle":         {Assertions: sessionAssertions, Run: runSessionLifecycle},
 	"registry.remote.lifecycle": {Assertions: []string{"mcp.sync.changed", "mcp.sync.failed", "a2a.sync.changed", "a2a.sync.failed"}, Run: registryRemoteLifecycle},
 	"registry.skill.lifecycle":  {Assertions: []string{"skill.package.roundtrip", "skill.inline.readback"}, Run: registrySkillLifecycle},
 	"registry.custom.lifecycle": {

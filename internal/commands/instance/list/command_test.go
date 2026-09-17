@@ -3,6 +3,7 @@ package list
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -148,6 +149,54 @@ func TestModuleAllowsZeroLimit(t *testing.T) {
 	}
 }
 
+func TestModuleBuildsTokenPaginationRequestAndPreservesCursor(t *testing.T) {
+	total := int64(2)
+	nextToken := "next-page"
+	cp := &fakeMixedControlPlane{response: &ags.DescribeSandboxInstanceListResponseParams{
+		TotalCount: &total,
+		NextToken:  &nextToken,
+	}}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	result, err := runtime.Handler.Run(t.Context(), command.Request{Flags: map[string]command.FlagValue{
+		"max-results":      {Name: "max-results", Type: command.FlagInt, Int: 10, Changed: true},
+		"next-token":       {Name: "next-token", Type: command.FlagString, String: "current-page", Changed: true},
+		"need-total-count": {Name: "need-total-count", Type: command.FlagBool, Bool: true, Changed: true},
+	}})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if cp.request["MaxResults"] != 10 || cp.request["NextToken"] != "current-page" || cp.request["NeedTotalCount"] != true {
+		t.Fatalf("request = %#v", cp.request)
+	}
+	pagination := result.Data.(map[string]any)["Pagination"].(map[string]any)
+	if pagination["NextCursor"] != nextToken {
+		t.Fatalf("NextCursor = %#v, want %q", pagination["NextCursor"], nextToken)
+	}
+	if _, duplicated := result.Data.(map[string]any)["NextToken"]; duplicated {
+		t.Fatalf("result duplicated normalized NextToken: %#v", result.Data)
+	}
+}
+
+func TestModuleAcceptsTokenPaginationRequestJSON(t *testing.T) {
+	cp := &fakeMixedControlPlane{response: &ags.DescribeSandboxInstanceListResponseParams{}}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	_, err = runtime.Handler.Run(t.Context(), command.Request{Flags: map[string]command.FlagValue{
+		"request": {Name: "request", Type: command.FlagString, String: `{"MaxResults":25,"NeedTotalCount":true}`, Changed: true},
+	}})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if cp.request["MaxResults"] != json.Number("25") || cp.request["NeedTotalCount"] != true {
+		t.Fatalf("request = %#v", cp.request)
+	}
+}
+
 func TestModuleListAllFetchesEveryPage(t *testing.T) {
 	total := int64(allPageLimit + 1)
 	firstPage := make([]*ags.SandboxInstance, allPageLimit)
@@ -210,6 +259,12 @@ func TestModuleRejectsInvalidListFlags(t *testing.T) {
 		{name: "offset", flags: withFlag(validFlags(), "offset", command.FlagValue{Name: "offset", Type: command.FlagInt, Int: -1, Changed: true}), want: "offset"},
 		{name: "limit", flags: withFlag(validFlags(), "limit", command.FlagValue{Name: "limit", Type: command.FlagInt, Int: -1, Changed: true}), want: "limit"},
 		{name: "all with offset", flags: withFlag(withFlag(validFlags(), "all", command.FlagValue{Name: "all", Type: command.FlagBool, Bool: true, Changed: true}), "offset", command.FlagValue{Name: "offset", Type: command.FlagInt, Int: 1, Changed: true}), want: "--all"},
+		{name: "negative max results", flags: withFlag(validFlagsWithoutPagination(), "max-results", command.FlagValue{Name: "max-results", Type: command.FlagInt, Int: -1, Changed: true}), want: "max-results"},
+		{name: "oversized max results", flags: withFlag(validFlagsWithoutPagination(), "max-results", command.FlagValue{Name: "max-results", Type: command.FlagInt, Int: 101, Changed: true}), want: "max-results"},
+		{name: "mixed modes", flags: withFlag(validFlags(), "max-results", command.FlagValue{Name: "max-results", Type: command.FlagInt, Int: 10, Changed: true}), want: "cannot be combined"},
+		{name: "total without token mode", flags: withFlag(validFlagsWithoutPagination(), "need-total-count", command.FlagValue{Name: "need-total-count", Type: command.FlagBool, Bool: true, Changed: true}), want: "requires token pagination"},
+		{name: "all with token mode", flags: withFlag(withFlag(validFlagsWithoutPagination(), "all", command.FlagValue{Name: "all", Type: command.FlagBool, Bool: true, Changed: true}), "max-results", command.FlagValue{Name: "max-results", Type: command.FlagInt, Int: 10, Changed: true}), want: "--all"},
+		{name: "request mixes modes", flags: map[string]command.FlagValue{"request": {Name: "request", Type: command.FlagString, String: `{"Offset":0,"MaxResults":10}`, Changed: true}}, want: "cannot be combined"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := runtime.Handler.Run(context.Background(), command.Request{Flags: tc.flags})

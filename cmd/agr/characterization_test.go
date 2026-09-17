@@ -37,12 +37,15 @@ func TestCharacterization_PublicCommandSurface(t *testing.T) {
 			"request":              {typ: "string"},
 		}},
 		{command: "instance.list", aliases: []string{"ls"}, use: "list", flags: map[string]flagExpectation{
-			"tool-id":      {typ: "string"},
-			"instance-ids": {typ: "stringArray"},
-			"filters":      {typ: "string"},
-			"offset":       {typ: "int", def: "0"},
-			"limit":        {typ: "int"},
-			"request":      {typ: "string"},
+			"tool-id":          {typ: "string"},
+			"instance-ids":     {typ: "stringArray"},
+			"filters":          {typ: "string"},
+			"offset":           {typ: "int", def: "0"},
+			"limit":            {typ: "int"},
+			"max-results":      {typ: "int"},
+			"next-token":       {typ: "string"},
+			"need-total-count": {typ: "bool"},
+			"request":          {typ: "string"},
 		}},
 		{command: "instance.update", use: "update <instance-id>", flags: map[string]flagExpectation{
 			"timeout":  {typ: "string"},
@@ -198,6 +201,7 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"--storage-mounts string",
 				"--computer-configuration string",
 				"WAAConfiguration",
+				"OSWorldConfiguration",
 				"agr tool create -n my-tool -t custom --network-configuration",
 				"--persistent",
 			},
@@ -212,6 +216,9 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"Status (persisted): STARTING, RUNNING, STARTING_FAILED, PAUSING, PAUSED, PAUSE_FAILED, RESUME_FAILED, FORK_FAILED, STOPPING, STOPPED, STOPPING_FAILED, FAILED",
 				"Status (derived): UNHEALTHY; use it as the sole Status value; --limit/--offset are ignored",
 				"RUNNING filter results may be displayed as UNHEALTHY",
+				"--max-results int",
+				"--next-token string",
+				"--need-total-count",
 			},
 			notContains: []string{"STOP_FAILED"},
 		},
@@ -223,6 +230,7 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"--tags string",
 				"--computer-configuration string",
 				"WAAConfiguration",
+				"OSWorldConfiguration",
 			},
 		},
 		{
@@ -336,6 +344,9 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 		{
 			command: "instance.list",
 			want: map[string]schemaFlagExpectation{
+				"max-results":       {typ: "integer"},
+				"next-token":        {typ: "string"},
+				"need-total-count":  {typ: "bool"},
 				"request":           {typ: "string"},
 				"generate-skeleton": {typ: "bool"},
 			},
@@ -472,6 +483,39 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				flag := schema.Flags["computer-configuration"]
 				if flag.Format == "" || len(flag.Examples) == 0 {
 					t.Fatalf("schema %s computer-configuration metadata incomplete: %#v", tc.command, flag)
+				}
+			}
+			if tc.command == "tool.create" || tc.command == "tool.update" || tc.command == "tool.fork" {
+				flag := schema.Flags["computer-configuration"]
+				found := false
+				for _, example := range flag.Examples {
+					if strings.Contains(example, "OSWorldConfiguration") && strings.Contains(example, "--region ap-guangzhou") {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Fatalf("schema %s OSWorld example does not declare its supported region: %v", tc.command, flag.Examples)
+				}
+			}
+			if tc.command == "instance.list" {
+				requireCliFlag(t, schema, "MaxResults", "max-results")
+				requirePropertyType(t, schema, "MaxResults", "integer")
+				requireCliFlag(t, schema, "NextToken", "next-token")
+				requirePropertyType(t, schema, "NextToken", "string")
+				requireCliFlag(t, schema, "NeedTotalCount", "need-total-count")
+				requirePropertyType(t, schema, "NeedTotalCount", "bool")
+				found := false
+				for _, example := range schema.Examples {
+					if strings.Contains(example, "--next-token") {
+						found = true
+						if !strings.Contains(example, "--max-results 50") || !strings.Contains(example, "--need-total-count") {
+							t.Fatalf("schema %s continuation example changes token pagination parameters: %q", tc.command, example)
+						}
+					}
+				}
+				if !found {
+					t.Fatalf("schema %s is missing a token pagination continuation example", tc.command)
 				}
 			}
 			if tc.command == "instance.exec" {
