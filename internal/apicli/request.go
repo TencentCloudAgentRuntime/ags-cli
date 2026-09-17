@@ -172,7 +172,8 @@ func collectInputs(field FieldSpec, req command.Request) parsers.FieldInputs {
 		// defaults even when Cobra does not mark the flag as explicitly changed.
 		changed := value.Changed || input.SendDefault
 		values := value.Strings
-		if len(values) == 0 && value.String != "" {
+		// Preserve explicit empty scalar strings; Changed controls omission.
+		if len(values) == 0 && (value.Type == command.FlagString || value.String != "") {
 			values = []string{value.String}
 		}
 		if value.Type == command.FlagBool {

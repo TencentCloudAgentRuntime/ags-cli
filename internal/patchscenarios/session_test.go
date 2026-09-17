@@ -104,6 +104,58 @@ func TestSessionLifecycleCandidate(t *testing.T) {
 			t.Fatalf("disabled AgentId exposed: %v %s", err, out)
 		}
 	})
+	t.Run("update-title-flags", func(t *testing.T) {
+		for _, tc := range []struct {
+			name     string
+			flags    []string
+			title    string
+			present  bool
+			metadata bool
+		}{
+			{"omitted", []string{"--metadata", "[]"}, "", false, true},
+			{"empty", []string{"--title", ""}, "", true, false},
+			{"empty-with-metadata", []string{"--title", "", "--metadata", "[]"}, "", true, true},
+			{"nonempty", []string{"--title", "updated"}, "updated", true, false},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				requests := make(chan map[string]any, 1)
+				server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					var request map[string]any
+					if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+						t.Error(err)
+					}
+					if r.Header.Get("X-TC-Action") != "ModifySession" {
+						t.Error("unexpected action")
+					}
+					requests <- request
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(`{"Response":{"RequestId":"fixture","Session":{}}}`))
+				}))
+				defer server.Close()
+				args := append([]string{"session", "update", "--space-id", "space-fixture", "--user-id", "user-fixture", "--session-id", "session-fixture", "-o", "json"}, tc.flags...)
+				cmd := exec.CommandContext(t.Context(), binary, args...)
+				cmd.Env = []string{"HOME=" + t.TempDir(), "TENCENTCLOUD_SECRET_ID=fake", "TENCENTCLOUD_SECRET_KEY=fake", "AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(server.URL, "https://"), "AGR_INSECURE_SKIP_VERIFY=1"}
+				if out, err := cmd.CombinedOutput(); err != nil {
+					t.Fatalf("update: %v %s", err, out)
+				}
+				select {
+				case request := <-requests:
+					value, present := request["Title"]
+					if present != tc.present || (present && value != tc.title) {
+						t.Fatalf("Title = %#v, present=%v; want %q, present=%v", value, present, tc.title, tc.present)
+					}
+					if tc.metadata {
+						items, ok := request["Metadata"].([]any)
+						if !ok || len(items) != 0 {
+							t.Fatalf("Metadata = %#v, want []", request["Metadata"])
+						}
+					}
+				default:
+					t.Fatal("no request reached server")
+				}
+			})
+		}
+	})
 	t.Run("event-input-transports", func(t *testing.T) {
 		fixture := &sessionFixture{t: t, session: map[string]any{}}
 		server := httptest.NewTLSServer(fixture)
