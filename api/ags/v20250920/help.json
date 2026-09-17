@@ -302,7 +302,9 @@
                 "agr instance list",
                 "agr instance list --tool-id sdt-xxxx",
                 "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'",
-                "agr instance list --offset 0 --limit 50"
+                "agr instance list --offset 0 --limit 50",
+                "agr instance list --max-results 50 --need-total-count",
+                "agr instance list --max-results 50 --next-token '<token>' --need-total-count"
             ],
             "fields": {
                 "ToolId": {
@@ -360,6 +362,30 @@
                     "inputs": {
                         "limit": {
                             "usage": "Pagination limit (max 100)"
+                        }
+                    }
+                },
+                "MaxResults": {
+                    "description": "Maximum results for token pagination.",
+                    "inputs": {
+                        "max-results": {
+                            "usage": "Token pagination page size (max 100)"
+                        }
+                    }
+                },
+                "NextToken": {
+                    "description": "Cursor returned by the previous token-paginated response.",
+                    "inputs": {
+                        "next-token": {
+                            "usage": "Token pagination cursor from Pagination.NextCursor"
+                        }
+                    }
+                },
+                "NeedTotalCount": {
+                    "description": "Return a stable total count during token pagination.",
+                    "inputs": {
+                        "need-total-count": {
+                            "usage": "Return TotalCount for token pagination"
                         }
                     }
                 }
@@ -556,9 +582,10 @@
                     "inputs": {
                         "computer-configuration": {
                             "usage": "ComputerConfiguration JSON object, @file, or - for stdin",
-                            "format": "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}",
+                            "format": "{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}",
                             "examples": [
-                                "agr tool create -n my-tool -t waa --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"
+                                "agr tool create -n my-tool -t waa --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'",
+                                "agr tool create -n my-osworld-tool -t osworld --region ap-guangzhou --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Resources\":{\"CPU\":\"4\",\"Memory\":\"8Gi\",\"Storage\":\"16Gi\"}}' --computer-configuration '{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}'"
                             ]
                         }
                     }
@@ -699,9 +726,10 @@
                     "inputs": {
                         "computer-configuration": {
                             "usage": "ComputerConfiguration JSON object, @file, or - for stdin",
-                            "format": "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}",
+                            "format": "{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}",
                             "examples": [
-                                "agr tool update sdt-xxxx --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"
+                                "agr tool update sdt-xxxx --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'",
+                                "agr tool update sdt-xxxx --region ap-guangzhou --custom-configuration '{\"Resources\":{\"CPU\":\"4\",\"Memory\":\"8Gi\",\"Storage\":\"16Gi\"}}' --computer-configuration '{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}'"
                             ]
                         }
                     }

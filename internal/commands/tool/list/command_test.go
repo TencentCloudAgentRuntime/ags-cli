@@ -39,6 +39,7 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 	tagKey := "env"
 	tagValue := "unit"
 	waaImageID := "img-unit"
+	osWorldVersion := "osworld2"
 	cp := &fakeMixedControlPlane{response: &ags.DescribeSandboxToolListResponseParams{
 		TotalCount: &total,
 		SandboxToolSet: []*ags.SandboxTool{{
@@ -53,7 +54,8 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 				NetworkMode: &network,
 			},
 			ComputerConfiguration: &ags.ComputerConfiguration{
-				WAAConfiguration: &ags.WAAConfiguration{ImageId: &waaImageID},
+				WAAConfiguration:     &ags.WAAConfiguration{ImageId: &waaImageID},
+				OSWorldConfiguration: &ags.OSWorldConfiguration{Version: &osWorldVersion},
 			},
 		}},
 	}}
@@ -75,6 +77,9 @@ func TestModuleBuildsAndRendersToolList(t *testing.T) {
 	}
 	computer, _ := apivalue.Decode(items[0]["ComputerConfiguration"])
 	if computer.Object("WAAConfiguration").String("ImageId") != waaImageID {
+		t.Fatalf("ComputerConfiguration = %#v", computer)
+	}
+	if computer.Object("OSWorldConfiguration").String("Version") != osWorldVersion {
 		t.Fatalf("ComputerConfiguration = %#v", computer)
 	}
 	var text bytes.Buffer
