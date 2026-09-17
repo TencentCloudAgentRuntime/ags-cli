@@ -1,6 +1,375 @@
 [
   {
     "op": "add",
+    "path": "/actions/ApproveRegistryRecord",
+    "value": {
+      "command": "registry.record.approve",
+      "request": "ApproveRegistryRecordRequest",
+      "response": "ApproveRegistryRecordResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CancelRegistryRecord",
+    "value": {
+      "command": "registry.record.cancel",
+      "request": "CancelRegistryRecordRequest",
+      "response": "CancelRegistryRecordResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateRegistry",
+    "value": {
+      "command": "registry.create",
+      "request": "CreateRegistryRequest",
+      "response": "CreateRegistryResponse",
+      "status": "mapped",
+      "fields": {
+        "Tags": {
+          "inputs": [
+            {
+              "flag": "tags",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateRegistryRecord",
+    "value": {
+      "command": "registry.record.create",
+      "request": "CreateRegistryRecordRequest",
+      "response": "CreateRegistryRecordResponse",
+      "status": "mapped",
+      "fields": {
+        "MCPSource": {
+          "inputs": [
+            {
+              "flag": "mcp-source",
+              "type": "json"
+            }
+          ]
+        },
+        "AgentSource": {
+          "inputs": [
+            {
+              "flag": "agent-source",
+              "type": "json"
+            }
+          ]
+        },
+        "SkillSource": {
+          "inputs": [
+            {
+              "flag": "skill-source",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteRegistry",
+    "value": {
+      "command": "registry.delete",
+      "request": "DeleteRegistryRequest",
+      "response": "DeleteRegistryResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteRegistryRecord",
+    "value": {
+      "command": "registry.record.delete",
+      "request": "DeleteRegistryRecordRequest",
+      "response": "DeleteRegistryRecordResponse",
+      "status": "mapped",
+      "fields": {
+        "VersionId": {
+          "allow_empty": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeRegistry",
+    "value": {
+      "command": "registry.get",
+      "request": "DescribeRegistryRequest",
+      "response": "DescribeRegistryResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeRegistryAuditLogList",
+    "value": {
+      "command": "registry.audit-log.list",
+      "request": "DescribeRegistryAuditLogListRequest",
+      "response": "DescribeRegistryAuditLogListResponse",
+      "status": "mapped",
+      "fields": {
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeRegistryList",
+    "value": {
+      "command": "registry.list",
+      "request": "DescribeRegistryListRequest",
+      "response": "DescribeRegistryListResponse",
+      "status": "mapped",
+      "fields": {
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        },
+        "Filters": {
+          "inputs": [
+            {
+              "flag": "filters",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeRegistryRecord",
+    "value": {
+      "command": "registry.record.get",
+      "request": "DescribeRegistryRecordRequest",
+      "response": "DescribeRegistryRecordResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeRegistryRecordList",
+    "value": {
+      "command": "registry.record.list",
+      "request": "DescribeRegistryRecordListRequest",
+      "response": "DescribeRegistryRecordListResponse",
+      "status": "mapped",
+      "fields": {
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        },
+        "Filters": {
+          "inputs": [
+            {
+              "flag": "filters",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeRegistryRecordVersionList",
+    "value": {
+      "command": "registry.record.version.list",
+      "request": "DescribeRegistryRecordVersionListRequest",
+      "response": "DescribeRegistryRecordVersionListResponse",
+      "status": "mapped",
+      "fields": {
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        },
+        "Filters": {
+          "inputs": [
+            {
+              "flag": "filters",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/GetSkillPackageDownloadURL",
+    "value": {
+      "command": "registry.skill-package.download-url",
+      "request": "GetSkillPackageDownloadURLRequest",
+      "response": "GetSkillPackageDownloadURLResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/GetSkillPackageUploadURL",
+    "value": {
+      "command": "registry.skill-package.upload-url",
+      "request": "GetSkillPackageUploadURLRequest",
+      "response": "GetSkillPackageUploadURLResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/PreviewRegistryRecord",
+    "value": {
+      "command": "registry.record.preview",
+      "request": "PreviewRegistryRecordRequest",
+      "response": "PreviewRegistryRecordResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/RejectRegistryRecord",
+    "value": {
+      "command": "registry.record.reject",
+      "request": "RejectRegistryRecordRequest",
+      "response": "RejectRegistryRecordResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/SyncRegistryRecord",
+    "value": {
+      "command": "registry.record.sync",
+      "request": "SyncRegistryRecordRequest",
+      "response": "SyncRegistryRecordResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/UpdateRegistry",
+    "value": {
+      "command": "registry.update",
+      "request": "UpdateRegistryRequest",
+      "response": "UpdateRegistryResponse",
+      "status": "mapped",
+      "fields": {
+        "Description": {
+          "allow_empty": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/UpdateRegistryRecord",
+    "value": {
+      "command": "registry.record.update",
+      "request": "UpdateRegistryRecordRequest",
+      "response": "UpdateRegistryRecordResponse",
+      "status": "mapped",
+      "fields": {
+        "MCPSource": {
+          "inputs": [
+            {
+              "flag": "mcp-source",
+              "type": "json"
+            }
+          ]
+        },
+        "AgentSource": {
+          "inputs": [
+            {
+              "flag": "agent-source",
+              "type": "json"
+            }
+          ]
+        },
+        "SkillSource": {
+          "inputs": [
+            {
+              "flag": "skill-source",
+              "type": "json"
+            }
+          ]
+        },
+        "LabelMutations": {
+          "inputs": [
+            {
+              "flag": "label-mutations",
+              "type": "json"
+            }
+          ]
+        },
+        "Description": {
+          "allow_empty": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
     "path": "/actions/CreateSessionSpace",
     "value": {
       "command": "session-space.create",

@@ -19,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 )
 
 // --- Test binary setup ---
@@ -48,7 +50,8 @@ func testBinary(t *testing.T) string {
 			bin += ".exe"
 		}
 		// #nosec G204 -- test-only command with controlled args.
-		cmd := exec.Command("go", "build", "-buildvcs=false", "-o", bin, "./cmd/agr")
+		args := []string{"build", "-buildvcs=false", "-tags=" + string(apimeta.BuildChannel), "-o", bin, "./cmd/agr"}
+		cmd := exec.Command("go", args...)
 		cmd.Dir = repoRoot
 		if out, err := cmd.CombinedOutput(); err != nil {
 			buildErr = &buildError{err: err, output: string(out)}

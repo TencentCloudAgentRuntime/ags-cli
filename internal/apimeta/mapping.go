@@ -46,6 +46,8 @@ type ActionMapping struct {
 // (alias, shorthand, positional, custom flag name, or explicit
 // exclusion from the cobra flag set).
 type FieldMapping struct {
+	// AllowEmpty permits an explicitly supplied empty string for this field.
+	AllowEmpty bool           `yaml:"allow_empty"`
 	Flag       string         `yaml:"flag"`
 	Shorthand  string         `yaml:"shorthand"`
 	Aliases    []string       `yaml:"aliases"`

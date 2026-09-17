@@ -233,7 +233,7 @@ func validateRequiredFields(req map[string]any, fields []FieldSpec) error {
 			continue
 		}
 		value, ok := req[field.Name]
-		if ok && requiredValuePresent(value) {
+		if ok && (requiredValuePresent(value) || (field.AllowEmpty && value == "")) {
 			continue
 		}
 		return missingRequiredFieldError(field)

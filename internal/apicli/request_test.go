@@ -360,6 +360,29 @@ func TestRequestBuilderRejectsInvalidJSONFlag(t *testing.T) {
 	}
 }
 
+func TestRequiredStringAllowEmptyIsExplicit(t *testing.T) {
+	for _, allow := range []bool{false, true} {
+		for _, raw := range []bool{false, true} {
+			builder := NewRequestBuilder(APIDescriptor{Fields: []FieldSpec{{Name: "Description", Required: true, AllowEmpty: allow, Parser: "common.default_string", Inputs: []InputSpec{{Name: "description", Flag: "description", Type: command.FlagString}}}}})
+			flags := map[string]command.FlagValue{"description": {Type: command.FlagString, Changed: true, String: ""}}
+			if raw {
+				flags = map[string]command.FlagValue{"request": {Type: command.FlagString, Changed: true, String: `{"Description":""}`}}
+			}
+			got, err := builder.Build(command.Request{Flags: flags})
+			if allow {
+				if err != nil || got["Description"] != "" {
+					t.Fatalf("raw=%v got=%v err=%v", raw, got, err)
+				}
+			} else if err == nil {
+				t.Fatal("required nonempty field accepted empty value")
+			}
+			if _, err := builder.Build(command.Request{}); err == nil {
+				t.Fatal("allow-empty must not allow an absent field")
+			}
+		}
+	}
+}
+
 func TestRequestBuilderPreservesStringPresence(t *testing.T) {
 	for _, tc := range []struct {
 		name                 string

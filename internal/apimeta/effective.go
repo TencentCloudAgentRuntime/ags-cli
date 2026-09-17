@@ -76,7 +76,10 @@ func ApplyAPIPatch(base, patchData []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	working := append([]byte(nil), base...)
+	working, err := decodePatchDocument(base)
+	if err != nil {
+		return nil, err
+	}
 	for i, operation := range patch {
 		kind := operation.Kind()
 		path, _ := operation.Path()
@@ -93,15 +96,19 @@ func ApplyAPIPatch(base, patchData []byte) ([]byte, error) {
 			}
 		}
 
-		working, err = applyOne(working, operation)
+		err = working.apply(operation)
 		if err != nil {
 			return nil, fmt.Errorf("apply patch operation %d %s %s: %w", i, kind, path, err)
 		}
 	}
-	if err := validateEffectiveJSON(working); err != nil {
+	result, err := working.bytes()
+	if err != nil {
 		return nil, err
 	}
-	return working, nil
+	if err := validateEffectiveJSON(result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // EvaluateAPIPatch classifies each mutating operation against an upstream
@@ -112,7 +119,10 @@ func EvaluateAPIPatch(upstream, patchData []byte) (PatchReport, error) {
 		return PatchReport{}, err
 	}
 
-	working := append([]byte(nil), upstream...)
+	working, err := decodePatchDocument(upstream)
+	if err != nil {
+		return PatchReport{}, err
+	}
 	results := make([]PatchOperationReport, 0, len(patch))
 	for i, operation := range patch {
 		kind := operation.Kind()
@@ -127,11 +137,11 @@ func EvaluateAPIPatch(upstream, patchData []byte) (PatchReport, error) {
 		case "test":
 			result, err = evaluateStandaloneTest(working, i, path, operation)
 		case "add":
-			result, err = evaluateAdd(&working, i, path, operation)
+			result, err = evaluateAdd(working, i, path, operation)
 		case "replace":
-			result, err = evaluateReplace(&working, patch, i, path, operation)
+			result, err = evaluateReplace(working, patch, i, path, operation)
 		case "remove":
-			result, err = evaluateRemove(&working, patch, i, path, operation)
+			result, err = evaluateRemove(working, patch, i, path, operation)
 		}
 		if err != nil {
 			return PatchReport{}, err
@@ -143,7 +153,11 @@ func EvaluateAPIPatch(upstream, patchData []byte) (PatchReport, error) {
 
 	status := summarizePatchStatus(results)
 	if status != PatchStatusConflict {
-		if err := validateEffectiveJSON(working); err != nil {
+		result, err := working.bytes()
+		if err != nil {
+			return PatchReport{}, err
+		}
+		if err := validateEffectiveJSON(result); err != nil {
 			return PatchReport{}, fmt.Errorf("validate rebased effective API: %w", err)
 		}
 	}
@@ -204,8 +218,8 @@ func decodePatch(data []byte, api bool) (jsonpatch.Patch, error) {
 	return patch, nil
 }
 
-func evaluateStandaloneTest(doc []byte, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
-	current, exists, err := pointerValue(doc, path)
+func evaluateStandaloneTest(doc *patchDocument, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
+	current, exists, err := doc.pointerValue(path)
 	if err != nil {
 		return PatchOperationReport{}, err
 	}
@@ -216,13 +230,13 @@ func evaluateStandaloneTest(doc []byte, index int, path string, operation jsonpa
 	return PatchOperationReport{}, nil
 }
 
-func evaluateAdd(doc *[]byte, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
-	state, detail, err := classifyAdd(*doc, path, operationValue(operation))
+func evaluateAdd(doc *patchDocument, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
+	state, detail, err := classifyAdd(doc, path, operationValue(operation))
 	if err != nil {
 		return PatchOperationReport{}, err
 	}
 	if state == PatchStatusActive {
-		*doc, err = applyOne(*doc, operation)
+		err = doc.apply(operation)
 		if err != nil {
 			return PatchOperationReport{}, fmt.Errorf("apply active add %s: %w", path, err)
 		}
@@ -230,8 +244,8 @@ func evaluateAdd(doc *[]byte, index int, path string, operation jsonpatch.Operat
 	return PatchOperationReport{Index: index, Op: "add", Path: path, Status: state, Detail: detail}, nil
 }
 
-func evaluateReplace(doc *[]byte, patch jsonpatch.Patch, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
-	current, exists, err := pointerValue(*doc, path)
+func evaluateReplace(doc *patchDocument, patch jsonpatch.Patch, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
+	current, exists, err := doc.pointerValue(path)
 	if err != nil {
 		return PatchOperationReport{}, err
 	}
@@ -245,7 +259,7 @@ func evaluateReplace(doc *[]byte, patch jsonpatch.Patch, index int, path string,
 	case exists && jsonValuesEqual(current, expected):
 		result.Status = PatchStatusActive
 		result.Detail = "upstream still contains the guarded value"
-		*doc, err = applyOne(*doc, operation)
+		err = doc.apply(operation)
 		if err != nil {
 			return PatchOperationReport{}, fmt.Errorf("apply active replace %s: %w", path, err)
 		}
@@ -256,14 +270,14 @@ func evaluateReplace(doc *[]byte, patch jsonpatch.Patch, index int, path string,
 	return result, nil
 }
 
-func evaluateRemove(doc *[]byte, patch jsonpatch.Patch, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
+func evaluateRemove(doc *patchDocument, patch jsonpatch.Patch, index int, path string, operation jsonpatch.Operation) (PatchOperationReport, error) {
 	expected := operationValue(patch[index-1])
-	if state, detail, handled, err := classifyMemberRemove(*doc, path, expected); err != nil {
+	if state, detail, handled, err := classifyMemberRemove(doc, path, expected); err != nil {
 		return PatchOperationReport{}, err
 	} else if handled {
 		result := PatchOperationReport{Index: index, Op: "remove", Path: path, Status: state, Detail: detail}
 		if state == PatchStatusActive {
-			*doc, err = applyOne(*doc, operation)
+			err = doc.apply(operation)
 			if err != nil {
 				return PatchOperationReport{}, fmt.Errorf("apply active remove %s: %w", path, err)
 			}
@@ -271,7 +285,7 @@ func evaluateRemove(doc *[]byte, patch jsonpatch.Patch, index int, path string, 
 		return result, nil
 	}
 
-	current, exists, err := pointerValue(*doc, path)
+	current, exists, err := doc.pointerValue(path)
 	if err != nil {
 		return PatchOperationReport{}, err
 	}
@@ -283,7 +297,7 @@ func evaluateRemove(doc *[]byte, patch jsonpatch.Patch, index int, path string, 
 	case jsonValuesEqual(current, expected):
 		result.Status = PatchStatusActive
 		result.Detail = "upstream still contains the guarded value"
-		*doc, err = applyOne(*doc, operation)
+		err = doc.apply(operation)
 		if err != nil {
 			return PatchOperationReport{}, fmt.Errorf("apply active remove %s: %w", path, err)
 		}
@@ -294,7 +308,7 @@ func evaluateRemove(doc *[]byte, patch jsonpatch.Patch, index int, path string, 
 	return result, nil
 }
 
-func classifyAdd(doc []byte, path string, value []byte) (PatchStatus, string, error) {
+func classifyAdd(doc *patchDocument, path string, value []byte) (PatchStatus, string, error) {
 	tokens, err := pointerTokens(path)
 	if err != nil {
 		return "", "", err
@@ -302,7 +316,7 @@ func classifyAdd(doc []byte, path string, value []byte) (PatchStatus, string, er
 	if len(tokens) >= 2 && tokens[len(tokens)-2] == "members" && tokens[len(tokens)-1] == "-" {
 		return classifyMemberAppend(doc, tokens[:len(tokens)-1], value)
 	}
-	current, exists, err := pointerValue(doc, path)
+	current, exists, err := doc.pointerValue(path)
 	if err != nil {
 		return "", "", err
 	}
@@ -315,8 +329,8 @@ func classifyAdd(doc []byte, path string, value []byte) (PatchStatus, string, er
 	return PatchStatusConflict, "upstream already contains a different value", nil
 }
 
-func classifyMemberAppend(doc []byte, parentTokens []string, value []byte) (PatchStatus, string, error) {
-	parent, exists, err := pointerValueTokens(doc, parentTokens)
+func classifyMemberAppend(doc *patchDocument, parentTokens []string, value []byte) (PatchStatus, string, error) {
+	parent, exists, err := doc.pointerValueTokens(parentTokens)
 	if err != nil {
 		return "", "", err
 	}
@@ -351,7 +365,7 @@ func classifyMemberAppend(doc []byte, parentTokens []string, value []byte) (Patc
 	return PatchStatusActive, fmt.Sprintf("member %s is absent upstream", added.Name), nil
 }
 
-func classifyMemberRemove(doc []byte, path string, expected []byte) (PatchStatus, string, bool, error) {
+func classifyMemberRemove(doc *patchDocument, path string, expected []byte) (PatchStatus, string, bool, error) {
 	tokens, err := pointerTokens(path)
 	if err != nil {
 		return "", "", false, err
@@ -370,7 +384,7 @@ func classifyMemberRemove(doc []byte, path string, expected []byte) (PatchStatus
 		return "", "", false, nil
 	}
 
-	parent, exists, err := pointerValueTokens(doc, tokens[:3])
+	parent, exists, err := doc.pointerValueTokens(tokens[:3])
 	if err != nil {
 		return "", "", true, err
 	}
@@ -552,49 +566,6 @@ func summarizePatchStatus(results []PatchOperationReport) PatchStatus {
 		return PatchStatusObsolete
 	}
 	return PatchStatusActive
-}
-
-func pointerValue(data []byte, path string) ([]byte, bool, error) {
-	tokens, err := pointerTokens(path)
-	if err != nil {
-		return nil, false, err
-	}
-	return pointerValueTokens(data, tokens)
-}
-
-func pointerValueTokens(data []byte, tokens []string) ([]byte, bool, error) {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.UseNumber()
-	var current any
-	if err := decoder.Decode(&current); err != nil {
-		return nil, false, fmt.Errorf("decode JSON document: %w", err)
-	}
-	for _, token := range tokens {
-		switch node := current.(type) {
-		case map[string]any:
-			value, ok := node[token]
-			if !ok {
-				return nil, false, nil
-			}
-			current = value
-		case []any:
-			if token == "-" {
-				return nil, false, nil
-			}
-			index, err := strconv.Atoi(token)
-			if err != nil || index < 0 || index >= len(node) {
-				return nil, false, nil
-			}
-			current = node[index]
-		default:
-			return nil, false, nil
-		}
-	}
-	value, err := json.Marshal(current)
-	if err != nil {
-		return nil, false, fmt.Errorf("encode JSON pointer value: %w", err)
-	}
-	return value, true, nil
 }
 
 func pointerTokens(path string) ([]string, error) {

@@ -42,6 +42,7 @@ type commandModel struct {
 }
 
 type fieldModel struct {
+	AllowEmpty bool
 	Name       string
 	Type       string
 	Member     string
@@ -261,6 +262,7 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 					Type:       m.Type,
 					Member:     m.Member,
 					Required:   m.Required && (fm == nil || !fm.Excluded),
+					AllowEmpty: fm != nil && fm.AllowEmpty,
 					Parser:     parser,
 					Positional: fm != nil && fm.Positional,
 					Excluded:   fm != nil && fm.Excluded,
@@ -383,6 +385,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 			}
 			b.WriteString("\t\t\t{\n")
 			fmt.Fprintf(&b, "\t\t\t\tName: %s,\n", quote(field.Name))
+			if field.AllowEmpty {
+				b.WriteString("\t\t\t\tAllowEmpty: true,\n")
+			}
 			if field.Required {
 				b.WriteString("\t\t\t\tRequired: true,\n")
 			}
@@ -548,6 +553,23 @@ func outputDescription(cmd commandModel) string {
 
 func outputEffects(cmd commandModel) []string {
 	switch cmd.Command {
+	case "registry.create":
+		return []string{"create:registry"}
+	case "registry.update":
+		return []string{"update:registry"}
+	case "registry.delete":
+		return []string{"delete:registry"}
+	case "registry.record.create":
+		return []string{"create:registry-record", "create:registry-record-version"}
+	case "registry.record.update", "registry.record.sync":
+		return []string{"update:registry-record", "create:registry-record-version"}
+	case "registry.record.delete":
+		return []string{"delete:registry-record"}
+	case "registry.record.approve", "registry.record.reject", "registry.record.cancel":
+		return []string{"update:registry-record-version"}
+	case "registry.skill-package.upload-url":
+		return []string{"update:registry-skill-package"}
+
 	case "tool.create":
 		return []string{"create:tool"}
 	case "deployment.create":
@@ -570,6 +592,9 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"update:session"}
 	case "session.event.append":
 		return []string{"create:event"}
+	}
+	if strings.HasPrefix(cmd.Command, "registry.") {
+		return []string{"read:registry"}
 	}
 	return nil
 }

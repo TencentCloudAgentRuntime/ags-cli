@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
+	"sync"
 )
 
 // Help is the English help text model for generated Cloud API commands.
@@ -75,15 +78,28 @@ func GeneratedHelp() *Help {
 	return &h
 }
 
+// The embedded help is fixed for the lifetime of a binary. Keep this private;
+// public accessors return copies so callers cannot mutate shared metadata.
+var embeddedHelp = sync.OnceValue(GeneratedHelp)
+
 // CommandHelpFor returns help metadata for a generated command ID.
 func CommandHelpFor(commandID string) CommandHelp {
-	h := GeneratedHelp()
-	return h.Commands[commandID]
+	ch := embeddedHelp().Commands[commandID]
+	ch.Examples = slices.Clone(ch.Examples)
+	ch.Fields = maps.Clone(ch.Fields)
+	for name, field := range ch.Fields {
+		field.Inputs = maps.Clone(field.Inputs)
+		for flag, input := range field.Inputs {
+			field.Inputs[flag] = cloneInputHelp(input)
+		}
+		ch.Fields[name] = field
+	}
+	return ch
 }
 
 // FieldDescription returns generated field help or fallback when no help exists.
 func FieldDescription(commandID, fieldName, fallback string) string {
-	ch := CommandHelpFor(commandID)
+	ch := embeddedHelp().Commands[commandID]
 	if fh, ok := ch.Fields[fieldName]; ok && fh.Description != "" {
 		return fh.Description
 	}
@@ -92,7 +108,7 @@ func FieldDescription(commandID, fieldName, fallback string) string {
 
 // InputHelpFor returns generated input help or fallback when no help exists.
 func InputHelpFor(commandID, fieldName, flagName, fallback string) InputHelp {
-	ch := CommandHelpFor(commandID)
+	ch := embeddedHelp().Commands[commandID]
 	if fh, ok := ch.Fields[fieldName]; ok {
 		if ih, ok := fh.Inputs[flagName]; ok {
 			if ih.Usage == "" {
@@ -101,11 +117,18 @@ func InputHelpFor(commandID, fieldName, flagName, fallback string) InputHelp {
 			if ih.Usage == "" {
 				ih.Usage = fallback
 			}
-			return ih
+			return cloneInputHelp(ih)
 		}
 		if fh.Description != "" {
 			return InputHelp{Usage: fh.Description}
 		}
 	}
 	return InputHelp{Usage: fallback}
+}
+
+func cloneInputHelp(input InputHelp) InputHelp {
+	input.Fields = slices.Clone(input.Fields)
+	input.Examples = slices.Clone(input.Examples)
+	input.Values = slices.Clone(input.Values)
+	return input
 }
