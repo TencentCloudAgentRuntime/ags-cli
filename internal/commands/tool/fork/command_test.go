@@ -203,6 +203,9 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if computer.Object("WAAConfiguration").String("ImageId") != "img-source" {
 		t.Fatalf("computer = %#v", computer)
 	}
+	if computer.Object("OSWorldConfiguration").String("Version") != "osworld2" {
+		t.Fatalf("computer = %#v", computer)
+	}
 
 }
 
@@ -217,7 +220,7 @@ func TestModuleAppliesExplicitOverrides(t *testing.T) {
 			"default-timeout":        {Name: "default-timeout", Type: command.FlagString, String: "1h", Changed: true},
 			"network-configuration":  {Name: "network-configuration", Type: command.FlagString, String: `{"NetworkMode":"PUBLIC"}`, Changed: true},
 			"tags":                   {Name: "tags", Type: command.FlagString, String: `[{"Key":"team","Value":"qa"}]`, Changed: true},
-			"computer-configuration": {Name: "computer-configuration", Type: command.FlagString, String: `{"WAAConfiguration":{"ImageId":"img-override"}}`, Changed: true},
+			"computer-configuration": {Name: "computer-configuration", Type: command.FlagString, String: `{"WAAConfiguration":{"ImageId":"img-override"},"OSWorldConfiguration":{"Version":"osworld1"}}`, Changed: true},
 			"role-arn":               {Name: "role-arn", Type: command.FlagString, String: "", Changed: true},
 			"client-token":           {Name: "client-token", Type: command.FlagString, String: "tok", Changed: true},
 			"persistent":             {Name: "persistent", Type: command.FlagBool, Bool: false, Changed: true},
@@ -245,6 +248,10 @@ func TestModuleAppliesExplicitOverrides(t *testing.T) {
 	computer := cp.request["ComputerConfiguration"].(map[string]any)
 	waa := computer["WAAConfiguration"].(map[string]any)
 	if waa["ImageId"] != "img-override" {
+		t.Fatalf("ComputerConfiguration = %#v", computer)
+	}
+	osWorld := computer["OSWorldConfiguration"].(map[string]any)
+	if osWorld["Version"] != "osworld1" {
 		t.Fatalf("ComputerConfiguration = %#v", computer)
 	}
 }
@@ -403,6 +410,7 @@ func sourceTool(id string) *ags.SandboxTool {
 	commandValue := "serve"
 	logFile := "/logs/app.log"
 	waaImageID := "img-source"
+	osWorldVersion := "osworld2"
 	persistent := true
 	status := "ACTIVE"
 	statusReason := "ready"
@@ -423,9 +431,12 @@ func sourceTool(id string) *ags.SandboxTool {
 		RoleArn:               &roleArn,
 		StorageMounts:         []*ags.StorageMount{{Name: &mountName, MountPath: &mountPath, ReadOnly: &readOnly}},
 		CustomConfiguration:   &ags.CustomConfigurationDetail{Image: &image, ImageRegistryType: &registryType, ImageDigest: &imageDigest, Command: []*string{&commandValue}},
-		ComputerConfiguration: &ags.ComputerConfiguration{WAAConfiguration: &ags.WAAConfiguration{ImageId: &waaImageID}},
-		LogConfiguration:      &ags.LogConfiguration{LogSources: &ags.LogSources{Files: []*string{&logFile}}},
-		StatusReason:          &statusReason,
+		ComputerConfiguration: &ags.ComputerConfiguration{
+			WAAConfiguration:     &ags.WAAConfiguration{ImageId: &waaImageID},
+			OSWorldConfiguration: &ags.OSWorldConfiguration{Version: &osWorldVersion},
+		},
+		LogConfiguration: &ags.LogConfiguration{LogSources: &ags.LogSources{Files: []*string{&logFile}}},
+		StatusReason:     &statusReason,
 	}
 }
 

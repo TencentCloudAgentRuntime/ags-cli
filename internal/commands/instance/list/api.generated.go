@@ -15,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "list",
 			Short:        "List instances",
 			Long:         "List sandbox instances with optional filters.",
-			Examples:     []string{"agr instance list", "agr instance list --tool-id sdt-xxxx", "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'", "agr instance list --offset 0 --limit 50"},
+			Examples:     []string{"agr instance list", "agr instance list --tool-id sdt-xxxx", "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'", "agr instance list --offset 0 --limit 50", "agr instance list --max-results 50 --need-total-count", "agr instance list --max-results 50 --next-token '<token>' --need-total-count"},
 			Aliases:      []string{"ls"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
@@ -65,6 +65,27 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
 					{Name: "filters", Flag: "filters", Usage: "Additional filters as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"<field>\",\"Values\":[\"<value1>\",\"<value2>\"]}]", Examples: []string{"agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]}]'", "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\",\"STARTING\"]}]'", "agr instance list --filters '[{\"Name\":\"Status\",\"Values\":[\"RUNNING\"]},{\"Name\":\"ToolName\",\"Values\":[\"my-tool\"]}]'"}, Values: []string{"Status (persisted): STARTING, RUNNING, STARTING_FAILED, PAUSING, PAUSED, PAUSE_FAILED, RESUME_FAILED, FORK_FAILED, STOPPING, STOPPED, STOPPING_FAILED, FAILED", "Status (derived): UNHEALTHY; use it as the sole Status value; --limit/--offset are ignored", "RUNNING filter results may be displayed as UNHEALTHY", "ToolName: tool name used to create the instance", "ToolId: tool ID"}, Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "MaxResults",
+				Parser: "common.default_int",
+				Inputs: []apicli.InputSpec{
+					{Name: "max-results", Flag: "max-results", Usage: "Token pagination page size (max 100)", Type: command.FlagInt},
+				},
+			},
+			{
+				Name:   "NextToken",
+				Parser: "common.default_string",
+				Inputs: []apicli.InputSpec{
+					{Name: "next-token", Flag: "next-token", Usage: "Token pagination cursor from Pagination.NextCursor", Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "NeedTotalCount",
+				Parser: "common.default_bool",
+				Inputs: []apicli.InputSpec{
+					{Name: "need-total-count", Flag: "need-total-count", Usage: "Return TotalCount for token pagination", Type: command.FlagBool},
 				},
 			},
 		},

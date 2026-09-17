@@ -109,7 +109,7 @@ func TestModuleBuildsUpdateRequest(t *testing.T) {
 }
 
 func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
-	const payload = `{"WAAConfiguration":{"ImageId":"img-unit"}}`
+	const payload = `{"WAAConfiguration":{"ImageId":"img-unit"},"OSWorldConfiguration":{"Version":"osworld2"}}`
 	filePath := filepath.Join(t.TempDir(), "computer-configuration.json")
 	if err := os.WriteFile(filePath, []byte(payload), 0o600); err != nil {
 		t.Fatalf("write ComputerConfiguration fixture: %v", err)
@@ -164,6 +164,10 @@ func TestModuleBuildsComputerConfigurationFromSupportedInputs(t *testing.T) {
 			waa, ok := configuration["WAAConfiguration"].(map[string]any)
 			if !ok || waa["ImageId"] != "img-unit" {
 				t.Fatalf("WAAConfiguration = %#v", configuration["WAAConfiguration"])
+			}
+			osWorld, ok := configuration["OSWorldConfiguration"].(map[string]any)
+			if !ok || osWorld["Version"] != "osworld2" {
+				t.Fatalf("OSWorldConfiguration = %#v", configuration["OSWorldConfiguration"])
 			}
 		})
 	}

@@ -2,6 +2,7 @@ package list
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -60,6 +61,9 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
+					if err := validatePaginationRequest(apiReq); err != nil {
+						return nil, err
+					}
 					if boolFlag(req, "all") {
 						return listAllInstances(ctx, executor, apiReq)
 					}
@@ -91,10 +95,57 @@ func validateRequest(req command.Request) error {
 			return output.NewUsageError("INVALID_PAGINATION", fmt.Sprintf("--limit must be >= 0 (got %d)", limit), "Use a non-negative pagination limit.")
 		}
 	}
-	if boolFlag(req, "all") && (flagChanged(req, "offset") || flagChanged(req, "limit")) {
-		return output.NewUsageError("INVALID_PAGINATION", "--all cannot be combined with --offset or --limit", "Use either --all for the complete list, or --offset/--limit for one page.")
+	if boolFlag(req, "all") && paginationFlagsChanged(req) {
+		return output.NewUsageError("INVALID_PAGINATION", "--all cannot be combined with pagination flags", "Use either --all for the complete list, or pagination flags for one page.")
 	}
 	return nil
+}
+
+func validatePaginationRequest(request map[string]any) error {
+	if maxResults, ok := integerRequestValue(request["MaxResults"]); ok && (maxResults < 0 || maxResults > 100) {
+		return output.NewUsageError("INVALID_PAGINATION", fmt.Sprintf("--max-results/MaxResults must be between 0 and 100 (got %d)", maxResults), "Use a token pagination page size no greater than 100.")
+	}
+	offsetMode := requestHasAny(request, "Offset", "Limit")
+	tokenMode := requestHasAny(request, "MaxResults", "NextToken", "NeedTotalCount")
+	if offsetMode && tokenMode {
+		return output.NewUsageError("INVALID_PAGINATION", "offset pagination cannot be combined with token pagination", "Use --offset/--limit or --max-results/--next-token/--need-total-count, not both.")
+	}
+	if _, needTotalCount := request["NeedTotalCount"]; needTotalCount && !requestHasAny(request, "MaxResults", "NextToken") {
+		return output.NewUsageError("INVALID_PAGINATION", "NeedTotalCount requires token pagination", "Include MaxResults or NextToken when requesting NeedTotalCount.")
+	}
+	return nil
+}
+
+func integerRequestValue(value any) (int64, bool) {
+	switch value := value.(type) {
+	case int:
+		return int64(value), true
+	case int64:
+		return value, true
+	case json.Number:
+		integer, err := value.Int64()
+		return integer, err == nil
+	default:
+		return 0, false
+	}
+}
+
+func requestHasAny(request map[string]any, names ...string) bool {
+	for _, name := range names {
+		if _, ok := request[name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func paginationFlagsChanged(req command.Request) bool {
+	for _, name := range []string{"offset", "limit", "max-results", "next-token", "need-total-count"} {
+		if flagChanged(req, name) {
+			return true
+		}
+	}
+	return false
 }
 
 func listAllInstances(ctx context.Context, executor *apicli.Executor, baseRequest map[string]any) (*command.Result, error) {
@@ -168,10 +219,14 @@ func instanceListResult(response apivalue.Object, offset int, limit *int, base *
 			items[i]["Region"] = renderOpts.Region
 		}
 	}
+	var nextCursor any
+	if nextToken := response.String("NextToken"); nextToken != "" {
+		nextCursor = nextToken
+	}
 	pagination := map[string]any{
 		"Offset":     offset,
 		"Total":      int(response.Int64("TotalCount")),
-		"NextCursor": nil,
+		"NextCursor": nextCursor,
 	}
 	if limit != nil {
 		pagination["Limit"] = *limit
@@ -180,7 +235,7 @@ func instanceListResult(response apivalue.Object, offset int, limit *int, base *
 		"Items":      items,
 		"Pagination": pagination,
 	}
-	apivalue.ExtendResponse(data, response, "InstanceSet", "TotalCount", "RequestId")
+	apivalue.ExtendResponse(data, response, "InstanceSet", "TotalCount", "NextToken", "RequestId")
 	return &command.Result{
 		Data:      data,
 		Warnings:  base.Warnings,

@@ -72,7 +72,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "ComputerConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "computer-configuration", Flag: "computer-configuration", Usage: "ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"WAAConfiguration\":{\"ImageId\":\"<image-id>\"}}", Examples: []string{"agr tool update sdt-xxxx --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'"}, Type: command.FlagString},
+					{Name: "computer-configuration", Flag: "computer-configuration", Usage: "ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}", Examples: []string{"agr tool update sdt-xxxx --computer-configuration '{\"WAAConfiguration\":{\"ImageId\":\"img-xxxx\"}}'", "agr tool update sdt-xxxx --region ap-guangzhou --custom-configuration '{\"Resources\":{\"CPU\":\"4\",\"Memory\":\"8Gi\",\"Storage\":\"16Gi\"}}' --computer-configuration '{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}'"}, Type: command.FlagString},
 				},
 			},
 		},
