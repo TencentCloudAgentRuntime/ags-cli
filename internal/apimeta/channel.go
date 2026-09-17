@@ -99,6 +99,10 @@ func applyMetadataPatch(base, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	doc, err := decodePatchDocument(base)
+	if err != nil {
+		return nil, err
+	}
 	for i, op := range patch {
 		path, _ := op.Path()
 		if op.Kind() == "add" {
@@ -106,24 +110,21 @@ func applyMetadataPatch(base, data []byte) ([]byte, error) {
 			if len(tokens) == 0 {
 				return nil, fmt.Errorf("add cannot replace the document")
 			}
-			parent, exists, err := pointerValueTokens(base, tokens[:len(tokens)-1])
-			if err != nil {
-				return nil, err
-			}
-			var object map[string]json.RawMessage
-			if !exists || json.Unmarshal(parent, &object) != nil || object == nil {
+			parent, exists := doc.lookup(tokens[:len(tokens)-1])
+			object, isObject := parent.(map[string]any)
+			if !exists || !isObject || object == nil {
 				return nil, fmt.Errorf("add %s requires an object parent; replace arrays with a test guard", path)
 			}
 			if _, exists := object[tokens[len(tokens)-1]]; exists {
 				return nil, fmt.Errorf("add %s would overwrite an existing key", path)
 			}
 		}
-		base, err = applyOne(base, op)
+		err = doc.apply(op)
 		if err != nil {
 			return nil, fmt.Errorf("operation %d: %w", i, err)
 		}
 	}
-	return base, nil
+	return doc.bytes()
 }
 
 func validateHelp(spec *Spec, mapping *Mapping, help *Help) error {
