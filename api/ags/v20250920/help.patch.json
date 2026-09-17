@@ -1,1 +1,864 @@
-[]
+[
+  {
+    "op": "add",
+    "path": "/commands/registry.record.approve",
+    "value": {
+      "short": "Approve a record version",
+      "long": "Approve a record version. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Comment": {
+          "description": "Approval decision comment.",
+          "inputs": {
+            "comment": {
+              "usage": "Approval decision comment."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.cancel",
+    "value": {
+      "short": "Cancel a record version",
+      "long": "Cancel a record version. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Comment": {
+          "description": "Approval decision comment.",
+          "inputs": {
+            "comment": {
+              "usage": "Approval decision comment."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.create",
+    "value": {
+      "short": "Create a registry",
+      "long": "Create a registry. Available in preview builds.",
+      "fields": {
+        "Name": {
+          "description": "Resource name.",
+          "inputs": {
+            "name": {
+              "usage": "Resource name."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description; pass an empty string to clear it.",
+          "inputs": {
+            "description": {
+              "usage": "Description; pass an empty string to clear it."
+            }
+          }
+        },
+        "ApprovalMode": {
+          "description": "Approval mode: AUTO or MANUAL; immutable after creation.",
+          "inputs": {
+            "approval-mode": {
+              "usage": "Approval mode: AUTO or MANUAL; immutable after creation."
+            }
+          }
+        },
+        "Tags": {
+          "description": "Cloud tags as Key/Value objects. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "tags": {
+              "usage": "Cloud tags as Key/Value objects. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.create",
+    "value": {
+      "short": "Create a record and its first version",
+      "long": "Provide exactly one content source matching --descriptor-type: MCP uses --mcp-source; A2A and AGUI use --agent-source; AGENT_SKILLS uses --skill-source; CUSTOM uses --custom-descriptors. Source objects accept inline JSON, @file, or - for stdin. Descriptors inside a source are JSON strings, not nested objects. Approval and assigning the stable label are separate operations.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "Name": {
+          "description": "Resource name.",
+          "inputs": {
+            "name": {
+              "usage": "Resource name."
+            }
+          }
+        },
+        "DescriptorType": {
+          "description": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM.",
+          "inputs": {
+            "descriptor-type": {
+              "usage": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description; pass an empty string to clear it.",
+          "inputs": {
+            "description": {
+              "usage": "Description; pass an empty string to clear it."
+            }
+          }
+        },
+        "VersionName": {
+          "description": "Name for the new version.",
+          "inputs": {
+            "version-name": {
+              "usage": "Name for the new version."
+            }
+          }
+        },
+        "MCPSource": {
+          "description": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "mcp-source": {
+              "usage": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        },
+        "AgentSource": {
+          "description": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "agent-source": {
+              "usage": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        },
+        "SkillSource": {
+          "description": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "skill-source": {
+              "usage": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        },
+        "CustomDescriptors": {
+          "description": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input.",
+          "inputs": {
+            "custom-descriptors": {
+              "usage": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.delete",
+    "value": {
+      "short": "Delete an empty registry",
+      "long": "Delete an empty registry. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.delete",
+    "value": {
+      "short": "Delete a record or a version",
+      "long": "Without VersionId, delete the entire record. With VersionId, delete only that version. The service enforces label references and version state restrictions. This command does not bypass those checks.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Reason": {
+          "description": "Reason for deletion.",
+          "inputs": {
+            "reason": {
+              "usage": "Reason for deletion."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.get",
+    "value": {
+      "short": "Get a registry",
+      "long": "Get a registry. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.audit-log.list",
+    "value": {
+      "short": "List registry audit logs",
+      "long": "List registry audit logs. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "ActionFilter": {
+          "description": "Audit action filter.",
+          "inputs": {
+            "action-filter": {
+              "usage": "Audit action filter."
+            }
+          }
+        },
+        "Actor": {
+          "description": "Audit actor filter.",
+          "inputs": {
+            "actor": {
+              "usage": "Audit actor filter."
+            }
+          }
+        },
+        "StartTime": {
+          "description": "Audit range start time.",
+          "inputs": {
+            "start-time": {
+              "usage": "Audit range start time."
+            }
+          }
+        },
+        "EndTime": {
+          "description": "Audit range end time.",
+          "inputs": {
+            "end-time": {
+              "usage": "Audit range end time."
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Maximum number of results.",
+          "inputs": {
+            "limit": {
+              "usage": "Maximum number of results."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.list",
+    "value": {
+      "short": "List registries",
+      "long": "List registries. Available in preview builds.",
+      "fields": {
+        "Offset": {
+          "description": "Pagination offset.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Maximum number of results.",
+          "inputs": {
+            "limit": {
+              "usage": "Maximum number of results."
+            }
+          }
+        },
+        "Filters": {
+          "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "filters": {
+              "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.get",
+    "value": {
+      "short": "Get a record and resolve a version",
+      "long": "Select a version using either --version-id or --label, not both. Omit both to use the service default selector. The response includes Record, Version, ResolvedBy and ResolvedLabel.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Label": {
+          "description": "Version label; mutually exclusive with version-id.",
+          "inputs": {
+            "label": {
+              "usage": "Version label; mutually exclusive with version-id."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.list",
+    "value": {
+      "short": "List registry records",
+      "long": "List registry records. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Maximum number of results.",
+          "inputs": {
+            "limit": {
+              "usage": "Maximum number of results."
+            }
+          }
+        },
+        "Filters": {
+          "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "filters": {
+              "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.version.list",
+    "value": {
+      "short": "List record versions",
+      "long": "List record versions. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Maximum number of results.",
+          "inputs": {
+            "limit": {
+              "usage": "Maximum number of results."
+            }
+          }
+        },
+        "Filters": {
+          "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "filters": {
+              "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.skill-package.download-url",
+    "value": {
+      "short": "Get a skill package download URL",
+      "long": "Get a short-lived download URL for a ready TAR_PACKAGE skill version. Select VersionId or Label, not both. This command returns the URL; it does not download a file.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Label": {
+          "description": "Version label; mutually exclusive with version-id.",
+          "inputs": {
+            "label": {
+              "usage": "Version label; mutually exclusive with version-id."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.skill-package.upload-url",
+    "value": {
+      "short": "Get a skill package upload URL",
+      "long": "Get a short-lived upload URL for an existing TAR_PACKAGE skill version. This command returns the URL; it does not upload a file. Upload the archive with HTTP PUT and check content readiness through registry record get.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.preview",
+    "value": {
+      "short": "Preview remote record changes",
+      "long": "Only remote MCP/A2A sources support preview. VersionId and Label are mutually exclusive. PreviewResult is JSON text returned by the service.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Label": {
+          "description": "Version label; mutually exclusive with version-id.",
+          "inputs": {
+            "label": {
+              "usage": "Version label; mutually exclusive with version-id."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.reject",
+    "value": {
+      "short": "Reject a record version",
+      "long": "Reject a record version. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Comment": {
+          "description": "Approval decision comment.",
+          "inputs": {
+            "comment": {
+              "usage": "Approval decision comment."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.sync",
+    "value": {
+      "short": "Synchronize a remote record source",
+      "long": "Only remote MCP/A2A sources support synchronization. VersionId and Label are mutually exclusive. A successful API call may report a synchronization error in SyncStatus/ErrorCode/ErrorMessage; inspect the response.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Record version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Record version ID."
+            }
+          }
+        },
+        "Label": {
+          "description": "Version label; mutually exclusive with version-id.",
+          "inputs": {
+            "label": {
+              "usage": "Version label; mutually exclusive with version-id."
+            }
+          }
+        },
+        "ChangeLog": {
+          "description": "Change log for the new version.",
+          "inputs": {
+            "change-log": {
+              "usage": "Change log for the new version."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.update",
+    "value": {
+      "short": "Update a registry description",
+      "long": "Update a registry description. Available in preview builds.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description; pass an empty string to clear it.",
+          "inputs": {
+            "description": {
+              "usage": "Description; pass an empty string to clear it."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/registry.record.update",
+    "value": {
+      "short": "Update record metadata, labels, or content",
+      "long": "Update Description and/or LabelMutations, or provide exactly one content source to create a new version. Content cannot be combined with Description or LabelMutations. VersionName and ChangeLog describe the new version. LabelMutations uses Operation, Name, optional VersionId and Reason; stable/latest labels cannot be deleted. Approval does not assign the stable label.",
+      "fields": {
+        "RegistryId": {
+          "description": "Registry ID.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Record ID."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description; pass an empty string to clear it.",
+          "inputs": {
+            "description": {
+              "usage": "Description; pass an empty string to clear it."
+            }
+          }
+        },
+        "VersionName": {
+          "description": "Name for the new version.",
+          "inputs": {
+            "version-name": {
+              "usage": "Name for the new version."
+            }
+          }
+        },
+        "ChangeLog": {
+          "description": "Change log for the new version.",
+          "inputs": {
+            "change-log": {
+              "usage": "Change log for the new version."
+            }
+          }
+        },
+        "MCPSource": {
+          "description": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "mcp-source": {
+              "usage": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        },
+        "AgentSource": {
+          "description": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "agent-source": {
+              "usage": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        },
+        "SkillSource": {
+          "description": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "skill-source": {
+              "usage": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        },
+        "CustomDescriptors": {
+          "description": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input.",
+          "inputs": {
+            "custom-descriptors": {
+              "usage": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input."
+            }
+          }
+        },
+        "LabelMutations": {
+          "description": "Label operations: Operation, Name, VersionId and Reason. Accepts JSON, @file, or - for stdin.",
+          "inputs": {
+            "label-mutations": {
+              "usage": "Label operations: Operation, Name, VersionId and Reason. Accepts JSON, @file, or - for stdin."
+            }
+          }
+        }
+      }
+    }
+  }
+]

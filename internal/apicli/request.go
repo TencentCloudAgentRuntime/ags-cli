@@ -172,7 +172,7 @@ func collectInputs(field FieldSpec, req command.Request) parsers.FieldInputs {
 		// defaults even when Cobra does not mark the flag as explicitly changed.
 		changed := value.Changed || input.SendDefault
 		values := value.Strings
-		if len(values) == 0 && value.String != "" {
+		if len(values) == 0 && (value.String != "" || (field.AllowEmpty && changed && value.Type == command.FlagString)) {
 			values = []string{value.String}
 		}
 		if value.Type == command.FlagBool {
@@ -232,7 +232,7 @@ func validateRequiredFields(req map[string]any, fields []FieldSpec) error {
 			continue
 		}
 		value, ok := req[field.Name]
-		if ok && requiredValuePresent(value) {
+		if ok && (requiredValuePresent(value) || (field.AllowEmpty && value == "")) {
 			continue
 		}
 		return missingRequiredFieldError(field)

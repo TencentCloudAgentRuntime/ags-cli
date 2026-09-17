@@ -29,6 +29,7 @@ type APISpec struct {
 
 // FieldSpec describes how one API request field is produced from CLI inputs.
 type FieldSpec struct {
+	AllowEmpty  bool
 	Name        string
 	Description string
 	Required    bool
