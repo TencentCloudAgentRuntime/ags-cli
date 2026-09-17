@@ -47,6 +47,13 @@ func APIDescriptor() apicli.APIDescriptor {
 					{Name: "limit", Flag: "limit", Usage: "单次分页查询返回的会话空间数量。", Type: command.FlagInt},
 				},
 			},
+			{
+				Name:   "Filters",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "filters", Flag: "filters", Usage: "Filters as a JSON array, @file, or - for stdin.", Format: "[{\"Name\":\"name-like\",\"Values\":[\"example\"]}]", Fields: []string{"At most 3 distinct filters; name and name-like are mutually exclusive", "1–100 nonblank values per filter, at most 128 Unicode characters each", "Values are OR, filters are AND; case-sensitive literal matching before pagination"}, Type: command.FlagString},
+				},
+			},
 		},
 	}
 }

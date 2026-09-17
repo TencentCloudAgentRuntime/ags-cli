@@ -46,7 +46,17 @@
       "command": "session-space.list",
       "request": "DescribeSessionSpacesRequest",
       "response": "DescribeSessionSpacesResponse",
-      "status": "mapped"
+      "status": "mapped",
+      "fields": {
+        "Filters": {
+          "inputs": [
+            {
+              "flag": "filters",
+              "type": "json"
+            }
+          ]
+        }
+      }
     }
   },
   {

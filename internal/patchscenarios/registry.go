@@ -6,5 +6,6 @@ import "github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 
 // Registry contains real candidate-CLI scenarios, subject to assertion review.
 var Registry = patchtest.Registry{
-	"session.lifecycle": {Assertions: sessionAssertions, Run: runSessionLifecycle},
+	"session.event-count": {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
+	"session.lifecycle":   {Assertions: sessionAssertions, Run: runSessionLifecycle},
 }

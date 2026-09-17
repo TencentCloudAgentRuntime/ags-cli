@@ -15,7 +15,7 @@ import (
 )
 
 var sessionAssertions = []string{
-	"space.create", "space.get", "space.list", "space.update", "space.delete",
+	"space.filters", "session.title-filters", "space.create", "space.get", "space.list", "space.update", "space.delete",
 	"session.create", "session.get", "session.list", "session.update", "session.delete",
 	"event.append", "event.list", "event.filters", "event.pagination", "session.filters", "session.pagination", "space.pagination", "input.validation",
 }
@@ -68,7 +68,6 @@ func runSessionLifecycle(s *patchtest.Session) error {
 		request map[string]any
 	}{
 		{"session-space.get", map[string]any{}},
-		{"session-space.list", map[string]any{"Filters": []any{}}},
 		{"session.event.append", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "Event": map[string]any{"Timestamp": "2026-09-01T00:00:00Z"}}},
 		{"session.list", map[string]any{"SpaceId": "space-validation", "Limit": "invalid"}},
 		{"session.get", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "NumRecentEvents": 1}},
@@ -144,12 +143,36 @@ func runSessionLifecycle(s *patchtest.Session) error {
 	if err := s.Assert("space.pagination", otherID != "" && otherID != spaceID); err != nil {
 		return err
 	}
+	for _, tc := range []struct {
+		field, value string
+		found        bool
+	}{
+		{"space-id", spaceID, true}, {"name", name + "-updated", true}, {"name-like", name + "-up", true}, {"description-like", "updated", true},
+		{"space-id", "absent-space", false}, {"name", name + "-absent", false}, {"name-like", name + "-absent", false}, {"description-like", name + "-absent", false},
+	} {
+		filters := []any{map[string]any{"Name": tc.field, "Values": []string{tc.value}}}
+		if tc.field != "space-id" {
+			filters = append(filters, map[string]any{"Name": "space-id", "Values": []string{spaceID, otherID}})
+		}
+		result, err := sessionCall(s, ctx, "session-space.list", map[string]any{"Filters": filters})
+		if err != nil {
+			return err
+		}
+		rows, _ := result.Data["SessionSpaces"].([]any)
+		want := 0
+		if tc.found {
+			want = 1
+		}
+		if err := s.Assert("space.filters", len(rows) == want && result.Data["TotalCount"] == json.Number(fmt.Sprint(want)) && (!tc.found || sessionContains(rows, "SpaceId", spaceID))); err != nil {
+			return err
+		}
+	}
 	spaceIDs := map[string]bool{}
 	var page sessionEnvelope
 	var items []any
 	total := int64(-1)
 	for offset := 0; total < 0 || int64(offset) < total; offset++ {
-		page, err = sessionCall(s, ctx, "session-space.list", map[string]any{"Offset": offset, "Limit": 1})
+		page, err = sessionCall(s, ctx, "session-space.list", map[string]any{"Offset": offset, "Limit": 1, "Filters": []any{map[string]any{"Name": "space-id", "Values": []string{spaceID, otherID}}}})
 		if err != nil {
 			return err
 		}
@@ -162,7 +185,7 @@ func runSessionLifecycle(s *patchtest.Session) error {
 			total = currentTotal
 		}
 		items, _ = page.Data["SessionSpaces"].([]any)
-		if err := s.Assert("space.pagination", parseErr == nil && total >= 2 && currentTotal == total && len(items) == 1); err != nil {
+		if err := s.Assert("space.pagination", parseErr == nil && total == 2 && currentTotal == total && len(items) == 1); err != nil {
 			return err
 		}
 		id := sessionString(sessionObject(items[0]), "SpaceId")
@@ -246,6 +269,27 @@ func runSessionLifecycle(s *patchtest.Session) error {
 		}
 		items, _ := result.Data["Sessions"].([]any)
 		if err := s.Assert("session.filters", len(items) == 0 && result.Data["TotalCount"] == json.Number("0")); err != nil {
+			return err
+		}
+	}
+	for _, tc := range []struct {
+		field, value, metadata string
+		found                  bool
+	}{
+		{"title", "updated", "verified", true}, {"title-like", "pdat", "verified", true},
+		{"title", "absent", "verified", false}, {"title-like", "absent", "verified", false},
+		{"title", "updated", "absent", false},
+	} {
+		result, err := sessionCall(s, ctx, "session.list", map[string]any{"SpaceId": spaceID, "Filters": []any{map[string]any{"Name": tc.field, "Values": []string{tc.value}}, map[string]any{"Name": "metadata:env", "Values": []string{tc.metadata}}}})
+		if err != nil {
+			return err
+		}
+		rows, _ := result.Data["Sessions"].([]any)
+		want := 0
+		if tc.found {
+			want = 1
+		}
+		if err := s.Assert("session.title-filters", len(rows) == want && result.Data["TotalCount"] == json.Number(fmt.Sprint(want)) && (!tc.found || sessionContains(rows, "SessionId", name))); err != nil {
 			return err
 		}
 	}

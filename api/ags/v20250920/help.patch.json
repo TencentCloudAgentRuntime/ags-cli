@@ -51,7 +51,23 @@
       "short": "List session spaces (preview)",
       "examples": [
         "Example - List session spaces:\n  agr session-space list --limit 20"
-      ]
+      ],
+      "fields": {
+        "Filters": {
+          "description": "Space filters: space-id, name, name-like, description-like.",
+          "inputs": {
+            "filters": {
+              "usage": "Filters as a JSON array, @file, or - for stdin.",
+              "format": "[{\"Name\":\"name-like\",\"Values\":[\"example\"]}]",
+              "fields": [
+                "At most 3 distinct filters; name and name-like are mutually exclusive",
+                "1–100 nonblank values per filter, at most 128 Unicode characters each",
+                "Values are OR, filters are AND; case-sensitive literal matching before pagination"
+              ]
+            }
+          }
+        }
+      }
     }
   },
   {

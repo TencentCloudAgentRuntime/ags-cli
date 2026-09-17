@@ -525,14 +525,14 @@ coverage:
   - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/name", "scenario": "session.lifecycle", "assertions": ["session.list"]}
   - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/required", "scenario": "session.lifecycle", "assertions": ["session.list", "input.validation"]}
   - {"entry": "/objects/DescribeSessionsRequest/members/AgentIds/type", "scenario": "session.lifecycle", "assertions": ["session.list"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/@exists", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/disabled", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/document", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/example", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/member", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/name", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/required", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation"]}
-  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/type", "scenario": "session.lifecycle", "assertions": ["session.filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/@exists", "scenario": "session.lifecycle", "assertions": ["session.filters", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/disabled", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/document", "scenario": "session.lifecycle", "assertions": ["session.filters", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/example", "scenario": "session.lifecycle", "assertions": ["session.filters", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/member", "scenario": "session.lifecycle", "assertions": ["session.filters", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/name", "scenario": "session.lifecycle", "assertions": ["session.filters", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/required", "scenario": "session.lifecycle", "assertions": ["session.filters", "input.validation", "session.title-filters"]}
+  - {"entry": "/objects/DescribeSessionsRequest/members/Filters/type", "scenario": "session.lifecycle", "assertions": ["session.filters", "session.title-filters"]}
   - {"entry": "/objects/DescribeSessionsRequest/members/Limit/@exists", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
   - {"entry": "/objects/DescribeSessionsRequest/members/Limit/disabled", "scenario": "session.lifecycle", "assertions": ["session.pagination", "input.validation"]}
   - {"entry": "/objects/DescribeSessionsRequest/members/Limit/document", "scenario": "session.lifecycle", "assertions": ["session.pagination"]}
@@ -1041,16 +1041,16 @@ coverage:
   - {"entry": "/objects/SessionInfo/members/CreateTime/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
   - {"entry": "/objects/SessionInfo/members/CreateTime/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
   - {"entry": "/objects/SessionInfo/members/CreateTime/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/example", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/member", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/name", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/output_required", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/required", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
-  - {"entry": "/objects/SessionInfo/members/EventCount/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/@exists", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/disabled", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/document", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/example", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/member", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/name", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/output_required", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/required", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/type", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
+  - {"entry": "/objects/SessionInfo/members/EventCount/value_allowed_null", "scenario": "session.event-count", "assertions": ["event-count.consistent"]}
   - {"entry": "/objects/SessionInfo/members/Metadata/@exists", "scenario": "session.lifecycle", "assertions": ["session.get"]}
   - {"entry": "/objects/SessionInfo/members/Metadata/disabled", "scenario": "session.lifecycle", "assertions": ["session.get", "input.validation"]}
   - {"entry": "/objects/SessionInfo/members/Metadata/document", "scenario": "session.lifecycle", "assertions": ["session.get"]}
@@ -1213,3 +1213,11 @@ coverage:
   - {"entry": "/objects/SessionState/members/CustomState/value_allowed_null", "scenario": "session.lifecycle", "assertions": ["session.get"]}
   - {"entry": "/objects/SessionState/type", "scenario": "session.lifecycle", "assertions": ["session.get"]}
   - {"entry": "/objects/SessionState/usage", "scenario": "session.lifecycle", "assertions": ["session.get"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/@exists", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/name", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/type", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/member", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/required", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/disabled", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/document", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/example", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}

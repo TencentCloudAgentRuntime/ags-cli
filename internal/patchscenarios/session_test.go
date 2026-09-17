@@ -28,7 +28,7 @@ func TestSessionLifecycleCandidate(t *testing.T) {
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build: %v\n%s", err, out)
 	}
-	for _, fault := range []string{"", "drop-update", "drop-event", "retain-resource", "ignore-session-filters", "ignore-session-offset", "ignore-session-limit", "ignore-space-offset", "ignore-space-limit", "ignore-event-author", "ignore-event-time", "ignore-event-offset", "ignore-event-limit", "drop-inline-data"} {
+	for _, fault := range []string{"", "ignore-space-id", "ignore-name", "ignore-name-like", "ignore-description-like", "ignore-title", "ignore-title-like", "drop-update", "drop-event", "retain-resource", "ignore-session-filters", "ignore-session-offset", "ignore-session-limit", "ignore-space-offset", "ignore-space-limit", "ignore-event-author", "ignore-event-time", "ignore-event-offset", "ignore-event-limit", "drop-inline-data"} {
 		t.Run("fault="+fault, func(t *testing.T) {
 			fixture := &sessionFixture{t: t, fault: fault}
 			server := httptest.NewTLSServer(fixture)
@@ -46,6 +46,27 @@ func TestSessionLifecycleCandidate(t *testing.T) {
 			}
 			if fault == "" && (len(results) != 1 || results[0].Cleanup != "pass" || results[0].Calls < 20) {
 				t.Fatalf("insufficient execution: %+v", results)
+			}
+		})
+	}
+	for _, fault := range []string{"", "zero-get-count", "zero-both-counts"} {
+		t.Run("event-count="+fault, func(t *testing.T) {
+			fixture := &sessionFixture{t: t, fault: fault}
+			server := httptest.NewTLSServer(fixture)
+			defer server.Close()
+			env := []string{"HOME=" + t.TempDir(), "PATH=" + os.Getenv("PATH"), "TENCENTCLOUD_SECRET_ID=fake", "TENCENTCLOUD_SECRET_KEY=fake", "TENCENTCLOUD_TOKEN=fake-session", "AGR_REGION=ap-guangzhou", "AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(server.URL, "https://"), "AGR_INSECURE_SKIP_VERIFY=1"}
+			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{{Scenario: "session.event-count", Assertions: []string{"event-count.consistent"}}}}
+			results, err := patchtest.Run(t.Context(), plan, Registry, binary, env)
+			if (err != nil) != (fault != "") {
+				t.Fatalf("fault %q: err=%v results=%+v", fault, err, results)
+			}
+			if len(results) != 1 || results[0].Cleanup != "pass" {
+				t.Fatalf("cleanup: %+v", results)
+			}
+			fixture.mu.Lock()
+			defer fixture.mu.Unlock()
+			if fixture.space != nil || fixture.session != nil {
+				t.Fatal("count fixture leaked")
 			}
 		})
 	}
@@ -188,6 +209,15 @@ func (f *sessionFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if f.pageSpace != nil {
 			spaces = append(spaces, f.pageSpace)
 		}
+		if filters, ok := req["Filters"].([]any); ok {
+			var matched []any
+			for _, item := range spaces {
+				if fixtureFilters(sessionObject(item), filters, f.fault) {
+					matched = append(matched, item)
+				}
+			}
+			spaces = matched
+		}
 		response["TotalCount"] = len(spaces)
 		if offset, ok := req["Offset"].(float64); ok && f.fault != "ignore-space-offset" {
 			spaces = spaces[min(int(offset), len(spaces)):]
@@ -235,13 +265,8 @@ func (f *sessionFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					match = false
 				}
 			}
-			if filters, ok := req["Filters"].([]any); ok {
-				for _, filter := range filters {
-					values := sessionObject(filter)["Values"].([]any)
-					if len(values) > 0 && !sessionContains(f.session["Metadata"], "Value", values[0].(string)) {
-						match = false
-					}
-				}
+			if filters, ok := req["Filters"].([]any); ok && !fixtureFilters(f.session, filters, f.fault) {
+				match = false
 			}
 		}
 		if match {
@@ -328,6 +353,22 @@ func (f *sessionFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.t.Errorf("unexpected action %s", action)
 		fail()
 	}
+	if f.fault == "zero-get-count" || f.fault == "zero-both-counts" {
+		if r.Header.Get("X-TC-Action") == "DescribeSession" && response["Session"] != nil {
+			row := maps.Clone(sessionObject(response["Session"]))
+			row["EventCount"] = 0
+			response["Session"] = row
+		}
+		if f.fault == "zero-both-counts" && r.Header.Get("X-TC-Action") == "DescribeSessions" {
+			if rows, ok := response["Sessions"].([]any); ok {
+				for i, raw := range rows {
+					row := maps.Clone(sessionObject(raw))
+					row["EventCount"] = 0
+					rows[i] = row
+				}
+			}
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]any{"Response": response}); err != nil {
 		f.t.Error(err)
@@ -356,4 +397,39 @@ func TestSessionEventValueEqual(t *testing.T) {
 			t.Errorf("%s: got %v want %v", tc.field, got, tc.want)
 		}
 	}
+}
+
+func fixtureFilters(object map[string]any, filters []any, fault string) bool {
+	for _, raw := range filters {
+		filter := sessionObject(raw)
+		name := sessionString(filter, "Name")
+		if fault == "ignore-"+name {
+			continue
+		}
+		values, _ := filter["Values"].([]any)
+		matched := false
+		for _, rawValue := range values {
+			value, _ := rawValue.(string)
+			switch name {
+			case "space-id":
+				matched = matched || sessionString(object, "SpaceId") == value
+			case "name":
+				matched = matched || sessionString(object, "Name") == value
+			case "name-like":
+				matched = matched || strings.Contains(sessionString(object, "Name"), value)
+			case "description-like":
+				matched = matched || strings.Contains(sessionString(object, "Description"), value)
+			case "title":
+				matched = matched || sessionString(object, "Title") == value
+			case "title-like":
+				matched = matched || strings.Contains(sessionString(object, "Title"), value)
+			default:
+				matched = matched || sessionContains(object["Metadata"], "Value", value)
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+	return true
 }

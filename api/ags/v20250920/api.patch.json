@@ -638,6 +638,15 @@
           "required": false,
           "type": "int",
           "example": "20"
+        },
+        {
+          "name": "Filters",
+          "type": "list",
+          "member": "Filter",
+          "required": false,
+          "disabled": false,
+          "document": "空间筛选，最多 3 项；支持 space-id、name、name-like、description-like。name 与 name-like 互斥，名称不可重复；每项 1–100 个非空值，每值最多 128 个 Unicode 字符。同一 Values 为 OR，不同条件为 AND；区分大小写，包含匹配按字面处理通配符。先筛选及授权，再计数和分页。",
+          "example": "无"
         }
       ],
       "type": "object"

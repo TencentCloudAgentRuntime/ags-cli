@@ -1,8 +1,73 @@
 # Session OpenAPI 与后端实际行为差异记录
 
-记录日期：2026-09-16。本文记录本轮 Session preview 接入中遇到的差异、处理决定和验证结果，不代表对整个 OpenAPI 的完整审计。
+初次记录：2026-09-16；最近更新：2026-09-17。本文记录本轮 Session preview 接入中遇到的差异、处理决定和验证结果，不代表对整个 OpenAPI 的完整审计。
 
 当前结论：CLI 已按已验证的后端行为收敛；调整后的完整 Session 生命周期真实 E2E 通过。OpenAPI 上游修订、API 负责人确认及线上部署版本核对尚未完成。
+
+## 最新结论：上海正式环境复核与当前范围
+
+2026-09-17 上海正式环境（`ap-shanghai`，API 版本 `2025-09-20`）验证：现有 `session.lifecycle` 的 58 次调用、20 个断言组通过；但随后独立计数复核发现后端 bug，因此不能笼统表述“全部 E2E 通过”。
+
+| 项目 | 上海实际结果 | 当前决定 |
+| --- | --- | --- |
+| 空间四种筛选、Session 标题筛选及 Metadata 组合 | 正反例与分页通过 | 保留当前 CLI |
+| InlineData | append/list 回读一致 | 保留 |
+| Timestamp | 客户端传入时间未保留，服务端生成时间 | 仅保留响应字段 |
+| DescribeSession 的 NumRecentEvents / AfterTimestamp | 请求成功但不返回 Events | 按已确认范围继续移除；事件查询使用 session event list |
+| ModifySessionTitle | ActionOffline，已被 ModifySession 替代 | 不提供独立标题命令 |
+| UpdateEvent | InvalidAction | 暂不纳入本次 CLI |
+| DescribeEvents.SkipTotal | 显式 true/false 都返回 UnknownParameter | 暂不纳入本次 CLI |
+| EventCount | get 为 0，list 与实际事件数一致 | 已知后端 bug；正确契约要求一致，CLI 不额外查询或覆写结果 |
+
+计数复核使用同一新建会话，核对 SpaceId/UserId/SessionId 后，观测如下：
+
+| 阶段 | DescribeSession.EventCount | DescribeSessions.EventCount | DescribeEvents.TotalCount |
+| --- | ---: | ---: | ---: |
+| 空会话 | 0 | 0 | 0 |
+| 追加 1 条事件 | 0 | 1 | 1 |
+| 追加 2 条事件 | 0 | 2 | 2 |
+| 等待 10 秒后 | 0 | 2 | 2 |
+
+省略 NumRecentEvents 或分别传 0、1、10，单条查询结果均相同。该结果与单条摘要未填充 EventCount、列表单独统计的源码路径吻合。以上用于界定后端问题，不改变 CLI 的目标契约。
+
+### 测试与报告口径
+
+新增独立 `session.event-count` 场景，断言 `event-count.consistent`：从空会话到追加 1/2 条事件，get/list/EventCount 必须等于已写入事件数量，并与事件列表的 TotalCount 和实际条数一致。EventCount 的覆盖项绑定此专项场景，不再借用普通 session.get 的成功断言。
+
+本地故障用例分别模拟“只有 get 错报 0”和“get/list 同时错报 0”，两者都必须使专项场景失败，并验证失败后资源清理。不会把已知后端 bug 标为 skip、预期通过或成功豁免。
+
+报告应分别展示：
+
+- 生命周期场景：本次上海实测通过。
+- 计数契约：独立真实复核失败，归因为已知后端 bug。
+- 完整验收：不能据生命周期通过宣称所有契约通过；覆盖计划包含计数专项后，实际失败应使总报告失败。
+
+新增注册场景的本地测试结果与此前原始云 API 复核是两类证据；此前通过报告不包含新增专项，不能复用为新覆盖计划的通过证明。后端修复后重新运行专项及完整 E2E。
+
+本轮原始 API 探测与计数复核创建的测试资源均已删除，并以 get 返回 not_found 确认。完整原始证据保存在本地，尚未作为公开 PR 附件发布。
+
+以下重庆与初次发现章节为历史记录；当前功能范围和报告结论以上述上海复核及明确决定为准。
+
+## 最新状态：2026-09-17 重庆正式环境验证
+
+以更新后的后端契约恢复空间列表 `Filters`，并补充会话 `title`、`title-like` 与 Metadata 的组合查询验证。当前结论：
+
+| 项目 | 最新状态 | CLI 决定 |
+| --- | --- | --- |
+| S-01 空间 Filters | 新版源码已实现；重庆正式环境四种筛选正反例及过滤后分页通过，不再返回 UnknownParameter | 已恢复 API patch、mapping、help/schema 和生成命令 |
+| S-02 Timestamp | 仍由服务端生成 | 保持响应字段，不恢复请求输入 |
+| S-03 近期事件参数 | YunAPI 摘要仍无 Events | 保持移除，使用事件列表查询 |
+| S-04 ModifySessionTitle | 正式路由仍使用 ModifySession | 保持 session update --title |
+| S-05 InlineData | 新版源码补齐响应投影，与云端回读一致 | 保留，完整场景回读再次通过 |
+| Session 标题筛选 | title/title-like 正反例及与 Metadata 的 AND 组合真实验证通过 | 沿用 session list --filters，新增回归断言 |
+
+本轮于 **2026-09-17 12:03:35–12:04:08（北京时间）**在 `ap-chongqing / ags.tencentcloudapi.com` 运行完整 `session.lifecycle`：**58 次 CLI 调用、20 个断言组全部通过，cleanup=pass**。创建的 2 个空间、2 个会话均已删除，随后查询确认不存在。没有测试所有长度/数量限制和非法组合，不外推其他地域或权限。
+
+- Patch digest：`c6a9616e9c4d48d191cd3d5cb1f79cd6c667c69a3d42b6dec89f3a6b4a78f0e5`。
+- Plan digest：`31954812aea596b4b6f36be44f3ad2d2176e7167bc7f3b9254d77378c056730e`。
+- 本轮机器报告、源码快照和二进制身份已在本地保存。仍为未提交快照预验证；正式 PR 的最终提交需重跑严格报告。
+
+以下章节保留 **2026-09-16 初次发现和处理历史**。其中空间筛选尚不可用、InlineData 源码与线上不同的旧结论，已由上表更新；旧报告 hash 仅对应当日快照。
 
 ## 1. 证据范围
 
