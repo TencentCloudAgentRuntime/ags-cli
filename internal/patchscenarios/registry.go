@@ -4,6 +4,8 @@ package patchscenarios
 
 import "github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 
-// Registry is empty because the canonical branch has no API patches.
-// Scenarios remain ordinary Go source, subject to independent assertion review.
-var Registry = patchtest.Registry{}
+// Registry contains real candidate-CLI scenarios, subject to assertion review.
+var Registry = patchtest.Registry{
+	"session.event-count": {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
+	"session.lifecycle":   {Assertions: sessionAssertions, Run: runSessionLifecycle},
+}
