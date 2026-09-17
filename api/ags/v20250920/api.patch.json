@@ -153,7 +153,7 @@
           "type": "string",
           "member": "string",
           "required": true,
-          "document": "来源类型。MANUAL：直接提交 MCP Descriptors JSON 文本；URL_IMPORT：从远端 MCP server.json URL 导入。",
+          "document": "来源类型。MANUAL：直接提交 MCP Descriptors JSON 文本；URL_IMPORT：从远端 MCP Streamable HTTP endpoint 导入。",
           "value_allowed_null": true
         },
         {
@@ -169,7 +169,7 @@
           "type": "string",
           "member": "string",
           "required": false,
-          "document": "远端 MCP server.json URL；HTTPS。Type=URL_IMPORT 时必填。Version 从远端 initialize.serverInfo.version 观测获得，无需请求参数。",
+          "document": "远端 MCP Streamable HTTP endpoint URL；HTTPS。Type=URL_IMPORT 时必填。Version 从远端 initialize.serverInfo.version 观测获得，无需请求参数。",
           "value_allowed_null": true
         }
       ]
@@ -205,7 +205,7 @@
           "type": "string",
           "member": "string",
           "required": true,
-          "document": "Record 名称；同一 Registry 内可重复。",
+          "document": "Record 名称；同一 Registry 内活动 Record 的名称必须唯一。",
           "value_allowed_null": false,
           "output_required": true
         },
@@ -1266,7 +1266,7 @@
           "type": "string",
           "member": "string",
           "required": false,
-          "document": "删除原因，最大 1024 字符。删除单个 Version 时必填；删除整个 Record 时可选。"
+          "document": "删除原因。删除单个 Version 时必填，去除首尾空白后最大 4096 字符；删除整个 Record 时可选。"
         }
       ]
     }
