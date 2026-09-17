@@ -230,7 +230,7 @@
     "path": "/commands/registry.record.delete",
     "value": {
       "short": "Delete a record or a version",
-      "long": "Without VersionId, delete the entire record. With VersionId, delete only that version. The service enforces label references and version state restrictions. This command does not bypass those checks.",
+      "long": "Without VersionId, delete the entire record. With VersionId, delete only that version. The service enforces label references and version state restrictions. This command does not bypass those checks. An explicitly empty --version-id is sent as an empty selector and rejected by the service; it never means deleting the entire record.",
       "fields": {
         "RegistryId": {
           "description": "Registry ID.",

@@ -20,7 +20,11 @@ func registryRemoteLifecycle(s *patchtest.Session) error {
 	if err != nil || base.Scheme != "https" || base.Host == "" || base.User != nil {
 		return fmt.Errorf("AGR_REGISTRY_FIXTURE_URL must identify the HTTPS metadata fixture")
 	}
-	ctx, cancel := context.WithTimeout(s.Context, 3*time.Minute)
+	window, err := registryFixtureWindow()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(s.Context, 4*window+2*time.Minute)
 	defer cancel()
 	health := *base
 	health.Path = "/health"
@@ -45,8 +49,8 @@ func registryRemoteLifecycle(s *patchtest.Session) error {
 		return fmt.Errorf("missing RegistryId")
 	}
 	for _, kind := range []struct{ descriptor, source, path string }{{"MCP", "MCPSource", "/mcp"}, {"A2A", "AgentSource", "/agent.json"}} {
-		change := time.Now().Add(20 * time.Second)
-		fail := change.Add(15 * time.Second)
+		change := time.Now().Add(window)
+		fail := change.Add(window)
 		endpoint := *base
 		endpoint.Path = fmt.Sprintf("/case/%d/%d%s", change.UnixMilli(), fail.UnixMilli(), kind.path)
 		endpoint.RawQuery = ""
@@ -77,6 +81,9 @@ func registryRemoteLifecycle(s *patchtest.Session) error {
 		}
 		if unchanged.Data.SyncStatus != "UNCHANGED" || unchanged.Data.ResolvedVersionId != ver {
 			return fmt.Errorf("unchanged sync mismatch")
+		}
+		if !time.Now().Before(change) {
+			return fmt.Errorf("initial fixture window elapsed; increase AGR_REGISTRY_FIXTURE_WINDOW")
 		}
 		if err = registryWaitUntil(ctx, change.Add(time.Second)); err != nil {
 			return err
@@ -113,6 +120,9 @@ func registryRemoteLifecycle(s *patchtest.Session) error {
 		}
 		if err = s.Assert(strings.ToLower(kind.descriptor)+".sync.changed", descriptorVersion(readback.Data.Version.Descriptors, "2.0.0") && readback.Data.Version.ChangeLog == "remote fixture changed"); err != nil {
 			return err
+		}
+		if !time.Now().Before(fail) {
+			return fmt.Errorf("changed fixture window elapsed; increase AGR_REGISTRY_FIXTURE_WINDOW")
 		}
 		if err = registryWaitUntil(ctx, fail.Add(time.Second)); err != nil {
 			return err
@@ -168,4 +178,19 @@ func registryFixtureConfigured() error {
 		return fmt.Errorf("AGR_REGISTRY_FIXTURE_URL must identify the reviewed HTTPS metadata fixture")
 	}
 	return nil
+}
+
+// Each remote source gets two independent windows. At the 3-minute maximum,
+// the scenario timeout is 14 minutes, leaving 6 minutes of the strict runner
+// budget for builds, other lifecycles and cleanup.
+func registryFixtureWindow() (time.Duration, error) {
+	value := os.Getenv("AGR_REGISTRY_FIXTURE_WINDOW")
+	if value == "" {
+		return time.Minute, nil
+	}
+	window, err := time.ParseDuration(value)
+	if err != nil || window < 30*time.Second || window > 3*time.Minute {
+		return 0, fmt.Errorf("AGR_REGISTRY_FIXTURE_WINDOW must be between 30s and 3m")
+	}
+	return window, nil
 }

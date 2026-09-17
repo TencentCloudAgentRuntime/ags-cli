@@ -680,6 +680,9 @@ coverage:
   - entry: /objects/CloudAuditLog/members/Action/name
     scenario: registry.lifecycle
     assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/Action/output_required
+    scenario: registry.lifecycle
+    assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/Action/required
     scenario: registry.lifecycle
     assertions: [record.history]
@@ -699,6 +702,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/Actor/name
+    scenario: registry.lifecycle
+    assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/Actor/output_required
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/Actor/required
@@ -722,6 +728,9 @@ coverage:
   - entry: /objects/CloudAuditLog/members/AuditLogId/name
     scenario: registry.lifecycle
     assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/AuditLogId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/AuditLogId/required
     scenario: registry.lifecycle
     assertions: [record.history]
@@ -741,6 +750,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/CreateTime/name
+    scenario: registry.lifecycle
+    assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/CreateTime/output_required
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/CreateTime/required
@@ -764,6 +776,9 @@ coverage:
   - entry: /objects/CloudAuditLog/members/Details/name
     scenario: registry.lifecycle
     assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/Details/output_required
+    scenario: registry.lifecycle
+    assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/Details/required
     scenario: registry.lifecycle
     assertions: [record.history]
@@ -783,6 +798,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/RecordId/name
+    scenario: registry.lifecycle
+    assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/RecordId/output_required
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/RecordId/required
@@ -806,6 +824,9 @@ coverage:
   - entry: /objects/CloudAuditLog/members/RegistryId/name
     scenario: registry.lifecycle
     assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/RegistryId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/RegistryId/required
     scenario: registry.lifecycle
     assertions: [record.history]
@@ -825,6 +846,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/VersionId/name
+    scenario: registry.lifecycle
+    assertions: [record.history]
+  - entry: /objects/CloudAuditLog/members/VersionId/output_required
     scenario: registry.lifecycle
     assertions: [record.history]
   - entry: /objects/CloudAuditLog/members/VersionId/required
@@ -989,6 +1013,9 @@ coverage:
   - entry: /objects/CloudRecord/members/AppId/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/AppId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/AppId/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1008,6 +1035,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/CreateTime/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/CreateTime/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/CreateTime/required
@@ -1031,6 +1061,9 @@ coverage:
   - entry: /objects/CloudRecord/members/CreatorSubAccountUin/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/CreatorSubAccountUin/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/CreatorSubAccountUin/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1050,6 +1083,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/CreatorUin/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/CreatorUin/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/CreatorUin/required
@@ -1073,6 +1109,9 @@ coverage:
   - entry: /objects/CloudRecord/members/Description/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/Description/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/Description/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1092,6 +1131,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/DescriptorType/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/DescriptorType/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/DescriptorType/required
@@ -1115,6 +1157,9 @@ coverage:
   - entry: /objects/CloudRecord/members/LabelSet/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, labels.removed]
+  - entry: /objects/CloudRecord/members/LabelSet/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, labels.removed]
   - entry: /objects/CloudRecord/members/LabelSet/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, labels.removed]
@@ -1134,6 +1179,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/LifecycleStatus/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/LifecycleStatus/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/LifecycleStatus/required
@@ -1157,6 +1205,9 @@ coverage:
   - entry: /objects/CloudRecord/members/Name/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/Name/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/Name/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1176,6 +1227,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/RecordId/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/RecordId/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/RecordId/required
@@ -1199,6 +1253,9 @@ coverage:
   - entry: /objects/CloudRecord/members/RegistryId/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/RegistryId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/RegistryId/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1220,6 +1277,9 @@ coverage:
   - entry: /objects/CloudRecord/members/UpdateTime/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/UpdateTime/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/UpdateTime/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1239,6 +1299,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/VersionCount/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecord/members/VersionCount/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecord/members/VersionCount/required
@@ -1370,6 +1433,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/AppId/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/AppId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/AppId/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1389,6 +1455,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/ApprovalActions/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/ApprovalActions/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/ApprovalActions/required
@@ -1412,6 +1481,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/ApprovalMode/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/ApprovalMode/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/ApprovalMode/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1431,6 +1503,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/ChangeLog/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/ChangeLog/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/ChangeLog/required
@@ -1454,6 +1529,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/ConfigSHA256/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/ConfigSHA256/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/ConfigSHA256/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1473,6 +1551,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CloudRecordVersion/members/ContentReadyTime/name
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CloudRecordVersion/members/ContentReadyTime/output_required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CloudRecordVersion/members/ContentReadyTime/required
@@ -1496,6 +1577,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/ContentSHA256/name
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CloudRecordVersion/members/ContentSHA256/output_required
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CloudRecordVersion/members/ContentSHA256/required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -1515,6 +1599,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CloudRecordVersion/members/ContentSizeBytes/name
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CloudRecordVersion/members/ContentSizeBytes/output_required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CloudRecordVersion/members/ContentSizeBytes/required
@@ -1538,6 +1625,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/ContentStatus/name
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CloudRecordVersion/members/ContentStatus/output_required
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CloudRecordVersion/members/ContentStatus/required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -1557,6 +1647,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/CreateTime/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/CreateTime/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/CreateTime/required
@@ -1580,6 +1673,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/CreatorSubAccountUin/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/CreatorSubAccountUin/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/CreatorSubAccountUin/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1599,6 +1695,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/CreatorUin/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/CreatorUin/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/CreatorUin/required
@@ -1622,6 +1721,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/Descriptors/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/Descriptors/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/Descriptors/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1641,6 +1743,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, labels.removed]
   - entry: /objects/CloudRecordVersion/members/LabelSet/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, labels.removed]
+  - entry: /objects/CloudRecordVersion/members/LabelSet/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, labels.removed]
   - entry: /objects/CloudRecordVersion/members/LabelSet/required
@@ -1664,6 +1769,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/RecordId/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/RecordId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/RecordId/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1683,6 +1791,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/Revision/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/Revision/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/Revision/required
@@ -1706,6 +1817,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/SourceConfig/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/SourceConfig/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/SourceConfig/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1725,6 +1839,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/SourceType/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/SourceType/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/SourceType/required
@@ -1748,6 +1865,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/Status/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/Status/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/Status/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1767,6 +1887,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/UpdateTime/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/UpdateTime/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/UpdateTime/required
@@ -1790,6 +1913,9 @@ coverage:
   - entry: /objects/CloudRecordVersion/members/VersionId/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/VersionId/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/VersionId/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -1809,6 +1935,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/VersionName/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/CloudRecordVersion/members/VersionName/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/CloudRecordVersion/members/VersionName/required
@@ -1844,6 +1973,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/AppId/name
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/AppId/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/AppId/required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -1863,6 +1995,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/ApprovalMode/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/ApprovalMode/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/ApprovalMode/required
@@ -1886,6 +2021,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/CreateTime/name
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/CreateTime/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/CreateTime/required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -1905,6 +2043,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/CreatorSubAccountUin/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/CreatorSubAccountUin/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/CreatorSubAccountUin/required
@@ -1928,6 +2069,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/CreatorUin/name
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/CreatorUin/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/CreatorUin/required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -1947,6 +2091,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Description/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/Description/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Description/required
@@ -1970,6 +2117,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/Name/name
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/Name/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Name/required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -1989,6 +2139,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/PublishedRecordCount/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/PublishedRecordCount/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/PublishedRecordCount/required
@@ -2012,6 +2165,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/RecordCount/name
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/RecordCount/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/RecordCount/required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -2031,6 +2187,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Region/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/Region/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Region/required
@@ -2054,6 +2213,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/RegistryId/name
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/RegistryId/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/RegistryId/required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -2073,6 +2235,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Status/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/Status/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/Status/required
@@ -2096,6 +2261,9 @@ coverage:
   - entry: /objects/CloudRegistry/members/Tags/name
     scenario: registry.lifecycle
     assertions: [registry.tags.readback]
+  - entry: /objects/CloudRegistry/members/Tags/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.tags.readback]
   - entry: /objects/CloudRegistry/members/Tags/required
     scenario: registry.lifecycle
     assertions: [registry.tags.readback]
@@ -2115,6 +2283,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/UpdateTime/name
+    scenario: registry.lifecycle
+    assertions: [registry.description, lists.filtered]
+  - entry: /objects/CloudRegistry/members/UpdateTime/output_required
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
   - entry: /objects/CloudRegistry/members/UpdateTime/required
@@ -2204,6 +2375,9 @@ coverage:
   - entry: /objects/CloudTag/members/Key/name
     scenario: registry.lifecycle
     assertions: [registry.tags.readback]
+  - entry: /objects/CloudTag/members/Key/output_required
+    scenario: registry.lifecycle
+    assertions: [registry.tags.readback]
   - entry: /objects/CloudTag/members/Key/required
     scenario: registry.lifecycle
     assertions: [registry.tags.readback]
@@ -2223,6 +2397,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [registry.tags.readback]
   - entry: /objects/CloudTag/members/Value/name
+    scenario: registry.lifecycle
+    assertions: [registry.tags.readback]
+  - entry: /objects/CloudTag/members/Value/output_required
     scenario: registry.lifecycle
     assertions: [registry.tags.readback]
   - entry: /objects/CloudTag/members/Value/required
@@ -2258,6 +2435,9 @@ coverage:
   - entry: /objects/CloudVersionApprovalAction/members/ActionId/name
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/ActionId/output_required
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActionId/required
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -2277,6 +2457,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActionType/name
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/ActionType/output_required
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActionType/required
@@ -2300,6 +2483,9 @@ coverage:
   - entry: /objects/CloudVersionApprovalAction/members/ActorSubAccountUin/name
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/ActorSubAccountUin/output_required
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActorSubAccountUin/required
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -2319,6 +2505,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActorType/name
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/ActorType/output_required
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActorType/required
@@ -2342,6 +2531,9 @@ coverage:
   - entry: /objects/CloudVersionApprovalAction/members/ActorUin/name
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/ActorUin/output_required
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/ActorUin/required
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -2361,6 +2553,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/Comment/name
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/Comment/output_required
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/Comment/required
@@ -2384,6 +2579,9 @@ coverage:
   - entry: /objects/CloudVersionApprovalAction/members/CreateTime/name
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/CreateTime/output_required
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/CreateTime/required
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -2403,6 +2601,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/RequestId/name
+    scenario: registry.lifecycle
+    assertions: [version.decisions]
+  - entry: /objects/CloudVersionApprovalAction/members/RequestId/output_required
     scenario: registry.lifecycle
     assertions: [version.decisions]
   - entry: /objects/CloudVersionApprovalAction/members/RequestId/required
@@ -2612,6 +2813,9 @@ coverage:
   - entry: /objects/CreateRegistryRecordResponse/members/ContentStatus/name
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CreateRegistryRecordResponse/members/ContentStatus/output_required
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CreateRegistryRecordResponse/members/ContentStatus/required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -2631,6 +2835,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CreateRegistryRecordResponse/members/ExpireTime/name
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CreateRegistryRecordResponse/members/ExpireTime/output_required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CreateRegistryRecordResponse/members/ExpireTime/required
@@ -2700,6 +2907,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CreateRegistryRecordResponse/members/UploadURL/name
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/CreateRegistryRecordResponse/members/UploadURL/output_required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/CreateRegistryRecordResponse/members/UploadURL/required
@@ -2947,22 +3157,22 @@ coverage:
     assertions: [version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/members/VersionId/@exists
     scenario: registry.lifecycle
-    assertions: [version.deleted]
+    assertions: [record.delete.selector, version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/members/VersionId/document
     scenario: registry.lifecycle
-    assertions: [version.deleted]
+    assertions: [record.delete.selector, version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/members/VersionId/member
     scenario: registry.lifecycle
-    assertions: [version.deleted]
+    assertions: [record.delete.selector, version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/members/VersionId/name
     scenario: registry.lifecycle
-    assertions: [version.deleted]
+    assertions: [record.delete.selector, version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/members/VersionId/required
     scenario: registry.lifecycle
-    assertions: [version.deleted]
+    assertions: [record.delete.selector, version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/members/VersionId/type
     scenario: registry.lifecycle
-    assertions: [version.deleted]
+    assertions: [record.delete.selector, version.deleted]
   - entry: /objects/DeleteRegistryRecordRequest/type
     scenario: registry.lifecycle
     assertions: [version.deleted]
@@ -3677,6 +3887,9 @@ coverage:
   - entry: /objects/DescribeRegistryRecordResponse/members/ResolvedLabel/name
     scenario: registry.lifecycle
     assertions: [record.label.readback, labels.removed]
+  - entry: /objects/DescribeRegistryRecordResponse/members/ResolvedLabel/output_required
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, labels.removed]
   - entry: /objects/DescribeRegistryRecordResponse/members/ResolvedLabel/required
     scenario: registry.lifecycle
     assertions: [record.label.readback, labels.removed]
@@ -4220,6 +4433,9 @@ coverage:
   - entry: /objects/GetSkillPackageUploadURLResponse/members/ContentStatus/name
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/GetSkillPackageUploadURLResponse/members/ContentStatus/output_required
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/GetSkillPackageUploadURLResponse/members/ContentStatus/required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -4239,6 +4455,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/GetSkillPackageUploadURLResponse/members/ExpireTime/name
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/GetSkillPackageUploadURLResponse/members/ExpireTime/output_required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/GetSkillPackageUploadURLResponse/members/ExpireTime/required
@@ -4688,6 +4907,9 @@ coverage:
   - entry: /objects/SyncRegistryRecordResponse/members/CreatedVersion/name
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
+  - entry: /objects/SyncRegistryRecordResponse/members/CreatedVersion/output_required
+    scenario: registry.lifecycle
+    assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/CreatedVersion/required
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
@@ -4707,6 +4929,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/ErrorCode/name
+    scenario: registry.lifecycle
+    assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
+  - entry: /objects/SyncRegistryRecordResponse/members/ErrorCode/output_required
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/ErrorCode/required
@@ -4730,6 +4955,9 @@ coverage:
   - entry: /objects/SyncRegistryRecordResponse/members/ErrorMessage/name
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
+  - entry: /objects/SyncRegistryRecordResponse/members/ErrorMessage/output_required
+    scenario: registry.lifecycle
+    assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/ErrorMessage/required
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
@@ -4751,6 +4979,9 @@ coverage:
   - entry: /objects/SyncRegistryRecordResponse/members/LastSyncTime/name
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
+  - entry: /objects/SyncRegistryRecordResponse/members/LastSyncTime/output_required
+    scenario: registry.lifecycle
+    assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/LastSyncTime/required
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
@@ -4770,6 +5001,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/Record/name
+    scenario: registry.lifecycle
+    assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
+  - entry: /objects/SyncRegistryRecordResponse/members/Record/output_required
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
   - entry: /objects/SyncRegistryRecordResponse/members/Record/required
@@ -5045,6 +5279,9 @@ coverage:
   - entry: /objects/UpdateRegistryRecordResponse/members/ContentStatus/name
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/UpdateRegistryRecordResponse/members/ContentStatus/output_required
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/UpdateRegistryRecordResponse/members/ContentStatus/required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -5064,6 +5301,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/UpdateRegistryRecordResponse/members/ExpireTime/name
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/UpdateRegistryRecordResponse/members/ExpireTime/output_required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/UpdateRegistryRecordResponse/members/ExpireTime/required
@@ -5111,6 +5351,9 @@ coverage:
   - entry: /objects/UpdateRegistryRecordResponse/members/UploadURL/name
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
+  - entry: /objects/UpdateRegistryRecordResponse/members/UploadURL/output_required
+    scenario: registry.lifecycle
+    assertions: [skill.package.roundtrip, skill.inline.readback]
   - entry: /objects/UpdateRegistryRecordResponse/members/UploadURL/required
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -5130,6 +5373,9 @@ coverage:
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/UpdateRegistryRecordResponse/members/Version/name
+    scenario: registry.lifecycle
+    assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /objects/UpdateRegistryRecordResponse/members/Version/output_required
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
   - entry: /objects/UpdateRegistryRecordResponse/members/Version/required

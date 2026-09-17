@@ -16,7 +16,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"registry", "record", "delete"},
 			Use:          "delete",
 			Short:        "Delete a record or a version",
-			Long:         "Without VersionId, delete the entire record. With VersionId, delete only that version. The service enforces label references and version state restrictions. This command does not bypass those checks.",
+			Long:         "Without VersionId, delete the entire record. With VersionId, delete only that version. The service enforces label references and version state restrictions. This command does not bypass those checks. An explicitly empty --version-id is sent as an empty selector and rejected by the service; it never means deleting the entire record.",
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DeleteRegistryRecordResponse",
@@ -51,8 +51,9 @@ func APIDescriptor() apicli.APIDescriptor {
 				},
 			},
 			{
-				Name:   "VersionId",
-				Parser: "common.default_string",
+				Name:       "VersionId",
+				AllowEmpty: true,
+				Parser:     "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "version-id", Flag: "version-id", Usage: "Record version ID.", Type: command.FlagString},
 				},

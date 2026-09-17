@@ -46,7 +46,8 @@
           "member": "string",
           "required": true,
           "document": "审计日志 ID。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "RegistryId",
@@ -54,7 +55,8 @@
           "member": "string",
           "required": true,
           "document": "所属 Registry ID。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Actor",
@@ -62,7 +64,8 @@
           "member": "string",
           "required": true,
           "document": "动作发起者（主账号 UIN 或子账号 UIN）。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Action",
@@ -70,7 +73,8 @@
           "member": "string",
           "required": true,
           "document": "Action 名称，等同 X-TC-Action。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Details",
@@ -78,7 +82,8 @@
           "member": "string",
           "required": true,
           "document": "动作脱敏摘要对象；使用云 API 字段命名，字段随 Action 而变；不包含凭据、预签名 URL 或完整 Descriptor。（JSON 字符串形式）",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreateTime",
@@ -86,7 +91,8 @@
           "member": "string",
           "required": true,
           "document": "动作发生时间。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "RecordId",
@@ -94,7 +100,8 @@
           "member": "string",
           "required": false,
           "document": "关联 Record ID；仅 Record / Version 相关动作。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "VersionId",
@@ -102,7 +109,8 @@
           "member": "string",
           "required": false,
           "document": "关联 Version ID；仅 Version 相关动作。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         }
       ]
     }
@@ -119,7 +127,7 @@
           "type": "string",
           "member": "string",
           "required": true,
-          "document": "过滤字段名。DescribeRegistryList 支持  name  /  search （模糊搜索）与  archived  /  status （true / false / all）；DescribeRegistryRecordList 支持  name  /  search （模糊）、 descriptor-type 、 lifecycle-status （精确）。",
+          "document": "过滤字段名。DescribeRegistryList 支持  name  /  search （模糊搜索）与  archived  /  status （true / false / all）；DescribeRegistryRecordList 支持  name  /  search （模糊）、 descriptor_type 、 lifecycle_status （精确）。",
           "value_allowed_null": true
         },
         {
@@ -180,7 +188,8 @@
           "member": "string",
           "required": true,
           "document": "Record ID；格式 `rec-` + 8 位小写字母/数字。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "RegistryId",
@@ -188,7 +197,8 @@
           "member": "string",
           "required": true,
           "document": "所属 Registry ID。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Name",
@@ -196,7 +206,8 @@
           "member": "string",
           "required": true,
           "document": "Record 名称；同一 Registry 内可重复。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Description",
@@ -204,7 +215,8 @@
           "member": "string",
           "required": true,
           "document": "描述。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "DescriptorType",
@@ -212,7 +224,8 @@
           "member": "string",
           "required": true,
           "document": "协议描述符类型；创建后不可变。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "LifecycleStatus",
@@ -220,7 +233,8 @@
           "member": "string",
           "required": true,
           "document": "生命周期状态。ACTIVE：可用；DELETED：软删除墓碑，不再参与常规查询、下发或版本配额。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "AppId",
@@ -228,7 +242,8 @@
           "member": "int64",
           "required": true,
           "document": "所属租户 AppId。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreatorUin",
@@ -236,7 +251,8 @@
           "member": "string",
           "required": true,
           "document": "创建者主账号 UIN。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreatorSubAccountUin",
@@ -244,7 +260,8 @@
           "member": "string",
           "required": true,
           "document": "创建者子账号 UIN；主账号直接创建时为空。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreateTime",
@@ -252,7 +269,8 @@
           "member": "string",
           "required": true,
           "document": "创建时间，ISO 8601 UTC。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "UpdateTime",
@@ -260,7 +278,8 @@
           "member": "string",
           "required": true,
           "document": "最近一次更新时间。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "VersionCount",
@@ -268,7 +287,8 @@
           "member": "int64",
           "required": false,
           "document": "Record 下未删除 Version 数量。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "LabelSet",
@@ -276,7 +296,8 @@
           "member": "string",
           "required": false,
           "document": "Record 下所有 Label Name（含未绑定 Label），包括系统 Label（stable / latest）和自定义 Label。仅名称，不含 VersionId、更新时间或操作者。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         }
       ]
     }
@@ -336,7 +357,8 @@
           "member": "string",
           "required": false,
           "document": "Version ID；格式 `rv-` + 8 位小写字母/数字。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "RecordId",
@@ -344,7 +366,8 @@
           "member": "string",
           "required": false,
           "document": "所属 Record ID。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Revision",
@@ -352,7 +375,8 @@
           "member": "int64",
           "required": false,
           "document": "Version 递增序号（1 起）。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Status",
@@ -360,7 +384,8 @@
           "member": "string",
           "required": false,
           "document": "Version 状态。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ApprovalMode",
@@ -368,7 +393,8 @@
           "member": "string",
           "required": false,
           "document": "审批模式；创建时锁定，后续变更 Registry 审批模式不影响本 Version。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "AppId",
@@ -376,7 +402,8 @@
           "member": "int64",
           "required": false,
           "document": "所属租户 AppId。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreatorUin",
@@ -384,7 +411,8 @@
           "member": "string",
           "required": false,
           "document": "创建者主账号 UIN。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreateTime",
@@ -392,7 +420,8 @@
           "member": "string",
           "required": false,
           "document": "创建时间。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "UpdateTime",
@@ -400,7 +429,8 @@
           "member": "string",
           "required": false,
           "document": "最近一次更新时间。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "VersionName",
@@ -408,7 +438,8 @@
           "member": "string",
           "required": false,
           "document": "Version 别名（可选）。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "Descriptors",
@@ -416,7 +447,8 @@
           "member": "string",
           "required": false,
           "document": "协议描述符对象。（JSON 字符串形式）",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "SourceType",
@@ -424,7 +456,8 @@
           "member": "string",
           "required": false,
           "document": "内容来源。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "SourceConfig",
@@ -432,7 +465,8 @@
           "member": "string",
           "required": false,
           "document": "规范化来源配置对象。（JSON 字符串形式）",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ContentStatus",
@@ -440,7 +474,8 @@
           "member": "string",
           "required": false,
           "document": "内容状态。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "ContentSHA256",
@@ -448,7 +483,8 @@
           "member": "string",
           "required": false,
           "document": "READY 内容 SHA-256。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "ContentSizeBytes",
@@ -456,7 +492,8 @@
           "member": "int64",
           "required": false,
           "document": "READY 内容字节数。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "ConfigSHA256",
@@ -464,7 +501,8 @@
           "member": "string",
           "required": false,
           "document": "配置内容规范化后的 SHA-256（用于幂等去重）。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreatorSubAccountUin",
@@ -472,7 +510,8 @@
           "member": "string",
           "required": false,
           "document": "创建者子账号 UIN。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ApprovalActions",
@@ -480,7 +519,8 @@
           "member": "CloudVersionApprovalAction",
           "required": false,
           "document": "Version 历次审批动作。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "ContentReadyTime",
@@ -488,7 +528,8 @@
           "member": "string",
           "required": false,
           "document": "TAR 内容成功校验、完成物化并进入 READY 的时间；MANUAL / URL_IMPORT 或尚未 READY 的 TAR_PACKAGE 均为空。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "ChangeLog",
@@ -496,7 +537,8 @@
           "member": "string",
           "required": false,
           "document": "本次 Version 的变更原因，最大 4096 字符；不可修改。Revision 1 或未填写时返回空字符串。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "LabelSet",
@@ -504,7 +546,8 @@
           "member": "string",
           "required": false,
           "document": "当前绑定该 Version 的 Label Name 列表（例如 stable / latest 或自定义 Label 名称）。未绑定 Label 不在此返回。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         }
       ]
     }
@@ -522,7 +565,8 @@
           "member": "string",
           "required": true,
           "document": "Registry ID；格式  reg-  + 8 位小写字母/数字。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Name",
@@ -530,7 +574,8 @@
           "member": "string",
           "required": true,
           "document": "Registry 同一 AppId + Region 唯一名称。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Description",
@@ -538,7 +583,8 @@
           "member": "string",
           "required": true,
           "document": "描述。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ApprovalMode",
@@ -546,7 +592,8 @@
           "member": "string",
           "required": true,
           "document": "审批模式；AUTO 自动通过，MANUAL 需人工审批；创建时确定，不可修改。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Region",
@@ -554,7 +601,8 @@
           "member": "string",
           "required": true,
           "document": "Registry 所在腾讯云地域，如  ap-guangzhou 。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Status",
@@ -562,7 +610,8 @@
           "member": "string",
           "required": true,
           "document": "Registry 状态。ACTIVE / ARCHIVED。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreateTime",
@@ -570,7 +619,8 @@
           "member": "string",
           "required": true,
           "document": "创建时间，ISO 8601 UTC，如  2026-08-11T10:00:00Z 。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "UpdateTime",
@@ -578,7 +628,8 @@
           "member": "string",
           "required": true,
           "document": "最近一次更新时间，ISO 8601 UTC。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "RecordCount",
@@ -586,7 +637,8 @@
           "member": "int64",
           "required": true,
           "document": "Registry 下 Record 总数。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Tags",
@@ -594,7 +646,8 @@
           "member": "CloudTag",
           "required": true,
           "document": "权威读取的腾讯云自定义标签，按 Key、Value 稳定排序；无标签时固定返回空数组，不返回 null。",
-          "value_allowed_null": false
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "PublishedRecordCount",
@@ -602,7 +655,8 @@
           "member": "int64",
           "required": false,
           "document": "Stable Label 已绑定的 Record 数量。Approved Version 数量和可对外消费的 Record 数量已不再等价。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "AppId",
@@ -610,7 +664,8 @@
           "member": "int64",
           "required": false,
           "document": "所属租户 AppId。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreatorUin",
@@ -618,7 +673,8 @@
           "member": "string",
           "required": false,
           "document": "创建者主账号 UIN。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreatorSubAccountUin",
@@ -626,7 +682,8 @@
           "member": "string",
           "required": false,
           "document": "创建者子账号 UIN；主账号直接创建时为空字符串。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         }
       ]
     }
@@ -670,7 +727,8 @@
           "member": "string",
           "required": true,
           "document": "自定义标签键；不可使用 qcs:、project 或项目预留前缀，且不可包含首尾空格。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Value",
@@ -678,7 +736,8 @@
           "member": "string",
           "required": true,
           "document": "自定义标签值，不可包含首尾空格。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         }
       ]
     }
@@ -696,7 +755,8 @@
           "member": "string",
           "required": false,
           "document": "动作 ID。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ActionType",
@@ -704,7 +764,8 @@
           "member": "string",
           "required": false,
           "document": "动作类型。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ActorType",
@@ -712,7 +773,8 @@
           "member": "string",
           "required": false,
           "document": "动作发起者类型。USER 用户；SYSTEM 系统自动通过。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ActorUin",
@@ -720,7 +782,8 @@
           "member": "string",
           "required": false,
           "document": "发起者主账号 UIN。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "ActorSubAccountUin",
@@ -728,7 +791,8 @@
           "member": "string",
           "required": false,
           "document": "发起者子账号 UIN。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "Comment",
@@ -736,7 +800,8 @@
           "member": "string",
           "required": false,
           "document": "动作留言。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "CreateTime",
@@ -744,7 +809,8 @@
           "member": "string",
           "required": false,
           "document": "发生时间。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": true
         },
         {
           "name": "RequestId",
@@ -752,7 +818,8 @@
           "member": "string",
           "required": false,
           "document": "对应云 API 请求的 RequestId。",
-          "value_allowed_null": true
+          "value_allowed_null": false,
+          "output_required": false
         }
       ]
     }
@@ -1094,7 +1161,8 @@
           "member": "string",
           "required": false,
           "document": "SkillSource.Type=TAR_PACKAGE 时返回：TAR 包上传预签名 URL。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         },
         {
           "name": "ExpireTime",
@@ -1102,7 +1170,8 @@
           "member": "string",
           "required": false,
           "document": "SkillSource.Type=TAR_PACKAGE 时返回：UploadURL 过期时间，ISO 8601 UTC。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         },
         {
           "name": "ContentStatus",
@@ -1110,7 +1179,8 @@
           "member": "string",
           "required": false,
           "document": "SkillSource.Type=TAR_PACKAGE 时返回：Version 内容当前状态（UPLOADING 等）。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         }
       ]
     }
@@ -1528,7 +1598,8 @@
           "member": "string",
           "required": false,
           "document": "通过 Label 解析（ResolvedBy=LABEL 或 DEFAULT_STABLE）时返回该 Label 名称，例如 stable。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         }
       ]
     }
@@ -1862,7 +1933,8 @@
           "member": "string",
           "required": false,
           "document": "重试后的内容状态。",
-          "value_allowed_null": false
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "ExpireTime",
@@ -1870,7 +1942,8 @@
           "member": "string",
           "required": false,
           "document": "UploadURL 过期时间。",
-          "value_allowed_null": false
+          "value_allowed_null": false,
+          "output_required": false
         }
       ]
     }
@@ -2107,7 +2180,8 @@
           "member": "CloudRecordVersion",
           "required": false,
           "document": "SyncStatus=VERSION_CREATED 时返回：本次新建的 Version。",
-          "value_allowed_null": false
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "Record",
@@ -2115,7 +2189,8 @@
           "member": "CloudRecord",
           "required": false,
           "document": "SyncStatus=VERSION_CREATED 时返回：同步后的最新 Record。",
-          "value_allowed_null": false
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "LastSyncTime",
@@ -2123,7 +2198,8 @@
           "member": "string",
           "required": false,
           "document": "最后一次同步时间，ISO 8601 UTC。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         },
         {
           "name": "ErrorCode",
@@ -2131,7 +2207,8 @@
           "member": "string",
           "required": false,
           "document": "失败错误码；SyncStatus=FAILED 时返回。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         },
         {
           "name": "ErrorMessage",
@@ -2139,7 +2216,8 @@
           "member": "string",
           "required": false,
           "document": "失败错误信息；SyncStatus=FAILED 时返回。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         }
       ]
     }
@@ -2311,7 +2389,8 @@
           "member": "CloudRecordVersion",
           "required": false,
           "document": "Version 创建模式返回：本次创建的新 Version。",
-          "value_allowed_null": false
+          "value_allowed_null": false,
+          "output_required": false
         },
         {
           "name": "UploadURL",
@@ -2319,7 +2398,8 @@
           "member": "string",
           "required": false,
           "document": "Version 创建模式且 SkillSource.Type=TAR_PACKAGE 时返回。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         },
         {
           "name": "ExpireTime",
@@ -2327,7 +2407,8 @@
           "member": "string",
           "required": false,
           "document": "Version 创建模式且 SkillSource.Type=TAR_PACKAGE 时返回。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         },
         {
           "name": "ContentStatus",
@@ -2335,7 +2416,8 @@
           "member": "string",
           "required": false,
           "document": "Version 创建模式且 SkillSource.Type=TAR_PACKAGE 时返回。",
-          "value_allowed_null": true
+          "value_allowed_null": true,
+          "output_required": false
         }
       ]
     }

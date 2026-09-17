@@ -92,7 +92,12 @@
       "command": "registry.record.delete",
       "request": "DeleteRegistryRecordRequest",
       "response": "DeleteRegistryRecordResponse",
-      "status": "mapped"
+      "status": "mapped",
+      "fields": {
+        "VersionId": {
+          "allow_empty": true
+        }
+      }
     }
   },
   {

@@ -41,6 +41,12 @@ Deploy that directory to an explicitly authorized Deno Deploy test app. It
 implements MCP metadata and an A2A 1.0 Agent Card only; it cannot execute tools.
 `/case/<changeAt>/<failAt>/mcp` and `/case/<changeAt>/<failAt>/agent.json` path timestamps change metadata and return HTTP 503,
 respectively, without mutable shared state. Each test gets an independent URL.
+The default change and failure windows are each 1 minute. Set
+`AGR_REGISTRY_FIXTURE_WINDOW` (30s to 3m) for slower environments; the scenario
+timeout scales accordingly, up to 14 minutes. The 3-minute cap leaves 6 minutes
+of the strict runner's 20-minute budget for builds, other lifecycles and cleanup. If a phase overruns its window, the run fails and
+requires a larger window, never a passing result. Increase the outer `go test -timeout` too when using larger windows. Time windows reduce but do not eliminate
+sensitivity to unusually slow cloud calls.
 Run `deno test --no-config tests/registry/fixture` to check the fixture locally.
 
 ## Evidence boundary

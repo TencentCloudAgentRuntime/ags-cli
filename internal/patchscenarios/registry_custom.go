@@ -133,6 +133,21 @@ func registryCustomLifecycle(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
+	// A supplied empty selector must fail without deleting the parent record.
+	for _, selector := range []string{"", " "} {
+		invalid, err := call("registry record delete", map[string]any{"RecordId": rec, "VersionId": selector, "Reason": "selector boundary"})
+		if err == nil || invalid.Failure == nil || invalid.Failure.Code != "InvalidParameter.VersionId" {
+			return fmt.Errorf("empty version selector was not rejected")
+		}
+	}
+	surviving, err := call("registry record get", map[string]any{"RecordId": rec})
+	if err != nil {
+		return err
+	}
+	record, _ := surviving.Raw["Record"].(map[string]any)
+	if err = s.Assert("record.delete.selector", record["RecordId"] == rec); err != nil {
+		return err
+	}
 	ver := created.Data.Version.VersionId
 	if rec == "" || ver == "" || created.Data.Version.Status != "PENDING_APPROVAL" {
 		return fmt.Errorf("invalid pending record")
@@ -320,7 +335,7 @@ func registryCustomExtras(s *patchtest.Session, reg, rec, ver, name string) erro
 		request            map[string]any
 	}{
 		{"registry list", "RegistrySet", reg, map[string]any{"Offset": 0, "Limit": 10, "Filters": []map[string]any{{"Name": "name", "Values": []string{name}}}}},
-		{"registry record list", "RecordSet", rec, map[string]any{"RegistryId": reg, "Offset": 0, "Limit": 10, "Filters": []map[string]any{{"Name": "name", "Values": []string{"custom-fixture"}}}}},
+		{"registry record list", "RecordSet", rec, map[string]any{"RegistryId": reg, "Offset": 0, "Limit": 10, "Filters": []map[string]any{{"Name": "name", "Values": []string{"custom-fixture"}}, {"Name": "descriptor_type", "Values": []string{"CUSTOM"}}, {"Name": "lifecycle_status", "Values": []string{"ACTIVE"}}}}},
 		{"registry record version list", "VersionSet", ver, map[string]any{"RegistryId": reg, "RecordId": rec, "Offset": 0, "Limit": 10, "Filters": []map[string]any{{"Name": "status", "Values": []string{"APPROVED"}}}}},
 	} {
 		result, err := registryCall(s, ctx, item.command, item.request)

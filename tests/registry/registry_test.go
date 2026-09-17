@@ -54,6 +54,12 @@ func TestRegistryChannels(t *testing.T) {
 			t.Error(err)
 		}
 		w.Header().Set("Content-Type", "application/json")
+		if action == "DeleteRegistryRecord" {
+			if version, present := payload["VersionId"]; present && strings.TrimSpace(version.(string)) == "" {
+				_ = json.NewEncoder(w).Encode(map[string]any{"Response": map[string]any{"Error": map[string]string{"Code": "InvalidParameter.VersionId", "Message": "VersionId must be non-empty when present"}}})
+				return
+			}
+		}
 		_ = json.NewEncoder(w).Encode(map[string]any{"Response": response})
 	}))
 	defer server.Close()
@@ -222,6 +228,38 @@ func TestRegistryChannels(t *testing.T) {
 		mu.Unlock()
 		if after != before {
 			t.Fatal("invalid request reached server")
+		}
+	}
+	// Explicit selectors must never disappear and widen the deletion scope.
+	for _, raw := range []bool{false, true} {
+		for _, selector := range []struct {
+			present bool
+			value   string
+		}{{false, ""}, {true, ""}, {true, " "}, {true, "rv-test"}} {
+			request := map[string]any{"RegistryId": "reg-test", "RecordId": "rec-test", "Reason": "version cleanup"}
+			args := []string{"registry", "record", "delete"}
+			if selector.present {
+				request["VersionId"] = selector.value
+			}
+			if raw {
+				args = append(args, "--request", encode(request))
+			} else {
+				args = append(args, "--registry-id", "reg-test", "--record-id", "rec-test", "--reason", "version cleanup")
+				if selector.present {
+					args = append(args, "--version-id", selector.value)
+				}
+			}
+			valid := !selector.present || strings.TrimSpace(selector.value) != ""
+			result := run("preview", "", valid, append(args, "-o", "json")...)
+			if !valid && result["Failure"].(map[string]any)["Code"] != "InvalidParameter.VersionId" {
+				t.Fatalf("empty delete selector was not rejected: %v", result)
+			}
+			mu.Lock()
+			matches := reflect.DeepEqual(payload, request)
+			mu.Unlock()
+			if !matches {
+				t.Fatalf("raw=%v: deletion scope changed", raw)
+			}
 		}
 	}
 	// Required Description must preserve an explicit empty value for clearing it.
