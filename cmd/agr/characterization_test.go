@@ -981,35 +981,51 @@ func TestCharacterization_HiddenCommandsAreNotResolvableThroughSchema(t *testing
 func TestCharacterization_JSONHelpMatchesSchemaForEveryPublicJSONCommand(t *testing.T) {
 	root := contractRoot()
 	for _, commandID := range allPublicCommandIDs(root) {
-		schema := schemaForCommand(t, commandID)
-		if !schema.SupportsJSON {
-			continue
-		}
-		schemaData := mustCommandDataJSON(t, "schema", commandID, "-o", "json")
-		helpData := mustCommandDataJSON(t, append(strings.Split(commandID, "."), "-o", "json", "--help")...)
-		if !reflect.DeepEqual(schemaData, helpData) {
-			t.Fatalf("schema/help JSON mismatch for %s\nschema=%s\nhelp=%s", commandID, schemaData, helpData)
-		}
-		for _, aliasPath := range aliasPathsForCommand(root, commandID) {
-			aliasData := mustCommandDataJSON(t, "schema", aliasPath, "-o", "json")
-			var aliasEnv struct {
+		aliases := aliasPathsForCommand(root, commandID)
+		t.Run(commandID, func(t *testing.T) {
+			// Commands execute in isolated subprocesses; parallelism follows -parallel.
+			t.Parallel()
+			// Reuse the same CLI response for metadata checks and help comparison.
+			// Each runAGR call starts an isolated, race-instrumented process in CI.
+			schemaData := mustCommandDataJSON(t, "schema", commandID, "-o", "json")
+			var schema struct {
 				Name         string `json:"Name"`
-				ResolvedFrom string `json:"ResolvedFrom"`
+				SupportsJSON bool   `json:"SupportsJson"`
 			}
-			if err := json.Unmarshal([]byte(aliasData), &aliasEnv); err != nil {
-				t.Fatalf("decode alias schema data for %s: %v\n%s", aliasPath, err, aliasData)
+			if err := json.Unmarshal([]byte(schemaData), &schema); err != nil {
+				t.Fatalf("decode schema data for %s: %v\n%s", commandID, err, schemaData)
 			}
-			if aliasEnv.Name != commandID {
-				t.Fatalf("alias schema name for %s = %q, want %q", aliasPath, aliasEnv.Name, commandID)
+			if schema.Name != commandID {
+				t.Fatalf("schema name = %q, want %q", schema.Name, commandID)
 			}
-			if aliasEnv.ResolvedFrom != aliasPath {
-				t.Fatalf("alias resolvedFrom for %s = %q, want %q", aliasPath, aliasEnv.ResolvedFrom, aliasPath)
+			if !schema.SupportsJSON {
+				return
 			}
-			aliasHelpData := mustCommandDataJSON(t, append([]string{"help"}, append(strings.Split(aliasPath, "."), "-o", "json")...)...)
-			if !reflect.DeepEqual(schemaData, aliasHelpData) {
-				t.Fatalf("schema/help JSON mismatch for alias %s\nschema=%s\nhelp=%s", aliasPath, schemaData, aliasHelpData)
+			helpData := mustCommandDataJSON(t, append(strings.Split(commandID, "."), "-o", "json", "--help")...)
+			if !reflect.DeepEqual(schemaData, helpData) {
+				t.Fatalf("schema/help JSON mismatch for %s\nschema=%s\nhelp=%s", commandID, schemaData, helpData)
 			}
-		}
+			for _, aliasPath := range aliases {
+				aliasData := mustCommandDataJSON(t, "schema", aliasPath, "-o", "json")
+				var aliasEnv struct {
+					Name         string `json:"Name"`
+					ResolvedFrom string `json:"ResolvedFrom"`
+				}
+				if err := json.Unmarshal([]byte(aliasData), &aliasEnv); err != nil {
+					t.Fatalf("decode alias schema data for %s: %v\n%s", aliasPath, err, aliasData)
+				}
+				if aliasEnv.Name != commandID {
+					t.Fatalf("alias schema name for %s = %q, want %q", aliasPath, aliasEnv.Name, commandID)
+				}
+				if aliasEnv.ResolvedFrom != aliasPath {
+					t.Fatalf("alias resolvedFrom for %s = %q, want %q", aliasPath, aliasEnv.ResolvedFrom, aliasPath)
+				}
+				aliasHelpData := mustCommandDataJSON(t, append([]string{"help"}, append(strings.Split(aliasPath, "."), "-o", "json")...)...)
+				if !reflect.DeepEqual(schemaData, aliasHelpData) {
+					t.Fatalf("schema/help JSON mismatch for alias %s\nschema=%s\nhelp=%s", aliasPath, schemaData, aliasHelpData)
+				}
+			}
+		})
 	}
 }
 
