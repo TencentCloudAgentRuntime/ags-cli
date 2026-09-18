@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchcoverage"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
@@ -13,19 +14,21 @@ import (
 
 func TestMountStartInstanceTracksWaitFailureForCleanup(t *testing.T) {
 	for _, tc := range []struct {
-		name   string
-		omitID bool
+		name         string
+		omitID       bool
+		cancelCreate bool
 	}{
 		{name: "failure details"},
 		{name: "tool discovery fallback", omitID: true},
+		{name: "cancelled create cleanup discovery", cancelCreate: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			testMountWaitFailureCleanup(t, tc.omitID)
+			testMountWaitFailureCleanup(t, tc.omitID, tc.cancelCreate)
 		})
 	}
 }
 
-func testMountWaitFailureCleanup(t *testing.T, omitID bool) {
+func testMountWaitFailureCleanup(t *testing.T, omitID, cancelCreate bool) {
 	t.Helper()
 	logPath := filepath.Join(t.TempDir(), "calls.log")
 	binary := filepath.Join(t.TempDir(), "fake-agr")
@@ -33,7 +36,10 @@ func testMountWaitFailureCleanup(t *testing.T, omitID bool) {
 printf '%s\n' "$*" >> "$CALL_LOG"
 case "$*" in
   "instance create "*)
-    if [ "$OMIT_RESOURCE_ID" = "1" ]; then
+	if [ "$CANCEL_CREATE" = "1" ]; then
+	  : > "$CALL_LOG.created"
+	  exec sleep 30
+	elif [ "$OMIT_RESOURCE_ID" = "1" ]; then
       printf '%s\n' '{"Status":"failed","Failure":{"Code":"ResourceNotReady","Kind":"runtime","Message":"wait timed out"}}'
     else
       printf '%s\n' '{"Status":"failed","Failure":{"Code":"ResourceNotReady","Kind":"runtime","Message":"wait timed out","Details":{"ResourceId":"instance-wait-failed"}}}'
@@ -67,7 +73,20 @@ esac
 			Run: func(s *patchtest.Session) error {
 				owned := &volumeMountOwned{}
 				s.Cleanup(func(ctx context.Context) error { return owned.cleanup(s, ctx) })
-				_, err := mountStartInstance(s, s.Context, owned, "tool-1", "reuse-1")
+				createCtx := s.Context
+				var cancelResult <-chan error
+				if cancelCreate {
+					var cancel context.CancelFunc
+					createCtx, cancel = context.WithCancel(s.Context)
+					defer cancel()
+					cancelResult = cancelWhenFileExists(s.Context, logPath+".created", cancel)
+				}
+				_, err := mountStartInstance(s, createCtx, owned, "tool-1", "reuse-1")
+				if cancelResult != nil {
+					if cancelErr := <-cancelResult; cancelErr != nil {
+						return cancelErr
+					}
+				}
 				return s.Assert("wait.failed", err != nil)
 			},
 		},
@@ -77,9 +96,17 @@ esac
 	if omitID {
 		env = append(env, "OMIT_RESOURCE_ID=1")
 	}
+	if cancelCreate {
+		env = append(env, "CANCEL_CREATE=1")
+	}
 	results, err := patchtest.Run(t.Context(), plan, registry, binary, env)
 	if err != nil {
 		t.Fatalf("run: %v; results=%+v", err, results)
+	}
+	if cancelCreate {
+		if _, err := os.Stat(logPath + ".created"); err != nil {
+			t.Fatalf("fake remote creation was not reached: %v", err)
+		}
 	}
 	log, err := os.ReadFile(logPath)
 	if err != nil {
@@ -89,10 +116,35 @@ esac
 		t.Fatalf("cleanup did not delete wait-failed instance:\n%s", log)
 	}
 	wantListCalls := 2
-	if omitID {
+	if omitID || cancelCreate {
 		wantListCalls++
 	}
 	if got := strings.Count(string(log), "instance list "); got != wantListCalls {
 		t.Fatalf("instance list calls=%d, want %d:\n%s", got, wantListCalls, log)
 	}
+}
+
+func cancelWhenFileExists(ctx context.Context, path string, cancel context.CancelFunc) <-chan error {
+	result := make(chan error, 1)
+	go func() {
+		waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
+		defer stop()
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			if _, err := os.Stat(path); err == nil {
+				cancel()
+				result <- nil
+				return
+			}
+			select {
+			case <-waitCtx.Done():
+				cancel()
+				result <- waitCtx.Err()
+				return
+			case <-ticker.C:
+			}
+		}
+	}()
+	return result
 }

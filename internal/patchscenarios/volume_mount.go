@@ -22,12 +22,13 @@ var volumeMountAssertions = []string{
 }
 
 type volumeMountOwned struct {
-	instances         []string
-	tools             []string
-	volumes           []string
-	templates         []string
-	bootstrapInstance string
-	bootstrapPath     string
+	instances              []string
+	tools                  []string
+	uncertainInstanceTools []string
+	volumes                []string
+	templates              []string
+	bootstrapInstance      string
+	bootstrapPath          string
 }
 
 func runVolumeMountLifecycle(s *patchtest.Session) error {
@@ -369,9 +370,7 @@ func mountStartInstance(s *patchtest.Session, ctx context.Context, owned *volume
 	owned.addInstance(id)
 	if err != nil {
 		if id == "" {
-			if trackErr := mountTrackToolInstances(s, ctx, owned, toolID); trackErr != nil {
-				return "", errors.Join(err, fmt.Errorf("track instances after failed create: %w", trackErr))
-			}
+			owned.addUncertainInstanceTool(toolID)
 		}
 		return "", err
 	}
@@ -548,6 +547,14 @@ func mountTrackToolInstances(s *patchtest.Session, ctx context.Context, owned *v
 
 func (o *volumeMountOwned) cleanup(s *patchtest.Session, ctx context.Context) error {
 	var errs []error
+	remainingUncertainTools := o.uncertainInstanceTools[:0]
+	for _, toolID := range o.uncertainInstanceTools {
+		if err := mountTrackToolInstances(s, ctx, o, toolID); err != nil {
+			errs = append(errs, fmt.Errorf("discover instances for tool %s: %w", toolID, err))
+			remainingUncertainTools = append(remainingUncertainTools, toolID)
+		}
+	}
+	o.uncertainInstanceTools = remainingUncertainTools
 	for i := len(o.instances) - 1; i >= 0; i-- {
 		if o.instances[i] == o.bootstrapInstance {
 			continue
@@ -703,5 +710,11 @@ func (o *volumeMountOwned) addVolume(id string) {
 func (o *volumeMountOwned) addInstance(id string) {
 	if id != "" && !slices.Contains(o.instances, id) {
 		o.instances = append(o.instances, id)
+	}
+}
+
+func (o *volumeMountOwned) addUncertainInstanceTool(id string) {
+	if id != "" && !slices.Contains(o.uncertainInstanceTools, id) {
+		o.uncertainInstanceTools = append(o.uncertainInstanceTools, id)
 	}
 }
