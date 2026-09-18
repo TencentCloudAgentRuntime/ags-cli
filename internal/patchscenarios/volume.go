@@ -37,7 +37,10 @@ const volumeTagKey = "agr-e2e"
 type volumeEnvelope struct {
 	Status  string
 	Data    map[string]any
-	Failure *struct{ Code, Kind, Message string }
+	Failure *struct {
+		Code, Kind, Message string
+		Details             map[string]any
+	}
 }
 
 // volumeStorage carries the reviewed backend identifiers. COS and CFS volumes
@@ -132,6 +135,16 @@ func volumeObject(value any) map[string]any { object, _ := value.(map[string]any
 func volumeString(object map[string]any, key string) string {
 	value, _ := object[key].(string)
 	return value
+}
+
+func volumeResourceID(result volumeEnvelope, dataKey string) string {
+	if id := volumeString(result.Data, dataKey); id != "" {
+		return id
+	}
+	if result.Failure != nil {
+		return volumeString(result.Failure.Details, "ResourceId")
+	}
+	return ""
 }
 
 func volumeNested(object map[string]any, path ...string) map[string]any {

@@ -182,9 +182,7 @@ func runVolumeMountLifecycle(s *patchtest.Session) error {
 		return err
 	}
 	failed, callErr := volumeCLI(s, ctx, "instance", "create", "--wait", "--timeout", "5m", "--tool-id", invalidToolID)
-	if failedID := volumeString(failed.Data, "InstanceId"); failedID != "" {
-		owned.instances = append(owned.instances, failedID)
-	}
+	owned.addInstance(volumeResourceID(failed, "InstanceId"))
 	if err := mountTrackToolInstances(s, ctx, owned, invalidToolID); err != nil {
 		return err
 	}
@@ -367,11 +365,14 @@ func mountStartInstance(s *patchtest.Session, ctx context.Context, owned *volume
 		return "", err
 	}
 	result, err := volumeCLI(s, ctx, "instance", "create", "--wait", "--timeout", "10m", "--tool-id", toolID, "--metadata", string(metadata))
-	id := volumeString(result.Data, "InstanceId")
-	if id != "" {
-		owned.instances = append(owned.instances, id)
-	}
+	id := volumeResourceID(result, "InstanceId")
+	owned.addInstance(id)
 	if err != nil {
+		if id == "" {
+			if trackErr := mountTrackToolInstances(s, ctx, owned, toolID); trackErr != nil {
+				return "", errors.Join(err, fmt.Errorf("track instances after failed create: %w", trackErr))
+			}
+		}
 		return "", err
 	}
 	if id == "" || volumeString(result.Data, "Status") != "RUNNING" {
@@ -696,5 +697,11 @@ func mountDeleteTemplate(s *patchtest.Session, ctx context.Context, id string) e
 func (o *volumeMountOwned) addVolume(id string) {
 	if id != "" && !slices.Contains(o.volumes, id) {
 		o.volumes = append(o.volumes, id)
+	}
+}
+
+func (o *volumeMountOwned) addInstance(id string) {
+	if id != "" && !slices.Contains(o.instances, id) {
+		o.instances = append(o.instances, id)
 	}
 }
