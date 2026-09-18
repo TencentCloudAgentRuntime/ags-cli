@@ -1104,5 +1104,458 @@
         "Example - List recent session events:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50"
       ]
     }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume.create",
+    "value": {
+      "short": "Create a volume",
+      "long": "Create a standalone sandbox volume bound to a concrete storage location. Available in preview builds.",
+      "fields": {
+        "VolumeName": {
+          "description": "Volume name, unique within the account.",
+          "inputs": {
+            "volume-name": {
+              "usage": "Volume name, unique within the account."
+            }
+          }
+        },
+        "AccessMode": {
+          "description": "Access mode: ReadWriteOnce, ReadWriteMany or ReadOnlyMany.",
+          "inputs": {
+            "access-mode": {
+              "usage": "Access mode: ReadWriteOnce, ReadWriteMany or ReadOnlyMany."
+            }
+          }
+        },
+        "StorageType": {
+          "description": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload.",
+          "inputs": {
+            "storage-type": {
+              "usage": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload."
+            }
+          }
+        },
+        "Storage": {
+          "description": "Concrete storage payload as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
+          "inputs": {
+            "storage": {
+              "usage": "Concrete storage payload as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
+              "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPath\":\"<path>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"Path\":\"<path>\"}} | {\"AgentCbs\":{\"Capacity\":\"<size>\"}}",
+              "fields": [
+                "Cos: existing COS bucket path",
+                "Cfs: existing CFS file system path",
+                "AgentCbs: disk provisioned by the service"
+              ]
+            }
+          }
+        },
+        "Tags": {
+          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+          "inputs": {
+            "tags": {
+              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+              "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Key: tag key",
+                "Value: tag value"
+              ]
+            }
+          }
+        },
+        "ClientToken": {
+          "description": "Idempotency token, at most 64 characters.",
+          "inputs": {
+            "client-token": {
+              "usage": "Idempotency token, at most 64 characters."
+            }
+          }
+        },
+        "StorageRoleArn": {
+          "description": "Role ARN used to access the underlying storage.",
+          "inputs": {
+            "storage-role-arn": {
+              "usage": "Role ARN used to access the underlying storage."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Bind an existing COS bucket path:\n  agr volume create --volume-name agent-workspace --access-mode ReadWriteMany --storage-type Cos --storage '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPath\":\"workspaces/agent\"}}' --storage-role-arn qcs::cam::uin/100000000001:roleName/AGSCOSRole",
+        "Example - Let the service provision a disk:\n  agr volume create --volume-name agent-scratch --access-mode ReadWriteOnce --storage-type AgentCbs --storage '{\"AgentCbs\":{\"Capacity\":\"20Gi\"}}'"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume.list",
+    "value": {
+      "short": "List volumes",
+      "long": "List volumes with exact ID/name filters, generic filters and pagination. Available in preview builds.",
+      "fields": {
+        "VolumeIds": {
+          "description": "Volume IDs to match exactly. Repeat the flag or pass a comma-separated list.",
+          "inputs": {
+            "volume-ids": {
+              "usage": "Volume IDs to match exactly. Repeat the flag or pass a comma-separated list."
+            }
+          }
+        },
+        "VolumeNames": {
+          "description": "Volume names to match exactly. Repeat the flag or pass a comma-separated list.",
+          "inputs": {
+            "volume-names": {
+              "usage": "Volume names to match exactly. Repeat the flag or pass a comma-separated list."
+            }
+          }
+        },
+        "Filters": {
+          "description": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
+          "inputs": {
+            "filters": {
+              "usage": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
+              "format": "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]",
+              "fields": [
+                "Name: filter name",
+                "Values: values ORed inside one filter"
+              ]
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset, starting at 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset, starting at 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Number of results per page, at most 100.",
+          "inputs": {
+            "limit": {
+              "usage": "Number of results per page, at most 100."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Look up specific volumes:\n  agr volume list --volume-ids vol-a1b2c3d4 --volume-ids vol-e5f6g7h8",
+        "Example - Page through results:\n  agr volume list --limit 20 --offset 20"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume.update",
+    "value": {
+      "short": "Update a volume",
+      "long": "Update volume tags. Storage, access mode and name cannot be changed. Identify the volume by ID or name. Available in preview builds.",
+      "fields": {
+        "VolumeId": {
+          "description": "Volume ID. Provide either this or --volume-name.",
+          "inputs": {
+            "volume-id": {
+              "usage": "Volume ID. Provide either this or --volume-name."
+            }
+          }
+        },
+        "VolumeName": {
+          "description": "Volume name. Provide either this or --volume-id.",
+          "inputs": {
+            "volume-name": {
+              "usage": "Volume name. Provide either this or --volume-id."
+            }
+          }
+        },
+        "Tags": {
+          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+          "inputs": {
+            "tags": {
+              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+              "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Key: tag key",
+                "Value: tag value"
+              ]
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Replace the tag set:\n  agr volume update --volume-name agent-workspace --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume.delete",
+    "value": {
+      "short": "Delete a volume",
+      "long": "Delete a volume by ID or name. Deletion fails while the volume is still mounted. Available in preview builds.",
+      "fields": {
+        "VolumeId": {
+          "description": "Volume ID. Provide either this or --volume-name.",
+          "inputs": {
+            "volume-id": {
+              "usage": "Volume ID. Provide either this or --volume-name."
+            }
+          }
+        },
+        "VolumeName": {
+          "description": "Volume name. Provide either this or --volume-id.",
+          "inputs": {
+            "volume-name": {
+              "usage": "Volume name. Provide either this or --volume-id."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Delete by name:\n  agr volume delete --volume-name agent-workspace"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume-template.create",
+    "value": {
+      "short": "Create a volume template",
+      "long": "Create a volume template. Templates derive or reuse concrete volumes per reuse key instead of binding one fixed path. Available in preview builds.",
+      "fields": {
+        "VolumeTemplateName": {
+          "description": "Volume template name, unique within the account.",
+          "inputs": {
+            "volume-template-name": {
+              "usage": "Volume template name, unique within the account."
+            }
+          }
+        },
+        "AccessMode": {
+          "description": "Access mode: ReadWriteOnce, ReadWriteMany or ReadOnlyMany.",
+          "inputs": {
+            "access-mode": {
+              "usage": "Access mode: ReadWriteOnce, ReadWriteMany or ReadOnlyMany."
+            }
+          }
+        },
+        "ReclaimPolicy": {
+          "description": "Reclaim policy: Retain keeps derived volumes after the sandbox is deleted, Delete removes them.",
+          "inputs": {
+            "reclaim-policy": {
+              "usage": "Reclaim policy: Retain keeps derived volumes after the sandbox is deleted, Delete removes them."
+            }
+          }
+        },
+        "StorageSpec": {
+          "description": "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
+          "inputs": {
+            "storage-spec": {
+              "usage": "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
+              "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}} | {\"AgentCbs\":{\"Capacity\":\"<size>\"}}",
+              "fields": [
+                "Cos: COS bucket path pattern, may contain ${reuse_key}",
+                "Cfs: CFS path pattern, may contain ${reuse_key}",
+                "AgentCbs: disk provisioned by the service"
+              ]
+            }
+          }
+        },
+        "StorageType": {
+          "description": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload.",
+          "inputs": {
+            "storage-type": {
+              "usage": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload."
+            }
+          }
+        },
+        "VolumeNamePattern": {
+          "description": "Name pattern for derived volumes; may contain ${reuse_key}.",
+          "inputs": {
+            "volume-name-pattern": {
+              "usage": "Name pattern for derived volumes; may contain ${reuse_key}."
+            }
+          }
+        },
+        "DefaultCapacity": {
+          "description": "Reserved capacity field; ignored by the COS and CFS backends.",
+          "inputs": {
+            "default-capacity": {
+              "usage": "Reserved capacity field; ignored by the COS and CFS backends."
+            }
+          }
+        },
+        "StorageRoleArn": {
+          "description": "Role ARN used to access the underlying storage.",
+          "inputs": {
+            "storage-role-arn": {
+              "usage": "Role ARN used to access the underlying storage."
+            }
+          }
+        },
+        "Tags": {
+          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+          "inputs": {
+            "tags": {
+              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+              "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Key: tag key",
+                "Value: tag value"
+              ]
+            }
+          }
+        },
+        "ClientToken": {
+          "description": "Idempotency token, at most 64 characters.",
+          "inputs": {
+            "client-token": {
+              "usage": "Idempotency token, at most 64 characters."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Derive one COS prefix per session:\n  agr volume-template create --volume-template-name agent-session-workspace --access-mode ReadWriteMany --reclaim-policy Delete --storage-type Cos --storage-spec '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPathPattern\":\"sessions/${reuse_key}\"}}' --volume-name-pattern agent-workspace-${reuse_key}"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume-template.list",
+    "value": {
+      "short": "List volume templates",
+      "long": "List volume templates with exact ID/name filters, generic filters and pagination. Available in preview builds.",
+      "fields": {
+        "VolumeTemplateIds": {
+          "description": "Volume template IDs to match exactly. Repeat the flag or pass a comma-separated list.",
+          "inputs": {
+            "volume-template-ids": {
+              "usage": "Volume template IDs to match exactly. Repeat the flag or pass a comma-separated list."
+            }
+          }
+        },
+        "VolumeTemplateNames": {
+          "description": "Volume template names to match exactly. Repeat the flag or pass a comma-separated list.",
+          "inputs": {
+            "volume-template-names": {
+              "usage": "Volume template names to match exactly. Repeat the flag or pass a comma-separated list."
+            }
+          }
+        },
+        "Filters": {
+          "description": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
+          "inputs": {
+            "filters": {
+              "usage": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
+              "format": "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]",
+              "fields": [
+                "Name: filter name",
+                "Values: values ORed inside one filter"
+              ]
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset, starting at 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset, starting at 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Number of results per page, at most 100.",
+          "inputs": {
+            "limit": {
+              "usage": "Number of results per page, at most 100."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Look up specific templates:\n  agr volume-template list --volume-template-ids volt-a1b2c3d4",
+        "Example - Page through results:\n  agr volume-template list --limit 20 --offset 20"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume-template.update",
+    "value": {
+      "short": "Update a volume template",
+      "long": "Update volume template tags and default capacity. Storage spec, access mode and reclaim policy cannot be changed. Available in preview builds.",
+      "fields": {
+        "VolumeTemplateId": {
+          "description": "Volume template ID. Provide either this or --volume-template-name.",
+          "inputs": {
+            "volume-template-id": {
+              "usage": "Volume template ID. Provide either this or --volume-template-name."
+            }
+          }
+        },
+        "VolumeTemplateName": {
+          "description": "Volume template name. Provide either this or --volume-template-id.",
+          "inputs": {
+            "volume-template-name": {
+              "usage": "Volume template name. Provide either this or --volume-template-id."
+            }
+          }
+        },
+        "Tags": {
+          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+          "inputs": {
+            "tags": {
+              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+              "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+              "fields": [
+                "Key: tag key",
+                "Value: tag value"
+              ]
+            }
+          }
+        },
+        "DefaultCapacity": {
+          "description": "Reserved capacity field; ignored by the COS and CFS backends.",
+          "inputs": {
+            "default-capacity": {
+              "usage": "Reserved capacity field; ignored by the COS and CFS backends."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Replace the tag set:\n  agr volume-template update --volume-template-id volt-a1b2c3d4 --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/volume-template.delete",
+    "value": {
+      "short": "Delete a volume template",
+      "long": "Delete a volume template by ID or name. Deletion fails while active volumes still reference it. Available in preview builds.",
+      "fields": {
+        "VolumeTemplateId": {
+          "description": "Volume template ID. Provide either this or --volume-template-name.",
+          "inputs": {
+            "volume-template-id": {
+              "usage": "Volume template ID. Provide either this or --volume-template-name."
+            }
+          }
+        },
+        "VolumeTemplateName": {
+          "description": "Volume template name. Provide either this or --volume-template-id.",
+          "inputs": {
+            "volume-template-name": {
+              "usage": "Volume template name. Provide either this or --volume-template-id."
+            }
+          }
+        }
+      },
+      "examples": [
+        "Example - Delete by name:\n  agr volume-template delete --volume-template-name agent-session-workspace"
+      ]
+    }
   }
 ]
