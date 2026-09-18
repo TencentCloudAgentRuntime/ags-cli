@@ -8,13 +8,12 @@
 - 本版本没有破坏性变更。
 
 ### 新功能
-- 新增 preview 专属的 Session Space 和 Session 生命周期命令，包括事件追加与
-  查询、过滤、分页和结构化事件载荷。
-- 新增 preview 专属的 Registry 生命周期命令，覆盖 Registry、Record、版本、
-  审批决策、远程预览与同步、审计日志和 Skill 包传输 URL。
-- 新增 preview 专属的 Volume 和 VolumeTemplate 生命周期命令，支持 COS 与
-  CFS 存储，并支持为沙箱 Tool 挂载直接卷和模板派生卷；fork Tool 时会保留
-  挂载配置。
+- 新增 Session Space 和 Session 生命周期命令，包括事件追加与查询、过滤、分页和
+  结构化事件载荷。
+- 新增 Registry 生命周期命令，覆盖 Registry、Record、版本、审批决策、远程预览与
+  同步、审计日志和 Skill 包传输 URL。
+- 新增 Volume 和 VolumeTemplate 生命周期命令，支持 COS 与 CFS 存储，并支持为
+  沙箱 Tool 挂载直接卷和模板派生卷；fork Tool 时会保留挂载配置。
 
 ### Bug 修复
 - 本版本没有 Bug 修复。

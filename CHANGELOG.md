@@ -8,14 +8,13 @@ All notable changes to this project will be documented in this file.
 - This release has no Breaking Changes.
 
 ### Features
-- Add preview-only Session Space and Session lifecycle commands, including
-  event append/list, filtering, pagination, and structured event payloads.
-- Add preview-only Registry lifecycle commands for registries, records,
-  versions, approval decisions, remote preview/sync, audit logs, and Skill
-  package transfer URLs.
-- Add preview-only Volume and VolumeTemplate lifecycle commands with COS and
-  CFS storage support, plus direct and template-derived mounts for sandbox
-  tools that are preserved when a tool is forked.
+- Add Session Space and Session lifecycle commands, including event append/list,
+  filtering, pagination, and structured event payloads.
+- Add Registry lifecycle commands for registries, records, versions, approval
+  decisions, remote preview/sync, audit logs, and Skill package transfer URLs.
+- Add Volume and VolumeTemplate lifecycle commands with COS and CFS storage
+  support, plus direct and template-derived mounts for sandbox tools that are
+  preserved when a tool is forked.
 
 ### Bug Fixes
 - This release has no Bug Fixes.
