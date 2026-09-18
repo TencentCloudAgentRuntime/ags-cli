@@ -281,9 +281,9 @@ func TestModuleCreatesInstanceWithMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
-	// Simulate: agr instance create --tool-name my-tool --metadata '[{"Key":"env","Value":"test"}]'
+	// Simulate: agr instance create --tool-name my-tool --metadata '[{"Name":"env","Value":"test"}]'
 	flags := withChanged(allInstanceCreateFlags(), "tool-name", "my-tool")
-	flags = withChanged(flags, "metadata", `[{"Key":"env","Value":"test"}]`)
+	flags = withChanged(flags, "metadata", `[{"Name":"env","Value":"test"}]`)
 	result, err := runtime.Handler.Run(context.Background(), command.Request{Flags: flags})
 	if err != nil {
 		t.Fatalf("Run returned error: %v", err)

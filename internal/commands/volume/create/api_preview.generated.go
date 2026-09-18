@@ -17,7 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "create",
 			Short:        "Create a volume",
 			Long:         "Create a standalone sandbox volume bound to a concrete storage location. Available in preview builds.",
-			Examples:     []string{"Example - Bind an existing COS bucket path:\n  agr volume create --volume-name agent-workspace --access-mode ReadWriteMany --storage-type Cos --storage '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPath\":\"workspaces/agent\"}}' --storage-role-arn qcs::cam::uin/100000000001:roleName/AGSCOSRole", "Example - Let the service provision a disk:\n  agr volume create --volume-name agent-scratch --access-mode ReadWriteOnce --storage-type AgentCbs --storage '{\"AgentCbs\":{\"Capacity\":\"20Gi\"}}'"},
+			Examples:     []string{"Example - Bind an existing COS bucket path:\n  agr volume create --volume-name agent-workspace --access-mode ReadWriteMany --storage-type Cos --storage '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPath\":\"workspaces/agent\"}}' --storage-role-arn qcs::cam::uin/100000000001:roleName/AGSCOSRole"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateVolumeResponse",
@@ -55,7 +55,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage-type", Flag: "storage-type", Usage: "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload. (required)", Type: command.FlagString},
+					{Name: "storage-type", Flag: "storage-type", Usage: "Storage backend type: Cos or Cfs. Must match the field set in the storage payload. (required)", Type: command.FlagString},
 				},
 			},
 			{
@@ -63,7 +63,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage", Flag: "storage", Usage: "Concrete storage payload as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type. (required)", Format: "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPath\":\"<path>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"Path\":\"<path>\"}} | {\"AgentCbs\":{\"Capacity\":\"<size>\"}}", Fields: []string{"Cos: existing COS bucket path", "Cfs: existing CFS file system path", "AgentCbs: disk provisioned by the service"}, Type: command.FlagString},
+					{Name: "storage", Flag: "storage", Usage: "Concrete storage payload as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type. (required)", Format: "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPath\":\"<path>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"Path\":\"<path>\"}}", Fields: []string{"Cos: existing COS bucket path", "Cfs: existing CFS file system path"}, Type: command.FlagString},
 				},
 			},
 			{

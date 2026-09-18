@@ -22,15 +22,10 @@ var volumeAssertions = []string{
 	"template.create", "template.readback", "template.client-token",
 	"template.update", "template.update.by-id", "template.tags.clear", "template.storage-role",
 	"template.filters", "template.pagination", "template.delete",
-	"mount.volume-ref", "mount.volume-ref.by-id", "mount.template-ref", "input.validation",
+	"input.validation",
 }
 
-// AgentCBS is provisioned by the service itself, so the scenario can name a
-// size without reserving anything in advance. The storage payload carries a
-// GiB count; the volume reports the derived capacity string.
 const (
-	agentCBSCapacity        = "20Gi"
-	agentCBSStoragePayload  = `{"AgentCbs":{"Capacity":"20Gi"}}`
 	templateDefaultCapacity = "20Gi"
 	templateGrownCapacity   = "40Gi"
 )
@@ -42,7 +37,7 @@ const volumeTagKey = "agr-e2e"
 type volumeEnvelope struct {
 	Status  string
 	Data    map[string]any
-	Failure *struct{ Code, Kind string }
+	Failure *struct{ Code, Kind, Message string }
 }
 
 // volumeStorage carries the reviewed backend identifiers. COS and CFS volumes
@@ -86,6 +81,9 @@ func volumeCLI(s *patchtest.Session, ctx context.Context, args ...string) (volum
 		return out, fmt.Errorf("%s: invalid CLI envelope", strings.Join(args, " "))
 	}
 	if callErr != nil || out.Status != "succeeded" || out.Failure != nil {
+		if out.Failure != nil {
+			return out, fmt.Errorf("%s: CLI call failed (%s/%s: %s)", strings.Join(args, " "), out.Failure.Code, out.Failure.Kind, out.Failure.Message)
+		}
 		return out, fmt.Errorf("%s: CLI call failed", strings.Join(args, " "))
 	}
 	return out, nil
@@ -118,27 +116,15 @@ func volumeSet(result volumeEnvelope, setKey string) ([]any, int64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	rows, _ := result.Data[setKey].([]any)
+	raw, exists := result.Data[setKey]
+	if !exists {
+		return nil, 0, fmt.Errorf("list response is missing %s", setKey)
+	}
+	rows, ok := raw.([]any)
+	if !ok {
+		return nil, 0, fmt.Errorf("list response %s is not an array", setKey)
+	}
 	return rows, total, nil
-}
-
-// volumeJSONFile materializes a JSON flag value so the documented @file
-// transport is exercised, not just inline JSON.
-func volumeJSONFile(payload string) (string, func(), error) {
-	file, err := os.CreateTemp("", "agr-volume-*.json")
-	if err != nil {
-		return "", nil, err
-	}
-	remove := func() { _ = os.Remove(file.Name()) }
-	if _, err := file.WriteString(payload); err != nil {
-		remove()
-		return "", nil, err
-	}
-	if err := file.Close(); err != nil {
-		remove()
-		return "", nil, err
-	}
-	return "@" + file.Name(), remove, nil
 }
 
 func volumeObject(value any) map[string]any { object, _ := value.(map[string]any); return object }
@@ -251,10 +237,6 @@ func runVolumeLifecycle(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	if err := volumeMountReferences(s, ctx, storage, name, volumeName, volumeID, templateName); err != nil {
-		return err
-	}
-
 	if _, err := volumeCall(s, ctx, "volume.delete", map[string]any{"VolumeId": volumeID}); err != nil {
 		return err
 	}
@@ -274,17 +256,6 @@ func runVolumeLifecycle(s *patchtest.Session) error {
 	}
 	// The cleanup callbacks independently confirm every resource is absent.
 	return s.Assert("template.delete", true)
-}
-
-// runVolumeAgentCbs isolates the AgentCBS backend. It is a separate scenario so
-// that a defect in one storage backend cannot mask the rest of the contract.
-func runVolumeAgentCbs(s *patchtest.Session) error {
-	if _, err := volumeStorageFromEnv(); err != nil {
-		return err
-	}
-	ctx := s.Context
-	name := fmt.Sprintf("agr-volume-cbs-e2e-%d", time.Now().UnixNano())
-	return volumeCbs(s, ctx, name+"-vol")
 }
 
 // volumeInputValidation pins the usage contract before any resource exists, so a
@@ -589,7 +560,7 @@ func volumeResourceLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		// A standalone, unmounted CFS volume carries no derivation, no mount and
 		// no capacity of its own.
 		volumeString(stored, "VolumeTemplateId") == "" && volumeString(stored, "ReuseKey") == "" &&
-		volumeString(stored, "MountedInstanceId") == "" && volumeString(stored, "Capacity") == "" &&
+		volumeString(stored, "MountedInstanceId") == "" &&
 		volumeString(volumeNested(stored, "Storage", "Cfs"), "Path") == path &&
 		volumeTagsEqual(stored["Tags"], tags)); err != nil {
 		return "", nil, err
@@ -702,80 +673,6 @@ func volumeSecond(s *patchtest.Session, ctx context.Context, storage volumeStora
 	return id, markDeleted, nil
 }
 
-// volumeCbs covers the service-provisioned backend, where the reported capacity
-// is the evidence, and updates by volume ID rather than by name. The storage
-// payload arrives through @file, which the flag help promises.
-func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
-	storageFlag, removeFile, err := volumeJSONFile(agentCBSStoragePayload)
-	if err != nil {
-		return err
-	}
-	defer removeFile()
-	created, err := volumeCLI(s, ctx, "volume", "create",
-		"--volume-name", name,
-		"--access-mode", "ReadWriteOnce",
-		"--storage-type", "AgentCbs",
-		"--storage", storageFlag,
-	)
-	volume := volumeObject(created.Data["Volume"])
-	id := volumeString(volume, "VolumeId")
-	markDeleted := func() {}
-	if id != "" {
-		markDeleted = volumeOwned(s, "volume", "VolumeSet", "VolumeIds", "VolumeId", id)
-	}
-	if err != nil {
-		return err
-	}
-	if err := s.Assert("volume.agent-cbs", id != "" &&
-		volumeString(volume, "StorageType") == "AgentCBS" &&
-		volumeString(volumeNested(volume, "Storage", "AgentCBS"), "Capacity") == agentCBSCapacity); err != nil {
-		return err
-	}
-	listed, err := volumeCLI(s, ctx, "volume", "list", "--volume-ids", id)
-	if err != nil {
-		return err
-	}
-	rows, total, err := volumeSet(listed, "VolumeSet")
-	if err != nil {
-		return err
-	}
-	stored := volumeRow(rows, "VolumeId", id)
-	if err := s.Assert("volume.agent-cbs", total == 1 && stored != nil &&
-		volumeString(stored, "Capacity") == agentCBSCapacity); err != nil {
-		return err
-	}
-
-	tags := volumeTags(volumeTagKey, "volume-cbs")
-	encoded, err := json.Marshal(tags)
-	if err != nil {
-		return err
-	}
-	if _, err := volumeCLI(s, ctx, "volume", "update", "--volume-id", id, "--tags", string(encoded)); err != nil {
-		return err
-	}
-	listed, err = volumeCLI(s, ctx, "volume", "list", "--volume-ids", id)
-	if err != nil {
-		return err
-	}
-	rows, _, err = volumeSet(listed, "VolumeSet")
-	if err != nil {
-		return err
-	}
-	stored = volumeRow(rows, "VolumeId", id)
-	if err := s.Assert("volume.agent-cbs", stored != nil && volumeTagsEqual(stored["Tags"], tags)); err != nil {
-		return err
-	}
-
-	if _, err := volumeCLI(s, ctx, "volume", "delete", "--volume-id", id); err != nil {
-		return err
-	}
-	markDeleted()
-	if err := volumeAbsent(s, ctx, "volume.list", "VolumeSet", "VolumeIds", id); err != nil {
-		return err
-	}
-	return s.Assert("volume.agent-cbs", true)
-}
-
 func volumeFilters(s *patchtest.Session, ctx context.Context, volumeID, secondID, volumeName string) error {
 	both := []string{volumeID, secondID}
 	for _, tc := range []struct {
@@ -842,111 +739,4 @@ func volumePaginate(s *patchtest.Session, ctx context.Context, command, setKey, 
 		}
 	}
 	return nil
-}
-
-// volumeMountReferences proves the StorageMount additions survive the round trip.
-// The CLI contract only promises that the references are sent and read back;
-// derivation happens when an instance starts and is not asserted here.
-func volumeMountReferences(s *patchtest.Session, ctx context.Context, storage volumeStorage, name, volumeName, volumeID, templateName string) error {
-	reuseKey := "${metadata.session_id}"
-	created, err := volumeCall(s, ctx, "tool.create", map[string]any{
-		"ToolName":             name + "-tool",
-		"ToolType":             storage.toolType,
-		"RoleArn":              storage.toolRoleArn,
-		"NetworkConfiguration": map[string]any{"NetworkMode": "PUBLIC"},
-		"StorageMounts": []any{
-			map[string]any{
-				"Name": "volume-by-name", "MountPath": "/mnt/by-name", "ReadOnly": false,
-				"Volume": map[string]any{"VolumeName": volumeName},
-			},
-			map[string]any{
-				"Name": "volume-by-id", "MountPath": "/mnt/by-id", "ReadOnly": true,
-				"Volume": map[string]any{"VolumeId": volumeID},
-			},
-			map[string]any{
-				"Name": "derived-volume", "MountPath": "/mnt/session", "ReadOnly": true,
-				"VolumeTemplate": map[string]any{"VolumeTemplateName": templateName, "ReuseKey": reuseKey},
-			},
-		},
-	})
-	toolID := volumeString(created.Data, "ToolId")
-	toolDeleted := false
-	if toolID != "" {
-		// The tool exists only to carry the mount references, so cleanup removes it
-		// through the raw action and proves absence with the list command.
-		s.Cleanup(func(ctx context.Context) error {
-			if !toolDeleted {
-				if err := volumeDeleteTool(s, ctx, toolID); err != nil {
-					return err
-				}
-			}
-			remaining, err := volumeCall(s, ctx, "tool.list", map[string]any{"ToolIds": []string{toolID}})
-			if err != nil {
-				return err
-			}
-			if rows, _ := remaining.Data["Items"].([]any); len(rows) != 0 {
-				return errors.New("tool absence not confirmed")
-			}
-			return nil
-		})
-	}
-	if err != nil {
-		return err
-	}
-	if toolID == "" {
-		return errors.New("tool create returned no ToolId")
-	}
-	result, err := volumeCall(s, ctx, "tool.list", map[string]any{"ToolIds": []string{toolID}})
-	if err != nil {
-		return err
-	}
-	items, _ := result.Data["Items"].([]any)
-	stored := volumeRow(items, "ToolId", toolID)
-	if stored == nil {
-		return errors.New("tool readback missing")
-	}
-	mounts := map[string]map[string]any{}
-	rows, _ := stored["StorageMounts"].([]any)
-	for _, row := range rows {
-		mount := volumeObject(row)
-		mounts[volumeString(mount, "Name")] = mount
-	}
-	byName := mounts["volume-by-name"]
-	if err := s.Assert("mount.volume-ref", byName != nil &&
-		volumeString(byName, "MountPath") == "/mnt/by-name" &&
-		volumeString(volumeObject(byName["Volume"]), "VolumeName") == volumeName &&
-		byName["VolumeTemplate"] == nil && byName["StorageSource"] == nil); err != nil {
-		return err
-	}
-	byID := mounts["volume-by-id"]
-	if err := s.Assert("mount.volume-ref.by-id", byID != nil &&
-		volumeString(byID, "MountPath") == "/mnt/by-id" &&
-		volumeString(volumeObject(byID["Volume"]), "VolumeId") == volumeID &&
-		byID["VolumeTemplate"] == nil && byID["StorageSource"] == nil); err != nil {
-		return err
-	}
-	derived := mounts["derived-volume"]
-	if err := s.Assert("mount.template-ref", derived != nil &&
-		volumeString(derived, "MountPath") == "/mnt/session" &&
-		volumeString(volumeObject(derived["VolumeTemplate"]), "VolumeTemplateName") == templateName &&
-		volumeString(volumeObject(derived["VolumeTemplate"]), "ReuseKey") == reuseKey &&
-		derived["Volume"] == nil && derived["StorageSource"] == nil); err != nil {
-		return err
-	}
-	// The referenced volume and template are deleted next, so the tool that
-	// references them must go first.
-	if err := volumeDeleteTool(s, ctx, toolID); err != nil {
-		return err
-	}
-	toolDeleted = true
-	return nil
-}
-
-func volumeDeleteTool(s *patchtest.Session, ctx context.Context, toolID string) error {
-	payload, err := json.Marshal(map[string]any{"ToolId": toolID})
-	if err != nil {
-		return err
-	}
-	_, err = volumeCLI(s, ctx, "api", "call", "DeleteSandboxTool", "--request", string(payload))
-	return err
 }

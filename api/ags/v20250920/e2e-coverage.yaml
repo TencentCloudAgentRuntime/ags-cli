@@ -488,51 +488,6 @@ coverage:
   - entry: /actions/UpdateVolumeTemplate/status
     scenario: volume.lifecycle
     assertions: [template.update, template.update.by-id]
-  - entry: /objects/AgentCbsSource/@exists
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/document
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/@exists
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/@exists
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/disabled
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/document
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/example
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/member
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/name
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/output_required
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/required
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/type
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/members/Capacity/value_allowed_null
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/type
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSource/usage
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
   - entry: /objects/ApproveRegistryRecordRequest/@exists
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -6434,36 +6389,6 @@ coverage:
   - entry: /objects/Storage/members/@exists
     scenario: volume.lifecycle
     assertions: [volume.create]
-  - entry: /objects/Storage/members/AgentCbs/@exists
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/disabled
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/document
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/example
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/member
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/name
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/output_required
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/required
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/type
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Storage/members/AgentCbs/value_allowed_null
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
   - entry: /objects/Storage/members/Cfs/@exists
     scenario: volume.lifecycle
     assertions: [volume.create]
@@ -6531,64 +6456,64 @@ coverage:
     scenario: volume.lifecycle
     assertions: [volume.create]
   - entry: /objects/StorageMount/members/Volume/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/disabled
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/example
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/member
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/name
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/output_required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/Volume/value_allowed_null
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref, mount.volume-ref.by-id]
   - entry: /objects/StorageMount/members/VolumeTemplate/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/disabled
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/example
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/member
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/name
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/output_required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageMount/members/VolumeTemplate/value_allowed_null
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/StorageSpec/@exists
     scenario: volume.lifecycle
@@ -8831,36 +8756,6 @@ coverage:
   - entry: /objects/Volume/members/AccessMode/value_allowed_null
     scenario: volume.lifecycle
     assertions: [volume.create]
-  - entry: /objects/Volume/members/Capacity/@exists
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/disabled
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/document
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/example
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/member
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/name
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/output_required
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/required
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/type
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
-  - entry: /objects/Volume/members/Capacity/value_allowed_null
-    scenario: volume.agent-cbs
-    assertions: [volume.agent-cbs]
   - entry: /objects/Volume/members/CreatedAt/@exists
     scenario: volume.lifecycle
     assertions: [volume.readback]
@@ -9258,79 +9153,79 @@ coverage:
     scenario: volume.lifecycle
     assertions: [volume.readback]
   - entry: /objects/VolumeRef/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeId/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/disabled
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/example
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/member
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/name
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/output_required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeId/value_allowed_null
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref.by-id]
   - entry: /objects/VolumeRef/members/VolumeName/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/disabled
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/example
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/member
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/name
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/output_required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/members/VolumeName/value_allowed_null
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeRef/usage
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.volume-ref]
   - entry: /objects/VolumeTemplate/@exists
     scenario: volume.lifecycle
@@ -9738,77 +9633,77 @@ coverage:
     scenario: volume.lifecycle
     assertions: [template.readback]
   - entry: /objects/VolumeTemplateRef/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/disabled
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/example
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/member
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/name
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/output_required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/ReuseKey/value_allowed_null
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/@exists
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/disabled
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/document
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/example
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/member
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/name
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/output_required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/required
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/value_allowed_null
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/type
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]
   - entry: /objects/VolumeTemplateRef/usage
-    scenario: volume.lifecycle
+    scenario: volume.mount-lifecycle
     assertions: [mount.template-ref]

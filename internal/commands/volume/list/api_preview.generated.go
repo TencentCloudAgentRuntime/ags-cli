@@ -52,7 +52,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Filters",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "filters", Flag: "filters", Usage: "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.", Format: "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]", Fields: []string{"Name: one of status, volume-name, tag-key, tag-value, tag:<key>", "Values: values ORed inside one filter"}, Type: command.FlagString},
+					{Name: "filters", Flag: "filters", Usage: "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.", Format: "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]", Fields: []string{"Name: one of status, volume-name, volume-template-id, tag-key, tag-value, tag:<key>", "Values: values ORed inside one filter"}, Type: command.FlagString},
 				},
 			},
 			{

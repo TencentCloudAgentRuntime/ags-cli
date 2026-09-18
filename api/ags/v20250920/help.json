@@ -264,9 +264,9 @@
                     "inputs": {
                         "metadata": {
                             "usage": "Metadata as JSON array, @file, or - for stdin",
-                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
                             "examples": [
-                                "agr instance create --tool-id sdt-xxxx --metadata '[{\"Key\":\"env\",\"Value\":\"test\"}]'"
+                                "agr instance create --tool-id sdt-xxxx --metadata '[{\"Name\":\"env\",\"Value\":\"test\"}]'"
                             ]
                         }
                     }
@@ -407,9 +407,9 @@
                     "inputs": {
                         "metadata": {
                             "usage": "Metadata as JSON array, @file, or - for stdin",
-                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
                             "examples": [
-                                "agr instance update <id> --metadata '[{\"Key\":\"env\",\"Value\":\"prod\"}]'"
+                                "agr instance update <id> --metadata '[{\"Name\":\"env\",\"Value\":\"prod\"}]'"
                             ]
                         }
                     }

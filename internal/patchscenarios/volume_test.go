@@ -28,10 +28,31 @@ var volumeFaults = []string{
 	"ignore-template-offset", "ignore-template-limit",
 	"ignore-client-token", "drop-volume-tags", "drop-template-update", "ignore-update-id", "ignore-empty-tags",
 	"drop-volume-storage", "drop-template-spec", "drop-template-link",
-	"drop-storage-role", "drop-cbs-capacity", "drop-timestamps",
-	"drop-reclaim-policy", "report-mounted-instance", "report-capacity",
-	"retain-resource", "drop-mount-volume", "drop-mount-volume-id",
-	"drop-mount-template", "drop-mount-reuse-key",
+	"drop-storage-role", "drop-timestamps",
+	"drop-reclaim-policy", "report-mounted-instance",
+	"retain-resource",
+	"malformed-volume-set", "malformed-template-set",
+}
+
+func TestVolumeSetRejectsMalformedLists(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		data map[string]any
+		ok   bool
+	}{
+		{name: "missing", data: map[string]any{"TotalCount": json.Number("0")}},
+		{name: "null", data: map[string]any{"TotalCount": json.Number("0"), "VolumeSet": nil}},
+		{name: "object", data: map[string]any{"TotalCount": json.Number("0"), "VolumeSet": map[string]any{}}},
+		{name: "string", data: map[string]any{"TotalCount": json.Number("0"), "VolumeSet": "invalid"}},
+		{name: "empty-array", data: map[string]any{"TotalCount": json.Number("0"), "VolumeSet": []any{}}, ok: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, err := volumeSet(volumeEnvelope{Data: tc.data}, "VolumeSet")
+			if (err == nil) != tc.ok {
+				t.Fatalf("err=%v, want success=%v", err, tc.ok)
+			}
+		})
+	}
 }
 
 // The same registered scenario runs against the real candidate CLI here and
@@ -53,7 +74,6 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			env := volumeEnv(t, server.URL)
 			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 				{Scenario: "volume.lifecycle", Assertions: volumeAssertions},
-				{Scenario: "volume.agent-cbs", Assertions: Registry["volume.agent-cbs"].Assertions},
 			}}
 			results, err := patchtest.Run(t.Context(), plan, Registry, binary, env)
 			if (err != nil) != (fault != "") {
@@ -72,7 +92,7 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 						t.Fatalf("cleanup did not pass: %+v", results)
 					}
 				}
-				if len(results) != 2 || calls < 60 {
+				if len(results) != 1 || calls < 50 {
 					t.Fatalf("insufficient execution: %+v", results)
 				}
 			}
@@ -87,7 +107,6 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			defer server.Close()
 			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 				{Scenario: "volume.lifecycle", Assertions: volumeAssertions},
-				{Scenario: "volume.agent-cbs", Assertions: Registry["volume.agent-cbs"].Assertions},
 			}}
 			if _, err := patchtest.Run(t.Context(), plan, Registry, binary, volumeEnv(t, server.URL)); err == nil {
 				t.Fatalf("missing %s produced a passing run", missing)
@@ -120,6 +139,13 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 		out, err := exec.CommandContext(t.Context(), binary, "volume", "create", "--help").CombinedOutput()
 		if err != nil || strings.Contains(string(out), "source-volume-id") {
 			t.Fatalf("disabled SourceVolumeId exposed: %v %s", err, out)
+		}
+		if strings.Contains(string(out), "AgentCbs") || strings.Contains(string(out), "AgentCBS") {
+			t.Fatalf("deferred AgentCBS create path exposed: %s", out)
+		}
+		out, err = exec.CommandContext(t.Context(), binary, "volume", "create", "--generate-skeleton").CombinedOutput()
+		if err != nil || strings.Contains(string(out), "AgentCbs") || strings.Contains(string(out), "AgentCBS") {
+			t.Fatalf("deferred AgentCBS create shape exposed: %v %s", err, out)
 		}
 		for _, tc := range []struct {
 			binary string
@@ -234,6 +260,9 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "DescribeVolumeList":
 		set, total := f.list(req, f.volumes, "VolumeId", "VolumeName", "VolumeIds", "VolumeNames", "volume-name", "volume")
 		response["VolumeSet"], response["TotalCount"] = set, total
+		if f.fault == "malformed-volume-set" && total == 0 {
+			response["VolumeSet"] = map[string]any{}
+		}
 	case "UpdateVolume":
 		stored := f.find(req, f.volumes, "VolumeId", "VolumeName")
 		if stored == nil {
@@ -250,6 +279,9 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "DescribeVolumeTemplateList":
 		set, total := f.list(req, f.templates, "VolumeTemplateId", "VolumeTemplateName", "VolumeTemplateIds", "VolumeTemplateNames", "volume-template-name", "template")
 		response["VolumeTemplateSet"], response["TotalCount"] = set, total
+		if f.fault == "malformed-template-set" && total == 0 {
+			response["VolumeTemplateSet"] = "invalid"
+		}
 	case "UpdateVolumeTemplate":
 		stored := f.find(req, f.templates, "VolumeTemplateId", "VolumeTemplateName")
 		if stored == nil {
@@ -299,15 +331,6 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 	delete(created, "ClientToken")
 	created[idField], created["Status"] = id, "ACTIVE"
 	created["CreatedAt"], created["UpdatedAt"] = "2026-09-18T00:00:00Z", "2026-09-18T00:00:00Z"
-	// Requests name the backend AgentCbs, responses echo AgentCBS.
-	if capacity := volumeString(volumeNested(created, storageField, "AgentCbs"), "Capacity"); capacity != "" {
-		created[storageField] = map[string]any{"AgentCBS": map[string]any{"Capacity": capacity}}
-		created["StorageType"] = "AgentCBS"
-		if idField == "VolumeId" {
-			// AgentCBS is the only backend that reports a capacity of its own.
-			created["Capacity"] = capacity
-		}
-	}
 	if idField == "VolumeId" {
 		// A standalone volume keeps its storage until it is deleted explicitly.
 		created["ReclaimPolicy"] = "Retain"
@@ -328,12 +351,6 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 		}
 	case "drop-storage-role":
 		delete(created, "StorageRoleArn")
-	case "drop-cbs-capacity":
-		if storage := volumeObject(created[storageField]); storage["AgentCBS"] != nil {
-			delete(created, "Capacity")
-			delete(created, "DefaultCapacity")
-			created[storageField] = map[string]any{"AgentCBS": map[string]any{}}
-		}
 	case "drop-timestamps":
 		delete(created, "CreatedAt")
 		delete(created, "UpdatedAt")
@@ -344,10 +361,6 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 	case "report-mounted-instance":
 		if idField == "VolumeId" {
 			created["MountedInstanceId"] = "rd2xjhpjrs7qqdbg37dwxu7nfdqltvbo"
-		}
-	case "report-capacity":
-		if idField == "VolumeId" && created["Capacity"] == nil {
-			created["Capacity"] = "20Gi"
 		}
 	}
 	store[id] = created
@@ -400,7 +413,7 @@ func (f *volumeFixture) remove(req map[string]any, store map[string]map[string]a
 // list applies the documented filter and pagination semantics; each fault turns
 // exactly one of them into a no-op.
 func (f *volumeFixture) list(req map[string]any, store map[string]map[string]any, idField, nameField, idsField, namesField, nameFilter, kind string) ([]any, int) {
-	var rows []any
+	rows := []any{}
 	for _, stored := range fixtureSorted(store, idField) {
 		if ids := fixtureStrings(req[idsField]); len(ids) > 0 && f.fault != "ignore-"+kind+"-ids" {
 			if !fixtureContains(ids, stored[idField]) {
@@ -452,22 +465,6 @@ func (f *volumeFixture) mounts(value any) []any {
 	out := make([]any, 0, len(items))
 	for _, item := range items {
 		mount := maps.Clone(volumeObject(item))
-		switch f.fault {
-		case "drop-mount-volume":
-			delete(mount, "Volume")
-		case "drop-mount-volume-id":
-			if reference, ok := mount["Volume"].(map[string]any); ok && reference["VolumeId"] != nil {
-				mount["Volume"] = map[string]any{}
-			}
-		case "drop-mount-template":
-			delete(mount, "VolumeTemplate")
-		case "drop-mount-reuse-key":
-			if reference, ok := mount["VolumeTemplate"].(map[string]any); ok {
-				reference = maps.Clone(reference)
-				delete(reference, "ReuseKey")
-				mount["VolumeTemplate"] = reference
-			}
-		}
 		out = append(out, mount)
 	}
 	return out

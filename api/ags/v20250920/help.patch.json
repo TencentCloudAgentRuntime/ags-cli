@@ -1129,10 +1129,10 @@
           }
         },
         "StorageType": {
-          "description": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload.",
+          "description": "Storage backend type: Cos or Cfs. Must match the field set in the storage payload.",
           "inputs": {
             "storage-type": {
-              "usage": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload."
+              "usage": "Storage backend type: Cos or Cfs. Must match the field set in the storage payload."
             }
           }
         },
@@ -1141,11 +1141,10 @@
           "inputs": {
             "storage": {
               "usage": "Concrete storage payload as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
-              "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPath\":\"<path>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"Path\":\"<path>\"}} | {\"AgentCbs\":{\"Capacity\":\"<size>\"}}",
+              "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPath\":\"<path>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"Path\":\"<path>\"}}",
               "fields": [
                 "Cos: existing COS bucket path",
-                "Cfs: existing CFS file system path",
-                "AgentCbs: disk provisioned by the service"
+                "Cfs: existing CFS file system path"
               ]
             }
           }
@@ -1181,8 +1180,7 @@
         }
       },
       "examples": [
-        "Example - Bind an existing COS bucket path:\n  agr volume create --volume-name agent-workspace --access-mode ReadWriteMany --storage-type Cos --storage '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPath\":\"workspaces/agent\"}}' --storage-role-arn qcs::cam::uin/100000000001:roleName/AGSCOSRole",
-        "Example - Let the service provision a disk:\n  agr volume create --volume-name agent-scratch --access-mode ReadWriteOnce --storage-type AgentCbs --storage '{\"AgentCbs\":{\"Capacity\":\"20Gi\"}}'"
+        "Example - Bind an existing COS bucket path:\n  agr volume create --volume-name agent-workspace --access-mode ReadWriteMany --storage-type Cos --storage '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPath\":\"workspaces/agent\"}}' --storage-role-arn qcs::cam::uin/100000000001:roleName/AGSCOSRole"
       ]
     }
   },
@@ -1216,7 +1214,7 @@
               "usage": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
               "format": "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]",
               "fields": [
-                "Name: one of status, volume-name, tag-key, tag-value, tag:<key>",
+                "Name: one of status, volume-name, volume-template-id, tag-key, tag-value, tag:<key>",
                 "Values: values ORed inside one filter"
               ]
             }
