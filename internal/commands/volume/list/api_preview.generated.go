@@ -17,7 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "list",
 			Short:        "List volumes",
 			Long:         "List volumes with exact ID/name filters, generic filters and pagination. Available in preview builds.",
-			Examples:     []string{"Example - Look up specific volumes:\n  agr volume list --volume-ids vol-a1b2c3d4 --volume-ids vol-e5f6g7h8", "Example - Page through results:\n  agr volume list --limit 20 --offset 20"},
+			Examples:     []string{"Example - Look up specific volumes:\n  agr volume list --volume-ids vol-a1b2c3d4 --volume-ids vol-e5f6g7h8", "Example - Filter by status and tag:\n  agr volume list --filters '[{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]},{\"Name\":\"tag-key\",\"Values\":[\"team\"]}]'", "Example - Page through results:\n  agr volume list --limit 20 --offset 20"},
 			Aliases:      []string{"ls"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
@@ -52,7 +52,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Filters",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "filters", Flag: "filters", Usage: "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.", Format: "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]", Fields: []string{"Name: filter name", "Values: values ORed inside one filter"}, Type: command.FlagString},
+					{Name: "filters", Flag: "filters", Usage: "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.", Format: "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]", Fields: []string{"Name: one of status, volume-name, tag-key, tag-value, tag:<key>", "Values: values ORed inside one filter"}, Type: command.FlagString},
 				},
 			},
 			{

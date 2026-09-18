@@ -1216,7 +1216,7 @@
               "usage": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
               "format": "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]",
               "fields": [
-                "Name: filter name",
+                "Name: one of status, volume-name, tag-key, tag-value, tag:<key>",
                 "Values: values ORed inside one filter"
               ]
             }
@@ -1241,6 +1241,7 @@
       },
       "examples": [
         "Example - Look up specific volumes:\n  agr volume list --volume-ids vol-a1b2c3d4 --volume-ids vol-e5f6g7h8",
+        "Example - Filter by status and tag:\n  agr volume list --filters '[{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]},{\"Name\":\"tag-key\",\"Values\":[\"team\"]}]'",
         "Example - Page through results:\n  agr volume list --limit 20 --offset 20"
       ]
     }
@@ -1450,7 +1451,7 @@
               "usage": "Generic filters as a JSON array, @file, or - for stdin. Different filters are ANDed, values inside one filter are ORed.",
               "format": "[{\"Name\":\"<name>\",\"Values\":[\"<value>\"]}]",
               "fields": [
-                "Name: filter name",
+                "Name: one of status, volume-template-name, tag-key, tag-value, tag:<key>",
                 "Values: values ORed inside one filter"
               ]
             }
@@ -1475,6 +1476,7 @@
       },
       "examples": [
         "Example - Look up specific templates:\n  agr volume-template list --volume-template-ids volt-a1b2c3d4",
+        "Example - Filter by status and tag:\n  agr volume-template list --filters '[{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]},{\"Name\":\"tag-key\",\"Values\":[\"team\"]}]'",
         "Example - Page through results:\n  agr volume-template list --limit 20 --offset 20"
       ]
     }

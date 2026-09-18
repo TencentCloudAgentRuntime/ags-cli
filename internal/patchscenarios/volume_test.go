@@ -217,7 +217,7 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "CreateVolume":
 		response["Volume"] = f.create(req, "vol", "VolumeId", "VolumeName", "Storage", f.volumes)
 	case "DescribeVolumeList":
-		set, total := f.list(req, f.volumes, "VolumeId", "VolumeName", "VolumeIds", "VolumeNames", "access-mode", "AccessMode", "volume")
+		set, total := f.list(req, f.volumes, "VolumeId", "VolumeName", "VolumeIds", "VolumeNames", "volume-name", "volume")
 		response["VolumeSet"], response["TotalCount"] = set, total
 	case "UpdateVolume":
 		stored := f.find(req, f.volumes, "VolumeId", "VolumeName")
@@ -233,7 +233,7 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "CreateVolumeTemplate":
 		response["VolumeTemplate"] = f.create(req, "volt", "VolumeTemplateId", "VolumeTemplateName", "StorageSpec", f.templates)
 	case "DescribeVolumeTemplateList":
-		set, total := f.list(req, f.templates, "VolumeTemplateId", "VolumeTemplateName", "VolumeTemplateIds", "VolumeTemplateNames", "storage-type", "StorageType", "template")
+		set, total := f.list(req, f.templates, "VolumeTemplateId", "VolumeTemplateName", "VolumeTemplateIds", "VolumeTemplateNames", "volume-template-name", "template")
 		response["VolumeTemplateSet"], response["TotalCount"] = set, total
 	case "UpdateVolumeTemplate":
 		stored := f.find(req, f.templates, "VolumeTemplateId", "VolumeTemplateName")
@@ -371,7 +371,7 @@ func (f *volumeFixture) remove(req map[string]any, store map[string]map[string]a
 
 // list applies the documented filter and pagination semantics; each fault turns
 // exactly one of them into a no-op.
-func (f *volumeFixture) list(req map[string]any, store map[string]map[string]any, idField, nameField, idsField, namesField, filterName, filterField, kind string) ([]any, int) {
+func (f *volumeFixture) list(req map[string]any, store map[string]map[string]any, idField, nameField, idsField, namesField, nameFilter, kind string) ([]any, int) {
 	var rows []any
 	for _, stored := range fixtureSorted(store, idField) {
 		if ids := fixtureStrings(req[idsField]); len(ids) > 0 && f.fault != "ignore-"+kind+"-ids" {
@@ -388,12 +388,18 @@ func (f *volumeFixture) list(req map[string]any, store map[string]map[string]any
 			matched := true
 			for _, raw := range filters {
 				filter, _ := raw.(map[string]any)
-				if filter["Name"] != filterName {
+				values := fixtureStrings(filter["Values"])
+				switch filter["Name"] {
+				case nameFilter:
+					if !fixtureContains(values, stored[nameField]) {
+						matched = false
+					}
+				case "tag-key":
+					if !fixtureTagKey(stored["Tags"], values) {
+						matched = false
+					}
+				default:
 					f.t.Errorf("unexpected filter %v", filter["Name"])
-					continue
-				}
-				if !fixtureContains(fixtureStrings(filter["Values"]), stored[filterField]) {
-					matched = false
 				}
 			}
 			if !matched {
@@ -462,6 +468,17 @@ func fixtureStrings(value any) []string {
 		}
 	}
 	return out
+}
+
+func fixtureTagKey(tags any, keys []string) bool {
+	rows, _ := tags.([]any)
+	for _, row := range rows {
+		tag, _ := row.(map[string]any)
+		if fixtureContains(keys, tag["Key"]) {
+			return true
+		}
+	}
+	return false
 }
 
 func fixtureContains(values []string, candidate any) bool {

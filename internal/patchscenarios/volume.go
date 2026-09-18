@@ -29,6 +29,10 @@ var volumeAssertions = []string{
 // name a size without reserving anything in advance.
 const agentCbsCapacity = "20Gi"
 
+// volumeTagKey marks every resource the scenario creates, and doubles as the
+// value the tag-key filter step selects on.
+const volumeTagKey = "agr-e2e"
+
 type volumeEnvelope struct {
 	Status  string
 	Data    map[string]any
@@ -294,7 +298,7 @@ func volumeInputValidation(s *patchtest.Session, ctx context.Context, storage vo
 }
 
 func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage volumeStorage, templateName string) (string, func(), error) {
-	tags := volumeTags("agr-e2e", "volume-template")
+	tags := volumeTags(volumeTagKey, "volume-template")
 	pathPattern := "agr-e2e/" + templateName + "/${reuse_key}"
 	request := map[string]any{
 		"VolumeTemplateName": templateName,
@@ -363,7 +367,7 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 
-	updated := volumeTags("agr-e2e", "volume-template", "stage", "updated")
+	updated := volumeTags(volumeTagKey, "volume-template", "stage", "updated")
 	if _, err := volumeCall(s, ctx, "volume-template.update", map[string]any{
 		"VolumeTemplateName": templateName, "Tags": updated,
 	}); err != nil {
@@ -474,7 +478,7 @@ func volumeTemplateCbs(s *patchtest.Session, ctx context.Context, name string) e
 	}
 
 	grown := "40Gi"
-	tags := volumeTags("agr-e2e", "volume-template-cbs")
+	tags := volumeTags(volumeTagKey, "volume-template-cbs")
 	encoded, err := json.Marshal(tags)
 	if err != nil {
 		return err
@@ -520,11 +524,22 @@ func volumeTemplateFilters(s *patchtest.Session, ctx context.Context, templateID
 		{map[string]any{"VolumeTemplateNames": []string{templateName + "-absent"}}, 0},
 		{map[string]any{"VolumeTemplateIds": []string{"volt-absent"}}, 0},
 		{map[string]any{"VolumeTemplateIds": both, "Filters": []any{
-			map[string]any{"Name": "storage-type", "Values": []string{"Cos"}},
+			map[string]any{"Name": "volume-template-name", "Values": []string{templateName}},
 		}}, 1},
+		// Values inside one filter are ORed.
 		{map[string]any{"VolumeTemplateIds": both, "Filters": []any{
-			map[string]any{"Name": "storage-type", "Values": []string{"Cos", "Cfs"}},
+			map[string]any{"Name": "volume-template-name", "Values": []string{templateName, templateName + "-page"}},
 		}}, 2},
+		// Only the first template carries tags, so a second dimension narrows
+		// the same pair back to one row.
+		{map[string]any{"VolumeTemplateIds": both, "Filters": []any{
+			map[string]any{"Name": "tag-key", "Values": []string{volumeTagKey}},
+		}}, 1},
+		// Separate filters are ANDed.
+		{map[string]any{"VolumeTemplateIds": both, "Filters": []any{
+			map[string]any{"Name": "volume-template-name", "Values": []string{templateName, templateName + "-page"}},
+			map[string]any{"Name": "tag-key", "Values": []string{volumeTagKey}},
+		}}, 1},
 	} {
 		rows, total, err := volumeQuery(s, ctx, "volume-template.list", "VolumeTemplateSet", tc.request)
 		if err != nil {
@@ -538,7 +553,7 @@ func volumeTemplateFilters(s *patchtest.Session, ctx context.Context, templateID
 }
 
 func volumeResourceLifecycle(s *patchtest.Session, ctx context.Context, storage volumeStorage, volumeName string) (string, func(), error) {
-	tags := volumeTags("agr-e2e", "volume")
+	tags := volumeTags(volumeTagKey, "volume")
 	path := "agr-e2e/" + volumeName
 	request := map[string]any{
 		"VolumeName":  volumeName,
@@ -600,7 +615,7 @@ func volumeResourceLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 
-	updated := volumeTags("agr-e2e", "volume", "stage", "updated")
+	updated := volumeTags(volumeTagKey, "volume", "stage", "updated")
 	if _, err := volumeCall(s, ctx, "volume.update", map[string]any{"VolumeName": volumeName, "Tags": updated}); err != nil {
 		return "", nil, err
 	}
@@ -729,7 +744,7 @@ func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
 		return err
 	}
 
-	tags := volumeTags("agr-e2e", "volume-cbs")
+	tags := volumeTags(volumeTagKey, "volume-cbs")
 	encoded, err := json.Marshal(tags)
 	if err != nil {
 		return err
@@ -772,11 +787,22 @@ func volumeFilters(s *patchtest.Session, ctx context.Context, volumeID, secondID
 		{map[string]any{"VolumeNames": []string{volumeName + "-absent"}}, 0},
 		{map[string]any{"VolumeIds": []string{"vol-absent"}}, 0},
 		{map[string]any{"VolumeIds": both, "Filters": []any{
-			map[string]any{"Name": "access-mode", "Values": []string{"ReadWriteMany"}},
+			map[string]any{"Name": "volume-name", "Values": []string{volumeName}},
 		}}, 1},
+		// Values inside one filter are ORed.
 		{map[string]any{"VolumeIds": both, "Filters": []any{
-			map[string]any{"Name": "access-mode", "Values": []string{"ReadWriteMany", "ReadOnlyMany"}},
+			map[string]any{"Name": "volume-name", "Values": []string{volumeName, volumeName + "-page"}},
 		}}, 2},
+		// Only the first volume carries tags, so a second dimension narrows the
+		// same pair back to one row.
+		{map[string]any{"VolumeIds": both, "Filters": []any{
+			map[string]any{"Name": "tag-key", "Values": []string{volumeTagKey}},
+		}}, 1},
+		// Separate filters are ANDed.
+		{map[string]any{"VolumeIds": both, "Filters": []any{
+			map[string]any{"Name": "volume-name", "Values": []string{volumeName, volumeName + "-page"}},
+			map[string]any{"Name": "tag-key", "Values": []string{volumeTagKey}},
+		}}, 1},
 	} {
 		rows, total, err := volumeQuery(s, ctx, "volume.list", "VolumeSet", tc.request)
 		if err != nil {
