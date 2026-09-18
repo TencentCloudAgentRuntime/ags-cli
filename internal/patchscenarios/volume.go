@@ -17,10 +17,10 @@ import (
 
 var volumeAssertions = []string{
 	"volume.create", "volume.readback", "volume.client-token", "volume.tags.readback",
-	"volume.update.by-id", "volume.storage-role",
+	"volume.update.by-id", "volume.tags.clear", "volume.storage-role",
 	"volume.filters", "volume.pagination", "volume.delete",
 	"template.create", "template.readback", "template.client-token",
-	"template.update", "template.update.by-id", "template.storage-role",
+	"template.update", "template.update.by-id", "template.tags.clear", "template.storage-role",
 	"template.filters", "template.pagination", "template.delete",
 	"mount.volume-ref", "mount.volume-ref.by-id", "mount.template-ref", "input.validation",
 }
@@ -29,9 +29,10 @@ var volumeAssertions = []string{
 // size without reserving anything in advance. The storage payload carries a
 // GiB count; the volume reports the derived capacity string.
 const (
-	agentCBSCapacity       = "20Gi"
-	agentCBSGrownCapacity  = "40Gi"
-	agentCBSStoragePayload = `{"AgentCbs":{"Capacity":"20Gi"}}`
+	agentCBSCapacity        = "20Gi"
+	agentCBSStoragePayload  = `{"AgentCbs":{"Capacity":"20Gi"}}`
+	templateDefaultCapacity = "20Gi"
+	templateGrownCapacity   = "40Gi"
 )
 
 // volumeTagKey marks every resource the scenario creates, and doubles as the
@@ -283,9 +284,6 @@ func runVolumeAgentCbs(s *patchtest.Session) error {
 	}
 	ctx := s.Context
 	name := fmt.Sprintf("agr-volume-cbs-e2e-%d", time.Now().UnixNano())
-	if err := volumeTemplateCbs(s, ctx, name+"-tpl"); err != nil {
-		return err
-	}
 	return volumeCbs(s, ctx, name+"-vol")
 }
 
@@ -330,6 +328,7 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 			"BucketPathPattern": pathPattern,
 		}},
 		"VolumeNamePattern": templateName + "-${reuse_key}",
+		"DefaultCapacity":   templateDefaultCapacity,
 		"StorageRoleArn":    storage.storageRoleArn,
 		"Tags":              tags,
 		"ClientToken":       templateName + "-token",
@@ -351,6 +350,7 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		volumeString(template, "ReclaimPolicy") == "Delete" &&
 		volumeString(template, "StorageType") == "Cos" &&
 		volumeString(template, "VolumeNamePattern") == templateName+"-${reuse_key}" &&
+		volumeString(template, "DefaultCapacity") == templateDefaultCapacity &&
 		volumeString(spec, "Endpoint") == storage.cosEndpoint &&
 		volumeString(spec, "BucketName") == storage.cosBucket &&
 		volumeString(spec, "BucketPathPattern") == pathPattern); err != nil {
@@ -378,6 +378,7 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 	stored := volumeRow(rows, "VolumeTemplateId", templateID)
 	if err := s.Assert("template.readback", total == 1 && len(rows) == 1 && stored != nil &&
 		volumeString(stored, "Status") != "" && volumeTimestamps(stored) &&
+		volumeString(stored, "DefaultCapacity") == templateDefaultCapacity &&
 		volumeString(volumeNested(stored, "StorageSpec", "Cos"), "BucketPathPattern") == pathPattern &&
 		volumeTagsEqual(stored["Tags"], tags)); err != nil {
 		return "", nil, err
@@ -404,7 +405,7 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 	// The ID selector must reach the same resource as the name selector.
 	byID := volumeTags(volumeTagKey, "volume-template", "stage", "by-id")
 	if _, err := volumeCall(s, ctx, "volume-template.update", map[string]any{
-		"VolumeTemplateId": templateID, "Tags": byID,
+		"VolumeTemplateId": templateID, "DefaultCapacity": templateGrownCapacity, "Tags": byID,
 	}); err != nil {
 		return "", nil, err
 	}
@@ -413,7 +414,9 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 	stored = volumeRow(rows, "VolumeTemplateId", templateID)
-	if err := s.Assert("template.update.by-id", stored != nil && volumeTagsEqual(stored["Tags"], byID)); err != nil {
+	if err := s.Assert("template.update.by-id", stored != nil &&
+		volumeString(stored, "DefaultCapacity") == templateGrownCapacity &&
+		volumeTagsEqual(stored["Tags"], byID)); err != nil {
 		return "", nil, err
 	}
 
@@ -426,6 +429,17 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 	}
 	if err := volumePaginate(s, ctx, "volume-template.list", "VolumeTemplateSet", "VolumeTemplateIds", "VolumeTemplateId",
 		"template.pagination", []string{templateID, secondID}); err != nil {
+		return "", nil, err
+	}
+	if _, err := volumeCLI(s, ctx, "volume-template", "update", "--volume-template-id", templateID, "--tags", "[]"); err != nil {
+		return "", nil, err
+	}
+	rows, _, err = volumeQuery(s, ctx, "volume-template.list", "VolumeTemplateSet", map[string]any{"VolumeTemplateIds": []string{templateID}})
+	if err != nil {
+		return "", nil, err
+	}
+	stored = volumeRow(rows, "VolumeTemplateId", templateID)
+	if err := s.Assert("template.tags.clear", stored != nil && volumeTagsEqual(stored["Tags"], nil)); err != nil {
 		return "", nil, err
 	}
 
@@ -456,7 +470,6 @@ func volumeTemplateSecond(s *patchtest.Session, ctx context.Context, storage vol
 			"FileSystemId": storage.cfsFileSystemID,
 			"PathPattern":  "agr-e2e/" + name + "/${reuse_key}",
 		}},
-		"StorageRoleArn": storage.storageRoleArn,
 	})
 	template := volumeObject(created.Data["VolumeTemplate"])
 	id := volumeString(template, "VolumeTemplateId")
@@ -477,70 +490,6 @@ func volumeTemplateSecond(s *patchtest.Session, ctx context.Context, storage vol
 		return "", nil, err
 	}
 	return id, markDeleted, nil
-}
-
-// volumeTemplateCbs covers the service-provisioned backend, where capacity is
-// the only spec input and the update selector is the template ID. It drives the
-// individual flags rather than --request, so the generated flag surface is
-// covered as well.
-func volumeTemplateCbs(s *patchtest.Session, ctx context.Context, name string) error {
-	created, err := volumeCLI(s, ctx, "volume-template", "create",
-		"--volume-template-name", name,
-		"--access-mode", "ReadWriteOnce",
-		"--reclaim-policy", "Delete",
-		"--storage-type", "AgentCbs",
-		"--storage-spec", agentCBSStoragePayload,
-		"--default-capacity", agentCBSCapacity,
-	)
-	template := volumeObject(created.Data["VolumeTemplate"])
-	id := volumeString(template, "VolumeTemplateId")
-	markDeleted := func() {}
-	if id != "" {
-		markDeleted = volumeOwned(s, "volume-template", "VolumeTemplateSet", "VolumeTemplateIds", "VolumeTemplateId", id)
-	}
-	if err != nil {
-		return err
-	}
-	if err := s.Assert("template.agent-cbs", id != "" &&
-		volumeString(template, "StorageType") == "AgentCBS" &&
-		volumeString(template, "DefaultCapacity") == agentCBSCapacity &&
-		volumeString(volumeNested(template, "StorageSpec", "AgentCBS"), "Capacity") == agentCBSCapacity); err != nil {
-		return err
-	}
-
-	grown := agentCBSGrownCapacity
-	tags := volumeTags(volumeTagKey, "volume-template-cbs")
-	encoded, err := json.Marshal(tags)
-	if err != nil {
-		return err
-	}
-	if _, err := volumeCLI(s, ctx, "volume-template", "update",
-		"--volume-template-id", id, "--default-capacity", grown, "--tags", string(encoded)); err != nil {
-		return err
-	}
-	listed, err := volumeCLI(s, ctx, "volume-template", "list", "--volume-template-ids", id)
-	if err != nil {
-		return err
-	}
-	rows, total, err := volumeSet(listed, "VolumeTemplateSet")
-	if err != nil {
-		return err
-	}
-	stored := volumeRow(rows, "VolumeTemplateId", id)
-	if err := s.Assert("template.agent-cbs", total == 1 && stored != nil &&
-		volumeString(stored, "DefaultCapacity") == grown &&
-		volumeTagsEqual(stored["Tags"], tags)); err != nil {
-		return err
-	}
-
-	if _, err := volumeCLI(s, ctx, "volume-template", "delete", "--volume-template-id", id); err != nil {
-		return err
-	}
-	markDeleted()
-	if err := volumeAbsent(s, ctx, "volume-template.list", "VolumeTemplateSet", "VolumeTemplateIds", id); err != nil {
-		return err
-	}
-	return s.Assert("template.agent-cbs", true)
 }
 
 func volumeTemplateFilters(s *patchtest.Session, ctx context.Context, templateID, secondID, templateName string) error {
@@ -682,6 +631,17 @@ func volumeResourceLifecycle(s *patchtest.Session, ctx context.Context, storage 
 	}
 	if err := volumePaginate(s, ctx, "volume.list", "VolumeSet", "VolumeIds", "VolumeId",
 		"volume.pagination", []string{volumeID, secondID}); err != nil {
+		return "", nil, err
+	}
+	if _, err := volumeCLI(s, ctx, "volume", "update", "--volume-id", volumeID, "--tags", "[]"); err != nil {
+		return "", nil, err
+	}
+	rows, _, err = volumeQuery(s, ctx, "volume.list", "VolumeSet", map[string]any{"VolumeIds": []string{volumeID}})
+	if err != nil {
+		return "", nil, err
+	}
+	stored = volumeRow(rows, "VolumeId", volumeID)
+	if err := s.Assert("volume.tags.clear", stored != nil && volumeTagsEqual(stored["Tags"], nil)); err != nil {
 		return "", nil, err
 	}
 

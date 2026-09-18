@@ -17,7 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "update",
 			Short:        "Update a volume",
 			Long:         "Update volume tags. Storage, access mode and name cannot be changed. Identify the volume by ID or name. Available in preview builds.",
-			Examples:     []string{"Example - Replace the tag set:\n  agr volume update --volume-name agent-workspace --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'"},
+			Examples:     []string{"Example - Replace the tag set:\n  agr volume update --volume-name agent-workspace --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'", "Example - Clear all tags:\n  agr volume update --volume-id vol-a1b2c3d4 --tags '[]'"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "UpdateVolumeResponse",
@@ -52,7 +52,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Tags",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "tags", Flag: "tags", Usage: "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Fields: []string{"Key: tag key", "Value: tag value"}, Type: command.FlagString},
+					{Name: "tags", Flag: "tags", Usage: "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags; [] clears all tags.", Format: "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]", Fields: []string{"Key: tag key", "Value: tag value"}, Type: command.FlagString},
 				},
 			},
 		},

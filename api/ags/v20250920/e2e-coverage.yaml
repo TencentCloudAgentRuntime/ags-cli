@@ -533,51 +533,6 @@ coverage:
   - entry: /objects/AgentCbsSource/usage
     scenario: volume.agent-cbs
     assertions: [volume.agent-cbs]
-  - entry: /objects/AgentCbsSpec/@exists
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/document
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/@exists
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/@exists
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/disabled
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/document
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/example
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/member
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/name
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/output_required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/type
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/members/Capacity/value_allowed_null
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/type
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/AgentCbsSpec/usage
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
   - entry: /objects/ApproveRegistryRecordRequest/@exists
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -3990,29 +3945,29 @@ coverage:
     scenario: volume.lifecycle
     assertions: [template.client-token]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/@exists
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/disabled
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/document
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/example
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/member
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/name
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/type
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/@exists
     scenario: volume.lifecycle
     assertions: [template.create]
@@ -6644,36 +6599,6 @@ coverage:
   - entry: /objects/StorageSpec/members/@exists
     scenario: volume.lifecycle
     assertions: [template.create]
-  - entry: /objects/StorageSpec/members/AgentCbs/@exists
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/disabled
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/document
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/example
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/member
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/name
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/output_required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/type
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
-  - entry: /objects/StorageSpec/members/AgentCbs/value_allowed_null
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
   - entry: /objects/StorageSpec/members/Cfs/@exists
     scenario: volume.lifecycle
     assertions: [template.create]
@@ -9477,35 +9402,35 @@ coverage:
     scenario: volume.lifecycle
     assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/@exists
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/disabled
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/document
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/example
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/member
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/name
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/output_required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/required
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/type
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/DefaultCapacity/value_allowed_null
-    scenario: volume.agent-cbs
-    assertions: [template.agent-cbs]
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/VolumeTemplate/members/ReclaimPolicy/@exists
     scenario: volume.lifecycle
     assertions: [template.create]

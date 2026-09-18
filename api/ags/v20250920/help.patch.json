@@ -1194,18 +1194,18 @@
       "long": "List volumes with exact ID/name filters, generic filters and pagination. Available in preview builds.",
       "fields": {
         "VolumeIds": {
-          "description": "Volume IDs to match exactly. Repeat the flag or pass a comma-separated list.",
+          "description": "Volume IDs to match exactly. Repeat the flag to pass multiple values.",
           "inputs": {
             "volume-ids": {
-              "usage": "Volume IDs to match exactly. Repeat the flag or pass a comma-separated list."
+              "usage": "Volume IDs to match exactly. Repeat the flag to pass multiple values."
             }
           }
         },
         "VolumeNames": {
-          "description": "Volume names to match exactly. Repeat the flag or pass a comma-separated list.",
+          "description": "Volume names to match exactly. Repeat the flag to pass multiple values.",
           "inputs": {
             "volume-names": {
-              "usage": "Volume names to match exactly. Repeat the flag or pass a comma-separated list."
+              "usage": "Volume names to match exactly. Repeat the flag to pass multiple values."
             }
           }
         },
@@ -1270,10 +1270,10 @@
           }
         },
         "Tags": {
-          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags; [] clears all tags.",
           "inputs": {
             "tags": {
-              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags; [] clears all tags.",
               "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
               "fields": [
                 "Key: tag key",
@@ -1284,7 +1284,8 @@
         }
       },
       "examples": [
-        "Example - Replace the tag set:\n  agr volume update --volume-name agent-workspace --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'"
+        "Example - Replace the tag set:\n  agr volume update --volume-name agent-workspace --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'",
+        "Example - Clear all tags:\n  agr volume update --volume-id vol-a1b2c3d4 --tags '[]'"
       ]
     }
   },
@@ -1353,20 +1354,19 @@
           "inputs": {
             "storage-spec": {
               "usage": "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
-              "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}} | {\"AgentCbs\":{\"Capacity\":\"<size>\"}}",
+              "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}}",
               "fields": [
                 "Cos: COS bucket path pattern, may contain ${reuse_key}",
-                "Cfs: CFS path pattern, may contain ${reuse_key}",
-                "AgentCbs: disk provisioned by the service"
+                "Cfs: CFS path pattern, may contain ${reuse_key}"
               ]
             }
           }
         },
         "StorageType": {
-          "description": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload.",
+          "description": "Storage backend type: Cos or Cfs. Must match the field set in the storage payload.",
           "inputs": {
             "storage-type": {
-              "usage": "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload."
+              "usage": "Storage backend type: Cos or Cfs. Must match the field set in the storage payload."
             }
           }
         },
@@ -1417,7 +1417,7 @@
         }
       },
       "examples": [
-        "Example - Derive one COS prefix per session:\n  agr volume-template create --volume-template-name agent-session-workspace --access-mode ReadWriteMany --reclaim-policy Delete --storage-type Cos --storage-spec '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPathPattern\":\"sessions/${reuse_key}\"}}' --volume-name-pattern agent-workspace-${reuse_key}"
+        "Example - Derive one COS prefix per session:\n  agr volume-template create --volume-template-name agent-session-workspace --access-mode ReadWriteMany --reclaim-policy Delete --storage-type Cos --storage-spec '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPathPattern\":\"sessions/${reuse_key}\"}}' --volume-name-pattern 'agent-workspace-${reuse_key}'"
       ]
     }
   },
@@ -1429,18 +1429,18 @@
       "long": "List volume templates with exact ID/name filters, generic filters and pagination. Available in preview builds.",
       "fields": {
         "VolumeTemplateIds": {
-          "description": "Volume template IDs to match exactly. Repeat the flag or pass a comma-separated list.",
+          "description": "Volume template IDs to match exactly. Repeat the flag to pass multiple values.",
           "inputs": {
             "volume-template-ids": {
-              "usage": "Volume template IDs to match exactly. Repeat the flag or pass a comma-separated list."
+              "usage": "Volume template IDs to match exactly. Repeat the flag to pass multiple values."
             }
           }
         },
         "VolumeTemplateNames": {
-          "description": "Volume template names to match exactly. Repeat the flag or pass a comma-separated list.",
+          "description": "Volume template names to match exactly. Repeat the flag to pass multiple values.",
           "inputs": {
             "volume-template-names": {
-              "usage": "Volume template names to match exactly. Repeat the flag or pass a comma-separated list."
+              "usage": "Volume template names to match exactly. Repeat the flag to pass multiple values."
             }
           }
         },
@@ -1505,10 +1505,10 @@
           }
         },
         "Tags": {
-          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+          "description": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags; [] clears all tags.",
           "inputs": {
             "tags": {
-              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags.",
+              "usage": "Tags as a JSON array, @file, or - for stdin. The list replaces existing tags; [] clears all tags.",
               "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
               "fields": [
                 "Key: tag key",
@@ -1527,7 +1527,8 @@
         }
       },
       "examples": [
-        "Example - Replace the tag set:\n  agr volume-template update --volume-template-id volt-a1b2c3d4 --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'"
+        "Example - Replace the tag set:\n  agr volume-template update --volume-template-id volt-a1b2c3d4 --tags '[{\"Key\":\"team\",\"Value\":\"agents\"}]'",
+        "Example - Clear all tags:\n  agr volume-template update --volume-template-id volt-a1b2c3d4 --tags '[]'"
       ]
     }
   },

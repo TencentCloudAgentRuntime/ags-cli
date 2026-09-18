@@ -4298,31 +4298,9 @@
   },
   {
     "op": "add",
-    "path": "/objects/AgentCbsSpec",
-    "value": {
-      "document": "AgentCBS 模板存储规格。",
-      "members": [
-        {
-          "disabled": false,
-          "document": "<p>AgentCBS 容量。</p>",
-          "member": "string",
-          "name": "Capacity",
-          "required": false,
-          "type": "string",
-          "example": "20Gi",
-          "output_required": true,
-          "value_allowed_null": false
-        }
-      ],
-      "type": "object",
-      "usage": "both"
-    }
-  },
-  {
-    "op": "add",
     "path": "/objects/StorageSpec",
     "value": {
-      "document": "VolumeTemplate 存储规格。Cos、Cfs、AgentCBS 必须且只能设置一个，且与 StorageType 一致。",
+      "document": "VolumeTemplate 存储规格。Cos、Cfs 必须且只能设置一个，且与 StorageType 一致。",
       "members": [
         {
           "disabled": false,
@@ -4340,17 +4318,6 @@
           "document": "<p>CFS 模板存储规格。</p>",
           "member": "CfsSpec",
           "name": "Cfs",
-          "required": false,
-          "type": "object",
-          "example": "无",
-          "output_required": false,
-          "value_allowed_null": true
-        },
-        {
-          "disabled": false,
-          "document": "<p>AgentCBS 模板存储规格。</p>",
-          "member": "AgentCbsSpec",
-          "name": "AgentCbs",
           "required": false,
           "type": "object",
           "example": "无",

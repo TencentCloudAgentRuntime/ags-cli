@@ -38,14 +38,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "VolumeIds",
 				Parser: "common.default_string_array",
 				Inputs: []apicli.InputSpec{
-					{Name: "volume-ids", Flag: "volume-ids", Usage: "Volume IDs to match exactly. Repeat the flag or pass a comma-separated list.", Type: command.FlagStringArray},
+					{Name: "volume-ids", Flag: "volume-ids", Usage: "Volume IDs to match exactly. Repeat the flag to pass multiple values.", Type: command.FlagStringArray},
 				},
 			},
 			{
 				Name:   "VolumeNames",
 				Parser: "common.default_string_array",
 				Inputs: []apicli.InputSpec{
-					{Name: "volume-names", Flag: "volume-names", Usage: "Volume names to match exactly. Repeat the flag or pass a comma-separated list.", Type: command.FlagStringArray},
+					{Name: "volume-names", Flag: "volume-names", Usage: "Volume names to match exactly. Repeat the flag to pass multiple values.", Type: command.FlagStringArray},
 				},
 			},
 			{

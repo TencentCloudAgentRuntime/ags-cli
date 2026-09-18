@@ -26,7 +26,7 @@ var volumeFaults = []string{
 	"ignore-volume-offset", "ignore-volume-limit",
 	"ignore-template-ids", "ignore-template-names", "ignore-template-filters",
 	"ignore-template-offset", "ignore-template-limit",
-	"ignore-client-token", "drop-volume-tags", "drop-template-update", "ignore-update-id",
+	"ignore-client-token", "drop-volume-tags", "drop-template-update", "ignore-update-id", "ignore-empty-tags",
 	"drop-volume-storage", "drop-template-spec", "drop-template-link",
 	"drop-storage-role", "drop-cbs-capacity", "drop-timestamps",
 	"drop-reclaim-policy", "report-mounted-instance", "report-capacity",
@@ -241,7 +241,7 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if f.fault != "drop-volume-tags" && !f.ignoresIDSelector(req, "VolumeId") {
-			maps.Copy(stored, req)
+			f.copyUpdate(stored, req)
 		}
 	case "DeleteVolume":
 		f.remove(req, f.volumes, "VolumeId", "VolumeName")
@@ -257,7 +257,7 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if f.fault != "drop-template-update" && !f.ignoresIDSelector(req, "VolumeTemplateId") {
-			maps.Copy(stored, req)
+			f.copyUpdate(stored, req)
 		}
 	case "DeleteVolumeTemplate":
 		f.remove(req, f.templates, "VolumeTemplateId", "VolumeTemplateName")
@@ -362,6 +362,14 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 func (f *volumeFixture) ignoresIDSelector(req map[string]any, idField string) bool {
 	id, _ := req[idField].(string)
 	return f.fault == "ignore-update-id" && id != ""
+}
+
+func (f *volumeFixture) copyUpdate(stored, req map[string]any) {
+	if tags, ok := req["Tags"].([]any); f.fault == "ignore-empty-tags" && ok && len(tags) == 0 {
+		req = maps.Clone(req)
+		delete(req, "Tags")
+	}
+	maps.Copy(stored, req)
 }
 
 func (f *volumeFixture) find(req map[string]any, store map[string]map[string]any, idField, nameField string) map[string]any {

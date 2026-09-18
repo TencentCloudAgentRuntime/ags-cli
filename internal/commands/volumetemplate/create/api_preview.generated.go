@@ -17,7 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "create",
 			Short:        "Create a volume template",
 			Long:         "Create a volume template. Templates derive or reuse concrete volumes per reuse key instead of binding one fixed path. Available in preview builds.",
-			Examples:     []string{"Example - Derive one COS prefix per session:\n  agr volume-template create --volume-template-name agent-session-workspace --access-mode ReadWriteMany --reclaim-policy Delete --storage-type Cos --storage-spec '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPathPattern\":\"sessions/${reuse_key}\"}}' --volume-name-pattern agent-workspace-${reuse_key}"},
+			Examples:     []string{"Example - Derive one COS prefix per session:\n  agr volume-template create --volume-template-name agent-session-workspace --access-mode ReadWriteMany --reclaim-policy Delete --storage-type Cos --storage-spec '{\"Cos\":{\"Endpoint\":\"cos.ap-guangzhou.myqcloud.com\",\"BucketName\":\"agent-data-1250000000\",\"BucketPathPattern\":\"sessions/${reuse_key}\"}}' --volume-name-pattern 'agent-workspace-${reuse_key}'"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateVolumeTemplateResponse",
@@ -63,7 +63,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage-spec", Flag: "storage-spec", Usage: "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type. (required)", Format: "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}} | {\"AgentCbs\":{\"Capacity\":\"<size>\"}}", Fields: []string{"Cos: COS bucket path pattern, may contain ${reuse_key}", "Cfs: CFS path pattern, may contain ${reuse_key}", "AgentCbs: disk provisioned by the service"}, Type: command.FlagString},
+					{Name: "storage-spec", Flag: "storage-spec", Usage: "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type. (required)", Format: "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}}", Fields: []string{"Cos: COS bucket path pattern, may contain ${reuse_key}", "Cfs: CFS path pattern, may contain ${reuse_key}"}, Type: command.FlagString},
 				},
 			},
 			{
@@ -71,7 +71,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage-type", Flag: "storage-type", Usage: "Storage backend type: Cos, Cfs or AgentCbs. Must match the field set in the storage payload. (required)", Type: command.FlagString},
+					{Name: "storage-type", Flag: "storage-type", Usage: "Storage backend type: Cos or Cfs. Must match the field set in the storage payload. (required)", Type: command.FlagString},
 				},
 			},
 			{
