@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.7] - 2026-09-18
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add `--computer-configuration` to Tool create, update, and fork workflows,
+  with WAA and OSWorld configuration support preserved through get, list, and
+  fork results.
+- Add token pagination to `agr instance list` through `--max-results`,
+  `--next-token`, and `--need-total-count`, with the returned cursor normalized
+  as `Pagination.NextCursor`.
+- Add isolated stable and preview release channels from the same source branch.
+  `agr version -o json` now reports the binary channel, while stable releases
+  continue to own `latest` and Homebrew distribution.
+
+### Bug Fixes
+- Correct machine-readable command schemas to use JSON Schema-style `array`
+  and `integer` property types and keep API-backed request fields synchronized
+  with their CLI flags.
+- Correct Instance metadata help and examples to use the service-supported
+  `Name` and `Value` fields.
+
+### Docs
+- Document the API patch verification process and the stable/preview
+  contribution and release workflow.
+
 ## [0.6.6] - 2026-08-27
 
 ### Breaking Changes
