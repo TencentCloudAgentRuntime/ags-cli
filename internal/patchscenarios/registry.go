@@ -9,6 +9,7 @@ var Registry = patchtest.Registry{
 	"session.event-count":       {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
 	"session.lifecycle":         {Assertions: sessionAssertions, Run: runSessionLifecycle},
 	"volume.lifecycle":          {Assertions: volumeAssertions, Run: runVolumeLifecycle},
+	"volume.agent-cbs":          {Assertions: []string{"volume.agent-cbs", "template.agent-cbs"}, Run: runVolumeAgentCbs},
 	"registry.remote.lifecycle": {Assertions: []string{"mcp.sync.changed", "mcp.sync.failed", "a2a.sync.changed", "a2a.sync.failed"}, Run: registryRemoteLifecycle},
 	"registry.skill.lifecycle":  {Assertions: []string{"skill.package.roundtrip", "skill.inline.readback"}, Run: registrySkillLifecycle},
 	"registry.custom.lifecycle": {

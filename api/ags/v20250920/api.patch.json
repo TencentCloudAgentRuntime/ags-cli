@@ -4179,7 +4179,7 @@
     "op": "add",
     "path": "/objects/Storage",
     "value": {
-      "document": "Volume 真实存储信息。Cos、Cfs、AgentCbs 必须且只能设置一个，且与 StorageType 一致。",
+      "document": "Volume 真实存储信息。Cos、Cfs、AgentCBS 必须且只能设置一个，且与 StorageType 一致。",
       "members": [
         {
           "disabled": false,
@@ -4322,7 +4322,7 @@
     "op": "add",
     "path": "/objects/StorageSpec",
     "value": {
-      "document": "VolumeTemplate 存储规格。Cos、Cfs、AgentCbs 必须且只能设置一个，且与 StorageType 一致。",
+      "document": "VolumeTemplate 存储规格。Cos、Cfs、AgentCBS 必须且只能设置一个，且与 StorageType 一致。",
       "members": [
         {
           "disabled": false,
@@ -4425,7 +4425,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCbs：使用 AgentCBS 作为存储后端</li></ul>",
+          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCBS：使用 AgentCBS 作为存储后端</li></ul>",
           "member": "string",
           "name": "StorageType",
           "required": false,
@@ -4612,7 +4612,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCbs：使用 AgentCBS 作为存储后端</li></ul>",
+          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCBS：使用 AgentCBS 作为存储后端</li></ul>",
           "member": "string",
           "name": "StorageType",
           "required": false,
@@ -4718,7 +4718,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCbs：使用 AgentCBS 作为存储后端</li></ul>",
+          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCBS：使用 AgentCBS 作为存储后端</li></ul>",
           "member": "string",
           "name": "StorageType",
           "required": true,
@@ -4727,7 +4727,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>Volume 的真实存储信息。Cos、Cfs、AgentCbs 必须且只能设置一个。</p>",
+          "document": "<p>Volume 的真实存储信息。Cos、Cfs、AgentCBS 必须且只能设置一个。</p>",
           "member": "Storage",
           "name": "Storage",
           "required": true,
@@ -5044,7 +5044,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>模板存储规格。Cos、Cfs、AgentCbs 必须且只能设置一个。</p>",
+          "document": "<p>模板存储规格。Cos、Cfs、AgentCBS 必须且只能设置一个。</p>",
           "member": "StorageSpec",
           "name": "StorageSpec",
           "required": true,
@@ -5053,7 +5053,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCbs：使用 AgentCBS 作为存储后端</li></ul>",
+          "document": "<p>存储类型。Storage 或 StorageSpec 中对应类型的字段必须与该值一致。</p><p>枚举值：</p><ul><li>Cos：使用 COS 作为存储后端</li><li>Cfs：使用 CFS 作为存储后端</li><li>AgentCBS：使用 AgentCBS 作为存储后端</li></ul>",
           "member": "string",
           "name": "StorageType",
           "required": true,

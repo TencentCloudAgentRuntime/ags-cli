@@ -51,7 +51,10 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			server := httptest.NewTLSServer(fixture)
 			defer server.Close()
 			env := volumeEnv(t, server.URL)
-			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{{Scenario: "volume.lifecycle", Assertions: volumeAssertions}}}
+			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+				{Scenario: "volume.lifecycle", Assertions: volumeAssertions},
+				{Scenario: "volume.agent-cbs", Assertions: Registry["volume.agent-cbs"].Assertions},
+			}}
 			results, err := patchtest.Run(t.Context(), plan, Registry, binary, env)
 			if (err != nil) != (fault != "") {
 				t.Fatalf("fault %q: err=%v results=%+v", fault, err, results)
@@ -61,8 +64,17 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			if fault != "retain-resource" && (len(fixture.volumes) > 1 || len(fixture.templates) > 1 || len(fixture.tools) != 0) {
 				t.Fatalf("owned resources leaked: volumes=%d templates=%d tools=%d", len(fixture.volumes), len(fixture.templates), len(fixture.tools))
 			}
-			if fault == "" && (len(results) != 1 || results[0].Cleanup != "pass" || results[0].Calls < 60) {
-				t.Fatalf("insufficient execution: %+v", results)
+			if fault == "" {
+				calls := 0
+				for _, result := range results {
+					calls += result.Calls
+					if result.Cleanup != "pass" {
+						t.Fatalf("cleanup did not pass: %+v", results)
+					}
+				}
+				if len(results) != 2 || calls < 60 {
+					t.Fatalf("insufficient execution: %+v", results)
+				}
 			}
 		})
 	}
@@ -73,7 +85,10 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			fixture := newVolumeFixture(t, "")
 			server := httptest.NewTLSServer(fixture)
 			defer server.Close()
-			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{{Scenario: "volume.lifecycle", Assertions: volumeAssertions}}}
+			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+				{Scenario: "volume.lifecycle", Assertions: volumeAssertions},
+				{Scenario: "volume.agent-cbs", Assertions: Registry["volume.agent-cbs"].Assertions},
+			}}
 			if _, err := patchtest.Run(t.Context(), plan, Registry, binary, volumeEnv(t, server.URL)); err == nil {
 				t.Fatalf("missing %s produced a passing run", missing)
 			}
@@ -284,13 +299,18 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 	delete(created, "ClientToken")
 	created[idField], created["Status"] = id, "ACTIVE"
 	created["CreatedAt"], created["UpdatedAt"] = "2026-09-18T00:00:00Z", "2026-09-18T00:00:00Z"
-	if idField == "VolumeId" {
-		// A standalone volume keeps its storage until it is deleted explicitly,
-		// and AgentCbs is the only backend that reports a capacity of its own.
-		created["ReclaimPolicy"] = "Retain"
-		if capacity := volumeString(volumeNested(created, storageField, "AgentCbs"), "Capacity"); capacity != "" {
+	// Requests name the backend AgentCbs, responses echo AgentCBS.
+	if capacity := volumeString(volumeNested(created, storageField, "AgentCbs"), "Capacity"); capacity != "" {
+		created[storageField] = map[string]any{"AgentCBS": map[string]any{"Capacity": capacity}}
+		created["StorageType"] = "AgentCBS"
+		if idField == "VolumeId" {
+			// AgentCBS is the only backend that reports a capacity of its own.
 			created["Capacity"] = capacity
 		}
+	}
+	if idField == "VolumeId" {
+		// A standalone volume keeps its storage until it is deleted explicitly.
+		created["ReclaimPolicy"] = "Retain"
 	}
 	switch f.fault {
 	case "drop-volume-storage":
@@ -309,10 +329,10 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 	case "drop-storage-role":
 		delete(created, "StorageRoleArn")
 	case "drop-cbs-capacity":
-		if storage := volumeObject(created[storageField]); storage["AgentCbs"] != nil {
+		if storage := volumeObject(created[storageField]); storage["AgentCBS"] != nil {
 			delete(created, "Capacity")
 			delete(created, "DefaultCapacity")
-			created[storageField] = map[string]any{"AgentCbs": map[string]any{}}
+			created[storageField] = map[string]any{"AgentCBS": map[string]any{}}
 		}
 	case "drop-timestamps":
 		delete(created, "CreatedAt")

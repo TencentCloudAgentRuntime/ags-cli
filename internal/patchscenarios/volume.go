@@ -17,17 +17,22 @@ import (
 
 var volumeAssertions = []string{
 	"volume.create", "volume.readback", "volume.client-token", "volume.tags.readback",
-	"volume.update.by-id", "volume.storage-role", "volume.agent-cbs",
+	"volume.update.by-id", "volume.storage-role",
 	"volume.filters", "volume.pagination", "volume.delete",
 	"template.create", "template.readback", "template.client-token",
-	"template.update", "template.update.by-id", "template.storage-role", "template.agent-cbs",
+	"template.update", "template.update.by-id", "template.storage-role",
 	"template.filters", "template.pagination", "template.delete",
 	"mount.volume-ref", "mount.volume-ref.by-id", "mount.template-ref", "input.validation",
 }
 
-// agentCbsCapacity is provisioned by the service itself, so the scenario can
-// name a size without reserving anything in advance.
-const agentCbsCapacity = "20Gi"
+// AgentCBS is provisioned by the service itself, so the scenario can name a
+// size without reserving anything in advance. The storage payload carries a
+// GiB count; the volume reports the derived capacity string.
+const (
+	agentCBSCapacity       = "20Gi"
+	agentCBSGrownCapacity  = "40Gi"
+	agentCBSStoragePayload = `{"AgentCbs":{"Capacity":"20Gi"}}`
+)
 
 // volumeTagKey marks every resource the scenario creates, and doubles as the
 // value the tag-key filter step selects on.
@@ -270,6 +275,20 @@ func runVolumeLifecycle(s *patchtest.Session) error {
 	return s.Assert("template.delete", true)
 }
 
+// runVolumeAgentCbs isolates the AgentCBS backend. It is a separate scenario so
+// that a defect in one storage backend cannot mask the rest of the contract.
+func runVolumeAgentCbs(s *patchtest.Session) error {
+	if _, err := volumeStorageFromEnv(); err != nil {
+		return err
+	}
+	ctx := s.Context
+	name := fmt.Sprintf("agr-volume-cbs-e2e-%d", time.Now().UnixNano())
+	if err := volumeTemplateCbs(s, ctx, name+"-tpl"); err != nil {
+		return err
+	}
+	return volumeCbs(s, ctx, name+"-vol")
+}
+
 // volumeInputValidation pins the usage contract before any resource exists, so a
 // rejected request can never be mistaken for a backend failure.
 func volumeInputValidation(s *patchtest.Session, ctx context.Context, storage volumeStorage) error {
@@ -382,14 +401,26 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 
+	// The ID selector must reach the same resource as the name selector.
+	byID := volumeTags(volumeTagKey, "volume-template", "stage", "by-id")
+	if _, err := volumeCall(s, ctx, "volume-template.update", map[string]any{
+		"VolumeTemplateId": templateID, "Tags": byID,
+	}); err != nil {
+		return "", nil, err
+	}
+	rows, _, err = volumeQuery(s, ctx, "volume-template.list", "VolumeTemplateSet", map[string]any{"VolumeTemplateIds": []string{templateID}})
+	if err != nil {
+		return "", nil, err
+	}
+	stored = volumeRow(rows, "VolumeTemplateId", templateID)
+	if err := s.Assert("template.update.by-id", stored != nil && volumeTagsEqual(stored["Tags"], byID)); err != nil {
+		return "", nil, err
+	}
+
 	secondID, secondDeleted, err := volumeTemplateSecond(s, ctx, storage, templateName+"-page")
 	if err != nil {
 		return "", nil, err
 	}
-	if err := volumeTemplateCbs(s, ctx, templateName+"-cbs"); err != nil {
-		return "", nil, err
-	}
-
 	if err := volumeTemplateFilters(s, ctx, templateID, secondID, templateName); err != nil {
 		return "", nil, err
 	}
@@ -458,8 +489,8 @@ func volumeTemplateCbs(s *patchtest.Session, ctx context.Context, name string) e
 		"--access-mode", "ReadWriteOnce",
 		"--reclaim-policy", "Delete",
 		"--storage-type", "AgentCbs",
-		"--storage-spec", `{"AgentCbs":{"Capacity":"`+agentCbsCapacity+`"}}`,
-		"--default-capacity", agentCbsCapacity,
+		"--storage-spec", agentCBSStoragePayload,
+		"--default-capacity", agentCBSCapacity,
 	)
 	template := volumeObject(created.Data["VolumeTemplate"])
 	id := volumeString(template, "VolumeTemplateId")
@@ -471,13 +502,13 @@ func volumeTemplateCbs(s *patchtest.Session, ctx context.Context, name string) e
 		return err
 	}
 	if err := s.Assert("template.agent-cbs", id != "" &&
-		volumeString(template, "StorageType") == "AgentCbs" &&
-		volumeString(template, "DefaultCapacity") == agentCbsCapacity &&
-		volumeString(volumeNested(template, "StorageSpec", "AgentCbs"), "Capacity") == agentCbsCapacity); err != nil {
+		volumeString(template, "StorageType") == "AgentCBS" &&
+		volumeString(template, "DefaultCapacity") == agentCBSCapacity &&
+		volumeString(volumeNested(template, "StorageSpec", "AgentCBS"), "Capacity") == agentCBSCapacity); err != nil {
 		return err
 	}
 
-	grown := "40Gi"
+	grown := agentCBSGrownCapacity
 	tags := volumeTags(volumeTagKey, "volume-template-cbs")
 	encoded, err := json.Marshal(tags)
 	if err != nil {
@@ -496,7 +527,7 @@ func volumeTemplateCbs(s *patchtest.Session, ctx context.Context, name string) e
 		return err
 	}
 	stored := volumeRow(rows, "VolumeTemplateId", id)
-	if err := s.Assert("template.update.by-id", total == 1 && stored != nil &&
+	if err := s.Assert("template.agent-cbs", total == 1 && stored != nil &&
 		volumeString(stored, "DefaultCapacity") == grown &&
 		volumeTagsEqual(stored["Tags"], tags)); err != nil {
 		return err
@@ -509,7 +540,7 @@ func volumeTemplateCbs(s *patchtest.Session, ctx context.Context, name string) e
 	if err := volumeAbsent(s, ctx, "volume-template.list", "VolumeTemplateSet", "VolumeTemplateIds", id); err != nil {
 		return err
 	}
-	return s.Assert("template.delete", true)
+	return s.Assert("template.agent-cbs", true)
 }
 
 func volumeTemplateFilters(s *patchtest.Session, ctx context.Context, templateID, secondID, templateName string) error {
@@ -628,14 +659,24 @@ func volumeResourceLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 
+	// The ID selector must reach the same resource as the name selector.
+	byID := volumeTags(volumeTagKey, "volume", "stage", "by-id")
+	if _, err := volumeCall(s, ctx, "volume.update", map[string]any{"VolumeId": volumeID, "Tags": byID}); err != nil {
+		return "", nil, err
+	}
+	rows, _, err = volumeQuery(s, ctx, "volume.list", "VolumeSet", map[string]any{"VolumeIds": []string{volumeID}})
+	if err != nil {
+		return "", nil, err
+	}
+	stored = volumeRow(rows, "VolumeId", volumeID)
+	if err := s.Assert("volume.update.by-id", stored != nil && volumeTagsEqual(stored["Tags"], byID)); err != nil {
+		return "", nil, err
+	}
+
 	secondID, secondDeleted, err := volumeSecond(s, ctx, storage, volumeName+"-page")
 	if err != nil {
 		return "", nil, err
 	}
-	if err := volumeCbs(s, ctx, volumeName+"-cbs"); err != nil {
-		return "", nil, err
-	}
-
 	if err := volumeFilters(s, ctx, volumeID, secondID, volumeName); err != nil {
 		return "", nil, err
 	}
@@ -705,7 +746,7 @@ func volumeSecond(s *patchtest.Session, ctx context.Context, storage volumeStora
 // is the evidence, and updates by volume ID rather than by name. The storage
 // payload arrives through @file, which the flag help promises.
 func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
-	storageFlag, removeFile, err := volumeJSONFile(`{"AgentCbs":{"Capacity":"` + agentCbsCapacity + `"}}`)
+	storageFlag, removeFile, err := volumeJSONFile(agentCBSStoragePayload)
 	if err != nil {
 		return err
 	}
@@ -726,8 +767,8 @@ func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
 		return err
 	}
 	if err := s.Assert("volume.agent-cbs", id != "" &&
-		volumeString(volume, "StorageType") == "AgentCbs" &&
-		volumeString(volumeNested(volume, "Storage", "AgentCbs"), "Capacity") == agentCbsCapacity); err != nil {
+		volumeString(volume, "StorageType") == "AgentCBS" &&
+		volumeString(volumeNested(volume, "Storage", "AgentCBS"), "Capacity") == agentCBSCapacity); err != nil {
 		return err
 	}
 	listed, err := volumeCLI(s, ctx, "volume", "list", "--volume-ids", id)
@@ -740,7 +781,7 @@ func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
 	}
 	stored := volumeRow(rows, "VolumeId", id)
 	if err := s.Assert("volume.agent-cbs", total == 1 && stored != nil &&
-		volumeString(stored, "Capacity") == agentCbsCapacity); err != nil {
+		volumeString(stored, "Capacity") == agentCBSCapacity); err != nil {
 		return err
 	}
 
@@ -761,7 +802,7 @@ func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
 		return err
 	}
 	stored = volumeRow(rows, "VolumeId", id)
-	if err := s.Assert("volume.update.by-id", stored != nil && volumeTagsEqual(stored["Tags"], tags)); err != nil {
+	if err := s.Assert("volume.agent-cbs", stored != nil && volumeTagsEqual(stored["Tags"], tags)); err != nil {
 		return err
 	}
 
@@ -772,7 +813,7 @@ func volumeCbs(s *patchtest.Session, ctx context.Context, name string) error {
 	if err := volumeAbsent(s, ctx, "volume.list", "VolumeSet", "VolumeIds", id); err != nil {
 		return err
 	}
-	return s.Assert("volume.delete", true)
+	return s.Assert("volume.agent-cbs", true)
 }
 
 func volumeFilters(s *patchtest.Session, ctx context.Context, volumeID, secondID, volumeName string) error {
