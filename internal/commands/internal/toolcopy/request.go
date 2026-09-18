@@ -23,6 +23,7 @@ func Request(value any) (map[string]any, error) {
 	}
 	spec := catalog.Spec
 	req := project(spec, spec.Actions["CreateSandboxTool"].Input, tool)
+	canonicalizeVolumeRefs(req["StorageMounts"])
 	delete(req, "ToolName")
 	delete(req, "ClientToken")
 	if tool["DefaultTimeoutSeconds"] != nil {
@@ -42,6 +43,26 @@ func Request(value any) (map[string]any, error) {
 		}
 	}
 	return req, nil
+}
+
+func canonicalizeVolumeRefs(value any) {
+	mounts, ok := value.([]map[string]any)
+	if !ok {
+		return
+	}
+	for _, mount := range mounts {
+		ref, ok := mount["Volume"].(map[string]any)
+		if !ok {
+			continue
+		}
+		if id, _ := ref["VolumeId"].(string); strings.TrimSpace(id) != "" {
+			delete(ref, "VolumeName")
+			continue
+		}
+		if name, _ := ref["VolumeName"].(string); strings.TrimSpace(name) != "" {
+			delete(ref, "VolumeId")
+		}
+	}
 }
 
 func project(spec *apimeta.Spec, name string, source apivalue.Object) map[string]any {

@@ -571,5 +571,121 @@
       "response": "DescribeEventsResponse",
       "status": "mapped"
     }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateVolume",
+    "value": {
+      "command": "volume.create",
+      "request": "CreateVolumeRequest",
+      "response": "CreateVolumeResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeVolumeList",
+    "value": {
+      "command": "volume.list",
+      "request": "DescribeVolumeListRequest",
+      "response": "DescribeVolumeListResponse",
+      "status": "mapped",
+      "fields": {
+        "VolumeIds": {
+          "inputs": [
+            {
+              "flag": "volume-ids",
+              "type": "string_array"
+            }
+          ]
+        },
+        "VolumeNames": {
+          "inputs": [
+            {
+              "flag": "volume-names",
+              "type": "string_array"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/UpdateVolume",
+    "value": {
+      "command": "volume.update",
+      "request": "UpdateVolumeRequest",
+      "response": "UpdateVolumeResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteVolume",
+    "value": {
+      "command": "volume.delete",
+      "request": "DeleteVolumeRequest",
+      "response": "DeleteVolumeResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateVolumeTemplate",
+    "value": {
+      "command": "volume-template.create",
+      "request": "CreateVolumeTemplateRequest",
+      "response": "CreateVolumeTemplateResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeVolumeTemplateList",
+    "value": {
+      "command": "volume-template.list",
+      "request": "DescribeVolumeTemplateListRequest",
+      "response": "DescribeVolumeTemplateListResponse",
+      "status": "mapped",
+      "fields": {
+        "VolumeTemplateIds": {
+          "inputs": [
+            {
+              "flag": "volume-template-ids",
+              "type": "string_array"
+            }
+          ]
+        },
+        "VolumeTemplateNames": {
+          "inputs": [
+            {
+              "flag": "volume-template-names",
+              "type": "string_array"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/UpdateVolumeTemplate",
+    "value": {
+      "command": "volume-template.update",
+      "request": "UpdateVolumeTemplateRequest",
+      "response": "UpdateVolumeTemplateResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteVolumeTemplate",
+    "value": {
+      "command": "volume-template.delete",
+      "request": "DeleteVolumeTemplateRequest",
+      "response": "DeleteVolumeTemplateResponse",
+      "status": "mapped"
+    }
   }
 ]

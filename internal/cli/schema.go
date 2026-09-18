@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// clientTokenProperty is the request member that makes a mutation safely
+// retryable; see requestAcceptsClientToken.
+const clientTokenProperty = "ClientToken"
+
 func init() {
 	schemaCmd.RunE = Wrap("schema", schemaFn)
 	rootCmd.AddCommand(schemaCmd)
@@ -829,6 +833,9 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 		if req, ok := requiredByCommand[schema.Name]; ok && schema.RequestSchema != nil {
 			schema.RequestSchema.Required = req
 		}
+		if schema.Idempotency == "none" && requestAcceptsClientToken(schema.RequestSchema) {
+			schema.Idempotency = "client_token"
+		}
 		if schema.SupportsRequest {
 			ensureSchemaFlag(schema, FlagSchema{Name: "request", Type: "string"})
 			if supports, ok := requestio.SupportsGeneratedSkeleton(schema.Name); !ok || supports {
@@ -836,6 +843,17 @@ func enrichSchemasFromGenerator(schemas []CommandSchema) {
 			}
 		}
 	}
+}
+
+// requestAcceptsClientToken keeps the reported idempotency derived from the
+// request contract. Retry hints in withIdempotencyHint depend on it, so a new
+// ClientToken command must not stay at "none" until someone edits a list.
+func requestAcceptsClientToken(request *RequestSchema) bool {
+	if request == nil {
+		return false
+	}
+	_, ok := request.Properties[clientTokenProperty]
+	return ok
 }
 
 func requestPropertyType(apiType string) string {

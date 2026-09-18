@@ -74,6 +74,42 @@ coverage:
   - entry: /actions/CreateRegistryRecord/status
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /actions/CreateVolume/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create, volume.client-token]
+  - entry: /actions/CreateVolume/document
+    scenario: volume.lifecycle
+    assertions: [volume.create, volume.client-token]
+  - entry: /actions/CreateVolume/input
+    scenario: volume.lifecycle
+    assertions: [volume.create, volume.client-token]
+  - entry: /actions/CreateVolume/name
+    scenario: volume.lifecycle
+    assertions: [volume.create, volume.client-token]
+  - entry: /actions/CreateVolume/output
+    scenario: volume.lifecycle
+    assertions: [volume.create, volume.client-token]
+  - entry: /actions/CreateVolume/status
+    scenario: volume.lifecycle
+    assertions: [volume.create, volume.client-token]
+  - entry: /actions/CreateVolumeTemplate/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create, template.client-token]
+  - entry: /actions/CreateVolumeTemplate/document
+    scenario: volume.lifecycle
+    assertions: [template.create, template.client-token]
+  - entry: /actions/CreateVolumeTemplate/input
+    scenario: volume.lifecycle
+    assertions: [template.create, template.client-token]
+  - entry: /actions/CreateVolumeTemplate/name
+    scenario: volume.lifecycle
+    assertions: [template.create, template.client-token]
+  - entry: /actions/CreateVolumeTemplate/output
+    scenario: volume.lifecycle
+    assertions: [template.create, template.client-token]
+  - entry: /actions/CreateVolumeTemplate/status
+    scenario: volume.lifecycle
+    assertions: [template.create, template.client-token]
   - entry: /actions/DeleteRegistry/@exists
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -110,6 +146,42 @@ coverage:
   - entry: /actions/DeleteRegistryRecord/status
     scenario: registry.lifecycle
     assertions: [version.deleted]
+  - entry: /actions/DeleteVolume/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /actions/DeleteVolume/document
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /actions/DeleteVolume/input
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /actions/DeleteVolume/name
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /actions/DeleteVolume/output
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /actions/DeleteVolume/status
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /actions/DeleteVolumeTemplate/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /actions/DeleteVolumeTemplate/document
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /actions/DeleteVolumeTemplate/input
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /actions/DeleteVolumeTemplate/name
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /actions/DeleteVolumeTemplate/output
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /actions/DeleteVolumeTemplate/status
+    scenario: volume.lifecycle
+    assertions: [template.delete]
   - entry: /actions/DescribeRegistry/@exists
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
@@ -218,6 +290,42 @@ coverage:
   - entry: /actions/DescribeRegistryRecordVersionList/status
     scenario: registry.lifecycle
     assertions: [lists.filtered, record.history]
+  - entry: /actions/DescribeVolumeList/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback, volume.filters, volume.pagination]
+  - entry: /actions/DescribeVolumeList/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback, volume.filters, volume.pagination]
+  - entry: /actions/DescribeVolumeList/input
+    scenario: volume.lifecycle
+    assertions: [volume.readback, volume.filters, volume.pagination]
+  - entry: /actions/DescribeVolumeList/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback, volume.filters, volume.pagination]
+  - entry: /actions/DescribeVolumeList/output
+    scenario: volume.lifecycle
+    assertions: [volume.readback, volume.filters, volume.pagination]
+  - entry: /actions/DescribeVolumeList/status
+    scenario: volume.lifecycle
+    assertions: [volume.readback, volume.filters, volume.pagination]
+  - entry: /actions/DescribeVolumeTemplateList/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback, template.filters, template.pagination]
+  - entry: /actions/DescribeVolumeTemplateList/document
+    scenario: volume.lifecycle
+    assertions: [template.readback, template.filters, template.pagination]
+  - entry: /actions/DescribeVolumeTemplateList/input
+    scenario: volume.lifecycle
+    assertions: [template.readback, template.filters, template.pagination]
+  - entry: /actions/DescribeVolumeTemplateList/name
+    scenario: volume.lifecycle
+    assertions: [template.readback, template.filters, template.pagination]
+  - entry: /actions/DescribeVolumeTemplateList/output
+    scenario: volume.lifecycle
+    assertions: [template.readback, template.filters, template.pagination]
+  - entry: /actions/DescribeVolumeTemplateList/status
+    scenario: volume.lifecycle
+    assertions: [template.readback, template.filters, template.pagination]
   - entry: /actions/GetSkillPackageDownloadURL/@exists
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -344,6 +452,42 @@ coverage:
   - entry: /actions/UpdateRegistryRecord/status
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
+  - entry: /actions/UpdateVolume/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback, volume.update.by-id]
+  - entry: /actions/UpdateVolume/document
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback, volume.update.by-id]
+  - entry: /actions/UpdateVolume/input
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback, volume.update.by-id]
+  - entry: /actions/UpdateVolume/name
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback, volume.update.by-id]
+  - entry: /actions/UpdateVolume/output
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback, volume.update.by-id]
+  - entry: /actions/UpdateVolume/status
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback, volume.update.by-id]
+  - entry: /actions/UpdateVolumeTemplate/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update, template.update.by-id]
+  - entry: /actions/UpdateVolumeTemplate/document
+    scenario: volume.lifecycle
+    assertions: [template.update, template.update.by-id]
+  - entry: /actions/UpdateVolumeTemplate/input
+    scenario: volume.lifecycle
+    assertions: [template.update, template.update.by-id]
+  - entry: /actions/UpdateVolumeTemplate/name
+    scenario: volume.lifecycle
+    assertions: [template.update, template.update.by-id]
+  - entry: /actions/UpdateVolumeTemplate/output
+    scenario: volume.lifecycle
+    assertions: [template.update, template.update.by-id]
+  - entry: /actions/UpdateVolumeTemplate/status
+    scenario: volume.lifecycle
+    assertions: [template.update, template.update.by-id]
   - entry: /objects/ApproveRegistryRecordRequest/@exists
     scenario: registry.lifecycle
     assertions: [version.decisions]
@@ -584,6 +728,156 @@ coverage:
   - entry: /objects/CancelRegistryRecordResponse/type
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/CfsSource/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/FileSystemId/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/members/Path/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSource/usage
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CfsSpec/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/FileSystemId/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/members/PathPattern/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CfsSpec/usage
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CloudAgentSourceInput/@exists
     scenario: registry.lifecycle
     assertions: [a2a.manual.readback, a2a.sync.changed, a2a.sync.failed]
@@ -2618,6 +2912,216 @@ coverage:
   - entry: /objects/CloudVersionApprovalAction/type
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/CosSource/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketName/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/BucketPath/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/members/Endpoint/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSource/usage
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CosSpec/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketName/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/BucketPathPattern/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/members/Endpoint/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CosSpec/usage
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/CreateRegistryRecordRequest/@exists
     scenario: registry.lifecycle
     assertions: [record.label.readback, version.decisions, mcp.manual.readback, a2a.manual.readback, skill.package.roundtrip]
@@ -3092,6 +3596,546 @@ coverage:
   - entry: /objects/CreateRegistryResponse/type
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/CreateVolumeRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/AccessMode/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/document
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/example
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/member
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/name
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/required
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/ClientToken/type
+    scenario: volume.lifecycle
+    assertions: [volume.client-token]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/@exists
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/disabled
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/document
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/example
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/member
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/name
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/required
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/SourceVolumeId/type
+    scenario: volume.lifecycle
+    assertions: [input.validation]
+  - entry: /objects/CreateVolumeRequest/members/Storage/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Storage/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/document
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/example
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/member
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/name
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/required
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageRoleArn/type
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/StorageType/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/Tags/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/Tags/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/members/VolumeName/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeRequest/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/members/Volume/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeResponse/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/CreateVolumeTemplateRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/AccessMode/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/@exists
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/disabled
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/document
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/example
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/member
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/name
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/required
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ClientToken/type
+    scenario: volume.lifecycle
+    assertions: [template.client-token]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/DefaultCapacity/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/ReclaimPolicy/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/@exists
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/disabled
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/document
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/example
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/member
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/name
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/required
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageRoleArn/type
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageSpec/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/StorageType/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/Tags/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeNamePattern/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/members/VolumeTemplateName/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateRequest/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/members/VolumeTemplate/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/CreateVolumeTemplateResponse/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/DeleteRegistryRecordRequest/@exists
     scenario: registry.lifecycle
     assertions: [version.deleted]
@@ -3230,6 +4274,150 @@ coverage:
   - entry: /objects/DeleteRegistryResponse/type
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/DeleteVolumeRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/document
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/document
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/example
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/member
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/name
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/required
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeId/type
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/document
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/example
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/member
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/name
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/required
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/members/VolumeName/type
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeRequest/type
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeResponse/document
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeResponse/type
+    scenario: volume.lifecycle
+    assertions: [volume.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/document
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/disabled
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/document
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/example
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/member
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/name
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/required
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateId/type
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/disabled
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/document
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/example
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/member
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/name
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/required
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/members/VolumeTemplateName/type
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateRequest/type
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateResponse/document
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.delete]
+  - entry: /objects/DeleteVolumeTemplateResponse/type
+    scenario: volume.lifecycle
+    assertions: [template.delete]
   - entry: /objects/DescribeRegistryAuditLogListRequest/@exists
     scenario: registry.lifecycle
     assertions: [record.history]
@@ -4154,6 +5342,414 @@ coverage:
   - entry: /objects/DescribeRegistryResponse/type
     scenario: registry.lifecycle
     assertions: [registry.description, lists.filtered]
+  - entry: /objects/DescribeVolumeListRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListRequest/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/document
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/example
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/member
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/name
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/required
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Filters/type
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/document
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/example
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/member
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/name
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/required
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Limit/type
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/document
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/example
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/member
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/name
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/required
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/Offset/type
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/document
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/example
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/member
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/name
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/required
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeIds/type
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/document
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/example
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/member
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/name
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/required
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/members/VolumeNames/type
+    scenario: volume.lifecycle
+    assertions: [volume.filters]
+  - entry: /objects/DescribeVolumeListRequest/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/document
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/example
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/member
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/name
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/required
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/type
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/TotalCount/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.pagination]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/members/VolumeSet/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeListResponse/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/DescribeVolumeTemplateListRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListRequest/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/@exists
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/disabled
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/document
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/example
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/member
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/name
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/required
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Filters/type
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/@exists
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/disabled
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/document
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/example
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/member
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/name
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/required
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Limit/type
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/@exists
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/disabled
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/document
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/example
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/member
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/name
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/required
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/Offset/type
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/@exists
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/disabled
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/document
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/example
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/member
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/name
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/required
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateIds/type
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/@exists
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/disabled
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/document
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/example
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/member
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/name
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/required
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/members/VolumeTemplateNames/type
+    scenario: volume.lifecycle
+    assertions: [template.filters]
+  - entry: /objects/DescribeVolumeTemplateListRequest/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/@exists
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/disabled
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/document
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/example
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/member
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/name
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/output_required
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/required
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/type
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/TotalCount/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.pagination]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/output_required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/members/VolumeTemplateSet/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/DescribeVolumeTemplateListResponse/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
   - entry: /objects/GetSkillPackageDownloadURLRequest/@exists
     scenario: registry.lifecycle
     assertions: [skill.package.roundtrip, skill.inline.readback]
@@ -4784,6 +6380,216 @@ coverage:
   - entry: /objects/RejectRegistryRecordResponse/type
     scenario: registry.lifecycle
     assertions: [version.decisions]
+  - entry: /objects/Storage/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cfs/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/members/Cos/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Storage/usage
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/StorageMount/members/Volume/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/disabled
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/example
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/member
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/name
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/output_required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/Volume/value_allowed_null
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref, mount.volume-ref.by-id]
+  - entry: /objects/StorageMount/members/VolumeTemplate/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/disabled
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/example
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/member
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/name
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/output_required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageMount/members/VolumeTemplate/value_allowed_null
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/StorageSpec/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cfs/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/members/Cos/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/StorageSpec/usage
+    scenario: volume.lifecycle
+    assertions: [template.create]
   - entry: /objects/SyncRegistryRecordRequest/@exists
     scenario: registry.lifecycle
     assertions: [mcp.sync.changed, mcp.sync.failed, a2a.sync.changed, a2a.sync.failed]
@@ -6695,3 +8501,1209 @@ coverage:
   - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/disabled", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
   - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/document", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
   - {"entry": "/objects/DescribeSessionSpacesRequest/members/Filters/example", "scenario": "session.lifecycle", "assertions": ["space.filters", "space.pagination"]}
+  - entry: /objects/UpdateVolumeRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/document
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/document
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/example
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/member
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/name
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/required
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/Tags/type
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/document
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/example
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/member
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/name
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/required
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeId/type
+    scenario: volume.lifecycle
+    assertions: [volume.update.by-id]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/document
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/example
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/member
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/name
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/required
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/members/VolumeName/type
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeRequest/type
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeResponse/document
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeResponse/type
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/UpdateVolumeTemplateRequest/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/document
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/disabled
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/document
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/example
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/member
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/name
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/required
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/DefaultCapacity/type
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/disabled
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/document
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/example
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/member
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/name
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/required
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/Tags/type
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/disabled
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/document
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/example
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/member
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/name
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/required
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateId/type
+    scenario: volume.lifecycle
+    assertions: [template.update.by-id]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/disabled
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/document
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/example
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/member
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/name
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/required
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/members/VolumeTemplateName/type
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateRequest/type
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateResponse/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateResponse/document
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateResponse/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/UpdateVolumeTemplateResponse/type
+    scenario: volume.lifecycle
+    assertions: [template.update]
+  - entry: /objects/Volume/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/AccessMode/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/AccessMode/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/CreatedAt/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/CreatedAt/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/MountedInstanceId/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReclaimPolicy/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/ReuseKey/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Status/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/Storage/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Storage/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageRoleArn/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/document
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/example
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/member
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/name
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/required
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/type
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageRoleArn/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.storage-role]
+  - entry: /objects/Volume/members/StorageType/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/StorageType/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/Tags/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/document
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/example
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/member
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/name
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/required
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/type
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/Tags/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.tags.readback]
+  - entry: /objects/Volume/members/UpdatedAt/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/UpdatedAt/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeId/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeId/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/document
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/example
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/member
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/name
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/required
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/type
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeName/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.create]
+  - entry: /objects/Volume/members/VolumeTemplateId/@exists
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/disabled
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/document
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/example
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/member
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/name
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/output_required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/required
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/members/VolumeTemplateId/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/type
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/Volume/usage
+    scenario: volume.lifecycle
+    assertions: [volume.readback]
+  - entry: /objects/VolumeRef/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeId/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/disabled
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/example
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/member
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/name
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/output_required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeId/value_allowed_null
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref.by-id]
+  - entry: /objects/VolumeRef/members/VolumeName/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/disabled
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/example
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/member
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/name
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/output_required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/members/VolumeName/value_allowed_null
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeRef/usage
+    scenario: volume.mount-lifecycle
+    assertions: [mount.volume-ref]
+  - entry: /objects/VolumeTemplate/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/AccessMode/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/AccessMode/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/output_required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/CreatedAt/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/output_required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/DefaultCapacity/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/ReclaimPolicy/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/Status/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/output_required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Status/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/@exists
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/disabled
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/document
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/example
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/member
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/name
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/output_required
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/required
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/type
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageRoleArn/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.storage-role]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageSpec/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/StorageType/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/Tags/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/output_required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/Tags/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/@exists
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/disabled
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/document
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/example
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/member
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/name
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/output_required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/required
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/UpdatedAt/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeNamePattern/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateId/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/@exists
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/disabled
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/document
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/example
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/member
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/name
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/output_required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/required
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/type
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/members/VolumeTemplateName/value_allowed_null
+    scenario: volume.lifecycle
+    assertions: [template.create]
+  - entry: /objects/VolumeTemplate/type
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplate/usage
+    scenario: volume.lifecycle
+    assertions: [template.readback]
+  - entry: /objects/VolumeTemplateRef/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/disabled
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/example
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/member
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/name
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/output_required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/ReuseKey/value_allowed_null
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/@exists
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/disabled
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/document
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/example
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/member
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/name
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/output_required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/required
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/members/VolumeTemplateName/value_allowed_null
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/type
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]
+  - entry: /objects/VolumeTemplateRef/usage
+    scenario: volume.mount-lifecycle
+    assertions: [mount.template-ref]

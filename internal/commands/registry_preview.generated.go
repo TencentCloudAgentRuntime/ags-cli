@@ -92,6 +92,14 @@ import (
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	toollist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/list"
 	toolupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/update"
+	volumecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volume/create"
+	volumedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volume/delete"
+	volumelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volume/list"
+	volumeupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volume/update"
+	volumetemplatecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volumetemplate/create"
+	volumetemplatedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volumetemplate/delete"
+	volumetemplatelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volumetemplate/list"
+	volumetemplateupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/volumetemplate/update"
 )
 
 func Registry() (*command.Registry, error) {
@@ -183,6 +191,14 @@ func Registry() (*command.Registry, error) {
 		toolget.Module(),
 		toollist.Module(),
 		toolupdate.Module(),
+		volumetemplatecreate.GeneratedModule(),
+		volumetemplatedelete.GeneratedModule(),
+		volumetemplatelist.GeneratedModule(),
+		volumetemplateupdate.GeneratedModule(),
+		volumecreate.GeneratedModule(),
+		volumedelete.GeneratedModule(),
+		volumelist.GeneratedModule(),
+		volumeupdate.GeneratedModule(),
 	} {
 		if err := registry.Register(module); err != nil {
 			return nil, err

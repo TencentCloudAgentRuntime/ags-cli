@@ -90,6 +90,10 @@ func groupShort(group string) string {
 		return "Manage sessions"
 	case "session-space":
 		return "Manage session spaces"
+	case "volume":
+		return "Manage sandbox volumes"
+	case "volume-template":
+		return "Manage sandbox volume templates"
 	}
 	return "Manage " + group
 }
@@ -104,6 +108,10 @@ func groupLong(group string) string {
 		return "Manage API keys for AGR sandbox access."
 	case "deployment":
 		return "Manage deployments and related data-plane workflows."
+	case "volume":
+		return "Manage sandbox volumes. A volume binds one concrete storage location that sandbox instances can mount."
+	case "volume-template":
+		return "Manage sandbox volume templates. A template derives or reuses a concrete volume per reuse key instead of binding one fixed path."
 	}
 	return ""
 }
@@ -161,9 +169,9 @@ func aliasesForCommand(commandID string) []string {
 	switch commandID {
 	case "instance.create":
 		return []string{"c"}
-	case "instance.list", "tool.list", "apikey.list", "session.list", "session-space.list", "session.event.list":
+	case "instance.list", "tool.list", "apikey.list", "session.list", "session-space.list", "session.event.list", "volume.list", "volume-template.list":
 		return []string{"ls"}
-	case "instance.delete", "tool.delete", "apikey.delete", "session.delete", "session-space.delete":
+	case "instance.delete", "tool.delete", "apikey.delete", "session.delete", "session-space.delete", "volume.delete", "volume-template.delete":
 		return []string{"rm", "del"}
 	}
 	return nil

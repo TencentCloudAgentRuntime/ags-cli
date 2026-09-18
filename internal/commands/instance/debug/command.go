@@ -75,8 +75,8 @@ func Module() command.Module {
 			{
 				Name:     "metadata",
 				Usage:    "Metadata as JSON array, @file, or - for stdin",
-				Format:   `[{"Key":"<key>","Value":"<value>"}]`,
-				Examples: []string{`agr instance debug --tool-id sdt-xxxx --metadata '[{"Key":"env","Value":"debug"}]'`},
+				Format:   `[{"Name":"<name>","Value":"<value>"}]`,
+				Examples: []string{`agr instance debug --tool-id sdt-xxxx --metadata '[{"Name":"env","Value":"debug"}]'`},
 				Type:     command.FlagString, Workflow: true,
 			},
 			{Name: "client-token", Usage: "Client token for duplicate creation protection", Type: command.FlagString, Workflow: true},

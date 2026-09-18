@@ -592,6 +592,18 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"update:session"}
 	case "session.event.append":
 		return []string{"create:event"}
+	case "volume.create":
+		return []string{"create:volume"}
+	case "volume.delete":
+		return []string{"delete:volume"}
+	case "volume.update":
+		return []string{"update:volume"}
+	case "volume-template.create":
+		return []string{"create:volume-template"}
+	case "volume-template.delete":
+		return []string{"delete:volume-template"}
+	case "volume-template.update":
+		return []string{"update:volume-template"}
 	}
 	if strings.HasPrefix(cmd.Command, "registry.") {
 		return []string{"read:registry"}

@@ -21,6 +21,7 @@ type schemaCommandSnapshot struct {
 	Name            string                 `json:"Name"`
 	Kind            string                 `json:"Kind"`
 	Mutation        bool                   `json:"Mutation"`
+	Idempotency     string                 `json:"Idempotency"`
 	RequiresAuth    bool                   `json:"RequiresAuth"`
 	SupportsRequest bool                   `json:"SupportsRequest"`
 	RequestSchema   *schemaRequestSnapshot `json:"RequestSchema"`
@@ -54,6 +55,101 @@ var apiDescriptorFieldExclusions = map[string]map[string]string{}
 // opt the command out of the API contract checks.
 var workflowAPIContracts = map[string]string{
 	"tool.fork": "CreateSandboxTool",
+}
+
+// clientTokenIdempotencyExceptions lists commands that expose a ClientToken
+// request property but deliberately do not advertise client-token idempotency.
+// Every entry needs a reason; an empty map is the expected steady state.
+var clientTokenIdempotencyExceptions = map[string]string{}
+
+const clientTokenProperty = "ClientToken"
+
+// TestSchema_ClientTokenIdempotency keeps the retry contract closed in both
+// directions: the API request member, the published request property and the
+// reported Idempotency must agree. withIdempotencyHint reads Idempotency, so a
+// drifting command silently drops the "retry with --client-token" hint.
+func TestSchema_ClientTokenIdempotency(t *testing.T) {
+	apiCatalog, err := apimeta.Get()
+	if err != nil {
+		t.Fatalf("load API metadata: %v", err)
+	}
+	contractAccepts := map[string]bool{}
+	for _, action := range apiCatalog.Mapping.MappedActionNames() {
+		mapped := apiCatalog.Mapping.Actions[action]
+		request, ok := apiCatalog.Object(mapped.Request)
+		if !ok {
+			continue
+		}
+		for _, member := range request.Members {
+			if member.Name == clientTokenProperty {
+				contractAccepts[mapped.Command] = true
+			}
+		}
+	}
+	if len(contractAccepts) == 0 {
+		t.Fatal("no mapped command accepts ClientToken; the invariant would be vacuous")
+	}
+
+	r := run(t, "schema", "-o", "json")
+	if r.exitCode != 0 {
+		t.Fatalf("exit code = %d\nstderr: %s\nstdout: %s", r.exitCode, r.stderr, r.stdout)
+	}
+	env := parseEnvelope(t, r.stdout)
+	rawData, err := json.Marshal(env.Data)
+	if err != nil {
+		t.Fatalf("marshal schema data: %v", err)
+	}
+	var catalog schemaCatalogSnapshot
+	if err := json.Unmarshal(rawData, &catalog); err != nil {
+		t.Fatalf("decode schema catalog: %v", err)
+	}
+
+	declaredCount := 0
+	published := map[string]bool{}
+	for _, schema := range catalog.Commands {
+		if schema.Kind == "group" {
+			continue
+		}
+		exposed := schema.RequestSchema != nil && hasRequestProperty(schema.RequestSchema, clientTokenProperty)
+		published[schema.Name] = exposed
+		if mapped, ok := contractAccepts[schema.Name]; ok && mapped != exposed {
+			t.Errorf("schema %q: publishes ClientToken = %v, but the mapped API request says %v", schema.Name, exposed, mapped)
+		}
+		declared := strings.Contains(schema.Idempotency, "client_token")
+		if reason, excepted := clientTokenIdempotencyExceptions[schema.Name]; excepted {
+			if strings.TrimSpace(reason) == "" {
+				t.Errorf("schema %q: idempotency exception must include a non-empty reason", schema.Name)
+			}
+			if !exposed {
+				t.Errorf("schema %q: stale idempotency exception, the command no longer exposes ClientToken", schema.Name)
+			}
+			continue
+		}
+		if declared != exposed {
+			t.Errorf("schema %q: Idempotency = %q but ClientToken exposed = %v", schema.Name, schema.Idempotency, exposed)
+		}
+		if declared {
+			declaredCount++
+		}
+	}
+	for commandID := range contractAccepts {
+		if _, ok := published[commandID]; !ok {
+			t.Errorf("mapped ClientToken command %q is missing from the schema catalog", commandID)
+		}
+	}
+	for commandID := range clientTokenIdempotencyExceptions {
+		if !published[commandID] {
+			t.Errorf("stale idempotency exception %q: no published ClientToken property", commandID)
+		}
+	}
+	if declaredCount == 0 {
+		t.Error("no command declares client-token idempotency")
+	}
+}
+
+func hasRequestProperty(request *schemaRequestSnapshot, name string) bool {
+	_, ok := request.Properties[name]
+	return ok
 }
 
 func TestAPIFieldCoverageIssues(t *testing.T) {
