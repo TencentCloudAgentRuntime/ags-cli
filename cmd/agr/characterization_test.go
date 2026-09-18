@@ -1257,6 +1257,11 @@ func runAGR(t *testing.T, args ...string) (string, error) {
 		"AGR_CHARACTERIZATION_HELPER=1",
 		"HOME="+t.TempDir(),
 		"USERPROFILE="+t.TempDir(),
+		// Parallel helpers inherit one GOCOVERDIR from `go test -coverprofile`
+		// and race to rename the same meta-data file. The loser writes an
+		// "error: coverage meta-data emit failed" line into this command's
+		// output, which then fails to parse as an envelope.
+		"GOCOVERDIR="+t.TempDir(),
 		"GORACE="+characterizationGORACE(os.Getenv("GORACE")),
 		"TENCENTCLOUD_SECRET_ID=",
 		"TENCENTCLOUD_SECRET_KEY=",
