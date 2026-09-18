@@ -2,6 +2,30 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.6.7] - 2026-09-18
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 为 Tool 创建、更新和 fork 流程新增 `--computer-configuration`，支持
+  WAA 和 OSWorld 配置，并在 get、list 与 fork 过程中完整保留相关配置。
+- 为 `agr instance list` 新增 `--max-results`、`--next-token` 和
+  `--need-total-count` token 分页能力，并将返回游标统一输出为
+  `Pagination.NextCursor`。
+- 支持从同一源码分支构建相互隔离的 stable 和 preview 发布通道；
+  `agr version -o json` 现在会报告二进制通道，稳定版继续维护 `latest`
+  和 Homebrew 分发。
+
+### Bug 修复
+- 修正机器可读命令 Schema，使用 JSON Schema 风格的 `array` 和
+  `integer` 属性类型，并保持 API 请求字段与 CLI flag 同步。
+- 修正 Instance metadata 帮助和示例，使用服务端支持的 `Name` 和
+  `Value` 字段。
+
+### 文档
+- 补充 API patch 验证流程，以及 stable/preview 贡献与发布工作流说明。
+
 ## [0.6.6] - 2026-08-27
 
 ### 破坏性变更
