@@ -21,6 +21,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const maxWebSocketMessageBytes = 1024 * 1024
+
 // Options defines configuration for the port-forward proxy.
 type Options struct {
 	InstanceID string // e.g. "sandbox-xxx"
@@ -34,6 +36,9 @@ type Options struct {
 	// connection. It enables lazy, refreshable Deployment credentials. When it
 	// is nil, Token retains the existing static instance-proxy behavior.
 	TokenProvider func(context.Context) (string, error)
+	// TokenInvalidator marks a dynamic token unusable after an upstream 401.
+	// The current request is never replayed.
+	TokenInvalidator func()
 	// RewriteOrigin normalizes each non-empty Origin to the upstream authority.
 	// Deployment proxy enables it because that proxy is intended for local
 	// debugging; instance proxy leaves it disabled for compatibility.
@@ -163,6 +168,9 @@ func (p *Proxy) Start() (string, error) {
 		}
 	}
 	reverseProxy.ModifyResponse = func(response *http.Response) error {
+		if response.StatusCode == http.StatusUnauthorized && p.options.TokenInvalidator != nil {
+			p.options.TokenInvalidator()
+		}
 		p.captureAffinityResponse(response.Request.Context(), response.Header)
 		return nil
 	}
@@ -282,6 +290,9 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 	}
 
 	upstreamConn, upstreamResp, err := dialer.DialContext(p.ctx, upstreamURL, upstreamHeaders)
+	if upstreamResp != nil && upstreamResp.StatusCode == http.StatusUnauthorized && p.options.TokenInvalidator != nil {
+		p.options.TokenInvalidator()
+	}
 	// Close the HTTP response body if present (dial failure with a non-101 HTTP response).
 	if upstreamResp != nil && upstreamResp.Body != nil {
 		defer func() { _ = upstreamResp.Body.Close() }()
@@ -298,6 +309,7 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 		return
 	}
 	defer func() { _ = upstreamConn.Close() }()
+	upstreamConn.SetReadLimit(maxWebSocketMessageBytes)
 	var affinityHeaders http.Header
 	if upstreamResp != nil {
 		affinityHeaders = upstreamResp.Header
@@ -324,6 +336,7 @@ func (p *Proxy) handleWebSocket(w http.ResponseWriter, r *http.Request, upgrader
 		return
 	}
 	defer func() { _ = clientConn.Close() }()
+	clientConn.SetReadLimit(maxWebSocketMessageBytes)
 
 	if p.options.Verbose {
 		p.logger.Printf("[WS] WebSocket connection established: %s", r.URL.Path)

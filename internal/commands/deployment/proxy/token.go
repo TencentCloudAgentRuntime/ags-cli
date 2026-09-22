@@ -100,3 +100,10 @@ func (m *tokenManager) fallback(refreshErr error) (string, error) {
 	}
 	return "", refreshErr
 }
+
+func (m *tokenManager) Invalidate() {
+	m.mu.Lock()
+	m.token = ""
+	m.expires = time.Time{}
+	m.mu.Unlock()
+}

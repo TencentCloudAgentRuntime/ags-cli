@@ -40,6 +40,101 @@ func TestTokenProviderAllowsLazyDeploymentCredentials(t *testing.T) {
 	}
 }
 
+func TestUnauthorizedInvalidatesDynamicTokenWithoutReplay(t *testing.T) {
+	var upstreamCalls, invalidations atomic.Int32
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		upstreamCalls.Add(1)
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer upstream.Close()
+	p, err := New(Options{
+		InstanceID:       "dpl-a1b2c3d4",
+		Domain:           "ap-guangzhou.agents.tencentags.com",
+		RemotePort:       8080,
+		ListenAddress:    "127.0.0.1:0",
+		Insecure:         true,
+		Logger:           log.New(io.Discard, "", 0),
+		TokenProvider:    func(context.Context) (string, error) { return "dpt_rejected", nil },
+		TokenInvalidator: func() { invalidations.Add(1) },
+		DialContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+			return dialer.DialContext(ctx, network, upstream.Listener.Addr().String())
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+	response, err := http.Get("http://" + address + "/http") //nolint:gosec -- loopback fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = response.Body.Close()
+	if response.StatusCode != http.StatusUnauthorized || upstreamCalls.Load() != 1 || invalidations.Load() != 1 {
+		t.Fatalf("HTTP status=%d upstream=%d invalidations=%d", response.StatusCode, upstreamCalls.Load(), invalidations.Load())
+	}
+	connection, wsResponse, err := websocket.DefaultDialer.Dial("ws://"+address+"/ws", nil)
+	if connection != nil {
+		_ = connection.Close()
+	}
+	if wsResponse != nil {
+		_ = wsResponse.Body.Close()
+	}
+	if err == nil || upstreamCalls.Load() != 2 || invalidations.Load() != 2 {
+		t.Fatalf("WebSocket err=%v upstream=%d invalidations=%d", err, upstreamCalls.Load(), invalidations.Load())
+	}
+}
+
+func TestWebSocketRejectsOversizedUpstreamMessage(t *testing.T) {
+	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		_ = conn.WriteMessage(websocket.BinaryMessage, make([]byte, maxWebSocketMessageBytes+1))
+	}))
+	defer upstream.Close()
+	p, err := New(Options{
+		InstanceID:    "dpl-a1b2c3d4",
+		Domain:        "ap-guangzhou.agents.tencentags.com",
+		RemotePort:    8080,
+		ListenAddress: "127.0.0.1:0",
+		Insecure:      true,
+		Logger:        log.New(io.Discard, "", 0),
+		Token:         "dpt_fixture",
+		DialContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+			return dialer.DialContext(ctx, network, upstream.Listener.Addr().String())
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	address, err := p.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Stop()
+	connection, response, err := websocket.DefaultDialer.Dial("ws://"+address+"/ws", nil)
+	if err != nil {
+		if response != nil {
+			_ = response.Body.Close()
+		}
+		t.Fatal(err)
+	}
+	defer func() { _ = connection.Close() }()
+	_ = connection.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if _, _, err = connection.ReadMessage(); err == nil {
+		t.Fatal("oversized upstream WebSocket message was forwarded")
+	}
+}
+
 func TestProxyForwardsHTTPSSEAndWebSocketWithDynamicToken(t *testing.T) {
 	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
 	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
