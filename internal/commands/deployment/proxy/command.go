@@ -167,15 +167,16 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 		}
 	}
 	proxy, err := runtime.NewProxy(dataplaneproxy.Options{
-		InstanceID:      deploymentID,
-		Domain:          domain,
-		RemotePort:      remotePort,
-		TokenProvider:   manager.Token,
-		RewriteOrigin:   true,
-		PreserveHeaders: true,
-		Affinity:        affinityOptions,
-		ListenAddress:   listenAddress,
-		Verbose:         boolFlag(req, "verbose"),
+		InstanceID:       deploymentID,
+		Domain:           domain,
+		RemotePort:       remotePort,
+		TokenProvider:    manager.Token,
+		TokenInvalidator: manager.Invalidate,
+		RewriteOrigin:    true,
+		PreserveHeaders:  true,
+		Affinity:         affinityOptions,
+		ListenAddress:    listenAddress,
+		Verbose:          boolFlag(req, "verbose"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create deployment proxy: %w", err)

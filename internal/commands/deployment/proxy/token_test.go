@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -97,6 +98,23 @@ func TestTokenManagerFallsBackOnlyToUnexpiredToken(t *testing.T) {
 	now = now.Add(2 * time.Hour)
 	if _, err := manager.Token(context.Background()); err == nil {
 		t.Fatal("expired fallback token should not be returned")
+	}
+}
+
+func TestTokenManagerInvalidateForcesNextRequestToRefresh(t *testing.T) {
+	now := time.Date(2026, 8, 25, 8, 0, 0, 0, time.UTC)
+	calls := 0
+	manager := newTokenManager(context.Background(), func(context.Context) (*ags.AcquireDeploymentTokenResponseParams, error) {
+		calls++
+		token, expires := fmt.Sprintf("dpt_%d", calls), now.Add(24*time.Hour).Format(time.RFC3339)
+		return &ags.AcquireDeploymentTokenResponseParams{Token: &token, ExpiresAt: &expires}, nil
+	}, func() time.Time { return now })
+	if token, err := manager.Token(context.Background()); err != nil || token != "dpt_1" {
+		t.Fatalf("first Token() = (%q, %v)", token, err)
+	}
+	manager.Invalidate()
+	if token, err := manager.Token(context.Background()); err != nil || token != "dpt_2" || calls != 2 {
+		t.Fatalf("Token() after invalidate = (%q, %v), calls=%d", token, err, calls)
 	}
 }
 
