@@ -19,10 +19,9 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 )
 
-// Exercise the real CLI, signed dynamic transport and JSON envelope. The old
-// SDK cannot represent the new fields, so they must survive the fallback route.
+// Exercise the real CLI, signed transport and JSON envelope. Canonical fields
+// must survive whichever SDK or dynamic route the compatibility check selects.
 func TestPrecachePromotedContract(t *testing.T) {
-	response := map[string]any{"PreCacheImageId": "cache-test", "SourceType": "EXPLICIT", "CachedImageSizeBytes": json.Number("9007199254740993"), "CreateTime": "created", "LastUsedTime": "used", "RequestId": "request-test"}
 	for _, tc := range []struct {
 		name   string
 		args   []string
@@ -37,6 +36,15 @@ func TestPrecachePromotedContract(t *testing.T) {
 		{"create", []string{"create", "--image", "nginx:latest", "--image-registry-type", "personal"}, "", "CreatePreCacheImageTask"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			response := map[string]any{"Image": "nginx:latest", "ImageDigest": "sha256:test", "ImageRegistryType": "personal", "PreCacheImageId": "cache-test", "RequestId": "request-test"}
+			if tc.action == "DescribePreCacheImageTask" {
+				response["Status"] = "Success"
+				response["Message"] = "cached"
+				response["SourceType"] = "EXPLICIT"
+				response["CachedImageSizeBytes"] = json.Number("9007199254740993")
+				response["CreateTime"] = "created"
+				response["LastUsedTime"] = "used"
+			}
 			requests := make(chan map[string]any, 1)
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("X-TC-Action") != tc.action || r.Header.Get("Authorization") == "" {

@@ -18,11 +18,11 @@ and response shapes are now populated; the empty-shape warning in the original
   `agr api call DescribeQuotaOverview --request '{}'`; no new quota resource group.
 - Volume/VolumeTemplate and storage-mount extensions remain preview-only. The
   remaining 36 API overlay operations rebase cleanly onto the canonical snapshot.
-- AGS/common remain v1.3.179. The repository already compares the full request and
-  response shape before SDK decoding and uses signed dynamic JSON for unsupported
-  contracts. This retains newly published fields without forcing an SDK upgrade.
-  Latest SDK checked during implementation: v1.3.188; version availability alone
-  is not used as evidence of wire compatibility.
+- AGS/common are pinned to v1.3.188; this AGS release requires common v1.3.188.
+  The repository still compares the full request and response shape before SDK
+  decoding and uses signed dynamic JSON for unsupported contracts. SDK runtime
+  decoding and signed local transport tests verify compatibility; version
+  availability alone is not used as evidence of wire compatibility.
 - Pre-cache get accepts a task ID alone. The old digest positional argument and
   image triple remain available; digest is now optional at the CLI argument layer.
   The CLI rejects missing, incomplete, empty, or mixed ID/triple selectors locally for both flags and JSON requests. Create/get JSON responses
@@ -32,7 +32,7 @@ and response shapes are now populated; the empty-shape warning in the original
 
 `TestPrecachePromotedContract` drives the real CLI over signed local HTTPS with
 ID flags, inline JSON, files, stdin and the legacy triple. It checks output fields
-and integer precision with the existing SDK fallback.
+and integer precision through the selected SDK or dynamic transport.
 `TestPromotedRequestCoverage` derives fields from canonical metadata and checks
 runtime flags, help and actual schema output. Both stable and preview run it.
 Session lifecycle and EventCount scenarios run against both candidate channels
