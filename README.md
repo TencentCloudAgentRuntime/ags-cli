@@ -395,6 +395,10 @@ agr deployment update <id>       Update mutable Deployment configuration
 agr deployment delete <id>       Delete a Deployment
 agr deployment proxy <id> PORT   L7 proxy for local debugging
 
+agr registry ...                 Manage registries, records, and skill packages
+agr session ...                  Manage sessions and events
+agr session-space ...            Manage session spaces
+
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|get

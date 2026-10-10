@@ -359,6 +359,10 @@ agr deployment update <id>       更新 Deployment 可变配置
 agr deployment delete <id>       删除 Deployment
 agr deployment proxy <id> PORT   本地调试七层代理
 
+agr registry ...                 管理 Registry、记录和 Skill 包
+agr session ...                  管理会话与事件
+agr session-space ...            管理会话空间
+
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|get

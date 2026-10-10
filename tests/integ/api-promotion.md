@@ -39,11 +39,12 @@ Session lifecycle and EventCount scenarios run against both candidate channels
 with deterministic fixtures and resource cleanup assertions. These are local
 integration tests, not live-service evidence.
 
-JSON request and field-flag input failures retain their original error causes
-and diagnostic context: request-input/parse stage, input field, and file or stdin
-location where observed. Regression tests cover missing files, stdin read errors,
-malformed JSON through inline/file/stdin inputs, and empty stdin while preserving
-usage error codes and exit status.
+JSON read/decode errors in generated command requests/field flags and
+`agr api call --request` retain their original error causes and diagnostic
+context: request-input/parse stage, input field, and file or stdin location where
+observed. Regression tests cover missing files, stdin read errors, malformed JSON
+through inline/file/stdin inputs, empty stdin and trailing JSON while preserving
+usage error codes and exit status. Raw API requests retain their original bytes.
 
 ## Historical live verification (2026-09-29, ap-chongqing)
 
