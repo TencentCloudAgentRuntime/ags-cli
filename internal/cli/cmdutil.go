@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	requestio "github.com/TencentCloudAgentRuntime/ags-cli/internal/cli/request"
@@ -13,6 +12,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/textview"
 	"github.com/spf13/cobra"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -357,31 +357,19 @@ func validateStreamNotJSON() error {
 // ═══════════════════════════════════════════════════════════════════════════
 
 func printKV(w io.Writer, pairs []KeyValue) {
-	maxLen := 0
-	for _, kv := range pairs {
-		if len(kv.Key) > maxLen {
-			maxLen = len(kv.Key)
-		}
+	rows := make([]textview.KeyValue, len(pairs))
+	for i, pair := range pairs {
+		rows[i] = textview.KeyValue(pair)
 	}
-	for _, kv := range pairs {
-		fmt.Fprintf(w, "%-*s  %s\n", maxLen, kv.Key+":", kv.Value)
-	}
+	textview.PrintKV(w, rows)
 }
 
 func printTable(w io.Writer, headers []string, rows [][]string) {
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, strings.Join(headers, "\t"))
-	for _, row := range rows {
-		fmt.Fprintln(tw, strings.Join(row, "\t"))
-	}
-	_ = tw.Flush()
+	textview.PrintTable(w, headers, rows)
 }
 
 func printTableWithPagination(w io.Writer, headers []string, rows [][]string, shown, total int) {
-	printTable(w, headers, rows)
-	if total > shown {
-		fmt.Fprintf(w, "\nShowing %d of %d items (use --offset and --limit for pagination)\n", shown, total)
-	}
+	textview.PrintTableWithPagination(w, headers, rows, shown, total)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

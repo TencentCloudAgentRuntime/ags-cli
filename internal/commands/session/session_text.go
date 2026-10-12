@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
-	"text/tabwriter"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/textview"
 )
 
 func sessionTextRenderer(id string, data any) (func(io.Writer), error) {
@@ -50,18 +50,18 @@ func sessionTextRenderer(id string, data any) (func(io.Writer), error) {
 				rows = append(rows, row)
 			}
 			total, _ := strconv.Atoi(sessionTextValue(response["TotalCount"]))
-			printTableWithPagination(w, fields, rows, len(rows), total)
+			textview.PrintTableWithPagination(w, fields, rows, len(rows), total)
 			return
 		}
 		if object != "" {
 			entry, _ := response[object].(map[string]any)
-			pairs := make([][2]string, 0, len(fields))
+			pairs := make([]textview.KeyValue, 0, len(fields))
 			for _, field := range fields {
 				if value, present := entry[field]; present {
-					pairs = append(pairs, [2]string{field, sessionTextValue(value)})
+					pairs = append(pairs, textview.KeyValue{Key: field, Value: sessionTextValue(value)})
 				}
 			}
-			printKV(w, pairs)
+			textview.PrintKV(w, pairs)
 			return
 		}
 		switch id {
@@ -82,26 +82,4 @@ func sessionTextValue(value any) string {
 	}
 	raw, _ := json.Marshal(value)
 	return string(raw)
-}
-
-func printKV(w io.Writer, pairs [][2]string) {
-	width := 0
-	for _, pair := range pairs {
-		width = max(width, len(pair[0]))
-	}
-	for _, pair := range pairs {
-		fmt.Fprintf(w, "%-*s  %s\n", width, pair[0]+":", pair[1])
-	}
-}
-
-func printTableWithPagination(w io.Writer, headers []string, rows [][]string, shown, total int) {
-	table := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(table, strings.Join(headers, "\t"))
-	for _, row := range rows {
-		fmt.Fprintln(table, strings.Join(row, "\t"))
-	}
-	_ = table.Flush()
-	if total > shown {
-		fmt.Fprintf(w, "\nShowing %d of %d items (use --offset and --limit for pagination)\n", shown, total)
-	}
 }
