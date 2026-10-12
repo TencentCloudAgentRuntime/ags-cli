@@ -67,9 +67,10 @@ func TestCredentialTokenOwnership(t *testing.T) {
 					args = append(args, tokenArgs...)
 				}
 				env := []string{}
-				if tc.auth == "env" {
+				switch tc.auth {
+				case "env":
 					env = append(env, "TENCENTCLOUD_TOKEN="+cloudToken)
-				} else if tc.auth == "config" {
+				case "config":
 					configPath := filepath.Join(home, "config.toml")
 					if err := os.WriteFile(configPath, []byte("[auth]\ntoken = \""+cloudToken+"\"\n"), 0600); err != nil {
 						t.Fatal(err)
@@ -171,7 +172,7 @@ func runTokenCLI(t *testing.T, server *httptest.Server, home string, env, args [
 	cmd := exec.CommandContext(t.Context(), os.Args[0], append([]string{"-test.run=^TestTransportLifecycleHelper$", "--"}, args...)...)
 	cmd.Env = append([]string{
 		"HOME=" + home, "USERPROFILE=" + home, "PATH=" + os.Getenv("PATH"),
-		"AGR_TRANSPORT_LIFECYCLE_HELPER=token", "GORACE=atexit_sleep_ms=0",
+		"AGR_TRANSPORT_LIFECYCLE_HELPER=cli", "GORACE=atexit_sleep_ms=0",
 		"TENCENTCLOUD_SECRET_ID=fixture-id", "TENCENTCLOUD_SECRET_KEY=fixture-key",
 	}, env...)
 	cmd.Env = append(cmd.Env,
