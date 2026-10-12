@@ -1,6 +1,7 @@
 package apicli
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
@@ -121,7 +122,7 @@ func (b *RequestBuilder) Build(req command.Request) (map[string]any, error) {
 			if err := mergePositionals(raw, b.desc.Fields, req); err != nil {
 				return nil, err
 			}
-			if err := b.validateRequiredFields(raw); err != nil {
+			if err := validateRequiredFields(raw, b.desc.Fields); err != nil {
 				return nil, err
 			}
 			return raw, nil
@@ -148,7 +149,7 @@ func (b *RequestBuilder) Build(req command.Request) (map[string]any, error) {
 			out[field.Name] = value
 		}
 	}
-	if err := b.validateRequiredFields(out); err != nil {
+	if err := validateRequiredFields(out, b.desc.Fields); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -227,8 +228,8 @@ func mergePositionals(raw map[string]any, fields []FieldSpec, req command.Reques
 	return nil
 }
 
-func (b *RequestBuilder) validateRequiredFields(req map[string]any) error {
-	for _, field := range b.desc.Fields {
+func validateRequiredFields(req map[string]any, fields []FieldSpec) error {
+	for _, field := range fields {
 		if !field.Required {
 			continue
 		}
@@ -236,11 +237,7 @@ func (b *RequestBuilder) validateRequiredFields(req map[string]any) error {
 		if ok && (requiredValuePresent(value) || (field.AllowEmpty && value == "")) {
 			continue
 		}
-		err := missingRequiredFieldError(field)
-		if field.Name == "SpaceId" && strings.HasPrefix(b.desc.Spec.ID, "session.") {
-			err.Failure.Hint += " Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
-		}
-		return err
+		return missingRequiredFieldError(field)
 	}
 	return nil
 }
@@ -261,7 +258,7 @@ func missingRequiredFieldError(field FieldSpec) *output.CLIError {
 		return output.NewUsageError(
 			"MISSING_REQUIRED_ARG",
 			fmt.Sprintf("missing required argument %s", arg),
-			fmt.Sprintf("Provide %s or include %s in --request.", arg, field.Name),
+			cmp.Or(field.RequiredHint, fmt.Sprintf("Provide %s or include %s in --request.", arg, field.Name)),
 		)
 	}
 	flag := requiredFlagName(field)
@@ -269,13 +266,13 @@ func missingRequiredFieldError(field FieldSpec) *output.CLIError {
 		return output.NewUsageError(
 			"MISSING_REQUIRED_FLAG",
 			fmt.Sprintf("%s is required", flag),
-			fmt.Sprintf("Provide %s or include %s in --request.", flag, field.Name),
+			cmp.Or(field.RequiredHint, fmt.Sprintf("Provide %s or include %s in --request.", flag, field.Name)),
 		)
 	}
 	return output.NewUsageError(
 		"MISSING_REQUIRED_FLAG",
 		fmt.Sprintf("%s is required", field.Name),
-		fmt.Sprintf("Provide %s in --request.", field.Name),
+		cmp.Or(field.RequiredHint, fmt.Sprintf("Provide %s in --request.", field.Name)),
 	)
 }
 

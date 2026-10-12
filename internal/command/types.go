@@ -66,6 +66,8 @@ type Spec struct {
 	Output         OutputSpec
 	SupportsJSON   bool
 	SupportsNDJSON bool
+	// RequiresAuth declares authentication for read-only modules without effects.
+	RequiresAuth bool
 }
 
 // GroupSpec describes an intermediate command group in the command tree.

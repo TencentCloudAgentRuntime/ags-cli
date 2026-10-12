@@ -1,11 +1,24 @@
 package cli
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 )
+
+func TestRemovedSessionSpaceMigrationHint(t *testing.T) {
+	root := &cobra.Command{Use: "agr"}
+	err := fmt.Errorf("unknown command %q for %q", "session-space", "agr")
+	hint := commandSpecificUsageHint(root, err)
+	if !strings.Contains(hint, "agr session space") {
+		t.Fatalf("migration hint absent: %q", hint)
+	}
+	if hint := commandSpecificUsageHint(root, fmt.Errorf("unknown command %q for %q", "not-a-command", "agr")); hint != "" {
+		t.Fatalf("migration hint leaked to another command: %q", hint)
+	}
+}
 
 func TestExplicitHelpTopicAllowsHelpCommand(t *testing.T) {
 	if err := explicitHelpTopicError([]string{"help", "help"}); err != nil {

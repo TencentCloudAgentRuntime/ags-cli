@@ -2,6 +2,7 @@ package patchscenarios
 
 import (
 	"encoding/json"
+	"errors"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -176,8 +177,21 @@ func testSessionLifecycleCandidate(t *testing.T, channel string) {
 			}
 			cmd := exec.CommandContext(t.Context(), candidate, "session-space", "--help")
 			cmd.Env = []string{"HOME=" + t.TempDir()}
-			if out, err := cmd.CombinedOutput(); err == nil {
-				t.Fatalf("obsolete preview group remains: %s", out)
+			if out, err := cmd.CombinedOutput(); err == nil || !strings.Contains(string(out), "agr session space") {
+				t.Fatalf("obsolete preview group remains or migration hint is absent: %v %s", err, out)
+			}
+			for _, args := range [][]string{{"session-space", "list", "-o", "json"}, {"session-space", "--help", "-o", "json"}} {
+				cmd := exec.CommandContext(t.Context(), candidate, args...)
+				cmd.Env = []string{"HOME=" + t.TempDir()}
+				out, err := cmd.Output()
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) || exit.ExitCode() != 2 {
+					t.Fatalf("removed command exit: %v %s", err, out)
+				}
+				var result struct{ Failure struct{ Code, Hint string } }
+				if err := json.Unmarshal(out, &result); err != nil || result.Failure.Code != "INVALID_USAGE" || !strings.Contains(result.Failure.Hint, "agr session space") {
+					t.Fatalf("removed command JSON diagnostic: %v %s", err, out)
+				}
 			}
 		}
 		if out, err := exec.CommandContext(t.Context(), binary, "schema", "session.update-title", "-o", "json").CombinedOutput(); err == nil {

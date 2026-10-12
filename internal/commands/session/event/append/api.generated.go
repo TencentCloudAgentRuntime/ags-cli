@@ -5,6 +5,7 @@ package append
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -14,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"session", "event", "append"},
 			Use:          "append",
 			Short:        "Append an event to a session",
-			Long:         "Append an interaction to an existing conversation. Keep the same SpaceId, UserId, and SessionId across turns. Supply a stable EventId for retries of the same event. The event accepts inline JSON, @file, or - for stdin.",
+			Long:         "Append an interaction to an existing conversation. Keep the same SpaceId, UserId, and SessionId across turns. The event accepts inline JSON, @file, or - for stdin.",
 			Examples:     []string{"Example - Append a user event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event '{\"EventId\":\"event-123\",\"Author\":\"user\",\"Content\":{\"Role\":\"user\",\"Parts\":[{\"Text\":\"Hello\"}]}}' -o text", "Example - Append a prepared event file:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
@@ -25,7 +26,7 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Groups: []command.GroupSpec{
 			{Path: []string{"session"}, Use: "session", Short: "Manage session spaces, sessions, and events", Long: "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history.", Examples: []string{"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text", "Example - Create a conversation using the returned SpaceId:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text", "Example - Append an event and read the conversation:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text"}},
-			{Path: []string{"session", "event"}, Use: "event", Short: "Manage session events", Long: "Append interactions and read a session's event history. Identify the session with --space-id, --user-id, and --session-id. Use a stable EventId when retrying an append. List results are paginated; a session snapshot is not the complete event history.", Examples: []string{"Example - Append a prepared event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text", "Example - Read the next page of history:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 50 --limit 50 -o text"}},
+			{Path: []string{"session", "event"}, Use: "event", Short: "Manage session events", Long: "Append interactions and read a session's event history. Identify the session with --space-id, --user-id, and --session-id. List results are paginated; a session snapshot is not the complete event history.", Examples: []string{"Example - Append a prepared event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text", "Example - Read the next page of history:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 50 --limit 50 -o text"}},
 		},
 		API: apicli.APISpec{
 			Action:       "AppendEvent",
@@ -34,9 +35,10 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "SpaceId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:         "SpaceId",
+				Required:     true,
+				RequiredHint: "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'.",
+				Parser:       "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
@@ -54,7 +56,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID returned by agr session create or agr session list. (required)", Type: command.FlagString},
+					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID; save the ID returned by agr session create and use it for subsequent operations. (required)", Type: command.FlagString},
 				},
 			},
 			{
@@ -62,7 +64,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "event", Flag: "event", Usage: "Event content as a JSON object, @file, or - for stdin. (required)", Format: "{\"EventId\":\"<id>\",\"Author\":\"<author>\",\"Content\":{\"Role\":\"<role>\",\"Parts\":[{\"Text\":\"<text>\"}]}}", Fields: []string{"EventId: optional stable event ID for idempotent retries", "Author: event author", "Content: structured event content", "Actions: optional state delta", "Metadata: optional event metadata JSON string", "Extensions: optional extension JSON string"}, Type: command.FlagString},
+					{Name: "event", Flag: "event", Usage: "Event content as a JSON object, @file, or - for stdin. (required)", Format: "{\"EventId\":\"<id>\",\"Author\":\"<author>\",\"Content\":{\"Role\":\"<role>\",\"Parts\":[{\"Text\":\"<text>\"}]}}", Fields: []string{"EventId: optional event ID; the service generates one when it is empty", "Author: event author", "Content: structured event content", "Actions: optional state delta", "Metadata: optional event metadata JSON string", "Extensions: optional extension JSON string"}, Type: command.FlagString},
 				},
 			},
 		},
@@ -70,5 +72,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

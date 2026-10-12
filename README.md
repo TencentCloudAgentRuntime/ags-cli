@@ -357,8 +357,8 @@ commands manage conversations, and `agr session event` writes and reads history.
 
 First choose an existing space, or create one for a business purpose. Save the
 server-returned `SpaceId`; do not construct it from the space name. Space lookup
-uses the selected account and region. Repeating `space create` creates another
-space, so reuse the returned ID for subsequent conversations.
+uses the selected account and region. Use the returned ID for subsequent
+conversations.
 
 ```bash
 agr session space list -o text
@@ -367,9 +367,9 @@ agr session space create --name customer-support --description 'Customer support
 
 Replace the example space ID below with that returned ID. `UserId` comes from
 your application, not your Tencent Cloud account. Keep the same SpaceId, UserId,
-and SessionId across turns. Supplying a stable SessionId lets a create retry
-return the existing conversation without overwriting its title or state;
-omitting it generates a new ID.
+and SessionId across turns. SessionId is optional on create; save the returned
+ID for subsequent operations. The published contract does not specify the
+result of retrying creation with the same ID.
 
 ```bash
 space_id=space-a1b2c3d4
@@ -382,11 +382,15 @@ agr session get --space-id "$space_id" --user-id "$user_id" --session-id "$sessi
 agr session event list --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --offset 0 --limit 50 -o text
 ```
 
-Use a stable EventId when retrying the same event. `--event` also accepts
+EventId is optional; the service generates it when empty. The published
+contract does not promise deduplication for repeated EventIds. `--event` also accepts
 `@event.json` or `-` for stdin. A session snapshot is not the complete event
 history: continue `event list` with increasing `--offset` until all pages are
 read. Use `session list --space-id ... --user-ids ...` to find a user's
 conversations, and `session update` to change their title or metadata.
+
+The current `session get` response has no event-list field, even when
+`--num-recent-events` is supplied. Read events with `session event list`.
 
 Delete a conversation before removing its space:
 
@@ -395,10 +399,9 @@ agr session delete --space-id "$space_id" --user-id "$user_id" --session-id "$se
 agr session space delete --space-id "$space_id" -o text
 ```
 
-Session deletion removes its events but preserves shared user state. The service
-only allows deletion of non-default spaces with no sessions, events, or user
-state; deleting every conversation may therefore leave a space nonempty. The
-public API does not provide a shared-user-state cleanup operation.
+Space deletion is a separate operation. The service only allows deletion of
+non-default spaces with no sessions, events, or user state; use the service
+result to determine whether the space can be removed.
 
 Space commands previously exposed in preview as `agr session-space` now use
 `agr session space`; the old command and schema IDs have no compatibility alias.

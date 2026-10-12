@@ -5,6 +5,7 @@ package get
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -14,8 +15,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"session", "get"},
 			Use:          "get",
 			Short:        "Describe a session",
-			Long:         "Read a session snapshot using SpaceId, UserId, and SessionId. Recent-event query options are --num-recent-events and an RFC3339 --after-timestamp. Use agr session event list with pagination for the full event history.",
-			Examples:     []string{"Example - Describe a session:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text", "Example - Include recent events:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --num-recent-events 10 --after-timestamp 2026-09-01T00:00:00Z -o text"},
+			Long:         "Read a session snapshot using SpaceId, UserId, and SessionId. The API accepts --num-recent-events and --after-timestamp, but its current published response has no event-list field. Use agr session event list to read events.",
+			Examples:     []string{"Example - Describe a session:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text", "Example - Read recent events with the event-list command:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 0 --limit 10 -o text"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeSessionResponse",
@@ -32,9 +33,10 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "SpaceId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:         "SpaceId",
+				Required:     true,
+				RequiredHint: "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'.",
+				Parser:       "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
@@ -52,21 +54,21 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID returned by agr session create or agr session list. (required)", Type: command.FlagString},
+					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID; save the ID returned by agr session create and use it for subsequent operations. (required)", Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "NumRecentEvents",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "num-recent-events", Flag: "num-recent-events", Usage: "Number of recent events to include.", Type: command.FlagInt},
+					{Name: "num-recent-events", Flag: "num-recent-events", Usage: "Recent-event query count accepted by the API, default 0, maximum 200. The current response has no event-list field; use agr session event list.", Type: command.FlagInt},
 				},
 			},
 			{
 				Name:   "AfterTimestamp",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "after-timestamp", Flag: "after-timestamp", Usage: "Only include events after this RFC3339 timestamp.", Type: command.FlagString},
+					{Name: "after-timestamp", Flag: "after-timestamp", Usage: "Event start time in RFC3339 format, at most 64 characters.", Type: command.FlagString},
 				},
 			},
 		},
@@ -74,5 +76,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

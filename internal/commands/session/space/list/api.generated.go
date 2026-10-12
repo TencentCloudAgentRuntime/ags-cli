@@ -5,6 +5,7 @@ package list
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -25,7 +26,7 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Groups: []command.GroupSpec{
 			{Path: []string{"session"}, Use: "session", Short: "Manage session spaces, sessions, and events", Long: "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history.", Examples: []string{"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text", "Example - Create a conversation using the returned SpaceId:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text", "Example - Append an event and read the conversation:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text"}},
-			{Path: []string{"session", "space"}, Use: "space", Short: "Manage session spaces", Long: "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Spaces are long-lived: deleting a session does not remove shared user state. Only empty, non-default spaces can be deleted.", Examples: []string{"Example - Choose a space and inspect its scope:\n  agr session space list -o text\n  agr session space get --space-id space-a1b2c3d4 -o text", "Example - Create a business space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"}},
+			{Path: []string{"session", "space"}, Use: "space", Short: "Manage session spaces", Long: "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Only spaces with no sessions, events, or user state can be deleted; default spaces are protected.", Examples: []string{"Example - Choose a space and inspect its scope:\n  agr session space list -o text\n  agr session space get --space-id space-a1b2c3d4 -o text", "Example - Create a business space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"}},
 		},
 		API: apicli.APISpec{
 			Action:       "DescribeSessionSpaces",
@@ -37,14 +38,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Offset",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "offset", Flag: "offset", Usage: "分页查询的起始偏移量。", Type: command.FlagInt},
+					{Name: "offset", Flag: "offset", Usage: "Pagination offset, default 0.", Type: command.FlagInt},
 				},
 			},
 			{
 				Name:   "Limit",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "limit", Flag: "limit", Usage: "单次分页查询返回的会话空间数量。", Type: command.FlagInt},
+					{Name: "limit", Flag: "limit", Usage: "Page size, default 20, maximum 100.", Type: command.FlagInt},
 				},
 			},
 			{
@@ -59,5 +60,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

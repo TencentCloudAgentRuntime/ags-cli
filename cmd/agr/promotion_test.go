@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"unicode"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
@@ -240,6 +241,49 @@ func TestSessionMissingSpaceHint(t *testing.T) {
 		}
 		if envelope.Failure.Code != "MISSING_REQUIRED_FLAG" || envelope.Failure.Kind != "usage" || !strings.Contains(envelope.Failure.Hint, "agr session space list") || !strings.Contains(envelope.Failure.Hint, "agr session space create") {
 			t.Fatalf("missing space diagnostic: %+v", envelope.Failure)
+		}
+	}
+}
+
+func TestSessionHelpMatchesPublishedResponse(t *testing.T) {
+	root := contractRoot()
+	contract, err := apimeta.LoadContract("../../api/ags/v20250920", apimeta.BuildChannel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, mapping := range contract.Mapping.Actions {
+		if !strings.HasPrefix(mapping.Command, "session.") {
+			continue
+		}
+		cmd, ok := findCobraCommand(root, mapping.Command)
+		if !ok {
+			t.Fatal("session command absent")
+		}
+		help := commandHelp(t, cmd)
+		if strings.IndexFunc(help, func(r rune) bool { return unicode.Is(unicode.Han, r) }) >= 0 {
+			t.Errorf("mixed-language help for %s", mapping.Command)
+		}
+		for _, unsupported := range []string{"idempotent retries", "stable EventId", "without overwriting", "preserves shared user state", "does not remove shared user state", "creates another space", "Include recent events"} {
+			if strings.Contains(help, unsupported) {
+				t.Errorf("%s promises %q", mapping.Command, unsupported)
+			}
+		}
+	}
+	get, _ := findCobraCommand(root, "session.get")
+	help := commandHelp(t, get)
+	if !strings.Contains(help, "no event-list field") || !strings.Contains(help, "agr session event list") {
+		t.Fatal("get help does not explain where to read events")
+	}
+	for _, name := range []string{"NumRecentEvents", "AfterTimestamp"} {
+		if _, present := schemaForCommand(t, "session.get").RequestSchema[name]; !present {
+			t.Fatalf("published input %s was removed", name)
+		}
+	}
+	for _, object := range []string{"SessionInfo", "DescribeSessionResponse"} {
+		for _, field := range contract.Spec.Object(object).Members {
+			if field.Member == "EventInfo" && !field.Disabled {
+				t.Fatal("published response now includes events; update the help and observable-response checks")
+			}
 		}
 	}
 }

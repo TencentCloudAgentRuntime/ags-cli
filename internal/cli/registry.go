@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cmdtree"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
@@ -90,17 +89,7 @@ func runRegistryModule(cmd *cobra.Command, module command.Module, spec command.S
 	if err != nil {
 		return nil, err
 	}
-	result, err := runtime.Handler.Run(cmd.Context(), req)
-	if err != nil {
-		return nil, err
-	}
-	if result != nil && result.Text == nil && strings.HasPrefix(spec.ID, "session.") {
-		result.Text, err = sessionTextRenderer(spec.ID, result.Data)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
+	return runtime.Handler.Run(cmd.Context(), req)
 }
 
 func registryRuntimeDeps(commandID string) command.Deps {

@@ -450,7 +450,7 @@ func schemaFromDescriptor(desc command.Descriptor) CommandSchema {
 	mutation, createsResource, requiresAuth := schemaEffects(spec.Output.Effects)
 	// Workflow commands always require authentication since they call the
 	// cloud control plane, even if they have no declared side-effects.
-	if desc.Source == command.SourceWorkflow {
+	if desc.Source == command.SourceWorkflow || spec.RequiresAuth {
 		requiresAuth = true
 	}
 	return CommandSchema{

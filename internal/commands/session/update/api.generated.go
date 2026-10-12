@@ -5,6 +5,7 @@ package update
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -33,9 +34,10 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "SpaceId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:         "SpaceId",
+				Required:     true,
+				RequiredHint: "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'.",
+				Parser:       "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
@@ -53,14 +55,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID returned by agr session create or agr session list. (required)", Type: command.FlagString},
+					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID; save the ID returned by agr session create and use it for subsequent operations. (required)", Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "Title",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "title", Flag: "title", Usage: "修改后的会话标题。入参限制：本参数可选，最大长度为 255 个字符。不传表示保持原会话标题不变，传空字符串表示清空会话标题。Title 与 Metadata 至少传入一项。", Type: command.FlagString},
+					{Name: "title", Flag: "title", Usage: "Conversation title, at most 256 characters.", Type: command.FlagString},
 				},
 			},
 			{
@@ -75,5 +77,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

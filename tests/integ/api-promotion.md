@@ -16,10 +16,18 @@ and response shapes are now populated; the empty-shape warning in the original
   and deletion results. JSON response data retains the canonical API shape.
   Root, space, and event help describe the complete workflow; both READMEs
   explain scope selection, retry IDs, history pagination, and deletion limits.
-- Session get exposes `--num-recent-events` and `--after-timestamp` in both
-  channels. AppendEvent uses canonical EventInfo instead of the obsolete
+- Session get retains the published `--num-recent-events` and `--after-timestamp`
+  request options in both channels, but its published response has no event-list
+  field. Help directs history queries to `session event list`; it does not promise
+  that get returns events. AppendEvent uses canonical EventInfo instead of the obsolete
   EventInput projection. Nullable response members and JSON-string Event payload
   members retain their canonical types; no client-side stringification is added.
+- Help and guides do not promise SessionId/EventId retry deduplication, creation
+  replay behavior, or session-delete cascades/state retention beyond the public
+  contract. Historical lifecycle runs did not verify those retry semantics.
+- Session presentation belongs to its command module, including create/update
+  timestamps in detail output. Missing-input and removed-command guidance comes
+  from help metadata; a migration hint does not register an old command alias.
 - DescribeQuotaOverview is explicitly raw-only via
   `agr api call DescribeQuotaOverview --request '{}'`; no new quota resource group.
 - Volume/VolumeTemplate and storage-mount extensions remain preview-only. The

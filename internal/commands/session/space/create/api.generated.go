@@ -5,6 +5,7 @@ package create
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -14,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"session", "space", "create"},
 			Use:          "create",
 			Short:        "Create a session space",
-			Long:         "Create a business space that isolates users, sessions, events, and state. Save the returned SpaceId and pass it to session and event commands. Repeating this command creates another space; a name is not an idempotency key.",
+			Long:         "Create a business space that isolates users, sessions, events, and state. Save the server-returned SpaceId and pass it to session and event commands.",
 			Examples:     []string{"Example - Create a session space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
@@ -25,7 +26,7 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Groups: []command.GroupSpec{
 			{Path: []string{"session"}, Use: "session", Short: "Manage session spaces, sessions, and events", Long: "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history.", Examples: []string{"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text", "Example - Create a conversation using the returned SpaceId:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text", "Example - Append an event and read the conversation:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text"}},
-			{Path: []string{"session", "space"}, Use: "space", Short: "Manage session spaces", Long: "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Spaces are long-lived: deleting a session does not remove shared user state. Only empty, non-default spaces can be deleted.", Examples: []string{"Example - Choose a space and inspect its scope:\n  agr session space list -o text\n  agr session space get --space-id space-a1b2c3d4 -o text", "Example - Create a business space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"}},
+			{Path: []string{"session", "space"}, Use: "space", Short: "Manage session spaces", Long: "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Only spaces with no sessions, events, or user state can be deleted; default spaces are protected.", Examples: []string{"Example - Choose a space and inspect its scope:\n  agr session space list -o text\n  agr session space get --space-id space-a1b2c3d4 -o text", "Example - Create a business space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"}},
 		},
 		API: apicli.APISpec{
 			Action:       "CreateSessionSpace",
@@ -38,14 +39,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "name", Flag: "name", Usage: "会话空间名称，用于标识会话空间的业务用途。入参限制：必填；去除首尾空白后不能为空；最大长度为 128 个字符。建议名称包含业务和环境信息，便于识别和管理。 (required)", Type: command.FlagString},
+					{Name: "name", Flag: "name", Usage: "Business space name, nonblank after trimming and at most 128 characters. (required)", Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "Description",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "description", Flag: "description", Usage: "会话空间描述，用于补充说明会话空间的业务用途。入参限制：选填；最大长度为 512 个字符。未传入时创建为空描述。", Type: command.FlagString},
+					{Name: "description", Flag: "description", Usage: "Business space description, at most 512 characters; omitted means an empty description.", Type: command.FlagString},
 				},
 			},
 			{
@@ -60,5 +61,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

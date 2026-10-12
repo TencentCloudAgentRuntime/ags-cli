@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/client"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -192,7 +193,10 @@ func Execute() {
 		if hasRawOutputFlag("json") {
 			// Help JSON has to be resolved from the raw argv stream because Cobra
 			// consumes help before the normal command RunE path is reached.
-			targetCmd, _, _ := rootCmd.Find(stripHelpAndOutputFlags(os.Args[1:]))
+			targetCmd, _, findErr := rootCmd.Find(stripHelpAndOutputFlags(os.Args[1:]))
+			if findErr != nil {
+				renderExecuteError(targetCmd, findErr, nil)
+			}
 			cmdID := ""
 			if targetCmd != nil && targetCmd != rootCmd {
 				var parts []string
@@ -355,7 +359,7 @@ func classifyCLIError(err error) *output.CLIError {
 	return cliErr
 }
 
-// commandSpecificUsageHint returns a tailored hint for unknown-flag style usage
+// commandSpecificUsageHint returns a tailored hint for removed commands and unknown-flag usage
 // errors on commands where the generic --help pointer is too vague to be
 // actionable. Returns "" when no command-specific hint applies.
 func commandSpecificUsageHint(cmd *cobra.Command, err error) string {
@@ -363,6 +367,13 @@ func commandSpecificUsageHint(cmd *cobra.Command, err error) string {
 		return ""
 	}
 	msg := err.Error()
+	if tail, ok := strings.CutPrefix(msg, "unknown command \""); ok {
+		name, _, _ := strings.Cut(tail, "\"")
+		if cmd.Parent() != nil {
+			name = canonicalCommandID(cmd) + "." + name
+		}
+		return apimeta.MigrationHintFor(name)
+	}
 	if !strings.Contains(msg, "unknown flag") && !strings.Contains(msg, "unknown shorthand") {
 		return ""
 	}

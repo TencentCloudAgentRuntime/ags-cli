@@ -5,6 +5,7 @@ package create
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -14,8 +15,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"session", "create"},
 			Use:          "create",
 			Short:        "Create a session",
-			Long:         "Create a persistent conversation in an existing space. Use the SpaceId returned by agr session space create/list and a UserId from your application. Supply a stable SessionId for retries: an existing session is returned without overwriting its title or state. Omitting SessionId generates a new ID. Complex state and metadata accept inline JSON, @file, or - for stdin.",
-			Examples:     []string{"Example - Create a session with a stable ID:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text"},
+			Long:         "Create a persistent conversation in an existing space. Use a server-returned SpaceId and a UserId from your application. SessionId is optional; save the returned SessionId for subsequent operations. Complex state and metadata accept inline JSON, @file, or - for stdin.",
+			Examples:     []string{"Example - Create a session with a caller-provided ID:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateSessionResponse",
@@ -33,9 +34,10 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "SpaceId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:         "SpaceId",
+				Required:     true,
+				RequiredHint: "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'.",
+				Parser:       "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
@@ -52,14 +54,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "SessionId",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "session-id", Flag: "session-id", Usage: "Stable conversation ID for retries. Omit to generate a new ID.", Type: command.FlagString},
+					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.", Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "Title",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "title", Flag: "title", Usage: "会话标题，最大长度 256 字符。", Type: command.FlagString},
+					{Name: "title", Flag: "title", Usage: "Conversation title, at most 256 characters.", Type: command.FlagString},
 				},
 			},
 			{
@@ -81,5 +83,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

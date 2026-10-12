@@ -5,6 +5,7 @@ package delete
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -14,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"session", "delete"},
 			Use:          "delete",
 			Short:        "Delete a session",
-			Long:         "Delete one conversation and its events using SpaceId, UserId, and SessionId. Shared user state and the containing space remain. Use agr session space delete only for an empty, non-default space.",
+			Long:         "Delete the conversation identified by SpaceId, UserId, and SessionId. Space deletion is a separate operation; agr session space delete is only allowed for an empty, non-default space.",
 			Examples:     []string{"Example - Delete a session:\n  agr session delete --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text"},
 			Aliases:      []string{"rm", "del"},
 			SupportsJSON: true,
@@ -34,9 +35,10 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "SpaceId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:         "SpaceId",
+				Required:     true,
+				RequiredHint: "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'.",
+				Parser:       "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
@@ -54,7 +56,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID returned by agr session create or agr session list. (required)", Type: command.FlagString},
+					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID; save the ID returned by agr session create and use it for subsequent operations. (required)", Type: command.FlagString},
 				},
 			},
 		},
@@ -62,5 +64,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

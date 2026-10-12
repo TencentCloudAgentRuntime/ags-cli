@@ -47,6 +47,7 @@ type fieldModel struct {
 	Type               string
 	Member             string
 	Required           bool
+	RequiredHint       string
 	Parser             string
 	Positional         bool
 	OptionalPositional bool
@@ -270,6 +271,9 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 					OptionalPositional: fm != nil && fm.OptionalPositional,
 					Excluded:           fm != nil && fm.Excluded,
 				}
+				if help != nil {
+					field.RequiredHint = help.Commands[a.Command].Fields[m.Name].RequiredHint
+				}
 				for _, in := range inputsFor(m, fm) {
 					if field.Excluded {
 						continue
@@ -313,6 +317,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	b.WriteString("import (\n")
 	b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli\"\n")
 	b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/command\"\n")
+	if cmd.Parts[0] == "session" {
+		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session\"\n")
+	}
 	b.WriteString(")\n\n")
 	b.WriteString("func APIDescriptor() apicli.APIDescriptor {\n")
 	b.WriteString("\treturn apicli.APIDescriptor{\n")
@@ -397,6 +404,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 			if field.Required {
 				b.WriteString("\t\t\t\tRequired: true,\n")
 			}
+			if field.RequiredHint != "" {
+				fmt.Fprintf(&b, "\t\t\t\tRequiredHint: %s,\n", quote(field.RequiredHint))
+			}
 			fmt.Fprintf(&b, "\t\t\t\tParser: %s,\n", quote(field.Parser))
 			if len(field.Inputs) > 0 {
 				b.WriteString("\t\t\t\tInputs: []apicli.InputSpec{\n")
@@ -448,7 +458,11 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	b.WriteString("\t}\n")
 	b.WriteString("}\n\n")
 	b.WriteString("func GeneratedModule() command.Module {\n")
-	b.WriteString("\treturn apicli.NewModule(APIDescriptor())\n")
+	if cmd.Parts[0] == "session" {
+		b.WriteString("\treturn session.NewModule(APIDescriptor())\n")
+	} else {
+		b.WriteString("\treturn apicli.NewModule(APIDescriptor())\n")
+	}
 	b.WriteString("}\n")
 	return gofmt(filepath.Join("internal", "commands", filepath.Join(cmd.Parts...), "api.generated.go"), []byte(b.String()))
 }

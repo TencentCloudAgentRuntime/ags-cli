@@ -5,6 +5,7 @@ package list
 import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session"
 )
 
 func APIDescriptor() apicli.APIDescriptor {
@@ -33,9 +34,10 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "SpaceId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:         "SpaceId",
+				Required:     true,
+				RequiredHint: "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'.",
+				Parser:       "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
@@ -51,14 +53,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Offset",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "offset", Flag: "offset", Usage: "分页偏移量，默认为 0。", Type: command.FlagInt},
+					{Name: "offset", Flag: "offset", Usage: "Pagination offset, default 0.", Type: command.FlagInt},
 				},
 			},
 			{
 				Name:   "Limit",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "limit", Flag: "limit", Usage: "返回数量，默认为 20，最大值为 100。", Type: command.FlagInt},
+					{Name: "limit", Flag: "limit", Usage: "Page size, default 20, maximum 100.", Type: command.FlagInt},
 				},
 			},
 			{
@@ -80,5 +82,5 @@ func APIDescriptor() apicli.APIDescriptor {
 }
 
 func GeneratedModule() command.Module {
-	return apicli.NewModule(APIDescriptor())
+	return session.NewModule(APIDescriptor())
 }

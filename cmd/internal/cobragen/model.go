@@ -160,9 +160,9 @@ func subgroupLong(group, sub string) string {
 	}
 	switch sub {
 	case "space":
-		return "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Spaces are long-lived: deleting a session does not remove shared user state. Only empty, non-default spaces can be deleted."
+		return "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Only spaces with no sessions, events, or user state can be deleted; default spaces are protected."
 	case "event":
-		return "Append interactions and read a session's event history. Identify the session with --space-id, --user-id, and --session-id. Use a stable EventId when retrying an append. List results are paginated; a session snapshot is not the complete event history."
+		return "Append interactions and read a session's event history. Identify the session with --space-id, --user-id, and --session-id. List results are paginated; a session snapshot is not the complete event history."
 	}
 	return ""
 }
