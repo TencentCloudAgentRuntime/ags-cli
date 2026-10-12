@@ -9,7 +9,13 @@ and response shapes are now populated; the empty-shape warning in the original
 ## Contract decisions
 
 - All 19 Registry/Skill Package and 12 Session/Event Actions move into stable
-  mapping/help. Their command paths and JSON transports are retained.
+  mapping/help. Space commands are grouped under `agr session space ...` with
+  command IDs `session.space.*`; the old preview `session-space` entry is removed
+  without an alias. Session/event paths and JSON transports are retained.
+- Session text output provides resource IDs, detail fields, paginated tables,
+  and deletion results. JSON response data retains the canonical API shape.
+  Root, space, and event help describe the complete workflow; both READMEs
+  explain scope selection, retry IDs, history pagination, and deletion limits.
 - Session get exposes `--num-recent-events` and `--after-timestamp` in both
   channels. AppendEvent uses canonical EventInfo instead of the obsolete
   EventInput projection. Nullable response members and JSON-string Event payload
@@ -38,6 +44,9 @@ runtime flags, help and actual schema output. Both stable and preview run it.
 Session lifecycle and EventCount scenarios run against both candidate channels
 with deterministic fixtures and resource cleanup assertions. These are local
 integration tests, not live-service evidence.
+The flag-based workflow also exercises all 12 Session/Space/Event commands in
+text and JSON output with stdin closed, verifies the new envelope command IDs,
+checks IDs needed by subsequent commands, and confirms fixture cleanup.
 
 JSON read/decode errors in generated command requests/field flags and
 `agr api call --request` retain their original error causes and diagnostic

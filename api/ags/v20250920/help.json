@@ -1608,10 +1608,10 @@
                 }
             }
         },
-        "session-space.create": {
+        "session.space.create": {
             "short": "Create a session space",
             "examples": [
-                "Example - Create a session space:\n  agr session-space create --name customer-support --description 'Customer support sessions'"
+                "Example - Create a session space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"
             ],
             "fields": {
                 "Tags": {
@@ -1627,24 +1627,47 @@
                         }
                     }
                 }
-            }
+            },
+            "long": "Create a business space that isolates users, sessions, events, and state. Save the returned SpaceId and pass it to session and event commands. Repeating this command creates another space; a name is not an idempotency key."
         },
-        "session-space.delete": {
+        "session.space.delete": {
             "short": "Delete a session space",
             "examples": [
-                "Example - Delete an empty session space:\n  agr session-space delete --space-id space-a1b2c3d4"
-            ]
+                "Example - Delete an empty session space:\n  agr session space delete --space-id space-a1b2c3d4 -o text"
+            ],
+            "long": "Delete an empty, non-default space. The service rejects deletion while sessions, events, or shared user state remain. Deleting sessions does not remove shared user state; default spaces cannot be deleted.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                }
+            }
         },
-        "session-space.get": {
+        "session.space.get": {
             "short": "Describe a session space",
             "examples": [
-                "Example - Describe a session space:\n  agr session-space get --space-id space-a1b2c3d4"
-            ]
+                "Example - Describe a session space:\n  agr session space get --space-id space-a1b2c3d4 -o text"
+            ],
+            "long": "Inspect a business space using its server-returned SpaceId. Find available IDs with agr session space list.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                }
+            }
         },
-        "session-space.list": {
+        "session.space.list": {
             "short": "List session spaces",
             "examples": [
-                "Example - List session spaces:\n  agr session-space list --limit 20"
+                "Example - List session spaces:\n  agr session space list --limit 20 -o text"
             ],
             "fields": {
                 "Filters": {
@@ -1661,19 +1684,31 @@
                         }
                     }
                 }
-            }
+            },
+            "long": "Choose a business space before creating or reading sessions. List spaces in the selected account and region; use Offset and Limit to read further pages."
         },
-        "session-space.update": {
+        "session.space.update": {
             "short": "Update a session space",
             "examples": [
-                "Example - Rename a session space:\n  agr session-space update --space-id space-a1b2c3d4 --name customer-support-production"
-            ]
+                "Example - Rename a session space:\n  agr session space update --space-id space-a1b2c3d4 --name customer-support-production -o text"
+            ],
+            "long": "Update a business space name and description. Its SpaceId and stored session data are unchanged.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                }
+            }
         },
         "session.create": {
             "short": "Create a session",
-            "long": "Create a session in a session space. Complex state and metadata fields accept inline JSON, @file, or - for stdin.",
+            "long": "Create a persistent conversation in an existing space. Use the SpaceId returned by agr session space create/list and a UserId from your application. Supply a stable SessionId for retries: an existing session is returned without overwriting its title or state. Omitting SessionId generates a new ID. Complex state and metadata accept inline JSON, @file, or - for stdin.",
             "examples": [
-                "Example - Create a session with a stable ID:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request'"
+                "Example - Create a session with a stable ID:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text"
             ],
             "fields": {
                 "State": {
@@ -1700,35 +1735,110 @@
                             ]
                         }
                     }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Stable conversation ID for retries. Omit to generate a new ID.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Stable conversation ID for retries. Omit to generate a new ID."
+                        }
+                    }
                 }
             }
         },
         "session.delete": {
             "short": "Delete a session",
             "examples": [
-                "Example - Delete a session:\n  agr session delete --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123"
-            ]
+                "Example - Delete a session:\n  agr session delete --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text"
+            ],
+            "long": "Delete one conversation and its events using SpaceId, UserId, and SessionId. Shared user state and the containing space remain. Use agr session space delete only for an empty, non-default space.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID returned by agr session create or agr session list.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID returned by agr session create or agr session list."
+                        }
+                    }
+                }
+            }
         },
         "session.get": {
             "short": "Describe a session",
             "examples": [
-                "Example - Describe a session:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123",
-                "Example - Include recent events:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --num-recent-events 10 --after-timestamp 2026-09-01T00:00:00Z"
+                "Example - Describe a session:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text",
+                "Example - Include recent events:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --num-recent-events 10 --after-timestamp 2026-09-01T00:00:00Z -o text"
             ],
-            "long": "Describe a session. Optionally request recent events with --num-recent-events and an RFC3339 --after-timestamp filter.",
+            "long": "Read a session snapshot using SpaceId, UserId, and SessionId. Recent-event query options are --num-recent-events and an RFC3339 --after-timestamp. Use agr session event list with pagination for the full event history.",
             "fields": {
                 "NumRecentEvents": {
                     "description": "Number of recent events to include."
                 },
                 "AfterTimestamp": {
                     "description": "Only include events after this RFC3339 timestamp."
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID returned by agr session create or agr session list.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID returned by agr session create or agr session list."
+                        }
+                    }
                 }
             }
         },
         "session.list": {
             "short": "List sessions",
             "examples": [
-                "Example - List sessions in a session space:\n  agr session list --space-id space-a1b2c3d4 --limit 20"
+                "Example - List sessions in a session space:\n  agr session list --space-id space-a1b2c3d4 --limit 20 -o text"
             ],
             "fields": {
                 "UserIds": {
@@ -1757,14 +1867,23 @@
                             ]
                         }
                     }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
                 }
-            }
+            },
+            "long": "Find conversations within a business space. Use --user-ids to select application users and --session-ids to select conversations; repeat each flag for multiple values. List results are paginated."
         },
         "session.update": {
             "short": "Update a session",
             "long": "Update a session title or replace its complete metadata array. Provide at least one of --title or --metadata.",
             "examples": [
-                "Example - Update a session title:\n  agr session update --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Resolved request'"
+                "Example - Update a session title:\n  agr session update --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Resolved request' -o text"
             ],
             "fields": {
                 "Metadata": {
@@ -1779,14 +1898,39 @@
                             ]
                         }
                     }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID returned by agr session create or agr session list.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID returned by agr session create or agr session list."
+                        }
+                    }
                 }
             }
         },
         "session.event.append": {
             "short": "Append an event to a session",
-            "long": "Append an event to a session. The event accepts inline JSON, @file, or - for stdin.",
+            "long": "Append an interaction to an existing conversation. Keep the same SpaceId, UserId, and SessionId across turns. Supply a stable EventId for retries of the same event. The event accepts inline JSON, @file, or - for stdin.",
             "examples": [
-                "Example - Append a user event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event '{\"EventId\":\"event-123\",\"Author\":\"user\",\"Content\":{\"Role\":\"user\",\"Parts\":[{\"Text\":\"Hello\"}]}}'"
+                "Example - Append a user event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event '{\"EventId\":\"event-123\",\"Author\":\"user\",\"Content\":{\"Role\":\"user\",\"Parts\":[{\"Text\":\"Hello\"}]}}' -o text",
+                "Example - Append a prepared event file:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text"
             ],
             "fields": {
                 "Event": {
@@ -1805,14 +1949,66 @@
                             ]
                         }
                     }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID returned by agr session create or agr session list.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID returned by agr session create or agr session list."
+                        }
+                    }
                 }
             }
         },
         "session.event.list": {
             "short": "List events in a session",
             "examples": [
-                "Example - List recent session events:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50"
-            ]
+                "Example - List recent session events:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text",
+                "Example - Read the next page of history:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 50 --limit 50 -o text"
+            ],
+            "long": "Read a conversation's event history. Use --offset and --limit to read all pages; --author and an RFC3339 --after-timestamp can filter the history. A session snapshot does not replace this history query.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    }
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID returned by agr session create or agr session list.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID returned by agr session create or agr session list."
+                        }
+                    }
+                }
+            }
         }
     }
 }

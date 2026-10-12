@@ -80,12 +80,12 @@ import (
 	sessioneventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/event/list"
 	sessionget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/get"
 	sessionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/list"
+	sessionspacecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/create"
+	sessionspacedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/delete"
+	sessionspaceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/get"
+	sessionspacelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/list"
+	sessionspaceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/update"
 	sessionupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/update"
-	sessionspacecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/create"
-	sessionspacedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/delete"
-	sessionspaceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/get"
-	sessionspacelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/list"
-	sessionspaceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/sessionspace/update"
 	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	tooldelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/delete"
 	toolfork "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/fork"
@@ -173,17 +173,17 @@ func Registry() (*command.Registry, error) {
 		registryskillpackagedownloadurl.GeneratedModule(),
 		registryskillpackageuploadurl.GeneratedModule(),
 		registryupdate.GeneratedModule(),
-		sessionspacecreate.GeneratedModule(),
-		sessionspacedelete.GeneratedModule(),
-		sessionspaceget.GeneratedModule(),
-		sessionspacelist.GeneratedModule(),
-		sessionspaceupdate.GeneratedModule(),
 		sessioncreate.GeneratedModule(),
 		sessiondelete.GeneratedModule(),
 		sessioneventappend.GeneratedModule(),
 		sessioneventlist.GeneratedModule(),
 		sessionget.GeneratedModule(),
 		sessionlist.GeneratedModule(),
+		sessionspacecreate.GeneratedModule(),
+		sessionspacedelete.GeneratedModule(),
+		sessionspaceget.GeneratedModule(),
+		sessionspacelist.GeneratedModule(),
+		sessionspaceupdate.GeneratedModule(),
 		sessionupdate.GeneratedModule(),
 		toolcreate.Module(),
 		tooldelete.Module(),

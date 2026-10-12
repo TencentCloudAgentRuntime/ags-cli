@@ -542,7 +542,7 @@ actions:
       Description:
         allow_empty: true
   CreateSessionSpace:
-    command: session-space.create
+    command: session.space.create
     request: CreateSessionSpaceRequest
     response: CreateSessionSpaceResponse
     status: mapped
@@ -552,17 +552,17 @@ actions:
         - flag: tags
           type: json
   DeleteSessionSpace:
-    command: session-space.delete
+    command: session.space.delete
     request: DeleteSessionSpaceRequest
     response: DeleteSessionSpaceResponse
     status: mapped
   DescribeSessionSpace:
-    command: session-space.get
+    command: session.space.get
     request: DescribeSessionSpaceRequest
     response: DescribeSessionSpaceResponse
     status: mapped
   DescribeSessionSpaces:
-    command: session-space.list
+    command: session.space.list
     request: DescribeSessionSpacesRequest
     response: DescribeSessionSpacesResponse
     status: mapped
@@ -572,7 +572,7 @@ actions:
         - flag: filters
           type: json
   ModifySessionSpace:
-    command: session-space.update
+    command: session.space.update
     request: ModifySessionSpaceRequest
     response: ModifySessionSpaceResponse
     status: mapped

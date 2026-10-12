@@ -120,7 +120,7 @@ func TestPromotedRequestCoverage(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, mapping := range contract.Mapping.Actions {
-		if !strings.HasPrefix(mapping.Command, "registry.") && !strings.HasPrefix(mapping.Command, "session.") && !strings.HasPrefix(mapping.Command, "session-space.") && !strings.HasPrefix(mapping.Command, "pre-cache-image-task.") {
+		if !strings.HasPrefix(mapping.Command, "registry.") && !strings.HasPrefix(mapping.Command, "session.") && !strings.HasPrefix(mapping.Command, "pre-cache-image-task.") {
 			continue
 		}
 		t.Run(mapping.Command, func(t *testing.T) {
@@ -170,6 +170,77 @@ func TestPromotedRequestCoverage(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSessionSpaceNamespace(t *testing.T) {
+	contract, err := apimeta.LoadContract("../../api/ags/v20250920", apimeta.BuildChannel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := contractRoot()
+	for action, spec := range contract.Spec.Actions {
+		if !strings.Contains(spec.Input, "SessionSpace") {
+			continue
+		}
+		t.Run(action, func(t *testing.T) {
+			mapping := contract.Mapping.Actions[action]
+			if mapping == nil || !strings.HasPrefix(mapping.Command, "session.space.") {
+				t.Fatalf("%s must be mapped under session.space", action)
+			}
+			cmd, ok := findCobraCommand(root, mapping.Command)
+			if !ok {
+				t.Fatal("nested space command absent")
+			}
+			schemaForCommand(t, mapping.Command)
+			if !strings.Contains(commandHelp(t, cmd), "agr session space ") {
+				t.Fatal("space help omits its canonical path")
+			}
+			oldID := strings.Replace(mapping.Command, "session.space.", "session-space.", 1)
+			if _, ok := findCobraCommand(root, oldID); ok {
+				t.Fatalf("obsolete command %s remains", oldID)
+			}
+			if out, err := runAGR(t, "schema", oldID, "-o", "json"); err == nil {
+				t.Fatalf("obsolete schema %s remains: %s", oldID, out)
+			}
+		})
+	}
+	for _, id := range []string{"session", "session.space", "session.event"} {
+		cmd, ok := findCobraCommand(root, id)
+		if !ok {
+			t.Fatalf("group %s absent", id)
+		}
+		if help := commandHelp(t, cmd); !strings.Contains(help, "Examples:") {
+			t.Errorf("group %s omits workflow examples: %s", id, help)
+		}
+	}
+	if out, err := runAGR(t, "session-space", "--help"); err == nil {
+		t.Fatalf("obsolete top-level command remains: %s", out)
+	}
+}
+
+func TestSessionMissingSpaceHint(t *testing.T) {
+	for _, args := range [][]string{
+		{"session", "create", "--user-id", "user-123"},
+		{"session", "create", "--request", `{"UserId":"user-123"}`},
+		{"session", "space", "get", "--request", `{}`},
+	} {
+		cmd := exec.CommandContext(t.Context(), os.Args[0], append([]string{"-test.run=^TestCharacterizationHelperProcess$", "--"}, append(args, "-o", "json")...)...)
+		home := t.TempDir()
+		cmd.Env = []string{"AGR_CHARACTERIZATION_HELPER=1", "HOME=" + home, "USERPROFILE=" + home, "GORACE=atexit_sleep_ms=0"}
+		out, err := cmd.Output()
+		if err == nil {
+			t.Fatalf("missing SpaceId accepted: %s", out)
+		}
+		var envelope struct {
+			Failure struct{ Code, Kind, Hint string }
+		}
+		if err := json.Unmarshal(out, &envelope); err != nil {
+			t.Fatal(err)
+		}
+		if envelope.Failure.Code != "MISSING_REQUIRED_FLAG" || envelope.Failure.Kind != "usage" || !strings.Contains(envelope.Failure.Hint, "agr session space list") || !strings.Contains(envelope.Failure.Hint, "agr session space create") {
+			t.Fatalf("missing space diagnostic: %+v", envelope.Failure)
+		}
 	}
 }
 

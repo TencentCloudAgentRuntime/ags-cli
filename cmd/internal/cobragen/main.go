@@ -77,11 +77,12 @@ type argModel struct {
 }
 
 type groupModel struct {
-	Path    []string
-	Use     string
-	Short   string
-	Long    string
-	Aliases []string
+	Path     []string
+	Use      string
+	Short    string
+	Long     string
+	Aliases  []string
+	Examples []string
 }
 
 func main() {
@@ -371,6 +372,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 		if len(group.Aliases) > 0 {
 			fmt.Fprintf(&b, ", Aliases: []string{%s}", quotedList(group.Aliases))
 		}
+		if len(group.Examples) > 0 {
+			fmt.Fprintf(&b, ", Examples: []string{%s}", quotedList(group.Examples))
+		}
 		b.WriteString("},\n")
 	}
 	b.WriteString("\t\t},\n")
@@ -490,18 +494,21 @@ func groupSpecsForCommand(parts []string) []groupModel {
 	var groups []groupModel
 	first := parts[0]
 	groups = append(groups, groupModel{
-		Path:    []string{first},
-		Use:     first,
-		Short:   groupShort(first),
-		Long:    groupLong(first),
-		Aliases: aliasesForGroup(first),
+		Path:     []string{first},
+		Use:      first,
+		Short:    groupShort(first),
+		Long:     groupLong(first),
+		Aliases:  aliasesForGroup(first),
+		Examples: groupExamples(first),
 	})
 	for i := 1; i < len(parts)-1; i++ {
 		path := append([]string(nil), parts[:i+1]...)
 		groups = append(groups, groupModel{
-			Path:  path,
-			Use:   parts[i],
-			Short: subgroupShort(first, parts[i]),
+			Path:     path,
+			Use:      parts[i],
+			Short:    subgroupShort(first, parts[i]),
+			Long:     subgroupLong(first, parts[i]),
+			Examples: groupExamples(strings.Join(path, ".")),
 		})
 	}
 	return groups
@@ -581,11 +588,11 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"delete:deployment"}
 	case "deployment.update":
 		return []string{"update:deployment"}
-	case "session-space.create":
+	case "session.space.create":
 		return []string{"create:session-space"}
-	case "session-space.delete":
+	case "session.space.delete":
 		return []string{"delete:session-space"}
-	case "session-space.update":
+	case "session.space.update":
 		return []string{"update:session-space"}
 	case "session.create":
 		return []string{"create:session"}

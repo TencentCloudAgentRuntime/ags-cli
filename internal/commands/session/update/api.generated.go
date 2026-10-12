@@ -15,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "update",
 			Short:        "Update a session",
 			Long:         "Update a session title or replace its complete metadata array. Provide at least one of --title or --metadata.",
-			Examples:     []string{"Example - Update a session title:\n  agr session update --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Resolved request'"},
+			Examples:     []string{"Example - Update a session title:\n  agr session update --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Resolved request' -o text"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "ModifySessionResponse",
@@ -24,7 +24,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			},
 		},
 		Groups: []command.GroupSpec{
-			{Path: []string{"session"}, Use: "session", Short: "Manage sessions"},
+			{Path: []string{"session"}, Use: "session", Short: "Manage session spaces, sessions, and events", Long: "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history.", Examples: []string{"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text", "Example - Create a conversation using the returned SpaceId:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text", "Example - Append an event and read the conversation:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text"}},
 		},
 		API: apicli.APISpec{
 			Action:       "ModifySession",
@@ -37,7 +37,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "space-id", Flag: "space-id", Usage: "会话所属的 SessionSpace ID。 (required)", Type: command.FlagString},
+					{Name: "space-id", Flag: "space-id", Usage: "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>. (required)", Type: command.FlagString},
 				},
 			},
 			{
@@ -45,7 +45,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "user-id", Flag: "user-id", Usage: "会话所属的用户 ID。 (required)", Type: command.FlagString},
+					{Name: "user-id", Flag: "user-id", Usage: "User ID from your application; not a Tencent Cloud account ID. (required)", Type: command.FlagString},
 				},
 			},
 			{
@@ -53,7 +53,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "session-id", Flag: "session-id", Usage: "待修改的会话 ID。 (required)", Type: command.FlagString},
+					{Name: "session-id", Flag: "session-id", Usage: "Conversation ID returned by agr session create or agr session list. (required)", Type: command.FlagString},
 				},
 			},
 			{

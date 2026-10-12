@@ -121,7 +121,7 @@ func (b *RequestBuilder) Build(req command.Request) (map[string]any, error) {
 			if err := mergePositionals(raw, b.desc.Fields, req); err != nil {
 				return nil, err
 			}
-			if err := validateRequiredFields(raw, b.desc.Fields); err != nil {
+			if err := b.validateRequiredFields(raw); err != nil {
 				return nil, err
 			}
 			return raw, nil
@@ -148,7 +148,7 @@ func (b *RequestBuilder) Build(req command.Request) (map[string]any, error) {
 			out[field.Name] = value
 		}
 	}
-	if err := validateRequiredFields(out, b.desc.Fields); err != nil {
+	if err := b.validateRequiredFields(out); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -227,8 +227,8 @@ func mergePositionals(raw map[string]any, fields []FieldSpec, req command.Reques
 	return nil
 }
 
-func validateRequiredFields(req map[string]any, fields []FieldSpec) error {
-	for _, field := range fields {
+func (b *RequestBuilder) validateRequiredFields(req map[string]any) error {
+	for _, field := range b.desc.Fields {
 		if !field.Required {
 			continue
 		}
@@ -236,7 +236,11 @@ func validateRequiredFields(req map[string]any, fields []FieldSpec) error {
 		if ok && (requiredValuePresent(value) || (field.AllowEmpty && value == "")) {
 			continue
 		}
-		return missingRequiredFieldError(field)
+		err := missingRequiredFieldError(field)
+		if field.Name == "SpaceId" && strings.HasPrefix(b.desc.Spec.ID, "session.") {
+			err.Failure.Hint += " Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+		}
+		return err
 	}
 	return nil
 }
@@ -251,7 +255,7 @@ func requiredValuePresent(value any) bool {
 	return true
 }
 
-func missingRequiredFieldError(field FieldSpec) error {
+func missingRequiredFieldError(field FieldSpec) *output.CLIError {
 	arg := requiredPositionalName(field)
 	if arg != "" {
 		return output.NewUsageError(
