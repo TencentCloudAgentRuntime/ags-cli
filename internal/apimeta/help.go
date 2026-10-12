@@ -12,8 +12,9 @@ import (
 
 // Help is the English help text model for generated Cloud API commands.
 type Help struct {
-	APIVersion string                 `json:"api_version"`
-	Commands   map[string]CommandHelp `json:"commands"`
+	APIVersion     string                 `json:"api_version"`
+	Commands       map[string]CommandHelp `json:"commands"`
+	MigrationHints map[string]string      `json:"migration_hints,omitempty"`
 }
 
 // CommandHelp is the human-authored help text for one generated command.
@@ -27,8 +28,9 @@ type CommandHelp struct {
 
 // FieldHelp is the help text attached to one API request field.
 type FieldHelp struct {
-	Description string               `json:"description,omitempty"`
-	Inputs      map[string]InputHelp `json:"inputs,omitempty"`
+	Description  string               `json:"description,omitempty"`
+	RequiredHint string               `json:"required_hint,omitempty"`
+	Inputs       map[string]InputHelp `json:"inputs,omitempty"`
 }
 
 // InputHelp is the help text attached to one generated flag or argument.
@@ -81,6 +83,11 @@ func GeneratedHelp() *Help {
 // The embedded help is fixed for the lifetime of a binary. Keep this private;
 // public accessors return copies so callers cannot mutate shared metadata.
 var embeddedHelp = sync.OnceValue(GeneratedHelp)
+
+// MigrationHintFor returns guidance for a removed command without registering it.
+func MigrationHintFor(commandID string) string {
+	return embeddedHelp().MigrationHints[commandID]
+}
 
 // CommandHelpFor returns help metadata for a generated command ID.
 func CommandHelpFor(commandID string) CommandHelp {

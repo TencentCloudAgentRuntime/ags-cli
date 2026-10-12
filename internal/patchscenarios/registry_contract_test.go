@@ -100,6 +100,10 @@ func TestRegistryEffectiveResponseContract(t *testing.T) {
 		}
 		t.Run(name, func(t *testing.T) {
 			for _, m := range declarations.Objects[name].Members {
+				// Canonical RequestId omits these attributes; other fields must remain explicit.
+				if string(m["name"]) == `"RequestId"` {
+					continue
+				}
 				for _, attribute := range []string{"output_required", "value_allowed_null"} {
 					if _, ok := m[attribute]; !ok {
 						t.Errorf("%s.%s missing explicit %s", name, m["name"], attribute)
@@ -138,17 +142,15 @@ func TestRegistryEffectiveResponseContract(t *testing.T) {
 			check(mapping.Response)
 		}
 	}
-	// Regression anchor: the wire DTO always emits this non-null number.
+	// Canonical CloudRecordVersion.Revision is optional and explicitly nullable.
 	version := registryResponseSample(schema, "CloudRecordVersion")
-	for _, null := range []bool{false, true} {
-		if null {
-			version["Revision"] = nil
-		} else {
-			delete(version, "Revision")
-		}
-		if err := validateRegistryObject(schema, "CloudRecordVersion", version); err == nil {
-			t.Fatal("missing/null Revision accepted")
-		}
+	delete(version, "Revision")
+	if err := validateRegistryObject(schema, "CloudRecordVersion", version); err != nil {
+		t.Fatal("canonical optional Revision rejected")
+	}
+	version["Revision"] = nil
+	if err := validateRegistryObject(schema, "CloudRecordVersion", version); err != nil {
+		t.Fatalf("canonical nullable Revision rejected: %v", err)
 	}
 }
 

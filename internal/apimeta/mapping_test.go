@@ -192,3 +192,36 @@ func hasIssueCode(issues []apimeta.Issue, code string) bool {
 	}
 	return false
 }
+
+func TestOptionalPositionalMapping(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		positional, excluded bool
+		valid                bool
+	}{
+		{"positional", true, false, true}, {"flag", false, false, false}, {"excluded", true, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			spec, mapping := loadCheckedIn(t)
+			field := mapping.Actions["DescribePreCacheImageTask"].Fields["ImageDigest"]
+			field.Positional, field.Excluded, field.OptionalPositional = tc.positional, tc.excluded, true
+			invalid := false
+			for _, issue := range mapping.Validate(spec) {
+				if issue.Code == "INVALID_OPTIONAL_POSITIONAL" {
+					invalid = true
+				}
+			}
+			if invalid == tc.valid {
+				t.Fatalf("valid=%v invalid=%v", tc.valid, invalid)
+			}
+		})
+	}
+	catalog, err := apimeta.Get()
+	if err != nil {
+		t.Fatal(err)
+	}
+	field := catalog.Mapping.Actions["DescribePreCacheImageTask"].Fields["ImageDigest"]
+	if !field.OptionalPositional || !field.Positional {
+		t.Fatal("generated catalog lost optional positional mapping")
+	}
+}

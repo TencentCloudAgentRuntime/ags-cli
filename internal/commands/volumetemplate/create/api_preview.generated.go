@@ -63,7 +63,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "storage-spec", Flag: "storage-spec", Usage: "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type. (required)", Format: "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}}", Fields: []string{"Cos: COS bucket path pattern, may contain ${reuse_key}", "Cfs: CFS path pattern, may contain ${reuse_key}"}, Type: command.FlagString},
+					{Name: "storage-spec", Flag: "storage-spec", Usage: "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type. (required)", Format: "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}}", Fields: []string{"Cos: COS bucket path pattern; must contain ${reuse_key}", "Cfs: CFS path pattern; must contain ${reuse_key}"}, Type: command.FlagString},
 				},
 			},
 			{
@@ -75,10 +75,11 @@ func APIDescriptor() apicli.APIDescriptor {
 				},
 			},
 			{
-				Name:   "VolumeNamePattern",
-				Parser: "common.default_string",
+				Name:     "VolumeNamePattern",
+				Required: true,
+				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "volume-name-pattern", Flag: "volume-name-pattern", Usage: "Name pattern for derived volumes; may contain ${reuse_key}.", Type: command.FlagString},
+					{Name: "volume-name-pattern", Flag: "volume-name-pattern", Usage: "Name pattern for derived volumes; must contain ${reuse_key}. (required)", Type: command.FlagString},
 				},
 			},
 			{

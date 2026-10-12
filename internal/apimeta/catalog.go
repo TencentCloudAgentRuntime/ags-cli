@@ -121,13 +121,14 @@ func newCatalogMapping(c *Catalog, apiVersion string) *Mapping {
 			entry.Command = a.CLI.Command
 			for fname, f := range a.CLI.Fields {
 				entry.Fields[fname] = &FieldMapping{
-					Flag:       f.Flag,
-					Shorthand:  f.Shorthand,
-					Aliases:    append([]string(nil), f.Aliases...),
-					Parser:     f.Parser,
-					Inputs:     mappingInputs(f.Inputs),
-					Positional: f.Positional,
-					Excluded:   f.Excluded,
+					Flag:               f.Flag,
+					Shorthand:          f.Shorthand,
+					Aliases:            append([]string(nil), f.Aliases...),
+					Parser:             f.Parser,
+					Inputs:             mappingInputs(f.Inputs),
+					Positional:         f.Positional,
+					OptionalPositional: f.OptionalPositional,
+					Excluded:           f.Excluded,
 				}
 			}
 		}

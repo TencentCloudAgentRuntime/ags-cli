@@ -42,15 +42,17 @@ type commandModel struct {
 }
 
 type fieldModel struct {
-	AllowEmpty bool
-	Name       string
-	Type       string
-	Member     string
-	Required   bool
-	Parser     string
-	Positional bool
-	Excluded   bool
-	Inputs     []inputModel
+	AllowEmpty         bool
+	Name               string
+	Type               string
+	Member             string
+	Required           bool
+	RequiredHint       string
+	Parser             string
+	Positional         bool
+	OptionalPositional bool
+	Excluded           bool
+	Inputs             []inputModel
 }
 
 type inputModel struct {
@@ -76,11 +78,12 @@ type argModel struct {
 }
 
 type groupModel struct {
-	Path    []string
-	Use     string
-	Short   string
-	Long    string
-	Aliases []string
+	Path     []string
+	Use      string
+	Short    string
+	Long     string
+	Aliases  []string
+	Examples []string
 }
 
 func main() {
@@ -258,14 +261,18 @@ func buildCommands(spec *apimeta.Spec, mapping *apimeta.Mapping, help *apimeta.H
 				fm := a.Fields[m.Name]
 				parser := parserForField(m, fm)
 				field := fieldModel{
-					Name:       m.Name,
-					Type:       m.Type,
-					Member:     m.Member,
-					Required:   m.Required && (fm == nil || !fm.Excluded),
-					AllowEmpty: fm != nil && fm.AllowEmpty,
-					Parser:     parser,
-					Positional: fm != nil && fm.Positional,
-					Excluded:   fm != nil && fm.Excluded,
+					Name:               m.Name,
+					Type:               m.Type,
+					Member:             m.Member,
+					Required:           m.Required && (fm == nil || !fm.Excluded),
+					AllowEmpty:         fm != nil && fm.AllowEmpty,
+					Parser:             parser,
+					Positional:         fm != nil && fm.Positional,
+					OptionalPositional: fm != nil && fm.OptionalPositional,
+					Excluded:           fm != nil && fm.Excluded,
+				}
+				if help != nil {
+					field.RequiredHint = help.Commands[a.Command].Fields[m.Name].RequiredHint
 				}
 				for _, in := range inputsFor(m, fm) {
 					if field.Excluded {
@@ -310,6 +317,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	b.WriteString("import (\n")
 	b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli\"\n")
 	b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/command\"\n")
+	if cmd.Parts[0] == "session" {
+		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session\"\n")
+	}
 	b.WriteString(")\n\n")
 	b.WriteString("func APIDescriptor() apicli.APIDescriptor {\n")
 	b.WriteString("\treturn apicli.APIDescriptor{\n")
@@ -369,6 +379,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 		if len(group.Aliases) > 0 {
 			fmt.Fprintf(&b, ", Aliases: []string{%s}", quotedList(group.Aliases))
 		}
+		if len(group.Examples) > 0 {
+			fmt.Fprintf(&b, ", Examples: []string{%s}", quotedList(group.Examples))
+		}
 		b.WriteString("},\n")
 	}
 	b.WriteString("\t\t},\n")
@@ -390,6 +403,9 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 			}
 			if field.Required {
 				b.WriteString("\t\t\t\tRequired: true,\n")
+			}
+			if field.RequiredHint != "" {
+				fmt.Fprintf(&b, "\t\t\t\tRequiredHint: %s,\n", quote(field.RequiredHint))
 			}
 			fmt.Fprintf(&b, "\t\t\t\tParser: %s,\n", quote(field.Parser))
 			if len(field.Inputs) > 0 {
@@ -442,7 +458,11 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	b.WriteString("\t}\n")
 	b.WriteString("}\n\n")
 	b.WriteString("func GeneratedModule() command.Module {\n")
-	b.WriteString("\treturn apicli.NewModule(APIDescriptor())\n")
+	if cmd.Parts[0] == "session" {
+		b.WriteString("\treturn session.NewModule(APIDescriptor())\n")
+	} else {
+		b.WriteString("\treturn apicli.NewModule(APIDescriptor())\n")
+	}
 	b.WriteString("}\n")
 	return gofmt(filepath.Join("internal", "commands", filepath.Join(cmd.Parts...), "api.generated.go"), []byte(b.String()))
 }
@@ -455,7 +475,8 @@ func argSpecs(cmd commandModel) []argModel {
 		}
 		name := apimeta.KebabCase(field.Name)
 		desc := positionalDescription(name)
-		args = append(args, argModel{Name: name, Description: desc, Required: true})
+		required := !field.OptionalPositional
+		args = append(args, argModel{Name: name, Description: desc, Required: required})
 	}
 	if strings.HasSuffix(cmd.Command, ".delete") && len(args) == 1 {
 		args[0].Repeatable = cmd.Command == "instance.delete" || cmd.Command == "tool.delete"
@@ -487,18 +508,21 @@ func groupSpecsForCommand(parts []string) []groupModel {
 	var groups []groupModel
 	first := parts[0]
 	groups = append(groups, groupModel{
-		Path:    []string{first},
-		Use:     first,
-		Short:   groupShort(first),
-		Long:    groupLong(first),
-		Aliases: aliasesForGroup(first),
+		Path:     []string{first},
+		Use:      first,
+		Short:    groupShort(first),
+		Long:     groupLong(first),
+		Aliases:  aliasesForGroup(first),
+		Examples: groupExamples(first),
 	})
 	for i := 1; i < len(parts)-1; i++ {
 		path := append([]string(nil), parts[:i+1]...)
 		groups = append(groups, groupModel{
-			Path:  path,
-			Use:   parts[i],
-			Short: subgroupShort(first, parts[i]),
+			Path:     path,
+			Use:      parts[i],
+			Short:    subgroupShort(first, parts[i]),
+			Long:     subgroupLong(first, parts[i]),
+			Examples: groupExamples(strings.Join(path, ".")),
 		})
 	}
 	return groups
@@ -578,11 +602,11 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"delete:deployment"}
 	case "deployment.update":
 		return []string{"update:deployment"}
-	case "session-space.create":
+	case "session.space.create":
 		return []string{"create:session-space"}
-	case "session-space.delete":
+	case "session.space.delete":
 		return []string{"delete:session-space"}
-	case "session-space.update":
+	case "session.space.update":
 		return []string{"update:session-space"}
 	case "session.create":
 		return []string{"create:session"}

@@ -450,7 +450,7 @@ func schemaFromDescriptor(desc command.Descriptor) CommandSchema {
 	mutation, createsResource, requiresAuth := schemaEffects(spec.Output.Effects)
 	// Workflow commands always require authentication since they call the
 	// cloud control plane, even if they have no declared side-effects.
-	if desc.Source == command.SourceWorkflow {
+	if desc.Source == command.SourceWorkflow || spec.RequiresAuth {
 		requiresAuth = true
 	}
 	return CommandSchema{
@@ -1392,6 +1392,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 		},
 		{
 			Name: "pre-cache-image-task.get", Summary: "Describe an image pre-cache task",
+			Failures: []string{"MISSING_REQUIRED_INPUT", "CONFLICTING_INPUTS"},
 			Mutation: false, CreatesResource: false,
 			Idempotency: "none", SupportsDryRun: false, Interactive: false,
 			RequiresAuth: true, SupportsJson: true, SupportsNdjson: false, SupportsJq: true,
@@ -1401,7 +1402,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 				"ImageDigest":       {Type: "string", CliFlag: nil},
 				"ImageRegistryType": {Type: "enum", Values: []string{"enterprise", "personal", "custom"}, CliFlag: nil},
 			}},
-			Args:  []ArgSchema{{Name: "ImageDigest", Type: "string", Required: true}},
+			Args:  []ArgSchema{{Name: "ImageDigest", Type: "string"}},
 			Flags: []FlagSchema{{Name: "request", Type: "string"}, {Name: "generate-skeleton", Type: "bool"}},
 		},
 		{

@@ -67,11 +67,11 @@ func runSessionLifecycle(s *patchtest.Session) error {
 		command string
 		request map[string]any
 	}{
-		{"session-space.get", map[string]any{}},
-		{"session.event.append", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "Event": map[string]any{"Timestamp": "2026-09-01T00:00:00Z"}}},
+		{"session.space.get", map[string]any{}},
+		{"session.event.append", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "Event": map[string]any{"UnknownField": true}}},
 		{"session.list", map[string]any{"SpaceId": "space-validation", "Limit": "invalid"}},
-		{"session.get", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "NumRecentEvents": 1}},
-		{"session.get", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "AfterTimestamp": "2026-09-01T00:00:00Z"}},
+		{"session.get", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "NumRecentEvents": "invalid"}},
+		{"session.get", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "AfterTimestamp": 123}},
 		{"session.get", map[string]any{"SpaceId": "space-validation", "UserId": "user-validation", "SessionId": "session-validation", "AgentId": "disabled"}},
 	} {
 		result, err := sessionCall(s, ctx, invalid.command, invalid.request)
@@ -82,17 +82,17 @@ func runSessionLifecycle(s *patchtest.Session) error {
 	name := fmt.Sprintf("agr-session-e2e-%d", time.Now().UnixNano())
 	// Only ordinary session state is used: user:-scoped state outlives a session
 	// and has no public cleanup API.
-	space, err := sessionCall(s, ctx, "session-space.create", map[string]any{"Name": name, "Description": "CLI preview lifecycle", "Tags": []any{map[string]any{"Key": "agr-e2e", "Value": "session"}}})
+	space, err := sessionCall(s, ctx, "session.space.create", map[string]any{"Name": name, "Description": "CLI session lifecycle", "Tags": []any{map[string]any{"Key": "agr-e2e", "Value": "session"}}})
 	spaceID := sessionString(sessionObject(space.Data["SessionSpace"]), "SpaceId")
 	spaceDeleted := false
 	if spaceID != "" {
 		s.Cleanup(func(ctx context.Context) error {
 			if !spaceDeleted {
-				if _, err := sessionCall(s, ctx, "session-space.delete", map[string]any{"SpaceId": spaceID}); err != nil {
+				if _, err := sessionCall(s, ctx, "session.space.delete", map[string]any{"SpaceId": spaceID}); err != nil {
 					return err
 				}
 			}
-			if err := sessionAbsent(s, ctx, "session-space.get", map[string]any{"SpaceId": spaceID}); err != nil {
+			if err := sessionAbsent(s, ctx, "session.space.get", map[string]any{"SpaceId": spaceID}); err != nil {
 				return err
 			}
 			return nil
@@ -104,18 +104,18 @@ func runSessionLifecycle(s *patchtest.Session) error {
 	if err := s.Assert("space.create", spaceID != "" && sessionString(sessionObject(space.Data["SessionSpace"]), "Name") == name); err != nil {
 		return err
 	}
-	get, err := sessionCall(s, ctx, "session-space.get", map[string]any{"SpaceId": spaceID})
+	get, err := sessionCall(s, ctx, "session.space.get", map[string]any{"SpaceId": spaceID})
 	if err != nil {
 		return err
 	}
 	if err := s.Assert("space.get", sessionString(sessionObject(get.Data["SessionSpace"]), "SpaceId") == spaceID); err != nil {
 		return err
 	}
-	_, err = sessionCall(s, ctx, "session-space.update", map[string]any{"SpaceId": spaceID, "Name": name + "-updated", "Description": "updated"})
+	_, err = sessionCall(s, ctx, "session.space.update", map[string]any{"SpaceId": spaceID, "Name": name + "-updated", "Description": "updated"})
 	if err != nil {
 		return err
 	}
-	get, err = sessionCall(s, ctx, "session-space.get", map[string]any{"SpaceId": spaceID})
+	get, err = sessionCall(s, ctx, "session.space.get", map[string]any{"SpaceId": spaceID})
 	if err != nil {
 		return err
 	}
@@ -124,17 +124,17 @@ func runSessionLifecycle(s *patchtest.Session) error {
 	}
 	var list sessionEnvelope
 
-	other, err := sessionCall(s, ctx, "session-space.create", map[string]any{"Name": name + "-page"})
+	other, err := sessionCall(s, ctx, "session.space.create", map[string]any{"Name": name + "-page"})
 	otherID := sessionString(sessionObject(other.Data["SessionSpace"]), "SpaceId")
 	otherDeleted := false
 	if otherID != "" {
 		s.Cleanup(func(ctx context.Context) error {
 			if !otherDeleted {
-				if _, err := sessionCall(s, ctx, "session-space.delete", map[string]any{"SpaceId": otherID}); err != nil {
+				if _, err := sessionCall(s, ctx, "session.space.delete", map[string]any{"SpaceId": otherID}); err != nil {
 					return err
 				}
 			}
-			return sessionAbsent(s, ctx, "session-space.get", map[string]any{"SpaceId": otherID})
+			return sessionAbsent(s, ctx, "session.space.get", map[string]any{"SpaceId": otherID})
 		})
 	}
 	if err != nil {
@@ -154,7 +154,7 @@ func runSessionLifecycle(s *patchtest.Session) error {
 		if tc.field != "space-id" {
 			filters = append(filters, map[string]any{"Name": "space-id", "Values": []string{spaceID, otherID}})
 		}
-		result, err := sessionCall(s, ctx, "session-space.list", map[string]any{"Filters": filters})
+		result, err := sessionCall(s, ctx, "session.space.list", map[string]any{"Filters": filters})
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func runSessionLifecycle(s *patchtest.Session) error {
 	var items []any
 	total := int64(-1)
 	for offset := 0; total < 0 || int64(offset) < total; offset++ {
-		page, err = sessionCall(s, ctx, "session-space.list", map[string]any{"Offset": offset, "Limit": 1, "Filters": []any{map[string]any{"Name": "space-id", "Values": []string{spaceID, otherID}}}})
+		page, err = sessionCall(s, ctx, "session.space.list", map[string]any{"Offset": offset, "Limit": 1, "Filters": []any{map[string]any{"Name": "space-id", "Values": []string{spaceID, otherID}}}})
 		if err != nil {
 			return err
 		}
@@ -198,11 +198,11 @@ func runSessionLifecycle(s *patchtest.Session) error {
 		return err
 	}
 
-	if _, err := sessionCall(s, ctx, "session-space.delete", map[string]any{"SpaceId": otherID}); err != nil {
+	if _, err := sessionCall(s, ctx, "session.space.delete", map[string]any{"SpaceId": otherID}); err != nil {
 		return err
 	}
 	otherDeleted = true
-	if err := sessionAbsent(s, ctx, "session-space.get", map[string]any{"SpaceId": otherID}); err != nil {
+	if err := sessionAbsent(s, ctx, "session.space.get", map[string]any{"SpaceId": otherID}); err != nil {
 		return err
 	}
 
@@ -440,11 +440,11 @@ func runSessionLifecycle(s *patchtest.Session) error {
 	if err := s.Assert("session.delete", true); err != nil {
 		return err
 	}
-	if _, err := sessionCall(s, ctx, "session-space.delete", map[string]any{"SpaceId": spaceID}); err != nil {
+	if _, err := sessionCall(s, ctx, "session.space.delete", map[string]any{"SpaceId": spaceID}); err != nil {
 		return err
 	}
 	spaceDeleted = true
-	if err := sessionAbsent(s, ctx, "session-space.get", map[string]any{"SpaceId": spaceID}); err != nil {
+	if err := sessionAbsent(s, ctx, "session.space.get", map[string]any{"SpaceId": spaceID}); err != nil {
 		return err
 	}
 	// The cleanup callbacks independently confirm both resources are absent.

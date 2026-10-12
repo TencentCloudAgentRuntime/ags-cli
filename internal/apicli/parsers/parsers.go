@@ -121,7 +121,7 @@ func defaultJSON(ctx FieldContext, inputs FieldInputs) (any, bool, error) {
 }
 
 func parseJSONValue(ctx FieldContext, flag, value string, target any) error {
-	data, err := readJSONFlagValue(ctx, value)
+	data, err := readJSONFlagValue(ctx, flag, value)
 	if err != nil {
 		return err
 	}
@@ -130,12 +130,12 @@ func parseJSONValue(ctx FieldContext, flag, value string, target any) error {
 			"INVALID_JSON_FLAG",
 			fmt.Sprintf("invalid JSON for --%s: %v", flag, err),
 			fmt.Sprintf("Provide a valid JSON value for --%s, @file, or - for stdin.", flag),
-		)
+		).WithCause(output.WithContext(err, map[string]any{"Stage": "request_parse", "Field": flag}))
 	}
 	return nil
 }
 
-func readJSONFlagValue(ctx FieldContext, value string) ([]byte, error) {
+func readJSONFlagValue(ctx FieldContext, flag, value string) ([]byte, error) {
 	switch {
 	case value == "-":
 		if ctx.Stdin == nil {
@@ -143,13 +143,13 @@ func readJSONFlagValue(ctx FieldContext, value string) ([]byte, error) {
 		}
 		data, err := io.ReadAll(ctx.Stdin)
 		if err != nil {
-			return nil, output.NewUsageError("INVALID_REQUEST_INPUT", fmt.Sprintf("failed to read JSON flag from stdin: %v", err), "Provide valid JSON via stdin, inline JSON, or @file.")
+			return nil, output.NewUsageError("INVALID_REQUEST_INPUT", fmt.Sprintf("failed to read JSON flag from stdin: %v", err), "Provide valid JSON via stdin, inline JSON, or @file.").WithCause(output.WithContext(err, map[string]any{"Stage": "request_input", "Field": flag, "Path": "stdin"}))
 		}
 		return data, nil
 	case strings.HasPrefix(value, "@"):
 		data, err := os.ReadFile(strings.TrimPrefix(value, "@"))
 		if err != nil {
-			return nil, output.NewUsageError("INVALID_REQUEST_INPUT", fmt.Sprintf("failed to read JSON flag file %s: %v", strings.TrimPrefix(value, "@"), err), "Check that the file exists and is readable.")
+			return nil, output.NewUsageError("INVALID_REQUEST_INPUT", fmt.Sprintf("failed to read JSON flag file %s: %v", strings.TrimPrefix(value, "@"), err), "Check that the file exists and is readable.").WithCause(output.WithContext(err, map[string]any{"Stage": "request_input", "Field": flag}))
 		}
 		return data, nil
 	default:

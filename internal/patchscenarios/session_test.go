@@ -2,6 +2,7 @@ package patchscenarios
 
 import (
 	"encoding/json"
+	"errors"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -21,9 +22,21 @@ import (
 // The same registered scenario runs against the real candidate CLI here and
 // against the service in the strict patch runner. The local fixture is not live evidence.
 func TestSessionLifecycleCandidate(t *testing.T) {
+	for _, channel := range []string{"stable", "preview"} {
+		t.Run(channel, func(t *testing.T) { testSessionLifecycleCandidate(t, channel) })
+	}
+}
+
+func testSessionLifecycleCandidate(t *testing.T, channel string) {
 	root := filepath.Clean("../..")
-	binary := filepath.Join(t.TempDir(), "agr-preview")
-	build := exec.CommandContext(t.Context(), "go", "build", "-buildvcs=false", "-tags=preview", "-o", binary, "./cmd/agr")
+	binary := filepath.Join(t.TempDir(), "agr-"+channel)
+	args := []string{"build", "-buildvcs=false", "-o", binary}
+	if channel == "preview" {
+		args = append(args, "-tags=preview")
+	}
+	args = append(args, "./cmd/agr")
+	build := exec.CommandContext(t.Context(), "go", args...)
+	build.Env = append(os.Environ(), "GOFLAGS=")
 	build.Dir = root
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build: %v\n%s", err, out)
@@ -70,6 +83,82 @@ func TestSessionLifecycleCandidate(t *testing.T) {
 			}
 		})
 	}
+	t.Run("workflow-flags", func(t *testing.T) {
+		for _, format := range []string{"text", "json"} {
+			t.Run(format, func(t *testing.T) {
+				fixture := &sessionFixture{t: t}
+				server := httptest.NewTLSServer(fixture)
+				defer server.Close()
+				home := t.TempDir()
+				env := []string{"HOME=" + home, "USERPROFILE=" + home, "TENCENTCLOUD_SECRET_ID=fake", "TENCENTCLOUD_SECRET_KEY=fake", "TENCENTCLOUD_TOKEN=fake-session", "AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(server.URL, "https://"), "AGR_INSECURE_SKIP_VERIFY=1"}
+				call := func(id string, flags ...string) map[string]any {
+					t.Helper()
+					args := append(strings.Split(id, "."), flags...)
+					args = append(args, "--non-interactive", "-o", format)
+					cmd := exec.CommandContext(t.Context(), binary, args...)
+					cmd.Env = env
+					cmd.Stdin = strings.NewReader("")
+					out, err := cmd.Output()
+					if err != nil || len(out) == 0 {
+						t.Fatalf("%s: %v %s", id, err, out)
+					}
+					if format == "text" {
+						want := "session-123"
+						switch {
+						case strings.HasSuffix(id, ".delete"):
+							want = "Deleted"
+						case id == "session.space.list":
+							want = "SpaceId"
+						case strings.HasPrefix(id, "session.space."):
+							want = "space-fixture"
+						case strings.HasPrefix(id, "session.event."):
+							want = "event-123"
+						}
+						if !strings.Contains(string(out), want) {
+							t.Fatalf("%s text omitted %s: %s", id, want, out)
+						}
+						return nil
+					}
+					var result struct {
+						Command, Status string
+						Data            map[string]any
+					}
+					if err := json.Unmarshal(out, &result); err != nil {
+						t.Fatal(err)
+					}
+					if result.Command != id || result.Status != "succeeded" {
+						t.Fatalf("%s envelope: %+v", id, result)
+					}
+					return result.Data
+				}
+				call("session.space.list")
+				created := call("session.space.create", "--name", "customer-support", "--description", "Customer support sessions")
+				if format == "json" && sessionString(sessionObject(created["SessionSpace"]), "SpaceId") != "space-fixture" {
+					t.Fatal("space create omitted the ID needed by the next command")
+				}
+				space := []string{"--space-id", "space-fixture"}
+				call("session.space.get", space...)
+				call("session.space.update", append(space, "--name", "customer-support-production")...)
+				key := []string{"--space-id", "space-fixture", "--user-id", "user-123", "--session-id", "session-123"}
+				call("session.create", append(key, "--title", "Support request")...)
+				call("session.event.append", append(key, "--event", `{"EventId":"event-123","Author":"user","Content":{"Role":"user","Parts":[{"Text":"Hello"}]}}`)...)
+				call("session.get", key...)
+				history := call("session.event.list", append(key, "--offset", "0", "--limit", "50")...)
+				if format == "json" && len(history["Events"].([]any)) != 1 {
+					t.Fatal("conversation history lost the appended event")
+				}
+				call("session.list", append(space, "--user-ids", "user-123")...)
+				call("session.update", append(key, "--title", "Resolved request")...)
+				call("session.delete", key...)
+				call("session.space.delete", space...)
+				fixture.mu.Lock()
+				defer fixture.mu.Unlock()
+				if fixture.space != nil || fixture.session != nil || len(fixture.events) != 0 || fixture.calls != 12 {
+					t.Fatalf("workflow cleanup/calls: space=%v session=%v events=%v calls=%d", fixture.space, fixture.session, fixture.events, fixture.calls)
+				}
+			})
+		}
+	})
 	t.Run("channel-isolation", func(t *testing.T) {
 		stable := filepath.Join(t.TempDir(), "agr-stable")
 		build := exec.CommandContext(t.Context(), "go", "build", "-buildvcs=false", "-o", stable, "./cmd/agr")
@@ -78,12 +167,31 @@ func TestSessionLifecycleCandidate(t *testing.T) {
 		if out, err := build.CombinedOutput(); err != nil {
 			t.Fatalf("build stable: %v\n%s", err, out)
 		}
-		for _, group := range []string{"session", "session-space"} {
-			if out, err := exec.CommandContext(t.Context(), stable, group, "--help").CombinedOutput(); err == nil {
-				t.Fatalf("stable exposes %s: %s", group, out)
+		for _, candidate := range []string{stable, binary} {
+			for _, path := range [][]string{{"session"}, {"session", "space"}, {"session", "event"}} {
+				cmd := exec.CommandContext(t.Context(), candidate, append(path, "--help")...)
+				cmd.Env = []string{"HOME=" + t.TempDir()}
+				if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "Examples:") {
+					t.Fatalf("group help %v: %v %s", path, err, out)
+				}
 			}
-			if out, err := exec.CommandContext(t.Context(), binary, group, "--help").CombinedOutput(); err != nil {
-				t.Fatalf("preview omits %s: %v %s", group, err, out)
+			cmd := exec.CommandContext(t.Context(), candidate, "session-space", "--help")
+			cmd.Env = []string{"HOME=" + t.TempDir()}
+			if out, err := cmd.CombinedOutput(); err == nil || !strings.Contains(string(out), "agr session space") {
+				t.Fatalf("obsolete preview group remains or migration hint is absent: %v %s", err, out)
+			}
+			for _, args := range [][]string{{"session-space", "list", "-o", "json"}, {"session-space", "--help", "-o", "json"}} {
+				cmd := exec.CommandContext(t.Context(), candidate, args...)
+				cmd.Env = []string{"HOME=" + t.TempDir()}
+				out, err := cmd.Output()
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) || exit.ExitCode() != 2 {
+					t.Fatalf("removed command exit: %v %s", err, out)
+				}
+				var result struct{ Failure struct{ Code, Hint string } }
+				if err := json.Unmarshal(out, &result); err != nil || result.Failure.Code != "INVALID_USAGE" || !strings.Contains(result.Failure.Hint, "agr session space") {
+					t.Fatalf("removed command JSON diagnostic: %v %s", err, out)
+				}
 			}
 		}
 		if out, err := exec.CommandContext(t.Context(), binary, "schema", "session.update-title", "-o", "json").CombinedOutput(); err == nil {
@@ -94,9 +202,9 @@ func TestSessionLifecycleCandidate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get contract: %v %s", err, out)
 			}
-			for _, unsupported := range []string{"num-recent-events", "after-timestamp", "NumRecentEvents", "AfterTimestamp"} {
-				if strings.Contains(string(out), unsupported) {
-					t.Fatalf("unsupported get parameter %s exposed: %s", unsupported, out)
+			for _, supported := range []string{"num-recent-events", "after-timestamp"} {
+				if !strings.Contains(string(out), supported) {
+					t.Fatalf("get parameter %s missing: %s", supported, out)
 				}
 			}
 		}

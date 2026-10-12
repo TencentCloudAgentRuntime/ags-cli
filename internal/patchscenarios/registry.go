@@ -1,5 +1,5 @@
 // Package patchscenarios registers reviewed, real CLI test scenarios. Add a
-// scenario together with its first preview-only patch, never a success stub.
+// scenario together with the capability it verifies, never a success stub.
 package patchscenarios
 
 import "github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"

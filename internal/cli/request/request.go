@@ -33,7 +33,7 @@ func ReadFlagFrom(value string, stdin io.Reader) ([]byte, error) {
 		if err != nil {
 			return nil, output.NewUsageError("INVALID_REQUEST_INPUT",
 				fmt.Sprintf("failed to read request from stdin: %v", err),
-				"Provide valid JSON via stdin, an inline string, or @file.").WithCause(output.WithContext(err, map[string]any{"Stage": "request_input", "Path": "stdin"}))
+				"Provide valid JSON via stdin, an inline string, or @file.").WithCause(output.WithContext(err, map[string]any{"Stage": "request_input", "Field": "request", "Path": "stdin"}))
 		}
 		return data, nil
 	case strings.HasPrefix(value, "@"):

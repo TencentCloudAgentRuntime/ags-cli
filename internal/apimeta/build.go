@@ -46,13 +46,14 @@ type CatalogCLIProjection struct {
 // CatalogFieldEntry is the catalog-level view of a mapping override
 // for one request member. Empty / zero values indicate "no override".
 type CatalogFieldEntry struct {
-	Flag       string              `json:"Flag,omitempty"`
-	Shorthand  string              `json:"Shorthand,omitempty"`
-	Aliases    []string            `json:"Aliases,omitempty"`
-	Parser     string              `json:"Parser,omitempty"`
-	Inputs     []CatalogInputEntry `json:"Inputs,omitempty"`
-	Positional bool                `json:"Positional,omitempty"`
-	Excluded   bool                `json:"Excluded,omitempty"`
+	Flag               string              `json:"Flag,omitempty"`
+	Shorthand          string              `json:"Shorthand,omitempty"`
+	Aliases            []string            `json:"Aliases,omitempty"`
+	Parser             string              `json:"Parser,omitempty"`
+	Inputs             []CatalogInputEntry `json:"Inputs,omitempty"`
+	Positional         bool                `json:"Positional,omitempty"`
+	OptionalPositional bool                `json:"OptionalPositional,omitzero"`
+	Excluded           bool                `json:"Excluded,omitempty"`
 }
 
 // CatalogInputEntry is the catalog-level view of one CLI input override.
@@ -110,13 +111,14 @@ func BuildCatalog(spec *Spec, mapping *Mapping) *CatalogFile {
 						continue
 					}
 					fields[name] = CatalogFieldEntry{
-						Flag:       fm.Flag,
-						Shorthand:  fm.Shorthand,
-						Aliases:    append([]string(nil), fm.Aliases...),
-						Parser:     fm.Parser,
-						Inputs:     catalogInputs(fm.Inputs),
-						Positional: fm.Positional,
-						Excluded:   fm.Excluded,
+						Flag:               fm.Flag,
+						Shorthand:          fm.Shorthand,
+						Aliases:            append([]string(nil), fm.Aliases...),
+						Parser:             fm.Parser,
+						Inputs:             catalogInputs(fm.Inputs),
+						Positional:         fm.Positional,
+						OptionalPositional: fm.OptionalPositional,
+						Excluded:           fm.Excluded,
 					}
 				}
 				if len(fields) > 0 {

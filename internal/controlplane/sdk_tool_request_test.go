@@ -83,3 +83,42 @@ func TestSDKSupportsInstanceTokenPaginationContract(t *testing.T) {
 		t.Fatalf("response NextToken = %v, want next-page", response.NextToken)
 	}
 }
+
+func TestSDKSupportsPromotedPrecacheContract(t *testing.T) {
+	request := ags.NewDescribePreCacheImageTaskRequest()
+	if err := request.FromJsonString(`{"PreCacheImageId":"cache-test"}`); err != nil {
+		t.Fatalf("FromJsonString: %v", err)
+	}
+	if request.PreCacheImageId == nil || *request.PreCacheImageId != "cache-test" {
+		t.Fatalf("PreCacheImageId = %v, want cache-test", request.PreCacheImageId)
+	}
+
+	var created ags.CreatePreCacheImageTaskResponseParams
+	if err := json.Unmarshal([]byte(`{"PreCacheImageId":"cache-test"}`), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.PreCacheImageId == nil || *created.PreCacheImageId != "cache-test" {
+		t.Fatalf("created PreCacheImageId = %v, want cache-test", created.PreCacheImageId)
+	}
+
+	var response ags.DescribePreCacheImageTaskResponseParams
+	if err := json.Unmarshal([]byte(`{"PreCacheImageId":"cache-test","SourceType":"EXPLICIT","CachedImageSizeBytes":9007199254740993,"CreateTime":"created","LastUsedTime":"used"}`), &response); err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []struct {
+		name, want string
+		value      *string
+	}{
+		{"PreCacheImageId", "cache-test", response.PreCacheImageId},
+		{"SourceType", "EXPLICIT", response.SourceType},
+		{"CreateTime", "created", response.CreateTime},
+		{"LastUsedTime", "used", response.LastUsedTime},
+	} {
+		if field.value == nil || *field.value != field.want {
+			t.Errorf("%s = %v, want %s", field.name, field.value, field.want)
+		}
+	}
+	if response.CachedImageSizeBytes == nil || *response.CachedImageSizeBytes != 9007199254740993 {
+		t.Fatalf("CachedImageSizeBytes = %v, precision lost", response.CachedImageSizeBytes)
+	}
+}

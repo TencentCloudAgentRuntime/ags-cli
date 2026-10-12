@@ -1,6 +1,7 @@
 package apicli
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
@@ -54,7 +55,7 @@ func (JSONRequestSource) Read(req command.Request) (map[string]any, bool, error)
 			"INVALID_REQUEST_JSON",
 			fmt.Sprintf("invalid JSON in --request: %v", err),
 			"Provide a valid JSON object as --request.",
-		)
+		).WithCause(output.WithContext(err, map[string]any{"Stage": "request_parse", "Field": "request"}))
 	}
 	out, ok := decoded.(map[string]any)
 	if !ok {
@@ -251,13 +252,13 @@ func requiredValuePresent(value any) bool {
 	return true
 }
 
-func missingRequiredFieldError(field FieldSpec) error {
+func missingRequiredFieldError(field FieldSpec) *output.CLIError {
 	arg := requiredPositionalName(field)
 	if arg != "" {
 		return output.NewUsageError(
 			"MISSING_REQUIRED_ARG",
 			fmt.Sprintf("missing required argument %s", arg),
-			fmt.Sprintf("Provide %s or include %s in --request.", arg, field.Name),
+			cmp.Or(field.RequiredHint, fmt.Sprintf("Provide %s or include %s in --request.", arg, field.Name)),
 		)
 	}
 	flag := requiredFlagName(field)
@@ -265,13 +266,13 @@ func missingRequiredFieldError(field FieldSpec) error {
 		return output.NewUsageError(
 			"MISSING_REQUIRED_FLAG",
 			fmt.Sprintf("%s is required", flag),
-			fmt.Sprintf("Provide %s or include %s in --request.", flag, field.Name),
+			cmp.Or(field.RequiredHint, fmt.Sprintf("Provide %s or include %s in --request.", flag, field.Name)),
 		)
 	}
 	return output.NewUsageError(
 		"MISSING_REQUIRED_FLAG",
 		fmt.Sprintf("%s is required", field.Name),
-		fmt.Sprintf("Provide %s in --request.", field.Name),
+		cmp.Or(field.RequiredHint, fmt.Sprintf("Provide %s in --request.", field.Name)),
 	)
 }
 

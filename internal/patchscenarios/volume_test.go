@@ -118,6 +118,36 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			}
 		})
 	}
+	t.Run("missing-name-pattern", func(t *testing.T) {
+		fixture := newVolumeFixture(t, "")
+		server := httptest.NewTLSServer(fixture)
+		defer server.Close()
+		for _, mode := range []string{"flags", "request"} {
+			t.Run(mode, func(t *testing.T) {
+				args := []string{"volume-template", "create", "-o", "json"}
+				if mode == "flags" {
+					args = append(args, "--volume-template-name", "workspace", "--access-mode", "ReadOnlyMany", "--reclaim-policy", "Retain", "--storage-type", "Cfs", "--storage-spec", `{"Cfs":{"FileSystemId":"cfs-fixture","PathPattern":"data/${reuse_key}"}}`)
+				} else {
+					args = append(args, "--request", `{"VolumeTemplateName":"workspace","AccessMode":"ReadOnlyMany","ReclaimPolicy":"Retain","StorageType":"Cfs","StorageSpec":{"Cfs":{"FileSystemId":"cfs-fixture","PathPattern":"data/${reuse_key}"}}}`)
+				}
+				cmd := exec.CommandContext(t.Context(), binary, args...)
+				cmd.Env = volumeEnv(t, server.URL)
+				out, err := cmd.CombinedOutput()
+				var result volumeEnvelope
+				if json.Unmarshal(out, &result) != nil || result.Failure == nil || result.Failure.Code != "MISSING_REQUIRED_FLAG" || !strings.Contains(result.Failure.Message, "--volume-name-pattern") {
+					t.Fatalf("missing name pattern: %v %s", err, out)
+				}
+				if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 2 {
+					t.Fatalf("missing name pattern exit: %v", err)
+				}
+			})
+		}
+		fixture.mu.Lock()
+		defer fixture.mu.Unlock()
+		if fixture.calls != 0 {
+			t.Fatalf("missing name pattern contacted service: %d calls", fixture.calls)
+		}
+	})
 	t.Run("channel-isolation", func(t *testing.T) {
 		stable := filepath.Join(t.TempDir(), "agr-stable")
 		build := exec.CommandContext(t.Context(), "go", "build", "-buildvcs=false", "-o", stable, "./cmd/agr")
@@ -275,7 +305,11 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "DeleteVolume":
 		f.remove(req, f.volumes, "VolumeId", "VolumeName")
 	case "CreateVolumeTemplate":
-		response["VolumeTemplate"] = f.create(req, "volt", "VolumeTemplateId", "VolumeTemplateName", "StorageSpec", f.templates)
+		if !strings.Contains(volumeString(req, "VolumeNamePattern"), "${reuse_key}") {
+			response["Error"] = map[string]any{"Code": "InvalidParameter", "Message": "VolumeNamePattern must contain ${reuse_key}"}
+		} else {
+			response["VolumeTemplate"] = f.create(req, "volt", "VolumeTemplateId", "VolumeTemplateName", "StorageSpec", f.templates)
+		}
 	case "DescribeVolumeTemplateList":
 		set, total := f.list(req, f.templates, "VolumeTemplateId", "VolumeTemplateName", "VolumeTemplateIds", "VolumeTemplateNames", "volume-template-name", "template")
 		response["VolumeTemplateSet"], response["TotalCount"] = set, total

@@ -72,7 +72,7 @@ func Module() command.Module {
 					}
 					var probe map[string]any
 					if err := json.Unmarshal(raw, &probe); err != nil {
-						return nil, output.NewUsageError("INVALID_REQUEST_JSON", fmt.Sprintf("invalid JSON in --request: %v", err), "Provide a valid JSON object as --request.")
+						return nil, output.NewUsageError("INVALID_REQUEST_JSON", fmt.Sprintf("invalid JSON in --request: %v", err), "Provide a valid JSON object as --request.").WithCause(output.WithContext(err, map[string]any{"Stage": "request_parse", "Field": "request"}))
 					}
 					if probe == nil {
 						return nil, output.NewUsageError("INVALID_REQUEST_JSON", "--request must be a JSON object", "The top-level value must be a JSON object, not an array or scalar.")

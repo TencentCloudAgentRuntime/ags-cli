@@ -54,6 +54,8 @@ type FieldMapping struct {
 	Parser     string         `yaml:"parser"`
 	Inputs     []InputMapping `yaml:"inputs"`
 	Positional bool           `yaml:"positional"`
+	// OptionalPositional relaxes only the CLI positional requirement, not the API field.
+	OptionalPositional bool `yaml:"optional_positional"`
 	// Excluded marks a field as not exposed via cobra flags. The field
 	// remains accepted via `--request` JSON; only the dedicated flag
 	// is suppressed. Useful for internal or unstable fields.
@@ -293,6 +295,9 @@ func (m *Mapping) Validate(spec *Spec) []Issue {
 					addFlag(kebabCaseField(memberName), memberName, "generated flag")
 				}
 				for fieldName, fm := range a.Fields {
+					if fm.OptionalPositional && (!fm.Positional || fm.Excluded) {
+						issues = append(issues, Issue{Action: name, Field: fieldName, Code: "INVALID_OPTIONAL_POSITIONAL", Detail: "optional_positional requires an exposed positional field"})
+					}
 					if fm.Excluded {
 						if fm.Flag != "" || fm.Shorthand != "" || len(fm.Aliases) > 0 || fm.Positional {
 							issues = append(issues, Issue{Action: name, Field: fieldName, Code: "EXCLUDED_WITH_FLAG", Detail: "excluded fields cannot also declare flag/shorthand/aliases/positional"})

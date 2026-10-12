@@ -15,14 +15,14 @@ import (
 func runSessionEventCount(s *patchtest.Session) error {
 	ctx := s.Context
 	name := fmt.Sprintf("agr-count-e2e-%d", time.Now().UnixNano())
-	space, err := sessionCall(s, ctx, "session-space.create", map[string]any{"Name": name})
+	space, err := sessionCall(s, ctx, "session.space.create", map[string]any{"Name": name})
 	spaceID := sessionString(sessionObject(space.Data["SessionSpace"]), "SpaceId")
 	if spaceID != "" {
 		s.Cleanup(func(ctx context.Context) error {
-			if _, err := sessionCall(s, ctx, "session-space.delete", map[string]any{"SpaceId": spaceID}); err != nil {
+			if _, err := sessionCall(s, ctx, "session.space.delete", map[string]any{"SpaceId": spaceID}); err != nil {
 				return err
 			}
-			return sessionAbsent(s, ctx, "session-space.get", map[string]any{"SpaceId": spaceID})
+			return sessionAbsent(s, ctx, "session.space.get", map[string]any{"SpaceId": spaceID})
 		})
 	}
 	if err != nil {

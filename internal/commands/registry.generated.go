@@ -55,6 +55,37 @@ import (
 	instanceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/update"
 	precacheimagetaskcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/create"
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
+	registryauditloglist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/auditlog/list"
+	registrycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/create"
+	registrydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/delete"
+	registryget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/get"
+	registrylist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/list"
+	registryrecordapprove "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/approve"
+	registryrecordcancel "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/cancel"
+	registryrecordcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/create"
+	registryrecorddelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/delete"
+	registryrecordget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/get"
+	registryrecordlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/list"
+	registryrecordpreview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/preview"
+	registryrecordreject "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/reject"
+	registryrecordsync "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/sync"
+	registryrecordupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/update"
+	registryrecordversionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/record/version/list"
+	registryskillpackagedownloadurl "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/skillpackage/downloadurl"
+	registryskillpackageuploadurl "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/skillpackage/uploadurl"
+	registryupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/update"
+	sessioncreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/create"
+	sessiondelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/delete"
+	sessioneventappend "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/event/append"
+	sessioneventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/event/list"
+	sessionget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/get"
+	sessionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/list"
+	sessionspacecreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/create"
+	sessionspacedelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/delete"
+	sessionspaceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/get"
+	sessionspacelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/list"
+	sessionspaceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/space/update"
+	sessionupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session/update"
 	toolcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/create"
 	tooldelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/delete"
 	toolfork "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/fork"
@@ -115,6 +146,37 @@ func Registry() (*command.Registry, error) {
 		instanceupdate.Module(),
 		precacheimagetaskcreate.Module(),
 		precacheimagetaskget.Module(),
+		registryauditloglist.GeneratedModule(),
+		registrycreate.GeneratedModule(),
+		registrydelete.GeneratedModule(),
+		registryget.GeneratedModule(),
+		registrylist.GeneratedModule(),
+		registryrecordapprove.GeneratedModule(),
+		registryrecordcancel.GeneratedModule(),
+		registryrecordcreate.GeneratedModule(),
+		registryrecorddelete.GeneratedModule(),
+		registryrecordget.GeneratedModule(),
+		registryrecordlist.GeneratedModule(),
+		registryrecordpreview.GeneratedModule(),
+		registryrecordreject.GeneratedModule(),
+		registryrecordsync.GeneratedModule(),
+		registryrecordupdate.GeneratedModule(),
+		registryrecordversionlist.GeneratedModule(),
+		registryskillpackagedownloadurl.GeneratedModule(),
+		registryskillpackageuploadurl.GeneratedModule(),
+		registryupdate.GeneratedModule(),
+		sessioncreate.GeneratedModule(),
+		sessiondelete.GeneratedModule(),
+		sessioneventappend.GeneratedModule(),
+		sessioneventlist.GeneratedModule(),
+		sessionget.GeneratedModule(),
+		sessionlist.GeneratedModule(),
+		sessionspacecreate.GeneratedModule(),
+		sessionspacedelete.GeneratedModule(),
+		sessionspaceget.GeneratedModule(),
+		sessionspacelist.GeneratedModule(),
+		sessionspaceupdate.GeneratedModule(),
+		sessionupdate.GeneratedModule(),
 		toolcreate.Module(),
 		tooldelete.Module(),
 		toolfork.Module(),

@@ -349,6 +349,66 @@ commands and `agr api call`). `--domain` only affects data-plane access. Both ca
 also be set via `cloud_endpoint` / `domain` in `~/.agr/config.toml` or
 `AGR_CLOUD_ENDPOINT` / `AGR_DOMAIN` environment variables.
 
+## Session spaces, conversations, and history
+
+Use `agr session` for the complete conversation workflow. `agr session space`
+manages business spaces, the direct `session create/get/list/update/delete`
+commands manage conversations, and `agr session event` writes and reads history.
+
+First choose an existing space, or create one for a business purpose. Save the
+server-returned `SpaceId`; do not construct it from the space name. Space lookup
+uses the selected account and region. Use the returned ID for subsequent
+conversations.
+
+```bash
+agr session space list -o text
+agr session space create --name customer-support --description 'Customer support sessions' -o text
+```
+
+Replace the example space ID below with that returned ID. `UserId` comes from
+your application, not your Tencent Cloud account. Keep the same SpaceId, UserId,
+and SessionId across turns. SessionId is optional on create; save the returned
+ID for subsequent operations. The published contract does not specify the
+result of retrying creation with the same ID.
+
+```bash
+space_id=space-a1b2c3d4
+user_id=user-123
+session_id=session-123
+
+agr session create --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --title 'Support request' -o text
+agr session event append --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --event '{"EventId":"event-123","Author":"user","Content":{"Role":"user","Parts":[{"Text":"Hello"}]}}' -o text
+agr session get --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" -o text
+agr session event list --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --offset 0 --limit 50 -o text
+```
+
+EventId is optional; the service generates it when empty. The published
+contract does not promise deduplication for repeated EventIds. `--event` also accepts
+`@event.json` or `-` for stdin. A session snapshot is not the complete event
+history: continue `event list` with increasing `--offset` until all pages are
+read. Use `session list --space-id ... --user-ids ...` to find a user's
+conversations, and `session update` to change their title or metadata.
+
+The current `session get` response has no event-list field, even when
+`--num-recent-events` is supplied. Read events with `session event list`.
+
+Delete a conversation before removing its space:
+
+```bash
+agr session delete --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" -o text
+agr session space delete --space-id "$space_id" -o text
+```
+
+Space deletion is a separate operation. The service only allows deletion of
+non-default spaces with no sessions, events, or user state; use the service
+result to determine whether the space can be removed.
+
+Space commands previously exposed in preview as `agr session-space` now use
+`agr session space`; the old command and schema IDs have no compatibility alias.
+Discover each layer with `agr session --help`, `agr session space --help`, or
+`agr session event --help`. For automation, use `-o json` and inspect the interface
+with `agr schema session.space.create -o json`.
+
 ## Low-level API access
 
 For undocumented fields or debugging, use the raw API channel:
@@ -394,6 +454,11 @@ agr deployment get <id>          Describe a Deployment
 agr deployment update <id>       Update mutable Deployment configuration
 agr deployment delete <id>       Delete a Deployment
 agr deployment proxy <id> PORT   L7 proxy for local debugging
+
+agr registry ...                 Manage registries, records, and skill packages
+agr session ...                  Manage session spaces, sessions, and events
+agr session space ...            Manage session spaces
+agr session event ...            Append and list session events
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete

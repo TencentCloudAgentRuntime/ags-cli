@@ -127,7 +127,7 @@ func TestCharacterization_PublicCommandSurface(t *testing.T) {
 			"image-registry-type": {typ: "string"},
 			"request":             {typ: "string"},
 		}},
-		{command: "pre-cache-image-task.get", use: "get <image-digest> --image <image> --image-registry-type <type>", flags: map[string]flagExpectation{
+		{command: "pre-cache-image-task.get", use: "get [image-digest] [flags]", flags: map[string]flagExpectation{
 			"image":               {typ: "string"},
 			"image-registry-type": {typ: "string"},
 			"request":             {typ: "string"},
@@ -258,7 +258,7 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 				"Describe an image pre-cache task",
 				"--image string",
 				"--image-registry-type string",
-				"Image registry type: enterprise, personal, or custom (required)",
+				"Required as part of the image triple when no task ID is supplied.",
 			},
 		},
 	}

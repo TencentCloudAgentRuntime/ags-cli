@@ -33,6 +33,8 @@ type FieldSpec struct {
 	Name        string
 	Description string
 	Required    bool
+	// RequiredHint overrides the generic missing-input guidance when provided.
+	RequiredHint string
 	// Parser is the stable parser ID registered in parsers.FieldParsers. Empty
 	// values are resolved from input types by RequestBuilder.
 	Parser string

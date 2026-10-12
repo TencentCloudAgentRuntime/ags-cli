@@ -1,4 +1,4 @@
-# Registry preview verification
+# Registry verification
 
 `go test ./tests/registry` builds stable and preview binaries, checks every
 Registry request member against its flag and schema, and exercises serialization
@@ -11,12 +11,13 @@ explicitly authorized account and region. They use an isolated CLI home and
 confirm deletion with a fresh cleanup context; do not point them at production
 resources.
 
-Build the candidate with `go build -tags=preview -o /tmp/agr-registry-preview ./cmd/agr`.
+Build the stable candidate with `go build -o /tmp/agr-registry ./cmd/agr`.
+To verify the preview channel, add `-tags=preview` to the same build command.
 Set `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`, optional
 `TENCENTCLOUD_TOKEN`, and `AGR_REGION` using your credential provider. Then run:
 
 ```sh
-AGR_REGISTRY_E2E_BINARY=/tmp/agr-registry-preview \
+AGR_REGISTRY_E2E_BINARY=/tmp/agr-registry \
 AGR_REGISTRY_E2E_SCENARIO=registry.lifecycle \
 AGR_REGISTRY_FIXTURE_URL=https://YOUR-REVIEWED-FIXTURE \
 go test ./internal/patchscenarios -run TestRegistryLive -count=1 -v -timeout=8m
@@ -32,7 +33,7 @@ local binary tests.
 
 For diagnosis, the component scenarios are `registry.custom.lifecycle`,
 `registry.skill.lifecycle`, and `registry.remote.lifecycle`. A component pass
-is not a complete patch validation.
+is not a complete Registry lifecycle validation.
 
 ## Remote metadata fixture
 
@@ -52,7 +53,11 @@ Run `deno test --no-config tests/registry/fixture` to check the fixture locally.
 ## Evidence boundary
 
 `go run ./cmd/internal/apipatch coverage` checks that every contract delta is
-bound to registered assertions. It does not execute the cloud tests. A local
-working-tree test is not the strict committed-head report required by
-[PATCH-VERIFICATION.md](../../PATCH-VERIFICATION.md). Generate that report only
-after a clean candidate commit and PR head exist; never substitute a local run.
+bound to registered assertions. Promoted Registry Actions no longer contribute
+overlay entries. The command does not execute cloud tests, and local binary
+tests do not prove service acceptance.
+
+Candidates containing a non-empty API patch still need the separate strict
+preview E2E report required by [PATCH-VERIFICATION.md](../../PATCH-VERIFICATION.md).
+Generate that report only after a clean candidate commit and PR head exist;
+Registry lifecycle runs and local working-tree tests do not substitute for it.

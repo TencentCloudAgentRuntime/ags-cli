@@ -43,3 +43,12 @@ func TestRegistrySymbolForCommandDir_ErrsWhenWrapperHasNoModule(t *testing.T) {
 		t.Fatal("registrySymbolForCommandDir returned nil error, want error")
 	}
 }
+
+func TestOptionalPositionalIsCommandIndependent(t *testing.T) {
+	for _, optional := range []bool{false, true} {
+		args := argSpecs(commandModel{Command: "future.get", Fields: []fieldModel{{Name: "ResourceId", Positional: true, OptionalPositional: optional}}})
+		if len(args) != 1 || args[0].Required == optional {
+			t.Fatalf("optional=%v args=%+v", optional, args)
+		}
+	}
+}

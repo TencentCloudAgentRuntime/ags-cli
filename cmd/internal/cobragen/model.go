@@ -87,9 +87,7 @@ func groupShort(group string) string {
 	case "deployment":
 		return "Manage deployments"
 	case "session":
-		return "Manage sessions"
-	case "session-space":
-		return "Manage session spaces"
+		return "Manage session spaces, sessions, and events"
 	case "volume":
 		return "Manage sandbox volumes"
 	case "volume-template":
@@ -108,6 +106,8 @@ func groupLong(group string) string {
 		return "Manage API keys for AGR sandbox access."
 	case "deployment":
 		return "Manage deployments and related data-plane workflows."
+	case "session":
+		return "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history."
 	case "volume":
 		return "Manage sandbox volumes. A volume binds one concrete storage location that sandbox instances can mount."
 	case "volume-template":
@@ -148,7 +148,39 @@ func subgroupShort(group, sub string) string {
 	if group == "session" && sub == "event" {
 		return "Manage session events"
 	}
+	if group == "session" && sub == "space" {
+		return "Manage session spaces"
+	}
 	return "Manage " + sub
+}
+
+func subgroupLong(group, sub string) string {
+	if group != "session" {
+		return ""
+	}
+	switch sub {
+	case "space":
+		return "Manage spaces that isolate users, sessions, events, and state by business purpose. Use the server-returned SpaceId with session and event commands. Only spaces with no sessions, events, or user state can be deleted; default spaces are protected."
+	case "event":
+		return "Append interactions and read a session's event history. Identify the session with --space-id, --user-id, and --session-id. List results are paginated; a session snapshot is not the complete event history."
+	}
+	return ""
+}
+
+func groupExamples(group string) []string {
+	switch group {
+	case "session":
+		return []string{
+			"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text",
+			"Example - Create a conversation using the returned SpaceId:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text",
+			"Example - Append an event and read the conversation:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text",
+		}
+	case "session.space":
+		return []string{"Example - Choose a space and inspect its scope:\n  agr session space list -o text\n  agr session space get --space-id space-a1b2c3d4 -o text", "Example - Create a business space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"}
+	case "session.event":
+		return []string{"Example - Append a prepared event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text", "Example - Read the next page of history:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 50 --limit 50 -o text"}
+	}
+	return nil
 }
 
 func aliasesForGroup(group string) []string {
@@ -169,9 +201,9 @@ func aliasesForCommand(commandID string) []string {
 	switch commandID {
 	case "instance.create":
 		return []string{"c"}
-	case "instance.list", "tool.list", "apikey.list", "session.list", "session-space.list", "session.event.list", "volume.list", "volume-template.list":
+	case "instance.list", "tool.list", "apikey.list", "session.list", "session.space.list", "session.event.list", "volume.list", "volume-template.list":
 		return []string{"ls"}
-	case "instance.delete", "tool.delete", "apikey.delete", "session.delete", "session-space.delete", "volume.delete", "volume-template.delete":
+	case "instance.delete", "tool.delete", "apikey.delete", "session.delete", "session.space.delete", "volume.delete", "volume-template.delete":
 		return []string{"rm", "del"}
 	}
 	return nil
@@ -209,7 +241,7 @@ func useForCommand(commandID string) string {
 	case "pre-cache-image-task.create":
 		return "create --image <image> --image-registry-type <type>"
 	case "pre-cache-image-task.get":
-		return "get <image-digest> --image <image> --image-registry-type <type>"
+		return "get [image-digest] [flags]"
 	case "deployment.get":
 		return "get <deployment-id>"
 	case "deployment.update":

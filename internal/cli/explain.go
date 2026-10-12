@@ -169,7 +169,7 @@ func explainCodeData(code string) (ExplainData, bool) {
 		base.AffectedCommands = affectedCommands(code)
 		base.Fix = []string{"agr init --secret-id <id> --secret-key <key>", "agr doctor"}
 	case "INVALID_USAGE", "JQ_REQUIRES_JSON", "SKELETON_UNSUPPORTED", "CONFLICTING_FLAGS", "CONFLICTING_INPUTS",
-		"MISSING_CODE", "INVALID_ENV", "INVALID_PORT", "INVALID_PAGINATION", "INVALID_LOCAL_PATH", "INVALID_ADDRESS",
+		"MISSING_CODE", "MISSING_REQUIRED_INPUT", "INVALID_ENV", "INVALID_PORT", "INVALID_PAGINATION", "INVALID_LOCAL_PATH", "INVALID_ADDRESS",
 		"INVALID_SHELL", "INVALID_CLEANUP", "MISSING_SEPARATOR", "STDOUT_CONFLICT", "ADB_NOT_FOUND", "UNSUPPORTED_LANGUAGE",
 		"MISSING_ACTION", "NDJSON_REQUIRES_STREAM", "STREAM_JSON_CONFLICT", "TTY_REQUIRED", "UNIMPLEMENTED_COMMAND",
 		"CONFIG_EXISTS", "CONFIG_INIT_FAILED", "DOCTOR_CHECKS_FAILED", "PARTIAL_DELETE_FAILED", "TOOL_NOT_FOUND",
@@ -360,8 +360,10 @@ func meaningForCLIUsageCode(code string) string {
 		return "No code input was provided to a code execution command."
 	case "UNSUPPORTED_LANGUAGE":
 		return "The selected execution language is not supported."
+	case "MISSING_REQUIRED_INPUT":
+		return "A required input or complete input combination is missing or empty."
 	case "CONFLICTING_INPUTS":
-		return "Multiple mutually exclusive code input sources were provided."
+		return "Mutually exclusive inputs or input combinations were provided together."
 	case "ADB_NOT_FOUND":
 		return "The adb binary was not found on the local machine."
 	case "MISSING_SEPARATOR":
@@ -421,8 +423,14 @@ func fixForCLIUsageCode(code string) []string {
 		return []string{"Provide code with -c/--code, -f/--file, or stdin."}
 	case "UNSUPPORTED_LANGUAGE":
 		return []string{"Use one of: python, javascript, typescript, r, java, bash."}
+	case "MISSING_REQUIRED_INPUT":
+		return []string{"For agr pre-cache-image-task get, provide a non-empty --pre-cache-image-id alone, or <image-digest> with --image and --image-registry-type."}
 	case "CONFLICTING_INPUTS":
-		return []string{"Use only one of -c/--code, -f/--file, or piped stdin."}
+		return []string{
+			"Use only one of the mutually exclusive input forms documented by the command help.",
+			"For agr instance code run, use only one of -c/--code, -f/--file, or piped stdin.",
+			"For agr pre-cache-image-task get, use --pre-cache-image-id alone or the complete image triple (<image-digest>, --image, --image-registry-type), not both.",
+		}
 	case "ADB_NOT_FOUND":
 		return []string{"Install Android SDK Platform-Tools or set ADB_PATH to a valid adb binary."}
 	case "MISSING_SEPARATOR":

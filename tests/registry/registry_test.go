@@ -1,4 +1,4 @@
-// Package registry tests the preview-only Registry contract through real binaries.
+// Package registry tests the stable and preview Registry contracts through real binaries.
 // The server is a serialization fixture, not evidence of cloud service acceptance.
 package registry
 
@@ -19,6 +19,12 @@ import (
 )
 
 func TestRegistryChannels(t *testing.T) {
+	for _, channel := range []string{"stable", "preview"} {
+		t.Run(channel, func(t *testing.T) { testRegistryChannel(t, channel) })
+	}
+}
+
+func testRegistryChannel(t *testing.T, channel string) {
 	if testing.Short() {
 		t.Skip("builds both CLI channels")
 	}
@@ -114,8 +120,8 @@ func TestRegistryChannels(t *testing.T) {
 			continue
 		}
 		count++
-		if _, ok := stable.Spec.Actions[name]; ok {
-			t.Fatalf("%s leaked into stable API", name)
+		if _, ok := stable.Spec.Actions[name]; !ok {
+			t.Fatalf("%s missing from stable API", name)
 		}
 		t.Run(name, func(t *testing.T) {
 			a := contract.Spec.Actions[name]
@@ -128,7 +134,7 @@ func TestRegistryChannels(t *testing.T) {
 			before := calls
 			mu.Unlock()
 			args := strings.Split(mapping.Command, ".")
-			got := run("preview", "", true, append(args, "--request", encode(request), "-o", "json")...)
+			got := run(channel, "", true, append(args, "--request", encode(request), "-o", "json")...)
 			mu.Lock()
 			observedAction, observedRequest, after := action, payload, calls
 			mu.Unlock()
@@ -138,7 +144,7 @@ func TestRegistryChannels(t *testing.T) {
 			if !reflect.DeepEqual(got["Data"], expected) {
 				t.Fatalf("response lost: got=%v want=%v", got["Data"], expected)
 			}
-			schema := run("preview", "", true, "schema", mapping.Command, "-o", "json")["Data"].(map[string]any)
+			schema := run(channel, "", true, "schema", mapping.Command, "-o", "json")["Data"].(map[string]any)
 			if schema["RequiresAuth"] != true || schema["SupportsRequest"] != true {
 				t.Fatalf("invalid schema: %v", schema)
 			}
@@ -167,20 +173,12 @@ func TestRegistryChannels(t *testing.T) {
 				}
 				flagArgs = append(flagArgs, "--"+flag, text)
 			}
-			run("preview", "", true, append(flagArgs, "-o", "json")...)
+			run(channel, "", true, append(flagArgs, "-o", "json")...)
 			mu.Lock()
 			same := reflect.DeepEqual(payload, request)
-			before = calls
 			mu.Unlock()
 			if !same {
 				t.Fatal("dedicated flags changed the request")
-			}
-			run("stable", "", false, append(args, "--request", encode(request), "-o", "json")...)
-			mu.Lock()
-			after = calls
-			mu.Unlock()
-			if after != before {
-				t.Fatal("stable sent a Registry request")
 			}
 		})
 	}
@@ -201,7 +199,7 @@ func TestRegistryChannels(t *testing.T) {
 			if transport == "stdin" {
 				value, input = "-", source
 			}
-			run("preview", input, true, "registry", "record", "create", "--registry-id", "reg-test", "--name", "test", "--descriptor-type", "AGENT_SKILLS", "--skill-source", value, "-o", "json")
+			run(channel, input, true, "registry", "record", "create", "--registry-id", "reg-test", "--name", "test", "--descriptor-type", "AGENT_SKILLS", "--skill-source", value, "-o", "json")
 			var want any
 			_ = json.Unmarshal([]byte(source), &want)
 			mu.Lock()
@@ -219,7 +217,7 @@ func TestRegistryChannels(t *testing.T) {
 		mu.Lock()
 		before := calls
 		mu.Unlock()
-		got := run("preview", "", false, "registry", "record", "create", "--request", body, "-o", "json")
+		got := run(channel, "", false, "registry", "record", "create", "--request", body, "-o", "json")
 		if got["Failure"].(map[string]any)["Code"] != "INVALID_REQUEST_JSON" {
 			t.Fatalf("unexpected failure: %v", got)
 		}
@@ -250,7 +248,7 @@ func TestRegistryChannels(t *testing.T) {
 				}
 			}
 			valid := !selector.present || strings.TrimSpace(selector.value) != ""
-			result := run("preview", "", valid, append(args, "-o", "json")...)
+			result := run(channel, "", valid, append(args, "-o", "json")...)
 			if !valid && result["Failure"].(map[string]any)["Code"] != "InvalidParameter.VersionId" {
 				t.Fatalf("empty delete selector was not rejected: %v", result)
 			}
@@ -263,7 +261,7 @@ func TestRegistryChannels(t *testing.T) {
 		}
 	}
 	// Required Description must preserve an explicit empty value for clearing it.
-	run("preview", "", true, "registry", "update", "--registry-id", "reg-test", "--description", "", "-o", "json")
+	run(channel, "", true, "registry", "update", "--registry-id", "reg-test", "--description", "", "-o", "json")
 	mu.Lock()
 	description, exists := payload["Description"]
 	mu.Unlock()

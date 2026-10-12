@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/credential"
 )
@@ -20,14 +21,18 @@ func Module() command.Module {
 		Long: `Retrieve a managed secret from a SecretMultiUser provider.
 
 This action requires a WorkloadIdentityToken which encodes the workload identity
-and user context. The token determines which user's secret is returned.`,
+and user context. The token determines which user's secret is returned.
+
+Here --token is the business WorkloadIdentityToken, including when placed before
+the subcommand. For cloud authentication with an STS token, use TENCENTCLOUD_TOKEN
+or auth.token in the configuration file.`,
 		Examples: []string{
 			"agr credential secret get --credential-provider-id agc-xxx --token eyJ...",
 			"agr credential secret get --credential-provider-id agc-xxx --token eyJ... --scope read:user -o json",
 		},
 		Flags: []command.FlagSpec{
 			{Name: "credential-provider-id", Usage: "SecretMultiUser provider ID (required)", Type: command.FlagString, Required: true},
-			{Name: "token", Usage: "WorkloadIdentityToken (required)", Type: command.FlagString, Required: true},
+			{Name: "token", Usage: "WorkloadIdentityToken (required); cloud STS token uses TENCENTCLOUD_TOKEN or auth.token", Type: command.FlagString, Required: true},
 			{Name: "scope", Usage: "Secret scope filter", Type: command.FlagString},
 		},
 		SupportsJSON: true,
@@ -46,9 +51,11 @@ and user context. The token determines which user's secret is returned.`,
 			deps = deps.WithDefaults()
 			cp := deps.ControlPlane.(credential.ControlPlane)
 			return command.Runtime{Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
+				token := req.Flags["token"].String
+				cli.MaskSecret(token)
 				params := map[string]any{
 					"CredentialProviderId":  req.Flags["credential-provider-id"].String,
-					"WorkloadIdentityToken": req.Flags["token"].String,
+					"WorkloadIdentityToken": token,
 				}
 				if scope := req.Flags["scope"]; scope.Changed {
 					params["Scope"] = scope.String

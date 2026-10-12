@@ -81,6 +81,7 @@ func addGroup(root *cobra.Command, nodes map[string]*cobra.Command, siblings map
 		Use:     defaultString(group.Use, group.Path[len(group.Path)-1]),
 		Short:   group.Short,
 		Long:    group.Long,
+		Example: formatExampleBlocks(group.Examples),
 		Aliases: group.Aliases,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -143,6 +144,7 @@ func ensureParent(root *cobra.Command, nodes map[string]*cobra.Command, siblings
 			Use:     defaultString(group.Use, prefix[len(prefix)-1]),
 			Short:   group.Short,
 			Long:    group.Long,
+			Example: formatExampleBlocks(group.Examples),
 			Aliases: group.Aliases,
 			Args:    cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {

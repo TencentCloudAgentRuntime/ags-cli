@@ -12,11 +12,13 @@ func APIDescriptor() apicli.APIDescriptor {
 		Spec: command.Spec{
 			ID:           "pre-cache-image-task.get",
 			Path:         []string{"pre-cache-image-task", "get"},
-			Use:          "get <image-digest> --image <image> --image-registry-type <type>",
+			Use:          "get [image-digest] [flags]",
 			Short:        "Describe an image pre-cache task",
+			Long:         "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.",
+			Examples:     []string{"Example - Query by task ID:\n  agr pre-cache-image-task get --pre-cache-image-id cache-example -o json", "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
-				{Name: "image-digest", Required: true, Description: "Image digest."},
+				{Name: "image-digest", Description: "Image digest."},
 			},
 			Output: command.OutputSpec{
 				DataType:    "DescribePreCacheImageTaskResponse",
@@ -33,27 +35,31 @@ func APIDescriptor() apicli.APIDescriptor {
 		},
 		Fields: []apicli.FieldSpec{
 			{
-				Name:     "Image",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:   "Image",
+				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "image", Flag: "image", Usage: "Image reference (required)", Type: command.FlagString},
+					{Name: "image", Flag: "image", Usage: "Image reference: repository:tag, repository@sha256:<64-digit digest>, or repository:tag@sha256:<64-digit digest>. Required as part of the image triple when no task ID is supplied.", Type: command.FlagString},
 				},
 			},
 			{
-				Name:     "ImageDigest",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:   "ImageRegistryType",
+				Parser: "common.default_string",
+				Inputs: []apicli.InputSpec{
+					{Name: "image-registry-type", Flag: "image-registry-type", Usage: "Image registry type: enterprise, personal, or custom. Required as part of the image triple when no task ID is supplied.", Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "ImageDigest",
+				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "image-digest", Positional: true},
 				},
 			},
 			{
-				Name:     "ImageRegistryType",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:   "PreCacheImageId",
+				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "image-registry-type", Flag: "image-registry-type", Usage: "Image registry type: enterprise, personal, or custom (required)", Type: command.FlagString},
+					{Name: "pre-cache-image-id", Flag: "pre-cache-image-id", Usage: "Pre-cache task ID. Use alone instead of the image triple.", Type: command.FlagString},
 				},
 			},
 		},

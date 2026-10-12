@@ -14,6 +14,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"pre-cache-image-task", "create"},
 			Use:          "create --image <image> --image-registry-type <type>",
 			Short:        "Create an image pre-cache task",
+			Long:         "Create an image pre-cache task. JSON output includes PreCacheImageId for subsequent get requests.",
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreatePreCacheImageTaskResponse",
@@ -34,7 +35,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "image", Flag: "image", Usage: "Image reference (required)", Type: command.FlagString},
+					{Name: "image", Flag: "image", Usage: "Image reference: repository:tag, repository@sha256:<64-digit digest>, or repository:tag@sha256:<64-digit digest>. (required)", Type: command.FlagString},
 				},
 			},
 			{

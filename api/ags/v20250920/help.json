@@ -762,10 +762,10 @@
             "short": "Create an image pre-cache task",
             "fields": {
                 "Image": {
-                    "description": "Image reference.",
+                    "description": "Image reference: repository:tag, repository@sha256:<64-digit digest>, or repository:tag@sha256:<64-digit digest>.",
                     "inputs": {
                         "image": {
-                            "usage": "Image reference (required)"
+                            "usage": "Image reference: repository:tag, repository@sha256:<64-digit digest>, or repository:tag@sha256:<64-digit digest>."
                         }
                     }
                 },
@@ -777,36 +777,1373 @@
                         }
                     }
                 }
-            }
+            },
+            "long": "Create an image pre-cache task. JSON output includes PreCacheImageId for subsequent get requests."
         },
         "pre-cache-image-task.get": {
             "short": "Describe an image pre-cache task",
             "fields": {
                 "Image": {
-                    "description": "Image reference.",
+                    "description": "Image reference: repository:tag, repository@sha256:<64-digit digest>, or repository:tag@sha256:<64-digit digest>. Required as part of the image triple when no task ID is supplied.",
                     "inputs": {
                         "image": {
-                            "usage": "Image reference (required)"
+                            "usage": "Image reference: repository:tag, repository@sha256:<64-digit digest>, or repository:tag@sha256:<64-digit digest>. Required as part of the image triple when no task ID is supplied."
                         }
                     }
                 },
                 "ImageDigest": {
-                    "description": "Image digest.",
+                    "description": "ImageDigest. Required as part of the image triple when no task ID is supplied.",
                     "inputs": {
                         "image-digest": {
-                            "usage": "Image digest"
+                            "usage": "ImageDigest. Required as part of the image triple when no task ID is supplied."
                         }
                     }
                 },
                 "ImageRegistryType": {
-                    "description": "Image registry type.",
+                    "description": "Image registry type: enterprise, personal, or custom. Required as part of the image triple when no task ID is supplied.",
                     "inputs": {
                         "image-registry-type": {
-                            "usage": "Image registry type: enterprise, personal, or custom (required)"
+                            "usage": "Image registry type: enterprise, personal, or custom. Required as part of the image triple when no task ID is supplied."
+                        }
+                    }
+                },
+                "PreCacheImageId": {
+                    "description": "Pre-cache task ID. Use alone instead of the image triple.",
+                    "inputs": {
+                        "pre-cache-image-id": {
+                            "usage": "Pre-cache task ID. Use alone instead of the image triple."
+                        }
+                    }
+                }
+            },
+            "long": "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.",
+            "examples": [
+                "Example - Query by task ID:\n  agr pre-cache-image-task get --pre-cache-image-id cache-example -o json",
+                "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json"
+            ]
+        },
+        "registry.record.approve": {
+            "short": "Approve a record version",
+            "long": "Approve a record version.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Comment": {
+                    "description": "Approval decision comment.",
+                    "inputs": {
+                        "comment": {
+                            "usage": "Approval decision comment."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.cancel": {
+            "short": "Cancel a record version",
+            "long": "Cancel a record version.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Comment": {
+                    "description": "Approval decision comment.",
+                    "inputs": {
+                        "comment": {
+                            "usage": "Approval decision comment."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.create": {
+            "short": "Create a registry",
+            "long": "Create a registry.",
+            "fields": {
+                "Name": {
+                    "description": "Resource name.",
+                    "inputs": {
+                        "name": {
+                            "usage": "Resource name."
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Description; pass an empty string to clear it.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Description; pass an empty string to clear it."
+                        }
+                    }
+                },
+                "ApprovalMode": {
+                    "description": "Approval mode: AUTO or MANUAL; immutable after creation.",
+                    "inputs": {
+                        "approval-mode": {
+                            "usage": "Approval mode: AUTO or MANUAL; immutable after creation."
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Cloud tags as Key/Value objects. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Cloud tags as Key/Value objects. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.create": {
+            "short": "Create a record and its first version",
+            "long": "Provide exactly one content source matching --descriptor-type: MCP uses --mcp-source; A2A and AGUI use --agent-source; AGENT_SKILLS uses --skill-source; CUSTOM uses --custom-descriptors. Source objects accept inline JSON, @file, or - for stdin. Descriptors inside a source are JSON strings, not nested objects. Approval and assigning the stable label are separate operations.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "Name": {
+                    "description": "Resource name.",
+                    "inputs": {
+                        "name": {
+                            "usage": "Resource name."
+                        }
+                    }
+                },
+                "DescriptorType": {
+                    "description": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM.",
+                    "inputs": {
+                        "descriptor-type": {
+                            "usage": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM."
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Description; pass an empty string to clear it.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Description; pass an empty string to clear it."
+                        }
+                    }
+                },
+                "VersionName": {
+                    "description": "Name for the new version.",
+                    "inputs": {
+                        "version-name": {
+                            "usage": "Name for the new version."
+                        }
+                    }
+                },
+                "MCPSource": {
+                    "description": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "mcp-source": {
+                            "usage": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                },
+                "AgentSource": {
+                    "description": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "agent-source": {
+                            "usage": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                },
+                "SkillSource": {
+                    "description": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "skill-source": {
+                            "usage": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                },
+                "CustomDescriptors": {
+                    "description": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input.",
+                    "inputs": {
+                        "custom-descriptors": {
+                            "usage": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.delete": {
+            "short": "Delete an empty registry",
+            "long": "Delete an empty registry.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.delete": {
+            "short": "Delete a record or a version",
+            "long": "Without VersionId, delete the entire record. With VersionId, delete only that version. The service enforces label references and version state restrictions. This command does not bypass those checks. An explicitly empty --version-id is sent as an empty selector and rejected by the service; it never means deleting the entire record.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Reason": {
+                    "description": "Reason for deletion.",
+                    "inputs": {
+                        "reason": {
+                            "usage": "Reason for deletion."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.get": {
+            "short": "Get a registry",
+            "long": "Get a registry.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.audit-log.list": {
+            "short": "List registry audit logs",
+            "long": "List registry audit logs.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "ActionFilter": {
+                    "description": "Audit action filter.",
+                    "inputs": {
+                        "action-filter": {
+                            "usage": "Audit action filter."
+                        }
+                    }
+                },
+                "Actor": {
+                    "description": "Audit actor filter.",
+                    "inputs": {
+                        "actor": {
+                            "usage": "Audit actor filter."
+                        }
+                    }
+                },
+                "StartTime": {
+                    "description": "Audit range start time.",
+                    "inputs": {
+                        "start-time": {
+                            "usage": "Audit range start time."
+                        }
+                    }
+                },
+                "EndTime": {
+                    "description": "Audit range end time.",
+                    "inputs": {
+                        "end-time": {
+                            "usage": "Audit range end time."
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Maximum number of results.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Maximum number of results."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.list": {
+            "short": "List registries",
+            "long": "List registries.",
+            "fields": {
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Maximum number of results.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Maximum number of results."
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.get": {
+            "short": "Get a record and resolve a version",
+            "long": "Select a version using either --version-id or --label, not both. Omit both to use the service default selector. The response includes Record, Version, ResolvedBy and ResolvedLabel.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Label": {
+                    "description": "Version label; mutually exclusive with version-id.",
+                    "inputs": {
+                        "label": {
+                            "usage": "Version label; mutually exclusive with version-id."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.list": {
+            "short": "List registry records",
+            "long": "List registry records.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Maximum number of results.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Maximum number of results."
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.version.list": {
+            "short": "List record versions",
+            "long": "List record versions.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Maximum number of results.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Maximum number of results."
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.skill-package.download-url": {
+            "short": "Get a skill package download URL",
+            "long": "Get a short-lived download URL for a ready TAR_PACKAGE skill version. Select VersionId or Label, not both. This command returns the URL; it does not download a file.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Label": {
+                    "description": "Version label; mutually exclusive with version-id.",
+                    "inputs": {
+                        "label": {
+                            "usage": "Version label; mutually exclusive with version-id."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.skill-package.upload-url": {
+            "short": "Get a skill package upload URL",
+            "long": "Get a short-lived upload URL for an existing TAR_PACKAGE skill version. This command returns the URL; it does not upload a file. Upload the archive with HTTP PUT and check content readiness through registry record get.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.preview": {
+            "short": "Preview remote record changes",
+            "long": "Only remote MCP/A2A sources support preview. VersionId and Label are mutually exclusive. PreviewResult is JSON text returned by the service.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Label": {
+                    "description": "Version label; mutually exclusive with version-id.",
+                    "inputs": {
+                        "label": {
+                            "usage": "Version label; mutually exclusive with version-id."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.reject": {
+            "short": "Reject a record version",
+            "long": "Reject a record version.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Comment": {
+                    "description": "Approval decision comment.",
+                    "inputs": {
+                        "comment": {
+                            "usage": "Approval decision comment."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.sync": {
+            "short": "Synchronize a remote record source",
+            "long": "Only remote MCP/A2A sources support synchronization. VersionId and Label are mutually exclusive. A successful API call may report a synchronization error in SyncStatus/ErrorCode/ErrorMessage; inspect the response.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "VersionId": {
+                    "description": "Record version ID.",
+                    "inputs": {
+                        "version-id": {
+                            "usage": "Record version ID."
+                        }
+                    }
+                },
+                "Label": {
+                    "description": "Version label; mutually exclusive with version-id.",
+                    "inputs": {
+                        "label": {
+                            "usage": "Version label; mutually exclusive with version-id."
+                        }
+                    }
+                },
+                "ChangeLog": {
+                    "description": "Change log for the new version.",
+                    "inputs": {
+                        "change-log": {
+                            "usage": "Change log for the new version."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.update": {
+            "short": "Update a registry description",
+            "long": "Update a registry description.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Description; pass an empty string to clear it.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Description; pass an empty string to clear it."
+                        }
+                    }
+                }
+            }
+        },
+        "registry.record.update": {
+            "short": "Update record metadata, labels, or content",
+            "long": "Update Description and/or LabelMutations, or provide exactly one content source to create a new version. Content cannot be combined with Description or LabelMutations. VersionName and ChangeLog describe the new version. LabelMutations uses Operation, Name, optional VersionId and Reason; stable/latest labels cannot be deleted. Approval does not assign the stable label.",
+            "fields": {
+                "RegistryId": {
+                    "description": "Registry ID.",
+                    "inputs": {
+                        "registry-id": {
+                            "usage": "Registry ID."
+                        }
+                    }
+                },
+                "RecordId": {
+                    "description": "Record ID.",
+                    "inputs": {
+                        "record-id": {
+                            "usage": "Record ID."
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Description; pass an empty string to clear it.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Description; pass an empty string to clear it."
+                        }
+                    }
+                },
+                "VersionName": {
+                    "description": "Name for the new version.",
+                    "inputs": {
+                        "version-name": {
+                            "usage": "Name for the new version."
+                        }
+                    }
+                },
+                "ChangeLog": {
+                    "description": "Change log for the new version.",
+                    "inputs": {
+                        "change-log": {
+                            "usage": "Change log for the new version."
+                        }
+                    }
+                },
+                "MCPSource": {
+                    "description": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "mcp-source": {
+                            "usage": "MCP source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                },
+                "AgentSource": {
+                    "description": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "agent-source": {
+                            "usage": "Agent source: Type, Descriptors (JSON string), or EndpointURL. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                },
+                "SkillSource": {
+                    "description": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "skill-source": {
+                            "usage": "Skill source: Type (MANUAL/TAR_PACKAGE) and SkillMd for MANUAL. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                },
+                "CustomDescriptors": {
+                    "description": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input.",
+                    "inputs": {
+                        "custom-descriptors": {
+                            "usage": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input."
+                        }
+                    }
+                },
+                "LabelMutations": {
+                    "description": "Label operations: Operation, Name, VersionId and Reason. Accepts JSON, @file, or - for stdin.",
+                    "inputs": {
+                        "label-mutations": {
+                            "usage": "Label operations: Operation, Name, VersionId and Reason. Accepts JSON, @file, or - for stdin."
+                        }
+                    }
+                }
+            }
+        },
+        "session.space.create": {
+            "short": "Create a session space",
+            "examples": [
+                "Example - Create a session space:\n  agr session space create --name customer-support --description 'Customer support sessions' -o text"
+            ],
+            "fields": {
+                "Tags": {
+                    "description": "Resource tags.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Resource tags as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "fields": [
+                                "Key: tag key",
+                                "Value: tag value"
+                            ]
+                        }
+                    }
+                },
+                "Name": {
+                    "description": "Business space name, nonblank after trimming and at most 128 characters.",
+                    "inputs": {
+                        "name": {
+                            "usage": "Business space name, nonblank after trimming and at most 128 characters."
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Business space description, at most 512 characters; omitted means an empty description.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Business space description, at most 512 characters; omitted means an empty description."
+                        }
+                    }
+                }
+            },
+            "long": "Create a business space that isolates users, sessions, events, and state. Save the server-returned SpaceId and pass it to session and event commands."
+        },
+        "session.space.delete": {
+            "short": "Delete a session space",
+            "examples": [
+                "Example - Delete an empty session space:\n  agr session space delete --space-id space-a1b2c3d4 -o text"
+            ],
+            "long": "Delete an empty, non-default space. The service rejects deletion while sessions, events, or user state remain; default spaces cannot be deleted.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                }
+            }
+        },
+        "session.space.get": {
+            "short": "Describe a session space",
+            "examples": [
+                "Example - Describe a session space:\n  agr session space get --space-id space-a1b2c3d4 -o text"
+            ],
+            "long": "Inspect a business space using its server-returned SpaceId. Find available IDs with agr session space list.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                }
+            }
+        },
+        "session.space.list": {
+            "short": "List session spaces",
+            "examples": [
+                "Example - List session spaces:\n  agr session space list --limit 20 -o text"
+            ],
+            "fields": {
+                "Filters": {
+                    "description": "Space filters: space-id, name, name-like, description-like.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Name\":\"name-like\",\"Values\":[\"example\"]}]",
+                            "fields": [
+                                "At most 3 distinct filters; name and name-like are mutually exclusive",
+                                "1–100 nonblank values per filter, at most 128 Unicode characters each",
+                                "Values are OR, filters are AND; case-sensitive literal matching before pagination"
+                            ]
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset, default 0.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset, default 0."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Page size, default 20, maximum 100.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Page size, default 20, maximum 100."
+                        }
+                    }
+                }
+            },
+            "long": "Choose a business space before creating or reading sessions. List spaces in the selected account and region; use Offset and Limit to read further pages."
+        },
+        "session.space.update": {
+            "short": "Update a session space",
+            "examples": [
+                "Example - Rename a session space:\n  agr session space update --space-id space-a1b2c3d4 --name customer-support-production -o text"
+            ],
+            "long": "Update a business space name and description. Its SpaceId and stored session data are unchanged.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "Name": {
+                    "description": "Business space name.",
+                    "inputs": {
+                        "name": {
+                            "usage": "Business space name."
+                        }
+                    }
+                },
+                "Description": {
+                    "description": "Business space description.",
+                    "inputs": {
+                        "description": {
+                            "usage": "Business space description."
+                        }
+                    }
+                }
+            }
+        },
+        "session.create": {
+            "short": "Create a session",
+            "long": "Create a persistent conversation in an existing space. Use a server-returned SpaceId and a UserId from your application. SessionId is optional; save the returned SessionId for subsequent operations. Complex state and metadata accept inline JSON, @file, or - for stdin.",
+            "examples": [
+                "Example - Create a session with a caller-provided ID:\n  agr session create --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Support request' -o text"
+            ],
+            "fields": {
+                "State": {
+                    "description": "Initial session state.",
+                    "inputs": {
+                        "state": {
+                            "usage": "Initial session state as a JSON object, @file, or - for stdin.",
+                            "format": "{\"CustomState\":\"<json-string>\"}",
+                            "fields": [
+                                "CustomState: serialized custom state JSON"
+                            ]
+                        }
+                    }
+                },
+                "Metadata": {
+                    "description": "Initial session metadata.",
+                    "inputs": {
+                        "metadata": {
+                            "usage": "Initial session metadata as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
+                            "fields": [
+                                "Name: metadata name",
+                                "Value: metadata value"
+                            ]
+                        }
+                    }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations."
+                        }
+                    }
+                },
+                "Title": {
+                    "description": "Conversation title, at most 256 characters.",
+                    "inputs": {
+                        "title": {
+                            "usage": "Conversation title, at most 256 characters."
+                        }
+                    }
+                }
+            }
+        },
+        "session.delete": {
+            "short": "Delete a session",
+            "examples": [
+                "Example - Delete a session:\n  agr session delete --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text"
+            ],
+            "long": "Delete the conversation identified by SpaceId, UserId, and SessionId. Space deletion is a separate operation; agr session space delete is only allowed for an empty, non-default space.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations."
+                        }
+                    }
+                }
+            }
+        },
+        "session.get": {
+            "short": "Describe a session",
+            "examples": [
+                "Example - Describe a session:\n  agr session get --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 -o text",
+                "Example - Read recent events with the event-list command:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 0 --limit 10 -o text"
+            ],
+            "long": "Read a session snapshot using SpaceId, UserId, and SessionId. The API accepts --num-recent-events and --after-timestamp, but its current published response has no event-list field. Use agr session event list to read events.",
+            "fields": {
+                "NumRecentEvents": {
+                    "description": "Recent-event query count accepted by the API, default 0, maximum 200. The current response has no event-list field; use agr session event list.",
+                    "inputs": {
+                        "num-recent-events": {
+                            "usage": "Recent-event query count accepted by the API, default 0, maximum 200. The current response has no event-list field; use agr session event list."
+                        }
+                    }
+                },
+                "AfterTimestamp": {
+                    "description": "Event start time in RFC3339 format, at most 64 characters.",
+                    "inputs": {
+                        "after-timestamp": {
+                            "usage": "Event start time in RFC3339 format, at most 64 characters."
+                        }
+                    }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations."
+                        }
+                    }
+                }
+            }
+        },
+        "session.list": {
+            "short": "List sessions",
+            "examples": [
+                "Example - List sessions in a session space:\n  agr session list --space-id space-a1b2c3d4 --limit 20 -o text"
+            ],
+            "fields": {
+                "UserIds": {
+                    "inputs": {
+                        "user-ids": {
+                            "usage": "User ID filter; repeat --user-ids for multiple values."
+                        }
+                    }
+                },
+                "SessionIds": {
+                    "inputs": {
+                        "session-ids": {
+                            "usage": "Session ID filter; repeat --session-ids for multiple values."
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Session metadata filters.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Session metadata filters as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Name\":\"metadata:<key>\",\"Values\":[\"<value>\"]}]",
+                            "fields": [
+                                "Name: metadata:<key>",
+                                "Values: accepted values for the metadata key"
+                            ]
+                        }
+                    }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "Offset": {
+                    "description": "Pagination offset, default 0.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset, default 0."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Page size, default 20, maximum 100.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Page size, default 20, maximum 100."
+                        }
+                    }
+                }
+            },
+            "long": "Find conversations within a business space. Use --user-ids to select application users and --session-ids to select conversations; repeat each flag for multiple values. List results are paginated."
+        },
+        "session.update": {
+            "short": "Update a session",
+            "long": "Update a session title or replace its complete metadata array. Provide at least one of --title or --metadata.",
+            "examples": [
+                "Example - Update a session title:\n  agr session update --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --title 'Resolved request' -o text"
+            ],
+            "fields": {
+                "Metadata": {
+                    "description": "Complete replacement session metadata.",
+                    "inputs": {
+                        "metadata": {
+                            "usage": "Complete session metadata as a JSON array, @file, or - for stdin. [] clears all metadata.",
+                            "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
+                            "fields": [
+                                "Name: metadata name",
+                                "Value: metadata value"
+                            ]
+                        }
+                    }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations."
+                        }
+                    }
+                },
+                "Title": {
+                    "description": "Conversation title, at most 256 characters.",
+                    "inputs": {
+                        "title": {
+                            "usage": "Conversation title, at most 256 characters."
+                        }
+                    }
+                }
+            }
+        },
+        "session.event.append": {
+            "short": "Append an event to a session",
+            "long": "Append an interaction to an existing conversation. Keep the same SpaceId, UserId, and SessionId across turns. The event accepts inline JSON, @file, or - for stdin.",
+            "examples": [
+                "Example - Append a user event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event '{\"EventId\":\"event-123\",\"Author\":\"user\",\"Content\":{\"Role\":\"user\",\"Parts\":[{\"Text\":\"Hello\"}]}}' -o text",
+                "Example - Append a prepared event file:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text"
+            ],
+            "fields": {
+                "Event": {
+                    "description": "Event content.",
+                    "inputs": {
+                        "event": {
+                            "usage": "Event content as a JSON object, @file, or - for stdin.",
+                            "format": "{\"EventId\":\"<id>\",\"Author\":\"<author>\",\"Content\":{\"Role\":\"<role>\",\"Parts\":[{\"Text\":\"<text>\"}]}}",
+                            "fields": [
+                                "EventId: optional event ID; the service generates one when it is empty",
+                                "Author: event author",
+                                "Content: structured event content",
+                                "Actions: optional state delta",
+                                "Metadata: optional event metadata JSON string",
+                                "Extensions: optional extension JSON string"
+                            ]
+                        }
+                    }
+                },
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations."
+                        }
+                    }
+                }
+            }
+        },
+        "session.event.list": {
+            "short": "List events in a session",
+            "examples": [
+                "Example - List recent session events:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --limit 50 -o text",
+                "Example - Read the next page of history:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 50 --limit 50 -o text"
+            ],
+            "long": "Read a conversation's event history. Use --offset and --limit to read all pages; --author and an RFC3339 --after-timestamp can filter the history. A session snapshot does not replace this history query.",
+            "fields": {
+                "SpaceId": {
+                    "description": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>.",
+                    "inputs": {
+                        "space-id": {
+                            "usage": "Server-returned space ID. Find one with agr session space list, or create one with agr session space create --name <name>."
+                        }
+                    },
+                    "required_hint": "Provide --space-id or include SpaceId in --request. Find a SpaceId with 'agr session space list', or create one with 'agr session space create --name <name>'."
+                },
+                "UserId": {
+                    "description": "User ID from your application; not a Tencent Cloud account ID.",
+                    "inputs": {
+                        "user-id": {
+                            "usage": "User ID from your application; not a Tencent Cloud account ID."
+                        }
+                    }
+                },
+                "SessionId": {
+                    "description": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations.",
+                    "inputs": {
+                        "session-id": {
+                            "usage": "Conversation ID; save the ID returned by agr session create and use it for subsequent operations."
+                        }
+                    }
+                },
+                "Author": {
+                    "description": "Only list events from this author.",
+                    "inputs": {
+                        "author": {
+                            "usage": "Only list events from this author."
+                        }
+                    }
+                },
+                "AfterTimestamp": {
+                    "description": "Event start time in RFC3339 format, at most 64 characters.",
+                    "inputs": {
+                        "after-timestamp": {
+                            "usage": "Event start time in RFC3339 format, at most 64 characters."
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Pagination offset, default 0.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Pagination offset, default 0."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Page size, default 50, maximum 200.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Page size, default 50, maximum 200."
                         }
                     }
                 }
             }
         }
+    },
+    "migration_hints": {
+        "session-space": "Use 'agr session space ...' instead of 'agr session-space ...'. The old preview command was removed; no compatibility alias is available."
     }
 }

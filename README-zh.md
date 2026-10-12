@@ -312,6 +312,63 @@ agr deployment proxy "$deployment_id" 3000:8080
 `cloud_endpoint` / `domain` 字段，或 `AGR_CLOUD_ENDPOINT` /
 `AGR_DOMAIN` 环境变量设置。两个开关相互独立。
 
+## 会话空间、会话与历史
+
+通过 `agr session` 完成整个会话流程：`agr session space` 管理业务空间，
+`session create/get/list/update/delete` 管理具体会话，`agr session event`
+追加和查询交互历史。
+
+先选择已有空间，或按业务用途创建空间。保存服务端返回的 `SpaceId`，不要
+根据空间名称构造 ID。空间查询使用当前选择的账号和地域，后续会话使用
+已返回的空间 ID。
+
+```bash
+agr session space list -o text
+agr session space create --name customer-support --description 'Customer support sessions' -o text
+```
+
+将下面的示例空间 ID 替换为返回的 ID。`UserId` 来自调用方业务系统，不是
+腾讯云账号 ID。每轮操作使用相同的 SpaceId、UserId 和 SessionId。创建时
+SessionId 可选，请保存返回的 ID 用于后续操作。公开契约没有规定使用相同
+ID 重试创建的结果。
+
+```bash
+space_id=space-a1b2c3d4
+user_id=user-123
+session_id=session-123
+
+agr session create --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --title 'Support request' -o text
+agr session event append --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --event '{"EventId":"event-123","Author":"user","Content":{"Role":"user","Parts":[{"Text":"Hello"}]}}' -o text
+agr session get --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" -o text
+agr session event list --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" --offset 0 --limit 50 -o text
+```
+
+EventId 可选，为空时由服务端生成；公开契约不承诺重复 EventId 会去重。
+`--event` 也支持 `@event.json` 和
+`-`/stdin。会话快照不代表完整历史；通过 `event list` 增加 `--offset`
+读取后续页，直到获取全部事件。使用
+`session list --space-id ... --user-ids ...` 查找某个业务用户的会话，通过
+`session update` 修改标题或元数据。
+
+当前 `session get` 响应没有事件列表字段，即使传入 `--num-recent-events`
+也不能从该响应获取事件；查询事件请使用 `session event list`。
+
+删除空间前，先删除其中的会话：
+
+```bash
+agr session delete --space-id "$space_id" --user-id "$user_id" --session-id "$session_id" -o text
+agr session space delete --space-id "$space_id" -o text
+```
+
+空间删除是单独的操作。服务端只允许删除没有会话、事件或用户状态的
+非默认空间；空间是否可以删除，应以服务端返回结果为准。
+
+此前 preview 的 `agr session-space` 已统一为 `agr session space`，旧命令及
+schema ID 不保留兼容别名。通过 `agr session --help`、
+`agr session space --help` 和 `agr session event --help` 分层发现命令。
+自动化使用 `-o json`，接口结构可通过
+`agr schema session.space.create -o json` 查看。
+
 ## 原始 API 调用
 
 每个已映射 API 操作的稳定入口仍是对应的资源命令。当需要调试或访问
@@ -358,6 +415,11 @@ agr deployment get <id>          查看 Deployment 详情
 agr deployment update <id>       更新 Deployment 可变配置
 agr deployment delete <id>       删除 Deployment
 agr deployment proxy <id> PORT   本地调试七层代理
+
+agr registry ...                 管理 Registry、记录和 Skill 包
+agr session ...                  管理会话空间、会话与事件
+agr session space ...            管理会话空间
+agr session event ...            追加和查询会话事件
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
