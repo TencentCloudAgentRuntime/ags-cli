@@ -248,8 +248,8 @@
               "usage": "Template storage spec as JSON, @file, or - for stdin. Exactly one backend must be set and it must match --storage-type.",
               "format": "{\"Cos\":{\"Endpoint\":\"<endpoint>\",\"BucketName\":\"<bucket>\",\"BucketPathPattern\":\"<pattern>\"}} | {\"Cfs\":{\"FileSystemId\":\"<cfs-id>\",\"PathPattern\":\"<pattern>\"}}",
               "fields": [
-                "Cos: COS bucket path pattern, may contain ${reuse_key}",
-                "Cfs: CFS path pattern, may contain ${reuse_key}"
+                "Cos: COS bucket path pattern; must contain ${reuse_key}",
+                "Cfs: CFS path pattern; must contain ${reuse_key}"
               ]
             }
           }
@@ -263,10 +263,10 @@
           }
         },
         "VolumeNamePattern": {
-          "description": "Name pattern for derived volumes; may contain ${reuse_key}.",
+          "description": "Name pattern for derived volumes; must contain ${reuse_key}.",
           "inputs": {
             "volume-name-pattern": {
-              "usage": "Name pattern for derived volumes; may contain ${reuse_key}."
+              "usage": "Name pattern for derived volumes; must contain ${reuse_key}."
             }
           }
         },

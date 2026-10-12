@@ -205,7 +205,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>COS Bucket 路径模板，可包含 ${reuse_key}。</p>",
+          "document": "<p>COS Bucket 路径模板，新建模板时必须包含 ${reuse_key}。</p>",
           "member": "string",
           "name": "BucketPathPattern",
           "required": true,
@@ -238,7 +238,7 @@
         },
         {
           "disabled": false,
-          "document": "<p>CFS 路径模板，可包含 ${reuse_key}。</p>",
+          "document": "<p>CFS 路径模板，新建模板时必须包含 ${reuse_key}。</p>",
           "member": "string",
           "name": "PathPattern",
           "required": true,
@@ -974,10 +974,10 @@
         },
         {
           "disabled": false,
-          "document": "<p>派生 Volume 名称模板，可包含 ${reuse_key}。</p>",
+          "document": "<p>派生 Volume 名称模板，必须包含 ${reuse_key}。</p>",
           "member": "string",
           "name": "VolumeNamePattern",
-          "required": false,
+          "required": true,
           "type": "string",
           "example": "agent-workspace-${reuse_key}"
         },

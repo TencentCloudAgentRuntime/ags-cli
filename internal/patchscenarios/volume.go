@@ -447,6 +447,7 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 func volumeTemplateSecond(s *patchtest.Session, ctx context.Context, storage volumeStorage, name string) (string, func(), error) {
 	created, err := volumeCall(s, ctx, "volume-template.create", map[string]any{
 		"VolumeTemplateName": name,
+		"VolumeNamePattern":  "${reuse_key}",
 		"AccessMode":         "ReadOnlyMany",
 		"ReclaimPolicy":      "Retain",
 		"StorageType":        "Cfs",
