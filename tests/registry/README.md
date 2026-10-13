@@ -57,7 +57,8 @@ bound to registered assertions. Promoted Registry Actions no longer contribute
 overlay entries. The command does not execute cloud tests, and local binary
 tests do not prove service acceptance.
 
-Candidates containing a non-empty API patch still need the separate strict
-preview E2E report required by [PATCH-VERIFICATION.md](../../PATCH-VERIFICATION.md).
-Generate that report only after a clean candidate commit and PR head exist;
+When [PATCH-VERIFICATION.md](../../PATCH-VERIFICATION.md) requires a separate
+strict preview E2E report (a PR that changes a non-empty patch contract, or a
+preview release with a non-empty API patch), generate it only after a clean
+candidate commit and PR head exist;
 Registry lifecycle runs and local working-tree tests do not substitute for it.

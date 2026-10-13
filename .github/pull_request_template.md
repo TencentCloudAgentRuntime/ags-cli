@@ -9,8 +9,9 @@
 <!-- Complete the section below only if this PR changes the patch contract
 (api/ags/**/*.patch.json, api/ags/**/e2e-coverage.yaml or internal/patchscenarios/)
 and the candidate contains a non-empty api/ags/**/api.patch.json.
-Otherwise remove it and state under Verification that the patch contract is
-unchanged and no live patch behavior was tested. -->
+Otherwise remove it and state under Verification that no live patch behavior was
+tested, and why: the patch contract is unchanged, or the candidate's
+api.patch.json is empty (including when this PR empties it). -->
 
 <details>
 <summary>API patch verification — only for PRs that change a non-empty patch contract</summary>
