@@ -98,11 +98,6 @@
    - 更改摘要
    - 已执行的测试
 
-   改动代码的 PR 须勾选 PR 模板中的 E2E 勾选项，并粘贴真实 E2E 测试报告：在隔离
-   测试环境中运行与改动相关的 live 测试，附关键输出，不得包含凭证、租户 ID 或内部
-   信息。纯文档、纯 CI 配置和 bot PR 可豁免。没有测试环境的外部贡献者可请维护者
-   代跑。
-
 ## 开发环境设置
 
 ### 前置要求
@@ -162,16 +157,14 @@ go run ./cmd/internal/cobragen check
 
 每个有效契约差异必须在 `e2e-coverage.yaml` 中映射到已注册的场景和断言 ID。
 严格入口 `make api-patch-e2e`、提交绑定报告、独立复现、清理及 API 审核见
-[补丁验证规范](PATCH-VERIFICATION.md)。PR 修改非空的 `api.patch.json` 时，作者须
-提名一位非本人的 API reviewer，由主审批人核实其身份、相关专业能力和明确同意意见。
+[补丁验证规范](PATCH-VERIFICATION.md)。非空 Patch 的作者须提名一位非本人的
+API reviewer，由主审批人核实其身份、相关专业能力和明确同意意见。
 API reviewer 可以没有 write 权限，其意见作为审核证据，不能替代所需的维护者批准。
 静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
 
 本阶段不新增真实 E2E 测试流水线。包含非空 Patch 的 PR 必须在合并前附上本地
-真实 E2E 测试报告或报告链接。只有修改 Patch 契约（`*.patch.json`、
-`e2e-coverage.yaml` 或 `internal/patchscenarios/`）的 PR 才需要可信 reviewer
-独立复跑。空 Patch 的工具类 PR 无需提供真实 Patch E2E 报告，但仍需提供所有代码
-PR 都要求的 E2E 测试报告。
+真实 E2E 测试报告或报告链接，并由可信 reviewer 独立复跑。空 Patch 的工具类 PR
+无需提供真实 Patch E2E 报告。
 
 下载新的上游文件后，先不覆盖仓库中的 `api.json`，使用以下命令判定补丁状态：
 

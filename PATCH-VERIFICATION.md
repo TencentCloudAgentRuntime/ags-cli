@@ -29,8 +29,6 @@ Mocks, coverage mappings and checked boxes are not substitutes for this report.
 
 PRs with empty patches, including changes to verification tooling itself, do not
 require a real patch-E2E report. State that no live patch behavior was tested.
-The E2E test report that every code PR attaches (see the PR template) still
-applies.
 
 ## Author workflow
 
@@ -93,8 +91,7 @@ That worker rejects a different head and builds the candidate CLI from the same
 commit. Both builds disable workspace mode, ambient Go flags and automatic VCS
 stamping (`-buildvcs=false`), since the archives have no `.git` metadata. Source
 identity is checked again after testing. The runner itself is candidate code:
-its report is not cryptographically trusted. Patch contract changes require
-independent reproduction (see the reviewer checklist).
+its report is not cryptographically trusted and must be independently reproduced.
 Launcher cancellation forwards an interrupt to the worker for cleanup, with a
 three-minute grace period before forced termination.
 
@@ -131,32 +128,22 @@ an interrupted/missing report is never usable passing evidence.
 All PRs follow the repository's normal required-review and CI rules on `main`.
 The retired `preview` branch's two-approval requirement no longer applies.
 
-A PR **changes the patch contract** when `git diff --name-only <base>...<head>`
-includes `api/ags/<version>/api.patch.json`, `mapping.patch.json`,
-`help.patch.json` or `e2e-coverage.yaml`, or files under `internal/patchscenarios/`.
-
-When a PR changes an `api.patch.json` and its candidate contains a non-empty
-Patch, the author must nominate an API reviewer other than themselves and link
-that reviewer's explicit acceptance of the API contract. The API reviewer may be
-any GitHub user; repository write access is not required. A lead maintainer must
-verify the reviewer's relevant expertise, identity and conclusions before
-approving. External API review is supporting
+For a candidate containing a non-empty Patch, the author must nominate an API
+reviewer other than themselves and link that reviewer's explicit acceptance of the
+API contract. The API reviewer may be any GitHub user; repository write access is
+not required. A lead maintainer must verify the reviewer's relevant expertise,
+identity and conclusions before approving. External API review is supporting
 evidence, not a substitute for required maintainer approval.
 
 GitHub enforces the approval count, not API expertise or evidence quality. The
-lead maintainer must check the real E2E report before approving and merging. For
-a PR that changes the patch contract, the lead maintainer also checks independent
-reproduction, plus API review and source/disclosure verification when the PR
-changes an `api.patch.json`.
+lead maintainer must check API review, source/disclosure verification, the real
+E2E report and independent reproduction before approving and merging.
 
-For a PR that changes the patch contract, the author report is supporting
-evidence. A trusted reviewer must independently rerun the strict command on the
-exact source in an isolated environment, then compare identity, plan, assertion
-records and cleanup. Scenario/entry set equality only proves bookkeeping; review
-the assertions themselves and show a targeted wrong behavior causes failure.
-Without independent reproduction, do not merge such a PR. Other PRs do not
-require independent reproduction or API review; the author report is the
-required evidence.
+Author report is supporting evidence. A trusted reviewer must independently rerun
+the strict command on the exact source in an isolated environment, then compare
+identity, plan, assertion records and cleanup. Scenario/entry set equality only
+proves bookkeeping; review the assertions themselves and show a targeted wrong
+behavior causes failure. Without independent reproduction, do not merge.
 
 New head commits invalidate approvals/reports. Base changes require comparing the
 new candidate merge result and rerunning when it changes. The local runner records
@@ -166,10 +153,9 @@ a separate design and security review; it is not a prerequisite for this workflo
 
 Record public source/disclosure approval, API version and endpoint/namespace
 match, SDK or raw-call strategy, API owner, cleanup owner, expiry/review date and
-official-absorption exit condition in each PR that changes an `api.patch.json`.
-Do not paste internal source text, credentials, tenant IDs, private endpoints or
-raw sensitive responses into public GitHub. Use an auditable API-owner
-confirmation for nonpublic sources.
+official-absorption exit condition in each Patch PR. Do not paste internal source
+text, credentials, tenant IDs, private endpoints or raw sensitive responses into
+public GitHub. Use an auditable API-owner confirmation for nonpublic sources.
 
 Real patch scenarios belong with the patch-dependent capabilities they verify.
 Do not add fabricated passing scenarios to populate an otherwise empty registry.
