@@ -6,36 +6,33 @@
 
 <!-- List commands run and their results. Note checks not run and why. -->
 
-<!-- Complete the section below only if the candidate contains a non-empty
-api/ags/**/api.patch.json, even if this PR does not edit that file.
-Otherwise leave it collapsed or remove it; no patch checklist/report is needed. -->
+<!-- Use the section below only when this PR affects patched API behavior or
+live verification. An unchanged non-empty patch is not a trigger. Remove fields
+that do not apply; ordinary local metadata/docs changes use Verification above. -->
 
 <details>
-<summary>API patch verification — only for non-empty patches</summary>
+<summary>API patch / live verification — when affected</summary>
 
-Complete before merging when the candidate contains a non-empty `api.patch.json`.
+**Scope:** <!-- Changed contract/runtime/scenario/evidence behavior and applicable tests. -->
 
-No live-E2E CI workflow is being added in this phase. Attach a real local E2E
-report or link to it here before merging; CI coverage success is not a substitute.
+**Live evidence, when required:** <!-- Link the strict current-head report: command
+without credentials, head/base, source tree, patch/plan digests, environment alias,
+timestamps, scenarios/assertions, counts and completed cleanup states. Explain an
+empty plan or other coverage limits; static coverage is not live evidence. -->
 
-Report attachment/link:
+**Contract review, only for changed API semantics:** <!-- Link source/disclosure
+basis and a knowledgeable non-author reviewer's acceptance. Record affected API
+version/namespace, SDK strategy and ownership; reference confirmed existing evidence
+for unchanged parts. The approving maintainer may also be the API reviewer. -->
 
-- [ ] Targets `main`; canonical `api.json` has not been replaced by a private source.
-- [ ] Source basis and public-disclosure approval recorded (public link or auditable API-owner confirmation; no internal source text).
-- [ ] API version, endpoint/namespace match, SDK/raw-call strategy reviewed.
-- [ ] `apipatch check-all`, `apipatch coverage`, and `cobragen check` pass.
-- [ ] Every obligation maps to real assertions; documentation exemptions reviewed for behavioral constraints.
-- [ ] Author-nominated API reviewer (not the author) explicitly accepted the API contract; identity and review link recorded, with expertise and conclusions verified by the lead maintainer.
-- [ ] Real E2E report attached or linked: command without credentials, head/base, source tree, patch/plan digests, environment alias, timestamps, scenarios/assertions, pass/fail/skip counts and cleanup results.
-- [ ] Trusted reviewer's independent reproduction matches the report's current source identity and digests.
-- [ ] Cleanup confirmed; responsible owner, review date and upstream-absorption exit condition recorded.
+**Independent reproduction, only when required:** <!-- Required for changes to
+verification evidence guarantees, or when requested for a stated review risk.
+Link the independent run and identity/digest comparison. Do not copy an author
+report into this field. Setup/readiness changes preserving the evidence guarantees
+do not automatically require another operator's run. -->
 
-The API reviewer need not have repository write access. Their review is supporting
-evidence, not a substitute for the repository's required maintainer approval.
-The lead maintainer verifies API review, independent test reproduction and
-source/disclosure evidence; no fixed reviewer teams are required.
-
-See [Patch verification](https://github.com/TencentCloudAgentRuntime/ags-cli/blob/main/PATCH-VERIFICATION.md). Reports are manual
-evidence, not an automated authorization gate. A checked box alone is not proof.
+See [Patch verification](https://github.com/TencentCloudAgentRuntime/ags-cli/blob/main/PATCH-VERIFICATION.md)
+for the scope rules. Normal CI and maintainer approval still apply. Reports are
+review evidence, not an automated authorization gate.
 
 </details>

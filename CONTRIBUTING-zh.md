@@ -139,8 +139,9 @@ ags-cli/
 已确认公开的 AGS 契约尚未进入上游时，仅在 `api.patch.json` 中用 RFC 6902
 JSON Patch 记录差异；无差异时保持为 `[]`。
 
-仅有后端代码不能作为依据。必须确认属于同一公开服务、API 版本、Endpoint 和资源命名空间；
-契约结构权威且已验证部署行为，或已获得 API Owner 批准；并明确允许在 tccli 发布前公开。
+改变有效契约或其来源/公开依据时，仅有后端代码不能作为依据。必须确认属于同一公开服务、API 版本、Endpoint
+和资源命名空间；契约结构权威且已验证部署行为，或已获得 API Owner 批准；
+并明确允许在 tccli 发布前公开。未变化的依据可以引用，无需重复审核。
 
 - 新增 Action、Object 或参数使用 `add`，参数数组只使用 `/-` 追加。
 - `replace` 或 `remove` 前必须紧邻一个同路径的 `test` 操作。
@@ -156,15 +157,14 @@ go run ./cmd/internal/cobragen check
 ```
 
 每个有效契约差异必须在 `e2e-coverage.yaml` 中映射到已注册的场景和断言 ID。
-严格入口 `make api-patch-e2e`、提交绑定报告、独立复现、清理及 API 审核见
-[补丁验证规范](PATCH-VERIFICATION.md)。非空 Patch 的作者须提名一位非本人的
-API reviewer，由主审批人核实其身份、相关专业能力和明确同意意见。
-API reviewer 可以没有 write 权限，其意见作为审核证据，不能替代所需的维护者批准。
-静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
+按本次改动的影响范围选择验证，不以 Patch 是否非空作为统一触发条件。
+schema 元数据、本地诊断和文档改动若不影响真实 API 行为或验证证据链，
+只需执行对应影响范围的测试，不自动要求真实 E2E。
 
-本阶段不新增真实 E2E 测试流水线。包含非空 Patch 的 PR 必须在合并前附上本地
-真实 E2E 测试报告或报告链接，并由可信 reviewer 独立复跑。空 Patch 的工具类 PR
-无需提供真实 Patch E2E 报告。
+何时必须提供当前 head 的严格 `make api-patch-e2e` 报告、API 契约审核或独立复现，
+以及清理和引用未变依据的要求，统一见[补丁验证规范](PATCH-VERIFICATION.md)。
+具备相关能力的维护者可以兼任 API reviewer，不额外增加 reviewer 人数或批准数量要求。
+静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
 
 下载新的上游文件后，先不覆盖仓库中的 `api.json`，使用以下命令判定补丁状态：
 
@@ -180,7 +180,7 @@ go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
 #### 单分支开发
 
 所有改动（包括 API Patch）均以 `main` 为目标。长期 `preview` 分支及其同步流程
-已退役。PR 遵守仓库常规审批和 CI 要求；非空 Patch 还须满足上述证据要求。
+已退役。PR 遵守仓库常规审批和 CI 要求；额外的补丁验证按上述改动影响范围执行。
 
 默认构建为 **stable**，只读取基础 `api.json`、`mapping.yaml` 和 `help.json`。
 preview 构建叠加对应的三份 `*.patch.json`；空补丁保留 `[]`，缺文件直接报错。
