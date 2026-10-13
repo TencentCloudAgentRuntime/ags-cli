@@ -140,10 +140,11 @@ be edited locally. When an approved public AGS contract is temporarily missing
 from upstream, record only the delta in `api.patch.json` using RFC 6902 JSON
 Patch. Keep the patch as `[]` when no delta is needed.
 
-Backend code alone is not sufficient evidence. Confirm the same public service,
-API version, endpoint, and resource namespace; verify the authoritative shape
-and deployed behavior or obtain API-owner approval; and confirm that early
-public disclosure is allowed.
+When changing the effective contract or its source/disclosure basis, backend code alone is not sufficient
+evidence. Confirm the same public service, API version, endpoint, and resource
+namespace; verify the authoritative shape and deployed behavior or obtain
+API-owner approval; and confirm that early public disclosure is allowed.
+Unchanged evidence may be referenced instead of repeating its review.
 
 - Use `add` for new actions, objects, or members. Append members with `/-`.
 - Guard every `replace` or `remove` with an immediately preceding `test` on the
@@ -161,17 +162,17 @@ go run ./cmd/internal/cobragen check
 ```
 
 Every effective contract delta must map to registered scenario/assertion IDs in
-`e2e-coverage.yaml`. See [Patch verification](PATCH-VERIFICATION.md) for the strict
-`make api-patch-e2e` entrypoint, commit-bound reports, independent reproduction,
-cleanup, and API review. For non-empty patches, the author nominates an API
-reviewer whose identity, expertise and explicit acceptance are verified by the
-lead maintainer. The API reviewer need not have write access; their review is
-supporting evidence, not a substitute for required maintainer approval. Static coverage
-does not prove runtime correctness; empty patches do not count as live E2E passes.
+`e2e-coverage.yaml`. Choose verification by the change's impact, not merely by
+the presence of a non-empty patch. Schema metadata, local diagnostics, and
+documentation changes that affect neither real API behavior nor the verification
+evidence chain require tests appropriate to their impact, not an automatic live run.
 
-No live-E2E CI workflow is being added in this phase. PRs containing a non-empty
-patch must attach or link a real local E2E report before merging, with independent
-reviewer reproduction. Empty-patch tooling PRs do not require a live patch report.
+See [Patch verification](PATCH-VERIFICATION.md) for when an exact-head strict
+`make api-patch-e2e` report, API contract review, or independent reproduction is
+required, including cleanup and reuse of unchanged evidence. A qualified maintainer
+may also serve as the API reviewer; this does not add a separate reviewer or
+approval-count requirement. Static coverage does not prove runtime correctness;
+empty patches do not count as live E2E passes.
 
 After downloading a refreshed upstream file without replacing the checked-in
 copy, classify the patch lifecycle with:
@@ -190,8 +191,8 @@ generated CLI diff.
 
 All changes, including API patches, target `main`. The long-lived `preview`
 branch and its synchronization workflow have been retired. Normal repository
-review and CI requirements apply; non-empty patches additionally require the
-evidence described above.
+review and CI requirements apply; additional patch verification follows the
+change's impact as described above.
 
 The default build is **stable** and uses the unpatched `api.json`, `mapping.yaml`
 and `help.json`. Preview builds use all three corresponding `*.patch.json`

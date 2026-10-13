@@ -5,8 +5,9 @@ reports, and review the evidence before merging. CI checks coverage mappings;
 real API tests require a separate, reviewed local run.
 
 `api.json` is canonical; a passing test does not turn `api.patch.json` into an
-official contract. All changes target `main`; patch evidence requirements apply
-regardless of whether the PR edits the patch file.
+official contract. All changes target `main`. Choose verification from the PR's
+actual effects; an unchanged, non-empty patch does not by itself require a new
+API review or live E2E run.
 
 ## Required evidence
 
@@ -14,10 +15,27 @@ No live-E2E CI workflow is being added in this phase. CI automatically checks
 coverage mappings without cloud credentials; it does not run real API tests or
 verify that a report has been attached. Reviewers enforce the evidence requirement.
 
-Every PR whose candidate contains a non-empty `api.patch.json` must attach a
-real E2E report, or link to it from the PR description, before merging. Run the
-strict command below locally against the real backend in an isolated test
-environment. Include the exact command (without credentials), current head/base
+All PRs require the normal CI and maintainer review, with tests appropriate to
+the changed behavior. State the verification scope in the PR description:
+
+| Actual effect of the change | Required evidence |
+| --- | --- |
+| Local metadata, diagnostics, documentation or release notes, without changing cloud API behavior or live-test evidence | Relevant unit, integration or channel tests. No new patch E2E or API-contract acceptance solely because the repository contains a patch. |
+| Effective patched API contract, or patch-dependent request/runtime behavior | Contract review for changed API semantics, applicable local tests, and a strict live report covering the affected behavior. |
+| Live scenario setup, readiness, assertions, coverage selection, execution or cleanup behavior | Targeted regression tests and a strict live report when the plan has live obligations. Review changed assertions and failure paths, not just assertion IDs. |
+| Implementation of verification evidence guarantees, including source/candidate binding, actual live execution, assertion meaning/completeness, result accounting or cleanup confirmation | The preceding tests and report, plus trusted-reviewer independent reproduction as described below. |
+
+Classify effects, not filenames or commit types. Contract prose can change an
+enum or constraint; a help/schema change can also affect request construction.
+Promoting patched behavior into canonical `api.json` also requires checking the
+affected behavior and channels, even if the patch is reduced or removed.
+Formatting and comments that change none of these behaviors do not trigger live
+testing. For behavior outside the patch plan, use the relevant tests or live
+suite; a passing patch report cannot establish coverage of unrelated commands.
+
+When a live report is required, attach it or link it before merging. Run the
+strict command below against the real backend in an isolated test environment.
+Include the exact command (without credentials), current head/base
 SHAs, source tree, patch/plan digests, environment alias, timestamps, executed
 scenarios/assertions, pass/fail/skip counts and confirmed cleanup results.
 The archived worker and candidate CLI are both built with `-tags=preview`.
@@ -27,8 +45,11 @@ Mapping/help-only overlays and handwritten preview commands are covered by
 channel tests; an empty API patch report is not evidence for those surfaces.
 Mocks, coverage mappings and checked boxes are not substitutes for this report.
 
-PRs with empty patches, including changes to verification tooling itself, do not
-require a real patch-E2E report. State that no live patch behavior was tested.
+An empty or documentation-only plan has no live obligations. Record that limit
+and validate affected tooling with appropriate regression tests; do not invent
+live scenarios to obtain a passing report. If the implementation of verification
+evidence guarantees changes, a trusted reviewer must independently reproduce those checks even when
+there is no applicable live patch plan.
 
 ## Author workflow
 
@@ -91,7 +112,8 @@ That worker rejects a different head and builds the candidate CLI from the same
 commit. Both builds disable workspace mode, ambient Go flags and automatic VCS
 stamping (`-buildvcs=false`), since the archives have no `.git` metadata. Source
 identity is checked again after testing. The runner itself is candidate code:
-its report is not cryptographically trusted and must be independently reproduced.
+its report is not cryptographically trusted. Review its implementation and apply
+the independent-reproduction requirements below.
 Launcher cancellation forwards an interrupt to the worker for cleanup, with a
 three-minute grace period before forced termination.
 
@@ -115,8 +137,13 @@ assertion's returned error is ignored, a failed assertion poisons the scenario.
 Empty/documentation-only plans return `not_applicable`, never live `pass`.
 
 Each scenario must register cleanup immediately for every created resource,
-including partial-failure IDs. Cleanup callbacks must **confirm absence**, not
-merely accept an asynchronous delete response. All registered callbacks run in
+including partial-failure IDs. Cleanup callbacks must confirm the API's completed
+cleanup state, not merely accept an asynchronous request: deleted resources must
+be absent; APIs that stop instances may retain history, so `STOPPED` or absence
+is sufficient. Remove run-specific test data and report cleanup failures; identify
+shared fixtures or history deliberately retained. Retained history is not a
+requirement to delete resources beyond the API's lifecycle contract.
+All registered callbacks run in
 reverse order after success/failure/panic, each with a fresh two-minute timeout.
 A read-only case explicitly calls `NoResources()`; missing cleanup declarations
 fail. Reviewer must audit that declarations cover every resource. Hard kill,
@@ -128,34 +155,60 @@ an interrupted/missing report is never usable passing evidence.
 All PRs follow the repository's normal required-review and CI rules on `main`.
 The retired `preview` branch's two-approval requirement no longer applies.
 
-For a candidate containing a non-empty Patch, the author must nominate an API
-reviewer other than themselves and link that reviewer's explicit acceptance of the
-API contract. The API reviewer may be any GitHub user; repository write access is
-not required. A lead maintainer must verify the reviewer's relevant expertise,
-identity and conclusions before approving. External API review is supporting
-evidence, not a substitute for required maintainer approval.
+When a PR introduces or changes an effective patched API contract, link acceptance
+of the changed semantics by a reviewer other than the author who understands the
+affected API. That reviewer may be the approving maintainer; this does not require
+an additional person or approval count. A separate API reviewer's identity,
+relevant expertise and conclusions must be verified by the maintainer. Repository
+write access is not required for that supporting review.
 
-GitHub enforces the approval count, not API expertise or evidence quality. The
-lead maintainer must check API review, source/disclosure verification, the real
-E2E report and independent reproduction before approving and merging.
+Record the source/disclosure basis, API version and endpoint/namespace match,
+SDK or raw-call strategy, API owner and official-absorption exit condition for
+changed contracts. Link existing confirmed evidence for unchanged parts and check
+that it still applies; do not reopen the entire contract review for unrelated
+changes. Public source links or auditable API-owner confirmation may establish
+the source basis. An API reviewer and an API owner are not necessarily the same
+person. Record the cleanup owner and any review/expiry date needed for retained
+test resources with the live evidence.
 
-Author report is supporting evidence. A trusted reviewer must independently rerun
-the strict command on the exact source in an isolated environment, then compare
-identity, plan, assertion records and cleanup. Scenario/entry set equality only
-proves bookkeeping; review the assertions themselves and show a targeted wrong
-behavior causes failure. Without independent reproduction, do not merge.
+Recheck source/disclosure evidence when its basis or the target service changes,
+even if the request shape is unchanged.
 
-New head commits invalidate approvals/reports. Base changes require comparing the
-new candidate merge result and rerunning when it changes. The local runner records
+The maintainer reviews the applicable evidence and its limits before approving.
+Ordinary scenario setup or readiness changes with unchanged assertions, real CLI
+execution, error/timeout propagation and cleanup guarantees do not automatically
+require a second operator to repeat the live run.
+
+Independent reproduction is required when the change affects the implementation
+of guarantees that make a report trustworthy: source/candidate binding, real
+backend execution,
+assertion predicates or expected values, required-assertion selection, failure or
+skip accounting, or cleanup confirmation. Keeping assertion IDs unchanged does
+not waive this requirement. A trusted reviewer reruns the strict command on the
+exact source in an isolated environment (or the applicable tooling regressions
+when the plan has no live obligations), then compares identity, plan, assertion
+records and cleanup. Also demonstrate that targeted wrong behavior fails.
+For other changes, a maintainer may require independent reproduction for a stated
+risk or evidence gap; record the reason and result in the review. Once required,
+it must be completed before merging. Do not claim reviewer reproduction from an
+author's report or from static coverage checks.
+
+When a current-head live report is required, a new head needs a new report.
+Earlier reports may be cited as historical evidence, with their original identity,
+but not relabeled as current-head runs. GitHub controls approval invalidation.
+Base changes require comparing the new candidate merge result and rerunning when
+they affect the tested behavior or verification evidence. The local runner records
 identity but does not automatically query GitHub or publish a trusted check.
 No live-E2E status check is required in this phase. Any future automation needs
 a separate design and security review; it is not a prerequisite for this workflow.
 
-Record public source/disclosure approval, API version and endpoint/namespace
-match, SDK or raw-call strategy, API owner, cleanup owner, expiry/review date and
-official-absorption exit condition in each Patch PR. Do not paste internal source
-text, credentials, tenant IDs, private endpoints or raw sensitive responses into
-public GitHub. Use an auditable API-owner confirmation for nonpublic sources.
+Changes to this verification policy need normal maintainer review, including an
+explicit assessment of the policy PR's own verification scope. They do not add a
+release gate or make earlier incomplete evidence complete.
+
+Do not paste internal source text, credentials, tenant IDs, private endpoints or
+raw sensitive responses into public GitHub. Use an auditable API-owner
+confirmation for nonpublic sources.
 
 Real patch scenarios belong with the patch-dependent capabilities they verify.
 Do not add fabricated passing scenarios to populate an otherwise empty registry.
