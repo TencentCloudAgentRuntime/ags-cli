@@ -216,6 +216,33 @@ agr instance exec \
 `Data.ExecutionContext.TemporarySandboxInstance` 与
 `Data.ExecutionContext.Cleanup`，方便脚本检查工作流。
 
+## 沙箱快照与实例克隆
+
+Runtime Snapshot API 当前为 Beta，后续可能发生不兼容变更或被弃用。
+从运行中的实例创建磁盘快照，保存返回的 `Snapshot.SnapshotId`，再用该 ID 查询或删除：
+
+```bash
+agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
+agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
+agr instance snapshot delete snapshot-xxxx -o text
+```
+
+请显式传入 `--memory=false`：省略时遵循服务端策略，当前暂不支持内存快照。
+重试创建时保持相同的 `ClientToken` 和请求参数。删除成功表示请求已受理，清理可能异步完成。
+
+列表返回 `NextToken` 供后续翻页。先使用 `--max-results 20`，再传入返回的
+`--next-token`，并保持过滤条件、快照 ID 和 `Limit` 不变。也支持 `--offset`/`--limit` 分页。
+
+使用源实例 ID 克隆出新实例：
+
+```bash
+agr instance create --source-instance-id ins-source --client-token clone-001 -o text
+```
+
+克隆时可以省略工具选择参数；若提供，则必须与源实例的工具匹配。
+快照 ID 用于管理 `instance snapshot` 下的资源。当前公开的实例创建契约支持按源实例
+ID 克隆，尚未在该命令中提供按已保存快照 ID 恢复的入口。
+
 ## Debug Tool 创建
 
 使用 `agr instance debug --tool-id` 或 `--tool-name` 基于现有工具创建一份
@@ -393,6 +420,9 @@ agr explain <CODE>               解释错误码与修复建议
 
 agr instance create              创建实例
 agr instance list                列出实例
+agr instance snapshot create     创建沙箱快照（Beta）
+agr instance snapshot list       查询沙箱快照（Beta）
+agr instance snapshot delete     请求删除沙箱快照（Beta）
 agr instance get <id>            实例详情
 agr instance update <id>         更新 timeout / metadata
 agr instance pause <id>          暂停实例

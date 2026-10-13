@@ -233,6 +233,38 @@ The JSON output of these commands includes
 `Data.ExecutionContext.TemporarySandboxInstance` and
 `Data.ExecutionContext.Cleanup` so scripts can inspect the workflow.
 
+## Sandbox snapshots and instance cloning
+
+The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.
+Create a disk-only snapshot from a running instance, save its returned
+`Snapshot.SnapshotId`, and use that ID to inspect or delete it:
+
+```bash
+agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
+agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
+agr instance snapshot delete snapshot-xxxx -o text
+```
+
+Use `--memory=false` explicitly: omitting it follows the service policy, and
+memory snapshots are currently unsupported. Retry creation with the same
+`ClientToken` and identical parameters. Deletion acknowledges the request;
+cleanup may finish asynchronously.
+
+List results contain `NextToken` for further pages. Use `--max-results 20`, then
+pass the returned `--next-token` while keeping filters, snapshot IDs, and `Limit`
+unchanged. `--offset`/`--limit` pagination is also supported.
+
+Clone an existing instance into a new instance using its instance ID:
+
+```bash
+agr instance create --source-instance-id ins-source --client-token clone-001 -o text
+```
+
+A tool selector is optional for cloning; if supplied, it must match the source
+instance. Saved snapshot IDs identify the resources managed by `instance snapshot`.
+The published instance-creation contract currently exposes cloning by source
+instance ID; restoring by a saved snapshot ID is outside this command surface.
+
 ## Debug instance creation
 
 Use `agr instance debug` with `--tool-id` or `--tool-name` to create a debug
@@ -432,6 +464,9 @@ agr explain <CODE>               Explain errors and fixes
 
 agr instance create              Create a new instance
 agr instance list                List instances
+agr instance snapshot create     Create a sandbox snapshot (Beta)
+agr instance snapshot list       List sandbox snapshots (Beta)
+agr instance snapshot delete     Request snapshot deletion (Beta)
 agr instance get <id>            Get instance details
 agr instance update <id>         Update timeout/metadata
 agr instance pause <id>          Pause an instance

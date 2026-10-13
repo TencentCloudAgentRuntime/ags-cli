@@ -142,6 +142,9 @@ func parserForField(m apimeta.Member, fm *apimeta.FieldMapping) string {
 }
 
 func subgroupShort(group, sub string) string {
+	if group == "instance" && sub == "snapshot" {
+		return "Manage sandbox snapshots (Beta)"
+	}
 	if group == "image" && sub == "precache" {
 		return "Manage image pre-cache tasks"
 	}
@@ -155,6 +158,9 @@ func subgroupShort(group, sub string) string {
 }
 
 func subgroupLong(group, sub string) string {
+	if group == "instance" && sub == "snapshot" {
+		return "Create, list, and delete sandbox snapshots. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued. Use --memory=false for disk-only snapshots. Snapshot IDs identify saved snapshots; instance create --source-instance-id clones an existing instance and does not accept a snapshot ID."
+	}
 	if group != "session" {
 		return ""
 	}
@@ -169,6 +175,8 @@ func subgroupLong(group, sub string) string {
 
 func groupExamples(group string) []string {
 	switch group {
+	case "instance.snapshot":
+		return []string{"Example - Create and inspect a disk-only snapshot:\n  agr instance snapshot create --instance-id ins-xxxx --memory=false -o text\n  agr instance snapshot list -o text", "Example - Request snapshot deletion:\n  agr instance snapshot delete snapshot-xxxx -o text"}
 	case "session":
 		return []string{
 			"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text",
@@ -201,9 +209,9 @@ func aliasesForCommand(commandID string) []string {
 	switch commandID {
 	case "instance.create":
 		return []string{"c"}
-	case "instance.list", "tool.list", "apikey.list", "session.list", "session.space.list", "session.event.list", "volume.list", "volume-template.list":
+	case "instance.list", "instance.snapshot.list", "tool.list", "apikey.list", "session.list", "session.space.list", "session.event.list", "volume.list", "volume-template.list":
 		return []string{"ls"}
-	case "instance.delete", "tool.delete", "apikey.delete", "session.delete", "session.space.delete", "volume.delete", "volume-template.delete":
+	case "instance.delete", "instance.snapshot.delete", "tool.delete", "apikey.delete", "session.delete", "session.space.delete", "volume.delete", "volume-template.delete":
 		return []string{"rm", "del"}
 	}
 	return nil
@@ -224,6 +232,8 @@ func argsForCommand(commandID string) string {
 
 func useForCommand(commandID string) string {
 	switch commandID {
+	case "instance.snapshot.delete":
+		return "delete [snapshot-id]"
 	case "instance.update":
 		return "update <instance-id>"
 	case "instance.pause":

@@ -1163,6 +1163,9 @@ func TestCharacterization_SchemaFailuresCoverLocalValidationErrors(t *testing.T)
 		codes   []string
 	}{
 		{command: "instance.browser.vnc", codes: []string{"INVALID_PORT"}},
+		{command: "instance.snapshot.create", codes: []string{"INTERNAL_ERROR"}},
+		{command: "instance.snapshot.list", codes: []string{"INVALID_PAGINATION"}},
+		{command: "instance.snapshot.delete", codes: []string{"MISSING_REQUIRED_ARG"}},
 		{command: "tool.list", codes: []string{"INVALID_PAGINATION"}},
 		{command: "instance.code.run", codes: []string{"CONFLICTING_INPUTS", "MISSING_CODE", "UNSUPPORTED_LANGUAGE"}},
 		{command: "tool.get", codes: []string{"MISSING_REQUIRED_ARG", "TOOL_NOT_FOUND"}},

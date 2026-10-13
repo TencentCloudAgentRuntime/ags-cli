@@ -123,8 +123,8 @@ func validateToolSelection(req command.Request) error {
 	if toolName != "" && toolID != "" {
 		return output.NewUsageError("CONFLICTING_FLAGS", "cannot specify both --tool-name and --tool-id", "Provide either --tool-name or --tool-id.")
 	}
-	if toolName == "" && toolID == "" {
-		return output.NewUsageError("MISSING_REQUIRED_FLAG", "must specify either --tool-name/-t or --tool-id", "Provide --tool-name for a named tool or --tool-id for a cloud tool ID.")
+	if toolName == "" && toolID == "" && stringFlag(req, "source-instance-id") == "" {
+		return output.NewUsageError("MISSING_REQUIRED_FLAG", "must specify --tool-name/-t, --tool-id, or --source-instance-id", "Provide a tool name or ID, or --source-instance-id to clone an existing instance.")
 	}
 	return nil
 }

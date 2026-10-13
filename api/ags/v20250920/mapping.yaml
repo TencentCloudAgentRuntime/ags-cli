@@ -142,6 +142,35 @@ actions:
           - flag: metadata
             type: json
 
+  # Canonical Snapshot APIs are exposed in stable and preview. Their upstream
+  # Beta compatibility warning is retained in help; no preview overlay is needed.
+  CreateSandboxSnapshot:
+    command: instance.snapshot.create
+    request: CreateSandboxSnapshotRequest
+    response: CreateSandboxSnapshotResponse
+    status: mapped
+
+  DeleteSandboxSnapshot:
+    command: instance.snapshot.delete
+    request: DeleteSandboxSnapshotRequest
+    response: DeleteSandboxSnapshotResponse
+    status: mapped
+    fields:
+      SnapshotId:
+        positional: true
+        optional_positional: true
+
+  DescribeSandboxSnapshotList:
+    command: instance.snapshot.list
+    request: DescribeSandboxSnapshotListRequest
+    response: DescribeSandboxSnapshotListResponse
+    status: mapped
+    fields:
+      SnapshotIds:
+        inputs:
+          - flag: snapshot-ids
+            type: string_array
+
   DescribeSandboxInstanceList:
     command: instance.list
     request: DescribeSandboxInstanceListRequest

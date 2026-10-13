@@ -959,6 +959,9 @@ func hasFlagType(flags []FlagSchema, typ string) bool {
 
 func buildHandwrittenSchemas() []CommandSchema {
 	schemas := []CommandSchema{
+		{Name: "instance.snapshot.create", Failures: []string{"INTERNAL_ERROR"}},
+		{Name: "instance.snapshot.list", Failures: []string{"INVALID_PAGINATION"}},
+		{Name: "instance.snapshot.delete", Failures: []string{"MISSING_REQUIRED_ARG"}},
 		{
 			Name: "instance.create", Summary: "Create a new sandbox instance",
 			Mutation: true, CreatesResource: true,
@@ -970,6 +973,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 				AnyOf: []RequirementSchema{
 					{Required: []string{"ToolName"}},
 					{Required: []string{"ToolId"}},
+					{Required: []string{"SourceInstanceId"}},
 				},
 				Properties: map[string]PropertySchema{
 					"ToolName":            {Type: "string", CliFlag: cliFlag("tool-name")},

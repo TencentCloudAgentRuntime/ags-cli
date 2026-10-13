@@ -319,6 +319,8 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/command\"\n")
 	if cmd.Parts[0] == "session" {
 		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session\"\n")
+	} else if strings.HasPrefix(cmd.Command, "instance.snapshot.") {
+		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot\"\n")
 	}
 	b.WriteString(")\n\n")
 	b.WriteString("func APIDescriptor() apicli.APIDescriptor {\n")
@@ -460,6 +462,8 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 	b.WriteString("func GeneratedModule() command.Module {\n")
 	if cmd.Parts[0] == "session" {
 		b.WriteString("\treturn session.NewModule(APIDescriptor())\n")
+	} else if strings.HasPrefix(cmd.Command, "instance.snapshot.") {
+		b.WriteString("\treturn snapshot.NewModule(APIDescriptor())\n")
 	} else {
 		b.WriteString("\treturn apicli.NewModule(APIDescriptor())\n")
 	}
@@ -577,6 +581,12 @@ func outputDescription(cmd commandModel) string {
 
 func outputEffects(cmd commandModel) []string {
 	switch cmd.Command {
+	case "instance.snapshot.create":
+		return []string{"create:snapshot"}
+	case "instance.snapshot.delete":
+		return []string{"delete:snapshot"}
+	case "instance.snapshot.list":
+		return []string{"read:snapshot"}
 	case "registry.create":
 		return []string{"create:registry"}
 	case "registry.update":

@@ -122,3 +122,47 @@ func TestSDKSupportsPromotedPrecacheContract(t *testing.T) {
 		t.Fatalf("CachedImageSizeBytes = %v, precision lost", response.CachedImageSizeBytes)
 	}
 }
+
+func TestSDKSupportsSnapshotContract(t *testing.T) {
+	start := ags.NewStartSandboxInstanceRequest()
+	if err := start.FromJsonString(`{"SourceInstanceId":"ins-source"}`); err != nil {
+		t.Fatal(err)
+	}
+	if start.SourceInstanceId == nil || *start.SourceInstanceId != "ins-source" {
+		t.Fatalf("SourceInstanceId = %v, want ins-source", start.SourceInstanceId)
+	}
+	create := ags.NewCreateSandboxSnapshotRequest()
+	if err := create.FromJsonString(`{"InstanceId":"ins-source","Memory":false,"ClientToken":"snapshot-retry"}`); err != nil {
+		t.Fatal(err)
+	}
+	if create.Memory == nil || *create.Memory {
+		t.Fatalf("Memory = %v, want explicit false", create.Memory)
+	}
+	if create.ClientToken == nil || *create.ClientToken != "snapshot-retry" {
+		t.Fatalf("ClientToken = %v, want snapshot-retry", create.ClientToken)
+	}
+	list := ags.NewDescribeSandboxSnapshotListRequest()
+	if err := list.FromJsonString(`{"SnapshotIds":["snapshot-test"],"MaxResults":25,"NextToken":"current-page"}`); err != nil {
+		t.Fatal(err)
+	}
+	if list.MaxResults == nil || *list.MaxResults != 25 || list.NextToken == nil || *list.NextToken != "current-page" {
+		t.Fatalf("pagination fields lost: %s", list.ToJsonString())
+	}
+	deleteRequest := ags.NewDeleteSandboxSnapshotRequest()
+	if err := deleteRequest.FromJsonString(`{"SnapshotId":"snapshot-test"}`); err != nil {
+		t.Fatal(err)
+	}
+	if deleteRequest.SnapshotId == nil || *deleteRequest.SnapshotId != "snapshot-test" {
+		t.Fatalf("SnapshotId = %v, want snapshot-test", deleteRequest.SnapshotId)
+	}
+	var response ags.DescribeSandboxSnapshotListResponseParams
+	if err := json.Unmarshal([]byte(`{"SnapshotSet":[{"SnapshotId":"snapshot-test","MemoryIncluded":false}],"TotalCount":1,"NextToken":"next-page"}`), &response); err != nil {
+		t.Fatal(err)
+	}
+	if len(response.SnapshotSet) != 1 || response.SnapshotSet[0].MemoryIncluded == nil || *response.SnapshotSet[0].MemoryIncluded {
+		t.Fatalf("snapshot response lost explicit false: %+v", response)
+	}
+	if response.NextToken == nil || *response.NextToken != "next-page" {
+		t.Fatalf("response NextToken = %v, want next-page", response.NextToken)
+	}
+}
