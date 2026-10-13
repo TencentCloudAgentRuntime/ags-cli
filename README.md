@@ -236,8 +236,8 @@ The JSON output of these commands includes
 ## Sandbox snapshots and instance cloning
 
 The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.
-Create a disk-only snapshot from a running instance, save its returned
-`Snapshot.SnapshotId`, and use that ID to inspect or delete it:
+Create a disk-only snapshot from a running instance with disk snapshot support
+enabled, save its returned `Snapshot.SnapshotId`, and use that ID to inspect or delete it:
 
 ```bash
 agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
@@ -245,25 +245,40 @@ agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
 agr instance snapshot delete snapshot-xxxx -o text
 ```
 
-Use `--memory=false` explicitly: omitting it follows the service policy, and
-memory snapshots are currently unsupported. Retry creation with the same
-`ClientToken` and identical parameters. Deletion acknowledges the request;
+Use `--memory=false` explicitly. When omitted, the CLI leaves `Memory` unset;
+the service defaults to including memory unless the source instance is configured
+for disk-only snapshots. Memory snapshots are currently unsupported. Retry creation
+with the same `ClientToken` and identical parameters.
+
+Deletion prompts for confirmation when stdin is a TTY and defaults to cancel.
+Use `--yes` (`-y`) to skip confirmation; `--non-interactive` and non-TTY stdin
+also proceed without prompting. A successful response acknowledges the request;
 cleanup may finish asynchronously.
 
 List results contain `NextToken` for further pages. Use `--max-results 20`, then
-pass the returned `--next-token` while keeping filters, snapshot IDs, and `Limit`
-unchanged. `--offset`/`--limit` pagination is also supported.
+pass the returned `--next-token` while keeping filters, snapshot IDs (including
+array order), and `Limit` unchanged. `MaxResults` may change between pages; an empty
+`NextToken` means there are no more pages. `--offset`/`--limit` pagination is also
+supported, as is `--limit` with `--next-token`.
 
-Clone an existing instance into a new instance using its instance ID:
+`Offset` must be non-negative. `Limit` and `MaxResults` accept 0-100; if both are
+omitted or 0, the service uses 20. A positive `MaxResults` cannot be combined with
+a positive `Offset` or `Limit`. A nonempty `NextToken` cannot be combined with a
+positive `Offset`.
+
+Clone a source instance with disk snapshot support enabled into a separate new
+instance. Instances without this capability cannot be cloned. Pass the source instance ID:
 
 ```bash
 agr instance create --source-instance-id ins-source --client-token clone-001 -o text
 ```
 
-A tool selector is optional for cloning; if supplied, it must match the source
-instance. Saved snapshot IDs identify the resources managed by `instance snapshot`.
-The published instance-creation contract currently exposes cloning by source
-instance ID; restoring by a saved snapshot ID is outside this command surface.
+The new instance inherits the source tool, so a tool selector is optional; if
+supplied, it must match the source tool. The source system disk is copied to the
+new instance; subsequent writes to either system disk are independent. Running
+processes and memory state are not preserved. Saved snapshot IDs identify the
+resources managed by `instance snapshot`; this command accepts a source instance
+ID and does not support restoring by a saved snapshot ID.
 
 ## Debug instance creation
 

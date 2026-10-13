@@ -14,7 +14,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "delete"},
 			Use:          "delete <instance-id> [instance-id...]",
 			Short:        "Delete instances",
-			Long:         "Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation.",
+			Long:         "Delete one or more sandbox instances. When stdin is a TTY, deletion requires confirmation and defaults to cancel. Use --yes (-y) to skip confirmation. With --non-interactive or non-TTY stdin, deletion proceeds without prompting.",
 			Aliases:      []string{"rm", "del"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{

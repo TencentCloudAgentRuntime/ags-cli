@@ -15,8 +15,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "snapshot", "delete"},
 			Use:          "delete [snapshot-id]",
 			Short:        "Request sandbox snapshot deletion (Beta)",
-			Long:         "Request deletion of a saved sandbox snapshot. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide a snapshot ID as the positional argument or in --request. The request is sent immediately without an interactive prompt. A successful response acknowledges deletion; cleanup can finish asynchronously. Inspect the snapshot with list to check its status.",
-			Examples:     []string{"agr instance snapshot delete snapshot-xxxx -o text", "agr instance snapshot delete --request '{\"SnapshotId\":\"snapshot-xxxx\"}' -o text"},
+			Long:         "Request deletion of a saved sandbox snapshot. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide a snapshot ID as the positional argument or in --request. When stdin is a TTY, deletion requires confirmation and defaults to cancel. Use --yes (-y) to skip confirmation. With --non-interactive or non-TTY stdin, the request is sent without prompting. A successful response acknowledges deletion; cleanup can finish asynchronously. Inspect the snapshot with list to check its status.",
+			Examples:     []string{"agr instance snapshot delete snapshot-xxxx -o text", "agr instance snapshot delete snapshot-xxxx --yes -o text", "agr instance snapshot delete --request '{\"SnapshotId\":\"snapshot-xxxx\"}' --yes -o text"},
 			Aliases:      []string{"rm", "del"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{

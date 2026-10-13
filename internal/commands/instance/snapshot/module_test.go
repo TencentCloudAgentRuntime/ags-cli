@@ -5,16 +5,20 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	createsnapshot "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/create"
 	deletesnapshot "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/delete"
 	listsnapshots "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/list"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
@@ -209,6 +213,89 @@ func TestDeleteSnapshotSupportsPositionalAndRawRequest(t *testing.T) {
 	}
 }
 
+func TestDeleteSnapshotConfirmation(t *testing.T) {
+	for _, rawRequest := range []bool{false, true} {
+		for _, tc := range []struct {
+			name           string
+			answer         string
+			tty            bool
+			yes            bool
+			nonInteractive bool
+			wantPrompt     bool
+			wantDelete     bool
+		}{
+			{name: "accept", answer: "y\n", tty: true, wantPrompt: true, wantDelete: true},
+			{name: "accept-uppercase", answer: "Y\n", tty: true, wantPrompt: true, wantDelete: true},
+			{name: "decline", answer: "n\n", tty: true, wantPrompt: true},
+			{name: "default-cancel", answer: "\n", tty: true, wantPrompt: true},
+			{name: "eof-cancel", tty: true, wantPrompt: true},
+			{name: "yes-skips", answer: "n\n", tty: true, yes: true, wantDelete: true},
+			{name: "non-interactive-skips", answer: "n\n", tty: true, nonInteractive: true, wantDelete: true},
+			{name: "non-tty-skips", answer: "n\n", wantDelete: true},
+		} {
+			t.Run(fmt.Sprintf("raw=%t/%s", rawRequest, tc.name), func(t *testing.T) {
+				flag := cli.RootCmd().PersistentFlags().Lookup("non-interactive")
+				previous := flag.Value.String()
+				if err := flag.Value.Set(strconv.FormatBool(tc.nonInteractive)); err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() {
+					if err := flag.Value.Set(previous); err != nil {
+						t.Error(err)
+					}
+				})
+				ios, stdin, stdout, stderr := iostreams.Test()
+				ios.SetStdinTTY(tc.tty)
+				stdin.WriteString(tc.answer)
+				cp := &snapshotControlPlane{response: map[string]any{"RequestId": "req-delete"}}
+				runtime, err := deletesnapshot.GeneratedModule().Build(command.Deps{ControlPlane: cp, IO: ios})
+				if err != nil {
+					t.Fatal(err)
+				}
+				req := command.Request{Flags: map[string]command.FlagValue{
+					"yes": {Type: command.FlagBool, Bool: tc.yes, Changed: true},
+				}}
+				if rawRequest {
+					req.Flags["request"] = stringFlag(`{"SnapshotId":"snapshot-test"}`)
+				} else {
+					req.ArgValues = map[string]string{"snapshot-id": "snapshot-test"}
+				}
+				result, err := runtime.Handler.Run(t.Context(), req)
+				if err != nil || result == nil {
+					t.Fatalf("result=%#v err=%v", result, err)
+				}
+				if stdout.Len() != 0 {
+					t.Fatalf("prompt leaked to stdout: %s", stdout)
+				}
+				if tc.wantPrompt {
+					if !strings.Contains(stderr.String(), "snapshot-test") || !strings.Contains(stderr.String(), "Proceed? [y/N]") {
+						t.Fatalf("missing confirmation: %q", stderr.String())
+					}
+				} else if stderr.Len() != 0 || stdin.String() != tc.answer {
+					t.Fatalf("non-interactive path prompted or read stdin: stderr=%q stdin=%q", stderr.String(), stdin.String())
+				}
+				if tc.wantDelete {
+					if cp.calls != 1 || !reflect.DeepEqual(cp.request, map[string]any{"SnapshotId": "snapshot-test"}) || len(result.Effects) != 1 {
+						t.Fatalf("delete call=%+v effects=%#v", cp, result.Effects)
+					}
+				} else {
+					if cp.calls != 0 || len(result.Effects) != 0 || result.ExitCode != 0 || result.Failure != nil {
+						t.Fatalf("cancel caused mutation or failure: calls=%d result=%#v", cp.calls, result)
+					}
+					data, err := json.Marshal(result.Data)
+					if err != nil || string(data) != `{"Cancelled":true}` {
+						t.Fatalf("cancel data=%s err=%v", data, err)
+					}
+					result.Text(stdout)
+					if stdout.String() != "Cancelled.\n" {
+						t.Fatalf("cancel text=%q", stdout.String())
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestSnapshotInvalidInputDoesNotCallAPI(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -227,10 +314,18 @@ func TestSnapshotInvalidInputDoesNotCallAPI(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cp := &snapshotControlPlane{}
-			runtime := snapshotRuntime(t, tc.module, cp)
+			ios, _, _, stderr := iostreams.Test()
+			ios.SetStdinTTY(true)
+			runtime, err := tc.module.Build(command.Deps{ControlPlane: cp, IO: ios})
+			if err != nil {
+				t.Fatal(err)
+			}
 			result, err := runtime.Handler.Run(t.Context(), tc.req)
 			if err == nil || result != nil || cp.calls != 0 {
 				t.Fatalf("invalid input accepted: calls=%d result=%#v err=%v", cp.calls, result, err)
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("invalid input prompted for confirmation: %q", stderr.String())
 			}
 		})
 	}
@@ -279,6 +374,16 @@ func TestSnapshotPaginationMatchesServiceModes(t *testing.T) {
 		valid   bool
 	}{
 		{"default", map[string]any{}, true},
+		{"zeros", map[string]any{"Offset": 0, "Limit": 0, "MaxResults": 0}, true},
+		{"negative-offset", map[string]any{"Offset": -1}, false},
+		{"negative-limit", map[string]any{"Limit": -1}, false},
+		{"negative-max-results", map[string]any{"MaxResults": -1}, false},
+		{"minimum-limit", map[string]any{"Limit": 1}, true},
+		{"maximum-limit", map[string]any{"Limit": 100}, true},
+		{"limit-too-large", map[string]any{"Limit": 101}, false},
+		{"minimum-max-results", map[string]any{"MaxResults": 1}, true},
+		{"maximum-max-results", map[string]any{"MaxResults": 100}, true},
+		{"max-results-too-large", map[string]any{"MaxResults": 101}, false},
 		{"offset", map[string]any{"Offset": 10, "Limit": 20}, true},
 		{"cursor", map[string]any{"NextToken": "cursor", "MaxResults": 20}, true},
 		{"cursor-with-limit", map[string]any{"NextToken": "cursor", "Limit": 20}, true},
@@ -320,6 +425,14 @@ func TestSnapshotPaginationMatchesServiceModes(t *testing.T) {
 					if err != nil || result == nil || cp.calls != 1 {
 						t.Fatalf("valid pagination failed: calls=%d result=%#v err=%v", cp.calls, result, err)
 					}
+					got, err := json.Marshal(cp.request)
+					if err != nil {
+						t.Fatal(err)
+					}
+					want, err := json.Marshal(tc.payload)
+					if err != nil || !bytes.Equal(got, want) {
+						t.Fatalf("pagination changed: got=%s want=%s err=%v", got, want, err)
+					}
 				} else {
 					var cliErr *output.CLIError
 					if !errors.As(err, &cliErr) || cliErr.Failure.Code != "INVALID_PAGINATION" || result != nil || cp.calls != 0 {
@@ -328,6 +441,47 @@ func TestSnapshotPaginationMatchesServiceModes(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestSnapshotPaginationJSONIntegerBounds(t *testing.T) {
+	for _, tc := range []struct {
+		name, payload string
+		valid         bool
+	}{
+		{"exact-large-offset", `{"Offset":9007199254740993}`, true},
+		{"maximum-offset", `{"Offset":9223372036854775807}`, true},
+		{"offset-overflow", `{"Offset":9223372036854775808}`, false},
+		{"offset-underflow", `{"Offset":-9223372036854775809}`, false},
+		{"limit-overflow", `{"Limit":9223372036854775808}`, false},
+		{"max-results-overflow", `{"MaxResults":9223372036854775808}`, false},
+		{"fractional-offset", `{"Offset":0.5}`, false},
+		{"fractional-limit", `{"Limit":1.5}`, false},
+		{"fractional-max-results", `{"MaxResults":1.5}`, false},
+		{"string-limit", `{"Limit":"20"}`, false},
+		{"nulls", `{"Limit":null,"MaxResults":null,"Offset":null}`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cp := &snapshotControlPlane{response: map[string]any{"SnapshotSet": []any{}}}
+			runtime := snapshotRuntime(t, listsnapshots.GeneratedModule(), cp)
+			result, err := runtime.Handler.Run(t.Context(), command.Request{Flags: map[string]command.FlagValue{
+				"request": stringFlag(tc.payload),
+			}})
+			if !tc.valid {
+				var cliErr *output.CLIError
+				if !errors.As(err, &cliErr) || cliErr.Failure.Code != "INVALID_PAGINATION" || result != nil || cp.calls != 0 {
+					t.Fatalf("invalid pagination accepted: calls=%d result=%#v err=%v", cp.calls, result, err)
+				}
+				return
+			}
+			if err != nil || result == nil || cp.calls != 1 {
+				t.Fatalf("valid pagination failed: calls=%d result=%#v err=%v", cp.calls, result, err)
+			}
+			got, err := json.Marshal(cp.request)
+			if err != nil || string(got) != tc.payload {
+				t.Fatalf("pagination changed: got=%s want=%s err=%v", got, tc.payload, err)
+			}
+		})
 	}
 }
 

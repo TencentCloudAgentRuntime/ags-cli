@@ -219,7 +219,8 @@ agr instance exec \
 ## 沙箱快照与实例克隆
 
 Runtime Snapshot API 当前为 Beta，后续可能发生不兼容变更或被弃用。
-从运行中的实例创建磁盘快照，保存返回的 `Snapshot.SnapshotId`，再用该 ID 查询或删除：
+从已启用磁盘快照能力、处于运行状态的实例创建磁盘快照，保存返回的
+`Snapshot.SnapshotId`，再用该 ID 查询或删除：
 
 ```bash
 agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
@@ -227,21 +228,34 @@ agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
 agr instance snapshot delete snapshot-xxxx -o text
 ```
 
-请显式传入 `--memory=false`：省略时遵循服务端策略，当前暂不支持内存快照。
-重试创建时保持相同的 `ClientToken` 和请求参数。删除成功表示请求已受理，清理可能异步完成。
+请显式传入 `--memory=false`。省略时 CLI 不发送 `Memory`；服务端默认包含内存，
+除非源实例已配置为仅磁盘快照。当前暂不支持内存快照。
+重试创建时保持相同的 `ClientToken` 和请求参数。
+
+标准输入为 TTY 时，删除前会提示确认，默认取消。使用 `--yes`（`-y`）跳过确认；
+`--non-interactive` 或非 TTY 标准输入也会直接执行，不提示确认。
+删除成功表示请求已受理，清理可能异步完成。
 
 列表返回 `NextToken` 供后续翻页。先使用 `--max-results 20`，再传入返回的
-`--next-token`，并保持过滤条件、快照 ID 和 `Limit` 不变。也支持 `--offset`/`--limit` 分页。
+`--next-token`，并保持过滤条件、快照 ID（包括数组顺序）和 `Limit` 不变。
+`MaxResults` 可以在翻页时调整；`NextToken` 为空表示没有后续页。
+也支持 `--offset`/`--limit` 分页，以及 `--limit` 与 `--next-token` 组合。
 
-使用源实例 ID 克隆出新实例：
+`Offset` 必须非负；`Limit` 和 `MaxResults` 接受 0–100，两者均省略或为 0 时，
+服务端使用默认页大小 20。正数 `MaxResults` 不能与正数 `Offset` 或 `Limit` 组合；
+非空 `NextToken` 不能与正数 `Offset` 组合。
+
+源实例必须已启用磁盘快照能力，未启用该能力的实例无法克隆。使用该源实例的 ID
+克隆出独立的新实例：
 
 ```bash
 agr instance create --source-instance-id ins-source --client-token clone-001 -o text
 ```
 
-克隆时可以省略工具选择参数；若提供，则必须与源实例的工具匹配。
-快照 ID 用于管理 `instance snapshot` 下的资源。当前公开的实例创建契约支持按源实例
-ID 克隆，尚未在该命令中提供按已保存快照 ID 恢复的入口。
+新实例继承源实例的工具，因此可以省略工具选择参数；若提供，则必须与源实例的工具匹配。
+克隆会复制源实例的系统盘，之后两者的系统盘写入相互独立，不保留运行中的进程和内存状态。
+快照 ID 用于管理 `instance snapshot` 下的资源；此命令接受源实例 ID，
+不支持传入已保存的快照 ID 恢复实例。
 
 ## Debug Tool 创建
 

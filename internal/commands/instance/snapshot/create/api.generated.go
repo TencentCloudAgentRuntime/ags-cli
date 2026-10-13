@@ -15,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "snapshot", "create"},
 			Use:          "create",
 			Short:        "Create a sandbox snapshot (Beta)",
-			Long:         "Create a saved snapshot of an existing sandbox instance. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide --instance-id and use --memory=false for a disk-only snapshot. Omitting Memory preserves the service policy and does not imply false; memory snapshots are currently unsupported. The source instance must be running and support snapshots.\n\nSave the returned Snapshot.SnapshotId for list and delete operations. Supply the same --client-token and request values when retrying an identical creation. The CLI does not automatically retry creation.",
+			Long:         "Create a saved snapshot of an existing sandbox instance. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide --instance-id for a running instance with disk snapshot support enabled, and use --memory=false for a disk-only snapshot. When --memory is omitted, the CLI leaves Memory unset. The service defaults to including memory unless the source instance is configured for disk-only snapshots. Memory snapshots are currently unsupported.\n\nSave the returned Snapshot.SnapshotId for list and delete operations. Supply the same --client-token and request values when retrying an identical creation. The CLI does not automatically retry creation.",
 			Examples:     []string{"agr instance snapshot create --instance-id ins-xxxx --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text", "agr instance snapshot create --request '{\"InstanceId\":\"ins-xxxx\",\"Memory\":false,\"Tags\":[{\"Key\":\"env\",\"Value\":\"test\"}]}' -o text"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
@@ -38,7 +38,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "InstanceId",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "instance-id", Flag: "instance-id", Usage: "Source instance ID required by the service.", Type: command.FlagString},
+					{Name: "instance-id", Flag: "instance-id", Usage: "Source instance ID required by the service; must be running with disk snapshot support enabled.", Type: command.FlagString},
 				},
 			},
 			{
@@ -52,7 +52,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Memory",
 				Parser: "common.default_bool",
 				Inputs: []apicli.InputSpec{
-					{Name: "memory", Flag: "memory", Usage: "Whether to include memory; explicitly use --memory=false for disk-only snapshots. Omission follows service policy.", Type: command.FlagBool},
+					{Name: "memory", Flag: "memory", Usage: "Use false for disk-only snapshots. Omission leaves Memory unset; true is currently unsupported.", Type: command.FlagBool},
 				},
 			},
 			{

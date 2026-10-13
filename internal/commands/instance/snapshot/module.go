@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/textview"
@@ -21,17 +23,39 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 	module.Descriptor.Generated = &generated
 	module.Descriptor.Source = command.SourceMixedAPI
 	module.Descriptor.Spec.RequiresAuth = true
+	if api.Spec.ID == "instance.snapshot.delete" {
+		module.Descriptor.Spec.Flags = append(module.Descriptor.Spec.Flags, command.FlagSpec{
+			Name: "yes", Shorthand: "y", Usage: "Skip confirmation prompt",
+			Type: command.FlagBool, Default: false, Workflow: true,
+		})
+	}
 	module.Build = func(deps command.Deps) (command.Runtime, error) {
+		deps = deps.WithDefaults()
 		builder := apicli.NewRequestBuilder(api)
 		executor := apicli.NewExecutor(api, deps.ControlPlane)
 		return command.Runtime{Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
-			request, err := builder.Build(req)
+			apiReq := req
+			if api.Spec.ID == "instance.snapshot.delete" {
+				apiReq.Flags = maps.Clone(req.Flags)
+				delete(apiReq.Flags, "yes")
+			}
+			request, err := builder.Build(apiReq)
 			if err != nil {
 				return nil, err
 			}
 			if api.Spec.ID == "instance.snapshot.list" {
 				if err := validatePagination(request); err != nil {
 					return nil, err
+				}
+			}
+			if api.Spec.ID == "instance.snapshot.delete" && !req.Flags["yes"].Bool && !cli.NonInteractive() && deps.IO.IsStdinTTY() {
+				fmt.Fprintf(deps.IO.ErrOut, "The following snapshot will be deleted:\n  - %s\n\nProceed? [y/N] ", request["SnapshotId"])
+				var answer string
+				if _, err := fmt.Fscanln(deps.IO.In, &answer); err != nil || (answer != "y" && answer != "Y") {
+					return &command.Result{
+						Data: map[string]any{"Cancelled": true},
+						Text: func(w io.Writer) { fmt.Fprintln(w, "Cancelled.") },
+					}, nil
 				}
 			}
 			result, err := executor.Execute(ctx, request)
@@ -73,28 +97,41 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 }
 
 func validatePagination(request map[string]any) error {
+	offset, ok := paginationInteger(request["Offset"])
+	if !ok || offset < 0 {
+		return output.NewUsageError("INVALID_PAGINATION", "Offset must be a non-negative 64-bit integer", "Use --offset >= 0, or omit Offset.")
+	}
+	limit, ok := paginationInteger(request["Limit"])
+	if !ok || limit < 0 || limit > 100 {
+		return output.NewUsageError("INVALID_PAGINATION", "Limit must be an integer between 0 and 100", "Use --limit from 1 to 100; omit it or use 0 to leave this page-size option unset.")
+	}
+	maxResults, ok := paginationInteger(request["MaxResults"])
+	if !ok || maxResults < 0 || maxResults > 100 {
+		return output.NewUsageError("INVALID_PAGINATION", "MaxResults must be an integer between 0 and 100", "Use --max-results from 1 to 100; omit it or use 0 to leave this page-size option unset.")
+	}
 	next, _ := request["NextToken"].(string)
-	offset := positiveInteger(request["Offset"])
-	if next != "" && offset {
+	if next != "" && offset > 0 {
 		return output.NewUsageError("INVALID_PAGINATION", "NextToken cannot be combined with a positive Offset", "Use --next-token without a positive --offset.")
 	}
-	if positiveInteger(request["MaxResults"]) && (offset || positiveInteger(request["Limit"])) {
+	if maxResults > 0 && (offset > 0 || limit > 0) {
 		return output.NewUsageError("INVALID_PAGINATION", "positive MaxResults cannot be combined with positive Offset or Limit", "Use --max-results without positive --offset or --limit values.")
 	}
 	return nil
 }
 
-func positiveInteger(value any) bool {
+func paginationInteger(value any) (int64, bool) {
 	switch value := value.(type) {
+	case nil:
+		return 0, true
 	case int:
-		return value > 0
+		return int64(value), true
 	case int64:
-		return value > 0
+		return value, true
 	case json.Number:
 		n, err := value.Int64()
-		return err == nil && n > 0
+		return n, err == nil
 	default:
-		return false
+		return 0, false
 	}
 }
 

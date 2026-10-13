@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -22,6 +23,11 @@ import (
 // server. Closed stdin and a deadline also catch unexpected interactive prompts.
 func runSnapshotCLI(t *testing.T, server *httptest.Server, stdin string, args ...string) ([]byte, string, error) {
 	t.Helper()
+	return runSnapshotCLIWithStdin(t, server, strings.NewReader(stdin), args...)
+}
+
+func runSnapshotCLIWithStdin(t *testing.T, server *httptest.Server, stdin io.Reader, args ...string) ([]byte, string, error) {
+	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
 	args = append(args, "-o", "json")
@@ -35,7 +41,7 @@ func runSnapshotCLI(t *testing.T, server *httptest.Server, stdin string, args ..
 		"TENCENTCLOUD_SECRET_ID=fake", "TENCENTCLOUD_SECRET_KEY=fake", "AGR_REGION=ap-guangzhou",
 		"AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(server.URL, "https://"), "AGR_TRANSPORT_TEST_CERT=" + string(cert),
 	}
-	cmd.Stdin = strings.NewReader(stdin)
+	cmd.Stdin = stdin
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
@@ -85,6 +91,21 @@ func TestSnapshotAndCloneSignedRequests(t *testing.T) {
 			request: `{"NextToken":"previous-page","MaxResults":10}`, response: listResponse,
 		},
 		{
+			name: "snapshot maximum offset page size", action: "DescribeSandboxSnapshotList",
+			args:    []string{"instance", "snapshot", "list", "--limit", "100"},
+			request: `{"Limit":100}`, response: listResponse,
+		},
+		{
+			name: "snapshot maximum cursor page size JSON", action: "DescribeSandboxSnapshotList",
+			args:    []string{"instance", "snapshot", "list", "--request", `{"MaxResults":100}`},
+			request: `{"MaxResults":100}`, response: listResponse,
+		},
+		{
+			name: "snapshot zero pagination values JSON", action: "DescribeSandboxSnapshotList",
+			args:    []string{"instance", "snapshot", "list", "--request", `{"Offset":0,"Limit":0,"MaxResults":0}`},
+			request: `{"Offset":0,"Limit":0,"MaxResults":0}`, response: listResponse,
+		},
+		{
 			name: "snapshot token with zero offset and limit", action: "DescribeSandboxSnapshotList",
 			args:    []string{"instance", "snapshot", "list", "--request", `{"Offset":0,"NextToken":"previous-page","Limit":10}`},
 			request: `{"Offset":0,"NextToken":"previous-page","Limit":10}`, response: listResponse,
@@ -102,6 +123,31 @@ func TestSnapshotAndCloneSignedRequests(t *testing.T) {
 		{
 			name: "snapshot delete JSON", action: "DeleteSandboxSnapshot",
 			args: []string{"instance", "snapshot", "delete", "--request", `{"SnapshotId":"snapshot-test"}`}, request: `{"SnapshotId":"snapshot-test"}`,
+			response: map[string]any{"RequestId": "request-test"},
+		},
+		{
+			name: "snapshot delete yes", action: "DeleteSandboxSnapshot",
+			args: []string{"instance", "snapshot", "delete", "snapshot-test", "--yes"}, request: `{"SnapshotId":"snapshot-test"}`,
+			response: map[string]any{"RequestId": "request-test"},
+		},
+		{
+			name: "snapshot delete yes shorthand", action: "DeleteSandboxSnapshot",
+			args: []string{"instance", "snapshot", "delete", "snapshot-test", "-y"}, request: `{"SnapshotId":"snapshot-test"}`,
+			response: map[string]any{"RequestId": "request-test"},
+		},
+		{
+			name: "snapshot delete JSON with yes", action: "DeleteSandboxSnapshot",
+			args: []string{"instance", "snapshot", "delete", "--request", `{"SnapshotId":"snapshot-test"}`, "--yes"}, request: `{"SnapshotId":"snapshot-test"}`,
+			response: map[string]any{"RequestId": "request-test"},
+		},
+		{
+			name: "snapshot delete stdin with yes", action: "DeleteSandboxSnapshot",
+			args: []string{"instance", "snapshot", "delete", "--request", "-", "--yes"}, stdin: `{"SnapshotId":"snapshot-test"}`, request: `{"SnapshotId":"snapshot-test"}`,
+			response: map[string]any{"RequestId": "request-test"},
+		},
+		{
+			name: "snapshot delete non-interactive", action: "DeleteSandboxSnapshot",
+			args: []string{"instance", "snapshot", "delete", "snapshot-test", "--non-interactive"}, request: `{"SnapshotId":"snapshot-test"}`,
 			response: map[string]any{"RequestId": "request-test"},
 		},
 		{
@@ -165,6 +211,102 @@ func TestSnapshotAndCloneSignedRequests(t *testing.T) {
 	}
 }
 
+func TestSnapshotDeleteDoesNotReadNonTTYStdin(t *testing.T) {
+	var calls atomic.Int64
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		if r.Header.Get("X-TC-Action") != "DeleteSandboxSnapshot" || r.Header.Get("Authorization") == "" {
+			t.Errorf("action=%s signed=%v", r.Header.Get("X-TC-Action"), r.Header.Get("Authorization") != "")
+		}
+		_, _ = w.Write([]byte(`{"Response":{"RequestId":"request-test"}}`))
+	}))
+	defer server.Close()
+	stdin, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stdin.Close()
+	defer writer.Close()
+	// Keep the pipe open without writing to it: reading a confirmation would
+	// block until the CLI helper's deadline instead of seeing EOF.
+	out, stderr, err := runSnapshotCLIWithStdin(t, server, stdin, "instance", "snapshot", "delete", "snapshot-test")
+	if err != nil {
+		t.Fatalf("CLI: %v; stdout=%s stderr=%s", err, out, stderr)
+	}
+	var envelope struct {
+		Status string
+		Data   struct{ RequestId string }
+	}
+	if err := json.Unmarshal(out, &envelope); err != nil {
+		t.Fatalf("JSON output: %v; stdout=%s stderr=%s", err, out, stderr)
+	}
+	if envelope.Status != "succeeded" || envelope.Data.RequestId != "request-test" || calls.Load() != 1 {
+		t.Fatalf("unexpected delete result: calls=%d stdout=%s stderr=%s", calls.Load(), out, stderr)
+	}
+	if strings.Contains(stderr, "Proceed?") {
+		t.Fatalf("non-TTY delete prompted for confirmation: %s", stderr)
+	}
+}
+
+func TestSnapshotAndInstanceDeleteConfirmationHelpAndSchema(t *testing.T) {
+	root := contractRoot()
+	for _, id := range []string{"instance.snapshot.delete", "instance.delete"} {
+		t.Run(id, func(t *testing.T) {
+			cmd, ok := findCobraCommand(root, id)
+			if !ok {
+				t.Fatalf("command %s not found", id)
+			}
+			yes := cmd.Flags().Lookup("yes")
+			if yes == nil || yes.Value.Type() != "bool" || yes.Shorthand != "y" || yes.DefValue != "false" {
+				t.Fatalf("runtime --yes flag=%+v", yes)
+			}
+			helpArgs := append(strings.Split(id, "."), "--help")
+			help, err := runAGR(t, helpArgs...)
+			if err != nil {
+				t.Fatalf("help failed: %v; output=%s", err, help)
+			}
+			for _, text := range []string{"TTY", "--yes", "-y", "--non-interactive", yes.Usage} {
+				if !strings.Contains(help, text) {
+					t.Errorf("help is missing %q: %s", text, help)
+				}
+			}
+			if strings.Contains(help, "does not prompt for confirmation") || strings.Contains(help, "no confirmation prompt") {
+				t.Errorf("help retains unconditional no-confirmation claim: %s", help)
+			}
+			out, err := runAGR(t, "schema", id, "-o", "json")
+			if err != nil {
+				t.Fatalf("schema failed: %v; output=%s", err, out)
+			}
+			var envelope struct {
+				Data struct {
+					Flags         []struct{ Name, Shorthand, Type, Description, Default string }
+					RequestSchema struct {
+						Properties map[string]json.RawMessage
+					}
+				}
+			}
+			if err := json.Unmarshal([]byte(out), &envelope); err != nil {
+				t.Fatal(err)
+			}
+			flagIndex := slices.IndexFunc(envelope.Data.Flags, func(flag struct{ Name, Shorthand, Type, Description, Default string }) bool {
+				return flag.Name == "yes"
+			})
+			if flagIndex < 0 {
+				t.Fatal("schema is missing --yes")
+			}
+			flag := envelope.Data.Flags[flagIndex]
+			if flag.Type != "bool" || flag.Shorthand != "y" || flag.Description != yes.Usage || flag.Default != yes.DefValue {
+				t.Errorf("schema --yes flag=%+v differs from runtime flag=%+v", flag, yes)
+			}
+			for property := range envelope.Data.RequestSchema.Properties {
+				if strings.EqualFold(property, "yes") {
+					t.Errorf("workflow --yes leaked into request schema as %q", property)
+				}
+			}
+		})
+	}
+}
+
 func TestSnapshotAndCloneInvalidInputsStayLocal(t *testing.T) {
 	var calls atomic.Int64
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +324,17 @@ func TestSnapshotAndCloneInvalidInputsStayLocal(t *testing.T) {
 		{"offset with token JSON", []string{"instance", "snapshot", "list", "--request", `{"Offset":1,"NextToken":"next"}`}},
 		{"max results with offset", []string{"instance", "snapshot", "list", "--max-results", "10", "--offset", "1"}},
 		{"max results with limit JSON", []string{"instance", "snapshot", "list", "--request", `{"MaxResults":10,"Limit":10}`}},
+		{"negative offset", []string{"instance", "snapshot", "list", "--offset", "-1"}},
+		{"negative offset JSON", []string{"instance", "snapshot", "list", "--request", `{"Offset":-1}`}},
+		{"negative limit", []string{"instance", "snapshot", "list", "--limit", "-1"}},
+		{"negative limit JSON", []string{"instance", "snapshot", "list", "--request", `{"Limit":-1}`}},
+		{"negative max results", []string{"instance", "snapshot", "list", "--max-results", "-1"}},
+		{"negative max results JSON", []string{"instance", "snapshot", "list", "--request", `{"MaxResults":-1}`}},
+		{"limit too large", []string{"instance", "snapshot", "list", "--limit", "101"}},
+		{"limit too large JSON", []string{"instance", "snapshot", "list", "--request", `{"Limit":101}`}},
+		{"max results too large", []string{"instance", "snapshot", "list", "--max-results", "101"}},
+		{"max results too large JSON", []string{"instance", "snapshot", "list", "--request", `{"MaxResults":101}`}},
+		{"offset overflow JSON", []string{"instance", "snapshot", "list", "--request", `{"Offset":9223372036854775808}`}},
 		{"clone missing source", []string{"instance", "create"}},
 		{"clone conflicting tools", []string{"instance", "create", "--source-instance-id", "ssi-source", "--tool-id", "sdt-source", "--tool-name", "source"}},
 		{"clone request conflicts with flag", []string{"instance", "create", "--source-instance-id", "ssi-source", "--request", `{"SourceInstanceId":"ssi-source"}`}},

@@ -15,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "snapshot", "list"},
 			Use:          "list",
 			Short:        "List sandbox snapshots (Beta)",
-			Long:         "List saved sandbox snapshots or query specific snapshot IDs. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nUse --offset/--limit for offset pagination, or --max-results/--next-token for cursor pagination. A nonempty NextToken conflicts with a positive Offset; positive MaxResults conflicts with positive Offset or Limit. Limit with NextToken is supported. Page sizes are at most 100; omitted page sizes follow the service default.\n\nPass a returned NextToken unchanged for the next page and keep SnapshotIds, Filters, and Limit unchanged. The result includes SnapshotSet, TotalCount, and NextToken. The CLI returns one page per invocation.",
+			Long:         "List saved sandbox snapshots or query specific snapshot IDs. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nUse --offset/--limit for offset pagination, or --max-results/--next-token for cursor pagination. Offset must be non-negative. Limit and MaxResults accept 0-100; 0 leaves that page-size option unset. If both page sizes are omitted or 0, the service uses 20. A nonempty NextToken conflicts with a positive Offset; positive MaxResults conflicts with positive Offset or Limit. Limit with NextToken is supported.\n\nPass a returned NextToken unchanged for the next page and keep SnapshotIds, Filters (including array order), and Limit unchanged. MaxResults may change between pages. The result includes SnapshotSet, TotalCount, and NextToken; an empty NextToken means there are no more pages. The CLI returns one page per invocation.",
 			Examples:     []string{"agr instance snapshot list --limit 20 -o text", "agr instance snapshot list --snapshot-ids snapshot-xxxx -o text", "agr instance snapshot list --max-results 20 -o text", "agr instance snapshot list --max-results 20 --next-token '<token>' -o text", "agr instance snapshot list --filters '[{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]}]' -o text"},
 			Aliases:      []string{"ls"},
 			SupportsJSON: true,
@@ -53,28 +53,28 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Offset",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "offset", Flag: "offset", Usage: "Offset for pagination; positive values conflict with NextToken or positive MaxResults.", Type: command.FlagInt},
+					{Name: "offset", Flag: "offset", Usage: "Non-negative pagination offset; positive values conflict with a nonempty NextToken or positive MaxResults.", Type: command.FlagInt},
 				},
 			},
 			{
 				Name:   "Limit",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "limit", Flag: "limit", Usage: "Page size up to 100; positive values conflict with positive MaxResults.", Type: command.FlagInt},
+					{Name: "limit", Flag: "limit", Usage: "Page size, 0-100; 0 or omission leaves it unset. Positive values conflict with positive MaxResults.", Type: command.FlagInt},
 				},
 			},
 			{
 				Name:   "NextToken",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "next-token", Flag: "next-token", Usage: "Cursor returned by the previous page; keep filters, IDs, and Limit unchanged.", Type: command.FlagString},
+					{Name: "next-token", Flag: "next-token", Usage: "Cursor returned by the previous page; keep SnapshotIds, Filters (including array order), and Limit unchanged.", Type: command.FlagString},
 				},
 			},
 			{
 				Name:   "MaxResults",
 				Parser: "common.default_int",
 				Inputs: []apicli.InputSpec{
-					{Name: "max-results", Flag: "max-results", Usage: "Cursor page size up to 100; positive values conflict with positive Offset or Limit.", Type: command.FlagInt},
+					{Name: "max-results", Flag: "max-results", Usage: "Cursor page size, 0-100; 0 or omission leaves it unset. Positive values conflict with positive Offset or Limit.", Type: command.FlagInt},
 				},
 			},
 		},
