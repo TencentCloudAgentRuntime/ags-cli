@@ -33,12 +33,19 @@ require a real patch-E2E report. State that no live patch behavior was tested.
 
 ### Preview release gate
 
-Before tagging `vX.Y.Z-preview.N` from a commit that contains a non-empty
-`api.patch.json`, the release owner runs the strict command on the
-release PR head and attaches or links the report in the release PR. Do not tag
-the preview release until the run passes with confirmed cleanup. The released
-code has already been reviewed and merged, so this run does not require
-independent reproduction. Stable releases do not require it.
+A preview release (`vX.Y.Z-preview.N`) from a commit that contains a non-empty
+`api.patch.json` must go through a release PR. The release owner runs the strict
+command on the release PR head and attaches or links the report in the release
+PR. After the release PR merges and before pushing the tag, confirm that
+`git rev-parse <commit>^{tree}` for the commit to be tagged equals the report's
+`source_tree`, and tag only that commit. If they differ, for example because
+`main` moved before the merge, update the release PR to current `main`, rerun the
+strict command and repeat the check. Do not push the tag until a passing report
+with confirmed cleanup matches the tagged tree.
+
+The released code has already been reviewed and merged, so this run does not
+require independent reproduction. The release workflow does not verify the
+report; the release owner enforces this gate. Stable releases do not require it.
 
 ## Required evidence
 

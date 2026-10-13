@@ -174,8 +174,9 @@ No live-E2E CI workflow is being added in this phase. A PR that changes the patc
 contract (`*.patch.json`, `e2e-coverage.yaml` or `internal/patchscenarios/`) while
 the patch is non-empty must attach or link a real local E2E report before merging,
 with independent reviewer reproduction. Other PRs do not require a live patch
-report; instead, each preview release with a non-empty patch requires a passing
-strict run on the release PR head.
+report; instead, each preview release with a non-empty patch must go through a
+release PR and requires a passing strict run whose source tree matches the tagged
+commit.
 
 After downloading a refreshed upstream file without replacing the checked-in
 copy, classify the patch lifecycle with:

@@ -165,8 +165,8 @@ API reviewer 可以没有 write 权限，其意见作为审核证据，不能替
 本阶段不新增真实 E2E 测试流水线。Patch 非空时，修改 Patch 契约（`*.patch.json`、
 `e2e-coverage.yaml` 或 `internal/patchscenarios/`）的 PR 必须在合并前附上本地真实
 E2E 测试报告或报告链接，并由可信 reviewer 独立复跑。其他 PR 无需提供真实 Patch
-E2E 报告；改为在每次发布 Patch 非空的 preview 版本前，于 release PR 的 head 上
-跑通一次严格测试。
+E2E 报告；改为要求 Patch 非空的 preview 版本必须经过 release PR 发布，并在推送
+tag 前跑通一次严格测试，且报告的源码树与最终打 tag 的 commit 一致。
 
 下载新的上游文件后，先不覆盖仓库中的 `api.json`，使用以下命令判定补丁状态：
 
