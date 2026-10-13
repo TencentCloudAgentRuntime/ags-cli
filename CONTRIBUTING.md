@@ -163,15 +163,19 @@ go run ./cmd/internal/cobragen check
 Every effective contract delta must map to registered scenario/assertion IDs in
 `e2e-coverage.yaml`. See [Patch verification](PATCH-VERIFICATION.md) for the strict
 `make api-patch-e2e` entrypoint, commit-bound reports, independent reproduction,
-cleanup, and API review. For non-empty patches, the author nominates an API
-reviewer whose identity, expertise and explicit acceptance are verified by the
-lead maintainer. The API reviewer need not have write access; their review is
-supporting evidence, not a substitute for required maintainer approval. Static coverage
-does not prove runtime correctness; empty patches do not count as live E2E passes.
+cleanup, and API review. When a PR changes a non-empty `api.patch.json`, the
+author nominates an API reviewer whose identity, expertise and explicit acceptance
+are verified by the lead maintainer. The API reviewer need not have write access;
+their review is supporting evidence, not a substitute for required maintainer
+approval. Static coverage does not prove runtime correctness; empty patches do not
+count as live E2E passes.
 
-No live-E2E CI workflow is being added in this phase. PRs containing a non-empty
-patch must attach or link a real local E2E report before merging, with independent
-reviewer reproduction. Empty-patch tooling PRs do not require a live patch report.
+No live-E2E CI workflow is being added in this phase. A PR that changes the patch
+contract (`*.patch.json`, `e2e-coverage.yaml` or `internal/patchscenarios/`) while
+the patch is non-empty must attach or link a real local E2E report before merging,
+with independent reviewer reproduction. Other PRs do not require a live patch
+report; instead, each preview release with a non-empty patch requires a passing
+strict run on the release PR head.
 
 After downloading a refreshed upstream file without replacing the checked-in
 copy, classify the patch lifecycle with:
@@ -190,8 +194,8 @@ generated CLI diff.
 
 All changes, including API patches, target `main`. The long-lived `preview`
 branch and its synchronization workflow have been retired. Normal repository
-review and CI requirements apply; non-empty patches additionally require the
-evidence described above.
+review and CI requirements apply; PRs that change a non-empty patch contract
+additionally require the evidence described above.
 
 The default build is **stable** and uses the unpatched `api.json`, `mapping.yaml`
 and `help.json`. Preview builds use all three corresponding `*.patch.json`

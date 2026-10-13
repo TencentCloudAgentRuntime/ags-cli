@@ -5,8 +5,40 @@ reports, and review the evidence before merging. CI checks coverage mappings;
 real API tests require a separate, reviewed local run.
 
 `api.json` is canonical; a passing test does not turn `api.patch.json` into an
-official contract. All changes target `main`; patch evidence requirements apply
-regardless of whether the PR edits the patch file.
+official contract. All changes target `main`. Patches apply only to preview
+builds; stable builds use the unpatched contract.
+
+## When evidence is required
+
+A PR **changes the patch contract** when `git diff --name-only <base>...<head>`
+includes any of:
+
+- `api/ags/<version>/api.patch.json`, `mapping.patch.json` or `help.patch.json`;
+- `api/ags/<version>/e2e-coverage.yaml`;
+- files under `internal/patchscenarios/`.
+
+If such a PR's candidate contains a non-empty `api.patch.json`, it requires the
+real E2E report below and independent reproduction. A PR that changes an
+`api.patch.json` also requires a nominated API reviewer's acceptance and the
+source and ownership records in the reviewer checklist.
+
+Other PRs do not require a real patch-E2E report or API review, even when their
+candidate contains a non-empty patch. They follow the normal CI and review rules.
+State in the PR that the patch contract is unchanged and no live patch behavior
+was tested. The preview release gate catches regressions they may cause in
+patch-backed commands.
+
+PRs with empty patches, including changes to verification tooling itself, do not
+require a real patch-E2E report. State that no live patch behavior was tested.
+
+### Preview release gate
+
+Before tagging `vX.Y.Z-preview.N` from a commit that contains a non-empty
+`api.patch.json`, the release owner runs the strict command on the
+release PR head and attaches or links the report in the release PR. Do not tag
+the preview release until the run passes with confirmed cleanup. The released
+code has already been reviewed and merged, so this run does not require
+independent reproduction. Stable releases do not require it.
 
 ## Required evidence
 
@@ -14,21 +46,18 @@ No live-E2E CI workflow is being added in this phase. CI automatically checks
 coverage mappings without cloud credentials; it does not run real API tests or
 verify that a report has been attached. Reviewers enforce the evidence requirement.
 
-Every PR whose candidate contains a non-empty `api.patch.json` must attach a
-real E2E report, or link to it from the PR description, before merging. Run the
-strict command below locally against the real backend in an isolated test
-environment. Include the exact command (without credentials), current head/base
-SHAs, source tree, patch/plan digests, environment alias, timestamps, executed
-scenarios/assertions, pass/fail/skip counts and confirmed cleanup results.
+When a report is required, attach it or link to it from the PR description
+before merging. Run the strict command below locally against the real backend in
+an isolated test environment. Include the exact command (without credentials),
+current head/base SHAs, source tree, patch/plan digests, environment alias,
+timestamps, executed scenarios/assertions, pass/fail/skip counts and confirmed
+cleanup results.
 The archived worker and candidate CLI are both built with `-tags=preview`.
 Reports include the actual `channel`, candidate `build_tags` and
 `candidate_sha256` when a candidate is executed; a stable worker is rejected.
 Mapping/help-only overlays and handwritten preview commands are covered by
 channel tests; an empty API patch report is not evidence for those surfaces.
 Mocks, coverage mappings and checked boxes are not substitutes for this report.
-
-PRs with empty patches, including changes to verification tooling itself, do not
-require a real patch-E2E report. State that no live patch behavior was tested.
 
 ## Author workflow
 
@@ -128,16 +157,18 @@ an interrupted/missing report is never usable passing evidence.
 All PRs follow the repository's normal required-review and CI rules on `main`.
 The retired `preview` branch's two-approval requirement no longer applies.
 
-For a candidate containing a non-empty Patch, the author must nominate an API
-reviewer other than themselves and link that reviewer's explicit acceptance of the
-API contract. The API reviewer may be any GitHub user; repository write access is
-not required. A lead maintainer must verify the reviewer's relevant expertise,
-identity and conclusions before approving. External API review is supporting
+When a PR changes an `api.patch.json` and its candidate contains a non-empty
+Patch, the author must nominate an API reviewer other than themselves and link
+that reviewer's explicit acceptance of the API contract. The API reviewer may be
+any GitHub user; repository write access is not required. A lead maintainer must
+verify the reviewer's relevant expertise, identity and conclusions before
+approving. External API review is supporting
 evidence, not a substitute for required maintainer approval.
 
-GitHub enforces the approval count, not API expertise or evidence quality. The
-lead maintainer must check API review, source/disclosure verification, the real
-E2E report and independent reproduction before approving and merging.
+GitHub enforces the approval count, not API expertise or evidence quality. For
+PRs that require patch evidence, the lead maintainer must check the real E2E
+report and independent reproduction before approving and merging, plus API review
+and source/disclosure verification when the PR changes an `api.patch.json`.
 
 Author report is supporting evidence. A trusted reviewer must independently rerun
 the strict command on the exact source in an isolated environment, then compare
@@ -153,9 +184,10 @@ a separate design and security review; it is not a prerequisite for this workflo
 
 Record public source/disclosure approval, API version and endpoint/namespace
 match, SDK or raw-call strategy, API owner, cleanup owner, expiry/review date and
-official-absorption exit condition in each Patch PR. Do not paste internal source
-text, credentials, tenant IDs, private endpoints or raw sensitive responses into
-public GitHub. Use an auditable API-owner confirmation for nonpublic sources.
+official-absorption exit condition in each PR that changes an `api.patch.json`.
+Do not paste internal source text, credentials, tenant IDs, private endpoints or
+raw sensitive responses into public GitHub. Use an auditable API-owner
+confirmation for nonpublic sources.
 
 Real patch scenarios belong with the patch-dependent capabilities they verify.
 Do not add fabricated passing scenarios to populate an otherwise empty registry.
