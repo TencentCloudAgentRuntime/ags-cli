@@ -19,7 +19,6 @@ func APIDescriptor() apicli.APIDescriptor {
 			Output: command.OutputSpec{
 				DataType:    "GetSkillPackageDownloadURLResponse",
 				Description: "GetSkillPackageDownloadURLResponse response.",
-				Effects:     []string{"read:registry"},
 			},
 		},
 		Groups: []command.GroupSpec{

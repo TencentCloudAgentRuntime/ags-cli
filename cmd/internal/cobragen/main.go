@@ -629,9 +629,6 @@ func outputEffects(cmd commandModel) []string {
 	case "volume-template.update":
 		return []string{"update:volume-template"}
 	}
-	if strings.HasPrefix(cmd.Command, "registry.") {
-		return []string{"read:registry"}
-	}
 	return nil
 }
 

@@ -26,6 +26,7 @@ type schemaCommandSnapshot struct {
 	SupportsRequest bool                   `json:"SupportsRequest"`
 	RequestSchema   *schemaRequestSnapshot `json:"RequestSchema"`
 	Flags           []schemaFlagSnapshot   `json:"Flags"`
+	Failures        []string               `json:"Failures"`
 }
 
 type schemaRequestSnapshot struct {
@@ -378,6 +379,16 @@ func TestSchema_RegistryInvariants(t *testing.T) {
 			workflowCount++
 			if !schema.RequiresAuth {
 				t.Errorf("schema %q: RequiresAuth = false for workflow command", descriptor.Spec.ID)
+			}
+		}
+		if hasAPI {
+			if !schema.RequiresAuth {
+				t.Errorf("schema %q: RequiresAuth = false for API-backed command", descriptor.Spec.ID)
+			}
+			for _, code := range []string{"MISSING_CLOUD_CREDENTIALS", "AUTH_FAILED"} {
+				if !slices.Contains(schema.Failures, code) {
+					t.Errorf("schema %q: Failures missing %s for API-backed command", descriptor.Spec.ID, code)
+				}
 			}
 		}
 		checkedFlags, jsonFlags := checkDescriptorFlagInvariants(t, descriptor, schema, api, hasAPI)

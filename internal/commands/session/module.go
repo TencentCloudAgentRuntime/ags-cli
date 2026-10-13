@@ -14,7 +14,6 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 	generated := module.Descriptor
 	module.Descriptor.Generated = &generated
 	module.Descriptor.Source = command.SourceMixedAPI
-	module.Descriptor.Spec.RequiresAuth = true
 	build := module.Build
 	module.Build = func(deps command.Deps) (command.Runtime, error) {
 		runtime, err := build(deps)
