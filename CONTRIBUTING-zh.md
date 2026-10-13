@@ -162,11 +162,10 @@ go run ./cmd/internal/cobragen check
 API reviewer 可以没有 write 权限，其意见作为审核证据，不能替代所需的维护者批准。
 静态覆盖不代表运行时正确，空 Patch 也不算真实 E2E 通过。
 
-本阶段不新增真实 E2E 测试流水线。Patch 非空时，修改 Patch 契约（`*.patch.json`、
-`e2e-coverage.yaml` 或 `internal/patchscenarios/`）的 PR 必须在合并前附上本地真实
-E2E 测试报告或报告链接，并由可信 reviewer 独立复跑。其他 PR 无需提供真实 Patch
-E2E 报告；改为要求 Patch 非空的 preview 版本必须经过 release PR 发布，并在推送
-tag 前跑通一次严格测试，且报告的源码树与最终打 tag 的 commit 一致。
+本阶段不新增真实 E2E 测试流水线。包含非空 Patch 的 PR 必须在合并前附上本地
+真实 E2E 测试报告或报告链接。只有修改 Patch 契约（`*.patch.json`、
+`e2e-coverage.yaml` 或 `internal/patchscenarios/`）的 PR 才需要可信 reviewer
+独立复跑。空 Patch 的工具类 PR 无需提供真实 Patch E2E 报告。
 
 下载新的上游文件后，先不覆盖仓库中的 `api.json`，使用以下命令判定补丁状态：
 
@@ -182,8 +181,7 @@ go run ./cmd/internal/apipatch rebase --upstream /tmp/ags-upstream-api.json
 #### 单分支开发
 
 所有改动（包括 API Patch）均以 `main` 为目标。长期 `preview` 分支及其同步流程
-已退役。PR 遵守仓库常规审批和 CI 要求；修改非空 Patch 契约的 PR 还须满足上述
-证据要求。
+已退役。PR 遵守仓库常规审批和 CI 要求；非空 Patch 还须满足上述证据要求。
 
 默认构建为 **stable**，只读取基础 `api.json`、`mapping.yaml` 和 `help.json`。
 preview 构建叠加对应的三份 `*.patch.json`；空补丁保留 `[]`，缺文件直接报错。

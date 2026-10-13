@@ -5,47 +5,8 @@ reports, and review the evidence before merging. CI checks coverage mappings;
 real API tests require a separate, reviewed local run.
 
 `api.json` is canonical; a passing test does not turn `api.patch.json` into an
-official contract. All changes target `main`. Patches apply only to preview
-builds; stable builds use the unpatched contract.
-
-## When evidence is required
-
-A PR **changes the patch contract** when `git diff --name-only <base>...<head>`
-includes any of:
-
-- `api/ags/<version>/api.patch.json`, `mapping.patch.json` or `help.patch.json`;
-- `api/ags/<version>/e2e-coverage.yaml`;
-- files under `internal/patchscenarios/`.
-
-If such a PR's candidate contains a non-empty `api.patch.json`, it requires the
-real E2E report below and independent reproduction. A PR that changes an
-`api.patch.json` also requires a nominated API reviewer's acceptance and the
-source and ownership records in the reviewer checklist.
-
-Other PRs do not require a real patch-E2E report or API review, even when their
-candidate contains a non-empty patch. They follow the normal CI and review rules.
-State in the PR that the patch contract is unchanged and no live patch behavior
-was tested. The preview release gate catches regressions they may cause in
-patch-backed commands.
-
-PRs with empty patches, including changes to verification tooling itself, do not
-require a real patch-E2E report. State that no live patch behavior was tested.
-
-### Preview release gate
-
-A preview release (`vX.Y.Z-preview.N`) from a commit that contains a non-empty
-`api.patch.json` must go through a release PR. The release owner runs the strict
-command on the release PR head and attaches or links the report in the release
-PR. After the release PR merges and before pushing the tag, confirm that
-`git rev-parse <commit>^{tree}` for the commit to be tagged equals the report's
-`source_tree`, and tag only that commit. If they differ, for example because
-`main` moved before the merge, update the release PR to current `main`, rerun the
-strict command and repeat the check. Do not push the tag until a passing report
-with confirmed cleanup matches the tagged tree.
-
-The released code has already been reviewed and merged, so this run does not
-require independent reproduction. The release workflow does not verify the
-report; the release owner enforces this gate. Stable releases do not require it.
+official contract. All changes target `main`; patch evidence requirements apply
+regardless of whether the PR edits the patch file.
 
 ## Required evidence
 
@@ -53,18 +14,21 @@ No live-E2E CI workflow is being added in this phase. CI automatically checks
 coverage mappings without cloud credentials; it does not run real API tests or
 verify that a report has been attached. Reviewers enforce the evidence requirement.
 
-When a report is required, attach it or link to it from the PR description
-before merging. Run the strict command below locally against the real backend in
-an isolated test environment. Include the exact command (without credentials),
-current head/base SHAs, source tree, patch/plan digests, environment alias,
-timestamps, executed scenarios/assertions, pass/fail/skip counts and confirmed
-cleanup results.
+Every PR whose candidate contains a non-empty `api.patch.json` must attach a
+real E2E report, or link to it from the PR description, before merging. Run the
+strict command below locally against the real backend in an isolated test
+environment. Include the exact command (without credentials), current head/base
+SHAs, source tree, patch/plan digests, environment alias, timestamps, executed
+scenarios/assertions, pass/fail/skip counts and confirmed cleanup results.
 The archived worker and candidate CLI are both built with `-tags=preview`.
 Reports include the actual `channel`, candidate `build_tags` and
 `candidate_sha256` when a candidate is executed; a stable worker is rejected.
 Mapping/help-only overlays and handwritten preview commands are covered by
 channel tests; an empty API patch report is not evidence for those surfaces.
 Mocks, coverage mappings and checked boxes are not substitutes for this report.
+
+PRs with empty patches, including changes to verification tooling itself, do not
+require a real patch-E2E report. State that no live patch behavior was tested.
 
 ## Author workflow
 
@@ -127,7 +91,8 @@ That worker rejects a different head and builds the candidate CLI from the same
 commit. Both builds disable workspace mode, ambient Go flags and automatic VCS
 stamping (`-buildvcs=false`), since the archives have no `.git` metadata. Source
 identity is checked again after testing. The runner itself is candidate code:
-its report is not cryptographically trusted and must be independently reproduced.
+its report is not cryptographically trusted. Patch contract changes require
+independent reproduction (see the reviewer checklist).
 Launcher cancellation forwards an interrupt to the worker for cleanup, with a
 three-minute grace period before forced termination.
 
@@ -164,6 +129,10 @@ an interrupted/missing report is never usable passing evidence.
 All PRs follow the repository's normal required-review and CI rules on `main`.
 The retired `preview` branch's two-approval requirement no longer applies.
 
+A PR **changes the patch contract** when `git diff --name-only <base>...<head>`
+includes `api/ags/<version>/api.patch.json`, `mapping.patch.json`,
+`help.patch.json` or `e2e-coverage.yaml`, or files under `internal/patchscenarios/`.
+
 When a PR changes an `api.patch.json` and its candidate contains a non-empty
 Patch, the author must nominate an API reviewer other than themselves and link
 that reviewer's explicit acceptance of the API contract. The API reviewer may be
@@ -172,16 +141,20 @@ verify the reviewer's relevant expertise, identity and conclusions before
 approving. External API review is supporting
 evidence, not a substitute for required maintainer approval.
 
-GitHub enforces the approval count, not API expertise or evidence quality. For
-PRs that require patch evidence, the lead maintainer must check the real E2E
-report and independent reproduction before approving and merging, plus API review
-and source/disclosure verification when the PR changes an `api.patch.json`.
+GitHub enforces the approval count, not API expertise or evidence quality. The
+lead maintainer must check the real E2E report before approving and merging. For
+a PR that changes the patch contract, the lead maintainer also checks independent
+reproduction, plus API review and source/disclosure verification when the PR
+changes an `api.patch.json`.
 
-Author report is supporting evidence. A trusted reviewer must independently rerun
-the strict command on the exact source in an isolated environment, then compare
-identity, plan, assertion records and cleanup. Scenario/entry set equality only
-proves bookkeeping; review the assertions themselves and show a targeted wrong
-behavior causes failure. Without independent reproduction, do not merge.
+For a PR that changes the patch contract, the author report is supporting
+evidence. A trusted reviewer must independently rerun the strict command on the
+exact source in an isolated environment, then compare identity, plan, assertion
+records and cleanup. Scenario/entry set equality only proves bookkeeping; review
+the assertions themselves and show a targeted wrong behavior causes failure.
+Without independent reproduction, do not merge such a PR. Other PRs do not
+require independent reproduction or API review; the author report is the
+required evidence.
 
 New head commits invalidate approvals/reports. Base changes require comparing the
 new candidate merge result and rerunning when it changes. The local runner records
