@@ -6,6 +6,17 @@
 
 <!-- List commands run and their results. Note checks not run and why. -->
 
+<!-- Required for every PR that changes code. Exempt: documentation-only,
+CI-configuration-only (for example only `.github/`) and bot PRs. Run the live
+tests relevant to the change against an isolated test environment, for example
+`go test ./tests/<area>/... -count=1 -v` with credentials, and paste the key
+output. Never include credentials, tenant IDs or internal information. External
+contributors without a test environment may ask a maintainer to run the tests. -->
+
+- [ ] Real E2E test report attached below (commands run, environment alias, results).
+
+E2E test report:
+
 <!-- Complete the section below only if the candidate contains a non-empty
 api/ags/**/api.patch.json, even if this PR does not edit that file.
 Otherwise leave it collapsed or remove it; no patch checklist/report is needed. -->

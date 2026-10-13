@@ -29,6 +29,8 @@ Mocks, coverage mappings and checked boxes are not substitutes for this report.
 
 PRs with empty patches, including changes to verification tooling itself, do not
 require a real patch-E2E report. State that no live patch behavior was tested.
+The E2E test report that every code PR attaches (see the PR template) still
+applies.
 
 ## Author workflow
 

@@ -98,6 +98,13 @@ For significant changes or new features, we recommend submitting a design propos
    - Summary of changes
    - Testing performed
 
+   PRs that change code must check the E2E box in the PR template and paste a
+   real E2E test report: the live tests relevant to the change, run against an
+   isolated test environment, with key output and no credentials, tenant IDs or
+   internal information. Documentation-only, CI-configuration-only and bot PRs
+   are exempt. External contributors without a test environment may ask a
+   maintainer to run the tests.
+
 ## Development Setup
 
 ### Prerequisites
@@ -174,7 +181,8 @@ No live-E2E CI workflow is being added in this phase. PRs containing a non-empty
 patch must attach or link a real local E2E report before merging. Independent
 reviewer reproduction is required only when the PR changes the patch contract
 (`*.patch.json`, `e2e-coverage.yaml` or `internal/patchscenarios/`). Empty-patch
-tooling PRs do not require a live patch report.
+tooling PRs do not require a live patch report, but still need the E2E test
+report required for every code PR.
 
 After downloading a refreshed upstream file without replacing the checked-in
 copy, classify the patch lifecycle with:
