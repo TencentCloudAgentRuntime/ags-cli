@@ -22,7 +22,6 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 	generated := module.Descriptor
 	module.Descriptor.Generated = &generated
 	module.Descriptor.Source = command.SourceMixedAPI
-	module.Descriptor.Spec.RequiresAuth = true
 	if api.Spec.ID == "instance.snapshot.delete" {
 		module.Descriptor.Spec.Flags = append(module.Descriptor.Spec.Flags, command.FlagSpec{
 			Name: "yes", Shorthand: "y", Usage: "Skip confirmation prompt",

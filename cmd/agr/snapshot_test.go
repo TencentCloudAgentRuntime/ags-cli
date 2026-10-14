@@ -225,8 +225,8 @@ func TestSnapshotDeleteDoesNotReadNonTTYStdin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer stdin.Close()
-	defer writer.Close()
+	defer func() { _ = stdin.Close() }()
+	defer func() { _ = writer.Close() }()
 	// Keep the pipe open without writing to it: reading a confirmation would
 	// block until the CLI helper's deadline instead of seeing EOF.
 	out, stderr, err := runSnapshotCLIWithStdin(t, server, stdin, "instance", "snapshot", "delete", "snapshot-test")
