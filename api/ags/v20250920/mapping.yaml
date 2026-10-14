@@ -374,6 +374,18 @@ actions:
     response: CreatePreCacheImageTaskResponse
     status: mapped
 
+  DeletePreCacheImage:
+    status: raw_only
+    request: DeletePreCacheImageRequest
+    response: DeletePreCacheImageResponse
+    reason: Image cache management is available via agr api call; dedicated commands are outside the snapshot restore scope.
+
+  DescribePreCacheImageList:
+    status: raw_only
+    request: DescribePreCacheImageListRequest
+    response: DescribePreCacheImageListResponse
+    reason: Image cache management is available via agr api call; dedicated commands are outside the snapshot restore scope.
+
   DescribePreCacheImageTask:
     command: pre-cache-image-task.get
     request: DescribePreCacheImageTaskRequest

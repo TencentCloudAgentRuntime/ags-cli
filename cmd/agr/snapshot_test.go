@@ -162,6 +162,23 @@ func TestSnapshotAndCloneSignedRequests(t *testing.T) {
 			name: "clone with matching tool", action: "StartSandboxInstance",
 			args: []string{"instance", "create", "--source-instance-id", "ssi-source", "--tool-id", "sdt-source"}, request: `{"SourceInstanceId":"ssi-source","ToolId":"sdt-source"}`, response: cloneResponse,
 		},
+		{
+			name: "restore snapshot flag", action: "StartSandboxInstance",
+			args: []string{"instance", "create", "--snapshot-id", "snapshot-test"}, request: `{"SnapshotId":"snapshot-test"}`, response: cloneResponse,
+		},
+		{
+			name: "restore snapshot JSON", action: "StartSandboxInstance",
+			args: []string{"instance", "create", "--request", `{"SnapshotId":"snapshot-test"}`}, request: `{"SnapshotId":"snapshot-test"}`, response: cloneResponse,
+		},
+		{
+			name: "restore snapshot stdin", action: "StartSandboxInstance",
+			args: []string{"instance", "create", "--request", "-"}, stdin: `{"SnapshotId":"snapshot-test"}`, request: `{"SnapshotId":"snapshot-test"}`, response: cloneResponse,
+		},
+		{
+			name: "restore snapshot overrides", action: "StartSandboxInstance",
+			args:    []string{"instance", "create", "--snapshot-id", "snapshot-test", "--timeout", "10m", "--client-token", "restore-retry", "--metadata", `[{"Name":"env","Value":"restored"}]`},
+			request: `{"SnapshotId":"snapshot-test","Timeout":"10m","ClientToken":"restore-retry","Metadata":[{"Name":"env","Value":"restored"}]}`, response: cloneResponse,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			requests := make(chan map[string]any, 8)
@@ -338,6 +355,9 @@ func TestSnapshotAndCloneInvalidInputsStayLocal(t *testing.T) {
 		{"clone missing source", []string{"instance", "create"}},
 		{"clone conflicting tools", []string{"instance", "create", "--source-instance-id", "ssi-source", "--tool-id", "sdt-source", "--tool-name", "source"}},
 		{"clone request conflicts with flag", []string{"instance", "create", "--source-instance-id", "ssi-source", "--request", `{"SourceInstanceId":"ssi-source"}`}},
+		{"restore request conflicts with flag", []string{"instance", "create", "--snapshot-id", "snapshot-test", "--request", `{"SnapshotId":"snapshot-test"}`}},
+		{"restore conflicts with clone", []string{"instance", "create", "--snapshot-id", "snapshot-test", "--source-instance-id", "ssi-source"}},
+		{"restore conflicts with clone JSON", []string{"instance", "create", "--request", `{"SnapshotId":"snapshot-test","SourceInstanceId":"ssi-source"}`}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			before := calls.Load()
@@ -385,13 +405,15 @@ func TestSnapshotNamespaceAndCloneSchema(t *testing.T) {
 		}
 	}
 	schema := schemaForCommand(t, "instance.create")
-	property, ok := schema.RequestSchema["SourceInstanceId"]
-	if !ok || property.Type != "string" || property.CliFlag == nil || *property.CliFlag != "source-instance-id" {
-		t.Fatalf("SourceInstanceId property=%+v present=%v", property, ok)
-	}
 	create, _ := findCobraCommand(root, "instance.create")
-	if create.Flags().Lookup("source-instance-id") == nil || !strings.Contains(commandHelp(t, create), "--source-instance-id") {
-		t.Fatal("clone source flag is absent from runtime/help")
+	for field, flag := range map[string]string{"SourceInstanceId": "source-instance-id", "SnapshotId": "snapshot-id"} {
+		property, ok := schema.RequestSchema[field]
+		if !ok || property.Type != "string" || property.CliFlag == nil || *property.CliFlag != flag {
+			t.Fatalf("%s property=%+v present=%v", field, property, ok)
+		}
+		if create.Flags().Lookup(flag) == nil || !strings.Contains(commandHelp(t, create), "--"+flag) {
+			t.Fatalf("%s is absent from runtime/help", flag)
+		}
 	}
 	out, err := runAGR(t, "schema", "instance.create", "-o", "json")
 	if err != nil {
@@ -399,6 +421,10 @@ func TestSnapshotNamespaceAndCloneSchema(t *testing.T) {
 	}
 	var envelope struct {
 		Data struct {
+			Flags []struct {
+				Name             string
+				IncompatibleWith []string
+			}
 			RequestSchema struct {
 				AnyOf []struct{ Required []string }
 			}
@@ -407,9 +433,21 @@ func TestSnapshotNamespaceAndCloneSchema(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &envelope); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.ContainsFunc(envelope.Data.RequestSchema.AnyOf, func(requirement struct{ Required []string }) bool {
-		return slices.Equal(requirement.Required, []string{"SourceInstanceId"})
-	}) {
-		t.Fatal("schema does not allow SourceInstanceId as an independent create source")
+	for _, field := range []string{"SourceInstanceId", "SnapshotId"} {
+		if !slices.ContainsFunc(envelope.Data.RequestSchema.AnyOf, func(requirement struct{ Required []string }) bool {
+			return slices.Equal(requirement.Required, []string{field})
+		}) {
+			t.Fatalf("schema does not allow %s as an independent create source", field)
+		}
+	}
+	for flag, incompatible := range map[string]string{"source-instance-id": "snapshot-id", "snapshot-id": "source-instance-id"} {
+		if !slices.ContainsFunc(envelope.Data.Flags, func(entry struct {
+			Name             string
+			IncompatibleWith []string
+		}) bool {
+			return entry.Name == flag && slices.Contains(entry.IncompatibleWith, incompatible)
+		}) {
+			t.Fatalf("schema does not declare %s incompatible with %s", flag, incompatible)
+		}
 	}
 }

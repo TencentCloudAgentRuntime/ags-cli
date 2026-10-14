@@ -159,7 +159,7 @@ func subgroupShort(group, sub string) string {
 
 func subgroupLong(group, sub string) string {
 	if group == "instance" && sub == "snapshot" {
-		return "Create, list, and delete sandbox snapshots. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued. Use --memory=false for disk-only snapshots. Snapshot IDs identify saved snapshots; instance create --source-instance-id clones an existing instance and does not accept a snapshot ID."
+		return "Create, list, and delete sandbox snapshots. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued. Use --memory=false for disk-only snapshots. Restore an ACTIVE saved snapshot into a new instance with instance create --snapshot-id. To clone an existing instance instead, use instance create --source-instance-id with an instance ID."
 	}
 	if group != "session" {
 		return ""
@@ -176,7 +176,7 @@ func subgroupLong(group, sub string) string {
 func groupExamples(group string) []string {
 	switch group {
 	case "instance.snapshot":
-		return []string{"Example - Create and inspect a disk-only snapshot:\n  agr instance snapshot create --instance-id ins-xxxx --memory=false -o text\n  agr instance snapshot list -o text", "Example - Request snapshot deletion:\n  agr instance snapshot delete snapshot-xxxx -o text"}
+		return []string{"Example - Create and inspect a disk-only snapshot:\n  agr instance snapshot create --instance-id ins-xxxx --memory=false -o text\n  agr instance snapshot list -o text", "Example - Restore an ACTIVE snapshot into a new instance:\n  agr instance create --snapshot-id snapshot-xxxx -o text", "Example - Request snapshot deletion:\n  agr instance snapshot delete snapshot-xxxx -o text"}
 	case "session":
 		return []string{
 			"Example - Choose or create a business space:\n  agr session space list -o text\n  agr session space create --name customer-support -o text",

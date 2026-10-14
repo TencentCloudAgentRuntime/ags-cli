@@ -14,8 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "create"},
 			Use:          "create",
 			Short:        "Create a new sandbox instance",
-			Long:         "Create a new sandbox instance from a tool template or clone an existing instance.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
-			Examples:     []string{"agr instance create --tool-id sdt-xxxx", "agr instance create --tool-name my-tool", "agr instance create -t my-tool --timeout 5m", "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'", "agr instance create -t my-tool --auth-mode NONE", "agr instance create --source-instance-id ins-source -o text"},
+			Long:         "Create a new sandbox instance from a tool template, clone an existing instance, or restore a saved snapshot.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nTo restore a saved disk-only snapshot into a new instance, use --snapshot-id. The snapshot must be ACTIVE. A tool selector is not required: restoration uses the tool configuration saved in the snapshot. Running processes and memory state are not restored. --snapshot-id and --source-instance-id are mutually exclusive, including in --request. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
+			Examples:     []string{"agr instance create --tool-id sdt-xxxx", "agr instance create --tool-name my-tool", "agr instance create -t my-tool --timeout 5m", "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'", "agr instance create -t my-tool --auth-mode NONE", "agr instance create --source-instance-id ins-source -o text", "agr instance create --snapshot-id snapshot-xxxx -o text"},
 			Aliases:      []string{"c"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
@@ -51,6 +51,13 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "source-instance-id", Flag: "source-instance-id", Usage: "Clone an instance with disk snapshot support enabled; any supplied tool must match the source (not a snapshot ID)", Examples: []string{"agr instance create --source-instance-id ins-source -o text"}, Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "SnapshotId",
+				Parser: "common.default_string",
+				Inputs: []apicli.InputSpec{
+					{Name: "snapshot-id", Flag: "snapshot-id", Usage: "Restore an ACTIVE saved disk-only snapshot into a new instance; conflicts with --source-instance-id (Beta)", Examples: []string{"agr instance create --snapshot-id snapshot-xxxx -o text"}, Type: command.FlagString},
 				},
 			},
 			{

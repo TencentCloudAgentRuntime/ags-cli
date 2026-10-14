@@ -233,15 +233,16 @@ The JSON output of these commands includes
 `Data.ExecutionContext.TemporarySandboxInstance` and
 `Data.ExecutionContext.Cleanup` so scripts can inspect the workflow.
 
-## Sandbox snapshots and instance cloning
+## Sandbox snapshots, restoration, and instance cloning
 
 The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.
 Create a disk-only snapshot from a running instance with disk snapshot support
-enabled, save its returned `Snapshot.SnapshotId`, and use that ID to inspect or delete it:
+enabled, save its returned `Snapshot.SnapshotId`, and use that ID to inspect, restore, or delete it:
 
 ```bash
 agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
 agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
+agr instance create --snapshot-id snapshot-xxxx --client-token restore-001 -o text
 agr instance snapshot delete snapshot-xxxx -o text
 ```
 
@@ -249,6 +250,11 @@ Use `--memory=false` explicitly. When omitted, the CLI leaves `Memory` unset;
 the service defaults to including memory unless the source instance is configured
 for disk-only snapshots. Memory snapshots are currently unsupported. Retry creation
 with the same `ClientToken` and identical parameters.
+
+Restore only after the snapshot is `ACTIVE`. Restoration creates a new instance
+using the saved tool configuration, so no tool selector is required. Running
+processes and memory state are not restored. `--snapshot-id` and
+`--source-instance-id` are mutually exclusive, including in `--request`.
 
 Deletion prompts for confirmation when stdin is a TTY and defaults to cancel.
 Use `--yes` (`-y`) to skip confirmation; `--non-interactive` and non-TTY stdin
@@ -276,9 +282,9 @@ agr instance create --source-instance-id ins-source --client-token clone-001 -o 
 The new instance inherits the source tool, so a tool selector is optional; if
 supplied, it must match the source tool. The source system disk is copied to the
 new instance; subsequent writes to either system disk are independent. Running
-processes and memory state are not preserved. Saved snapshot IDs identify the
-resources managed by `instance snapshot`; this command accepts a source instance
-ID and does not support restoring by a saved snapshot ID.
+processes and memory state are not preserved. Pass an instance ID to
+`--source-instance-id` to clone it, or a saved snapshot ID to `--snapshot-id`
+to restore it.
 
 ## Debug instance creation
 

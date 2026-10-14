@@ -201,14 +201,15 @@
         },
         "instance.create": {
             "short": "Create a new sandbox instance",
-            "long": "Create a new sandbox instance from a tool template or clone an existing instance.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
+            "long": "Create a new sandbox instance from a tool template, clone an existing instance, or restore a saved snapshot.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nTo restore a saved disk-only snapshot into a new instance, use --snapshot-id. The snapshot must be ACTIVE. A tool selector is not required: restoration uses the tool configuration saved in the snapshot. Running processes and memory state are not restored. --snapshot-id and --source-instance-id are mutually exclusive, including in --request. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
             "examples": [
                 "agr instance create --tool-id sdt-xxxx",
                 "agr instance create --tool-name my-tool",
                 "agr instance create -t my-tool --timeout 5m",
                 "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'",
                 "agr instance create -t my-tool --auth-mode NONE",
-                "agr instance create --source-instance-id ins-source -o text"
+                "agr instance create --source-instance-id ins-source -o text",
+                "agr instance create --snapshot-id snapshot-xxxx -o text"
             ],
             "fields": {
                 "ToolName": {
@@ -301,6 +302,17 @@
                             "usage": "Clone an instance with disk snapshot support enabled; any supplied tool must match the source (not a snapshot ID)",
                             "examples": [
                                 "agr instance create --source-instance-id ins-source -o text"
+                            ]
+                        }
+                    }
+                },
+                "SnapshotId": {
+                    "description": "Saved disk-only snapshot ID to restore into a new instance. The snapshot must be ACTIVE. Conflicts with SourceInstanceId.",
+                    "inputs": {
+                        "snapshot-id": {
+                            "usage": "Restore an ACTIVE saved disk-only snapshot into a new instance; conflicts with --source-instance-id (Beta)",
+                            "examples": [
+                                "agr instance create --snapshot-id snapshot-xxxx -o text"
                             ]
                         }
                     }
@@ -2156,7 +2168,7 @@
         },
         "instance.snapshot.create": {
             "short": "Create a sandbox snapshot (Beta)",
-            "long": "Create a saved snapshot of an existing sandbox instance. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide --instance-id for a running instance with disk snapshot support enabled, and use --memory=false for a disk-only snapshot. When --memory is omitted, the CLI leaves Memory unset. The service defaults to including memory unless the source instance is configured for disk-only snapshots. Memory snapshots are currently unsupported.\n\nSave the returned Snapshot.SnapshotId for list and delete operations. Supply the same --client-token and request values when retrying an identical creation. The CLI does not automatically retry creation.",
+            "long": "Create a saved snapshot of an existing sandbox instance. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide --instance-id for a running instance with disk snapshot support enabled, and use --memory=false for a disk-only snapshot. When --memory is omitted, the CLI leaves Memory unset. The service defaults to including memory unless the source instance is configured for disk-only snapshots. Memory snapshots are currently unsupported.\n\nSave the returned Snapshot.SnapshotId for list, restore, and delete operations. Once the snapshot is ACTIVE, restore it into a new instance with `agr instance create --snapshot-id <snapshot-id>`. Supply the same --client-token and request values when retrying an identical creation. The CLI does not automatically retry creation.",
             "examples": [
                 "agr instance snapshot create --instance-id ins-xxxx --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text",
                 "agr instance snapshot create --request '{\"InstanceId\":\"ins-xxxx\",\"Memory\":false,\"Tags\":[{\"Key\":\"env\",\"Value\":\"test\"}]}' -o text"

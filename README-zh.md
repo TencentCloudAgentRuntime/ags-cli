@@ -216,21 +216,26 @@ agr instance exec \
 `Data.ExecutionContext.TemporarySandboxInstance` 与
 `Data.ExecutionContext.Cleanup`，方便脚本检查工作流。
 
-## 沙箱快照与实例克隆
+## 沙箱快照、恢复与实例克隆
 
 Runtime Snapshot API 当前为 Beta，后续可能发生不兼容变更或被弃用。
 从已启用磁盘快照能力、处于运行状态的实例创建磁盘快照，保存返回的
-`Snapshot.SnapshotId`，再用该 ID 查询或删除：
+`Snapshot.SnapshotId`，再用该 ID 查询、恢复或删除：
 
 ```bash
 agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
 agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
+agr instance create --snapshot-id snapshot-xxxx --client-token restore-001 -o text
 agr instance snapshot delete snapshot-xxxx -o text
 ```
 
 请显式传入 `--memory=false`。省略时 CLI 不发送 `Memory`；服务端默认包含内存，
 除非源实例已配置为仅磁盘快照。当前暂不支持内存快照。
 重试创建时保持相同的 `ClientToken` 和请求参数。
+
+快照状态为 `ACTIVE` 后才能恢复。恢复会使用快照保存的工具配置创建新实例，
+因此无需传入工具选择参数，不会恢复运行中的进程和内存状态。
+`--snapshot-id` 与 `--source-instance-id` 互斥，`--request` 中的对应字段也不能同时指定。
 
 标准输入为 TTY 时，删除前会提示确认，默认取消。使用 `--yes`（`-y`）跳过确认；
 `--non-interactive` 或非 TTY 标准输入也会直接执行，不提示确认。
@@ -254,8 +259,8 @@ agr instance create --source-instance-id ins-source --client-token clone-001 -o 
 
 新实例继承源实例的工具，因此可以省略工具选择参数；若提供，则必须与源实例的工具匹配。
 克隆会复制源实例的系统盘，之后两者的系统盘写入相互独立，不保留运行中的进程和内存状态。
-快照 ID 用于管理 `instance snapshot` 下的资源；此命令接受源实例 ID，
-不支持传入已保存的快照 ID 恢复实例。
+向 `--source-instance-id` 传入实例 ID 进行克隆；向 `--snapshot-id` 传入
+已保存的快照 ID 进行恢复。
 
 ## Debug Tool 创建
 

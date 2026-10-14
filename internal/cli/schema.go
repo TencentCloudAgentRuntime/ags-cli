@@ -974,6 +974,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 					{Required: []string{"ToolName"}},
 					{Required: []string{"ToolId"}},
 					{Required: []string{"SourceInstanceId"}},
+					{Required: []string{"SnapshotId"}},
 				},
 				Properties: map[string]PropertySchema{
 					"ToolName":            {Type: "string", CliFlag: cliFlag("tool-name")},
@@ -990,6 +991,8 @@ func buildHandwrittenSchemas() []CommandSchema {
 			Flags: []FlagSchema{
 				{Name: "tool-name", Shorthand: "t", Type: "string"},
 				{Name: "tool-id", Type: "string"},
+				{Name: "source-instance-id", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
+				{Name: "snapshot-id", Type: "string", IncompatibleWith: []string{"source-instance-id"}},
 				{Name: "timeout", Type: "string"},
 				{Name: "mount-options", Type: "json"},
 				{Name: "custom-configuration", Type: "json"},
