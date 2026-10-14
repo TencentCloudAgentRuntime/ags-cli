@@ -252,9 +252,11 @@ for disk-only snapshots. Memory snapshots are currently unsupported. Retry creat
 with the same `ClientToken` and identical parameters.
 
 Restore only after the snapshot is `ACTIVE`. Restoration creates a new instance
-using the saved tool configuration, so no tool selector is required. Running
-processes and memory state are not restored. `--snapshot-id` and
-`--source-instance-id` are mutually exclusive, including in `--request`.
+using the saved tool configuration, so `--tool-id` and `--tool-name/-t` cannot be
+supplied. Running processes and memory state are not restored. `--snapshot-id`
+conflicts with `--source-instance-id`, `--tool-id`, and `--tool-name/-t`.
+In `--request`, `SnapshotId` likewise cannot be combined with `SourceInstanceId`,
+`ToolId`, or `ToolName`.
 
 Deletion prompts for confirmation when stdin is a TTY and defaults to cancel.
 Use `--yes` (`-y`) to skip confirmation; `--non-interactive` and non-TTY stdin

@@ -389,6 +389,53 @@ func TestSnapshotAndCloneInvalidInputsStayLocal(t *testing.T) {
 	}
 }
 
+func TestSnapshotRestoreSelectorsStayLocal(t *testing.T) {
+	var calls atomic.Int64
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		_, _ = w.Write([]byte(`{"Response":{"Instance":{"InstanceId":"unexpected","AuthMode":"NONE"}}}`))
+	}))
+	defer server.Close()
+	for _, selector := range []struct{ field, flag, value string }{
+		{"SourceInstanceId", "--source-instance-id", "ssi-source"},
+		{"ToolId", "--tool-id", "sdt-tool"},
+		{"ToolName", "-t", "tool-name"},
+	} {
+		payload, err := json.Marshal(map[string]string{"SnapshotId": "snapshot-test", selector.field: selector.value})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, mode := range []string{"flags", "request", "stdin"} {
+			t.Run(selector.field+"/"+mode, func(t *testing.T) {
+				args := []string{"instance", "create", "--snapshot-id", "snapshot-test", selector.flag, selector.value}
+				stdin := ""
+				switch mode {
+				case "request":
+					args = []string{"instance", "create", "--request", string(payload)}
+				case "stdin":
+					args = []string{"instance", "create", "--request", "-"}
+					stdin = string(payload)
+				}
+				out, stderr, err := runSnapshotCLI(t, server, stdin, args...)
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) || exit.ExitCode() != 2 {
+					t.Fatalf("exit=%v stdout=%s stderr=%s", err, out, stderr)
+				}
+				var envelope struct{ Failure struct{ Code, Kind string } }
+				if err := json.Unmarshal(out, &envelope); err != nil {
+					t.Fatal(err)
+				}
+				if envelope.Failure.Code != "CONFLICTING_FLAGS" || envelope.Failure.Kind != "usage" {
+					t.Fatalf("failure=%s", out)
+				}
+				if calls.Load() != 0 {
+					t.Fatal("conflicting selectors sent an API request")
+				}
+			})
+		}
+	}
+}
+
 func TestSnapshotNamespaceAndCloneSchema(t *testing.T) {
 	root := contractRoot()
 	group, ok := findCobraCommand(root, "instance.snapshot")
@@ -440,14 +487,21 @@ func TestSnapshotNamespaceAndCloneSchema(t *testing.T) {
 			t.Fatalf("schema does not allow %s as an independent create source", field)
 		}
 	}
-	for flag, incompatible := range map[string]string{"source-instance-id": "snapshot-id", "snapshot-id": "source-instance-id"} {
-		if !slices.ContainsFunc(envelope.Data.Flags, func(entry struct {
-			Name             string
-			IncompatibleWith []string
-		}) bool {
-			return entry.Name == flag && slices.Contains(entry.IncompatibleWith, incompatible)
-		}) {
-			t.Fatalf("schema does not declare %s incompatible with %s", flag, incompatible)
+	for flag, conflicts := range map[string][]string{
+		"source-instance-id": {"snapshot-id"},
+		"tool-id":            {"snapshot-id"},
+		"tool-name":          {"snapshot-id"},
+		"snapshot-id":        {"source-instance-id", "tool-id", "tool-name"},
+	} {
+		for _, incompatible := range conflicts {
+			if !slices.ContainsFunc(envelope.Data.Flags, func(entry struct {
+				Name             string
+				IncompatibleWith []string
+			}) bool {
+				return entry.Name == flag && slices.Contains(entry.IncompatibleWith, incompatible)
+			}) {
+				t.Fatalf("schema does not declare %s incompatible with %s", flag, incompatible)
+			}
 		}
 	}
 }

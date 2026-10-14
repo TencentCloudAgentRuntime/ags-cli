@@ -989,10 +989,10 @@ func buildHandwrittenSchemas() []CommandSchema {
 			},
 			Args: []ArgSchema{},
 			Flags: []FlagSchema{
-				{Name: "tool-name", Shorthand: "t", Type: "string"},
-				{Name: "tool-id", Type: "string"},
+				{Name: "tool-name", Shorthand: "t", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
+				{Name: "tool-id", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
 				{Name: "source-instance-id", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
-				{Name: "snapshot-id", Type: "string", IncompatibleWith: []string{"source-instance-id"}},
+				{Name: "snapshot-id", Type: "string", IncompatibleWith: []string{"source-instance-id", "tool-id", "tool-name"}},
 				{Name: "timeout", Type: "string"},
 				{Name: "mount-options", Type: "json"},
 				{Name: "custom-configuration", Type: "json"},

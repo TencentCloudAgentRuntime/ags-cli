@@ -234,8 +234,9 @@ agr instance snapshot delete snapshot-xxxx -o text
 重试创建时保持相同的 `ClientToken` 和请求参数。
 
 快照状态为 `ACTIVE` 后才能恢复。恢复会使用快照保存的工具配置创建新实例，
-因此无需传入工具选择参数，不会恢复运行中的进程和内存状态。
-`--snapshot-id` 与 `--source-instance-id` 互斥，`--request` 中的对应字段也不能同时指定。
+因此不能再传入 `--tool-id` 或 `--tool-name/-t`，不会恢复运行中的进程和内存状态。
+`--snapshot-id` 与 `--source-instance-id`、`--tool-id`、`--tool-name/-t` 互斥，
+`--request` 中的 `SnapshotId` 也不能与 `SourceInstanceId`、`ToolId`、`ToolName` 同时指定。
 
 标准输入为 TTY 时，删除前会提示确认，默认取消。使用 `--yes`（`-y`）跳过确认；
 `--non-interactive` 或非 TTY 标准输入也会直接执行，不提示确认。

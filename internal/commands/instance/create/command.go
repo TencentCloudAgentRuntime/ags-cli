@@ -60,6 +60,11 @@ func Module() command.Module {
 				if sourceID != "" && snapshotID != "" {
 					return nil, output.NewUsageError("CONFLICTING_FLAGS", "cannot specify both SourceInstanceId and SnapshotId", "Use --source-instance-id to clone an instance or --snapshot-id to restore a saved snapshot; choose one source in --request as well.")
 				}
+				toolID, _ := apiReq["ToolId"].(string)
+				toolName, _ := apiReq["ToolName"].(string)
+				if snapshotID != "" && (toolID != "" || toolName != "") {
+					return nil, output.NewUsageError("CONFLICTING_FLAGS", "cannot specify ToolId or ToolName with SnapshotId", "Use --snapshot-id without --tool-id or --tool-name/-t; omit ToolId and ToolName from --request when restoring a saved snapshot.")
+				}
 
 				// Show spinner for interactive text mode only.
 				sp := progress.NewForCLI(deps.IO.ErrOut, cli.IsJSONOutput(), cli.NonInteractive(), deps.IO.IsStderrTTY(), cli.NoColor())
