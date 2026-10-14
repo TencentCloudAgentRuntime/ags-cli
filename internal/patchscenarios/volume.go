@@ -563,6 +563,14 @@ func volumeResourceLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 
+	// Creation returns before tag synchronization finishes; ACTIVE marks readiness.
+	readyCtx, cancelReady := context.WithTimeout(ctx, 2*time.Minute)
+	err = mountWaitResourceActive(s, readyCtx, "volume.list", "VolumeSet", "VolumeIds", "VolumeId", volumeID)
+	cancelReady()
+	if err != nil {
+		return "", nil, err
+	}
+
 	rows, total, err := volumeQuery(s, ctx, "volume.list", "VolumeSet", map[string]any{"VolumeIds": []string{volumeID}})
 	if err != nil {
 		return "", nil, err

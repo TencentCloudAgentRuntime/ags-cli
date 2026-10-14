@@ -118,6 +118,28 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			}
 		})
 	}
+	t.Run("creating-volume-tags", func(t *testing.T) {
+		volumeStorageEnv(t)
+		fixture := newVolumeFixture(t, "")
+		fixture.creatingVolumes = map[string]bool{}
+		server := httptest.NewTLSServer(fixture)
+		defer server.Close()
+		plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+			{Scenario: "volume.lifecycle", Assertions: volumeAssertions},
+		}}
+		results, err := patchtest.Run(t.Context(), plan, Registry, binary, volumeEnv(t, server.URL))
+		if err != nil || len(results) != 1 || results[0].Cleanup != "pass" {
+			t.Fatalf("asynchronous volume creation: err=%v results=%+v", err, results)
+		}
+		fixture.mu.Lock()
+		defer fixture.mu.Unlock()
+		if fixture.creatingVolumeLists != 2 {
+			t.Fatalf("CREATING volume responses=%d, want 2", fixture.creatingVolumeLists)
+		}
+		if len(fixture.volumes) != 1 || len(fixture.templates) != 1 || len(fixture.tools) != 0 {
+			t.Fatalf("owned resources leaked: volumes=%d templates=%d tools=%d", len(fixture.volumes), len(fixture.templates), len(fixture.tools))
+		}
+	})
 	t.Run("missing-name-pattern", func(t *testing.T) {
 		fixture := newVolumeFixture(t, "")
 		server := httptest.NewTLSServer(fixture)
@@ -239,6 +261,9 @@ type volumeFixture struct {
 	templates map[string]map[string]any
 	tools     map[string]map[string]any
 	tokens    map[string]string
+
+	creatingVolumes     map[string]bool
+	creatingVolumeLists int
 }
 
 func newVolumeFixture(t *testing.T, fault string) *volumeFixture {
@@ -289,6 +314,19 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response["Volume"] = f.create(req, "vol", "VolumeId", "VolumeName", "Storage", f.volumes)
 	case "DescribeVolumeList":
 		set, total := f.list(req, f.volumes, "VolumeId", "VolumeName", "VolumeIds", "VolumeNames", "volume-name", "volume")
+		for i, item := range set {
+			stored := volumeObject(item)
+			id := volumeString(stored, "VolumeId")
+			if f.creatingVolumes[id] {
+				// Tag synchronization finishes after the first read, before ACTIVE.
+				pending := maps.Clone(stored)
+				pending["Tags"] = []any{}
+				set[i] = pending
+				stored["Status"] = "ACTIVE"
+				delete(f.creatingVolumes, id)
+				f.creatingVolumeLists++
+			}
+		}
 		response["VolumeSet"], response["TotalCount"] = set, total
 		if f.fault == "malformed-volume-set" && total == 0 {
 			response["VolumeSet"] = map[string]any{}
@@ -368,6 +406,10 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 	if idField == "VolumeId" {
 		// A standalone volume keeps its storage until it is deleted explicitly.
 		created["ReclaimPolicy"] = "Retain"
+		if f.creatingVolumes != nil {
+			created["Status"] = "CREATING"
+			f.creatingVolumes[id] = true
+		}
 	}
 	switch f.fault {
 	case "drop-volume-storage":

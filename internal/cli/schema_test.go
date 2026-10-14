@@ -78,6 +78,7 @@ func TestSchemaFromDescriptorInfersEffects(t *testing.T) {
 		name            string
 		effects         []string
 		source          string
+		api             any
 		mutation        bool
 		createsResource bool
 		requiresAuth    bool
@@ -112,9 +113,17 @@ func TestSchemaFromDescriptorInfersEffects(t *testing.T) {
 			requiresAuth: true,
 		},
 		{
-			// A non-workflow source with no effects must stay auth-free.
+			// A non-workflow source with no effects or API metadata must stay auth-free.
 			name:   "apicli source without effects",
 			source: command.SourceAPICli,
+		},
+		{
+			// API-backed read commands call the authenticated control plane
+			// even though they declare no effects.
+			name:         "api metadata without effects",
+			source:       command.SourceAPICli,
+			api:          struct{}{},
+			requiresAuth: true,
 		},
 	}
 
@@ -122,6 +131,7 @@ func TestSchemaFromDescriptorInfersEffects(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			schema := schemaFromDescriptor(command.Descriptor{
 				Source: tt.source,
+				API:    tt.api,
 				Spec: command.Spec{
 					ID:           "test.command",
 					Output:       command.OutputSpec{Effects: tt.effects},

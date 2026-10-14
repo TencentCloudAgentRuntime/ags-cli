@@ -19,7 +19,6 @@ func APIDescriptor() apicli.APIDescriptor {
 			Output: command.OutputSpec{
 				DataType:    "DescribeRegistryRecordResponse",
 				Description: "DescribeRegistryRecordResponse response.",
-				Effects:     []string{"read:registry"},
 			},
 		},
 		Groups: []command.GroupSpec{
