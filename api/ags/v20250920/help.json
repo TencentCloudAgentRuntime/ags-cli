@@ -201,20 +201,22 @@
         },
         "instance.create": {
             "short": "Create a new sandbox instance",
-            "long": "Create a new sandbox instance from a tool template.\n\nThe referenced tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
+            "long": "Create a new sandbox instance from a tool template, clone an existing instance, or restore a saved snapshot.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nTo restore a saved disk-only snapshot into a new instance, use --snapshot-id. The snapshot must be ACTIVE. Restoration uses the tool configuration saved in the snapshot. Do not supply --tool-id or --tool-name/-t with --snapshot-id. Running processes and memory state are not restored. --snapshot-id conflicts with --source-instance-id, --tool-id, and --tool-name/-t. In --request, SnapshotId cannot be combined with SourceInstanceId, ToolId, or ToolName. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
             "examples": [
                 "agr instance create --tool-id sdt-xxxx",
                 "agr instance create --tool-name my-tool",
                 "agr instance create -t my-tool --timeout 5m",
                 "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'",
-                "agr instance create -t my-tool --auth-mode NONE"
+                "agr instance create -t my-tool --auth-mode NONE",
+                "agr instance create --source-instance-id ins-source -o text",
+                "agr instance create --snapshot-id snapshot-xxxx -o text"
             ],
             "fields": {
                 "ToolName": {
                     "description": "Tool name.",
                     "inputs": {
                         "tool-name": {
-                            "usage": "Tool name"
+                            "usage": "Tool name; conflicts with --snapshot-id"
                         }
                     }
                 },
@@ -222,7 +224,7 @@
                     "description": "Tool ID.",
                     "inputs": {
                         "tool-id": {
-                            "usage": "Tool ID"
+                            "usage": "Tool ID; conflicts with --snapshot-id"
                         }
                     }
                 },
@@ -290,6 +292,28 @@
                     "inputs": {
                         "client-token": {
                             "usage": "Client token for duplicate creation protection"
+                        }
+                    }
+                },
+                "SourceInstanceId": {
+                    "description": "Source sandbox instance with disk snapshot support enabled. A tool selector is optional; if supplied, it must match the source tool. Use an instance ID, not a saved snapshot ID.",
+                    "inputs": {
+                        "source-instance-id": {
+                            "usage": "Clone an instance with disk snapshot support enabled; any supplied tool must match the source (not a snapshot ID)",
+                            "examples": [
+                                "agr instance create --source-instance-id ins-source -o text"
+                            ]
+                        }
+                    }
+                },
+                "SnapshotId": {
+                    "description": "Saved disk-only snapshot ID to restore into a new instance. The snapshot must be ACTIVE. Conflicts with SourceInstanceId, ToolId, and ToolName.",
+                    "inputs": {
+                        "snapshot-id": {
+                            "usage": "Restore an ACTIVE saved disk-only snapshot; conflicts with --source-instance-id, --tool-id, and --tool-name/-t (Beta)",
+                            "examples": [
+                                "agr instance create --snapshot-id snapshot-xxxx -o text"
+                            ]
                         }
                     }
                 }
@@ -454,7 +478,7 @@
         },
         "instance.delete": {
             "short": "Delete instances",
-            "long": "Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation."
+            "long": "Delete one or more sandbox instances. When stdin is a TTY, deletion requires confirmation and defaults to cancel. Use --yes (-y) to skip confirmation. With --non-interactive or non-TTY stdin, deletion proceeds without prompting."
         },
         "tool.create": {
             "short": "Create a new sandbox tool",
@@ -2137,6 +2161,142 @@
                     "inputs": {
                         "limit": {
                             "usage": "Page size, default 50, maximum 200."
+                        }
+                    }
+                }
+            }
+        },
+        "instance.snapshot.create": {
+            "short": "Create a sandbox snapshot (Beta)",
+            "long": "Create a saved snapshot of an existing sandbox instance. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide --instance-id for a running instance with disk snapshot support enabled, and use --memory=false for a disk-only snapshot. When --memory is omitted, the CLI leaves Memory unset. The service defaults to including memory unless the source instance is configured for disk-only snapshots. Memory snapshots are currently unsupported.\n\nSave the returned Snapshot.SnapshotId for list, restore, and delete operations. Once the snapshot is ACTIVE, restore it into a new instance with `agr instance create --snapshot-id <snapshot-id>`. Supply the same --client-token and request values when retrying an identical creation. The CLI does not automatically retry creation.",
+            "examples": [
+                "agr instance snapshot create --instance-id ins-xxxx --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text",
+                "agr instance snapshot create --request '{\"InstanceId\":\"ins-xxxx\",\"Memory\":false,\"Tags\":[{\"Key\":\"env\",\"Value\":\"test\"}]}' -o text"
+            ],
+            "fields": {
+                "InstanceId": {
+                    "description": "Source instance ID required by the service; must be running with disk snapshot support enabled.",
+                    "inputs": {
+                        "instance-id": {
+                            "usage": "Source instance ID required by the service; must be running with disk snapshot support enabled."
+                        }
+                    }
+                },
+                "SnapshotName": {
+                    "description": "Optional snapshot name.",
+                    "inputs": {
+                        "snapshot-name": {
+                            "usage": "Optional snapshot name."
+                        }
+                    }
+                },
+                "Memory": {
+                    "description": "Use false for disk-only snapshots. Omission leaves Memory unset; true is currently unsupported.",
+                    "inputs": {
+                        "memory": {
+                            "usage": "Use false for disk-only snapshots. Omission leaves Memory unset; true is currently unsupported."
+                        }
+                    }
+                },
+                "Tags": {
+                    "description": "Resource tags as a JSON array, @file, or - for stdin.",
+                    "inputs": {
+                        "tags": {
+                            "usage": "Resource tags as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Key\":\"<key>\",\"Value\":\"<value>\"}]",
+                            "fields": [
+                                "Key: tag key",
+                                "Value: tag value"
+                            ]
+                        }
+                    }
+                },
+                "ClientToken": {
+                    "description": "Idempotency token; reuse with identical request values for a creation retry.",
+                    "inputs": {
+                        "client-token": {
+                            "usage": "Idempotency token; reuse with identical request values for a creation retry."
+                        }
+                    }
+                }
+            }
+        },
+        "instance.snapshot.delete": {
+            "short": "Request sandbox snapshot deletion (Beta)",
+            "long": "Request deletion of a saved sandbox snapshot. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nProvide a snapshot ID as the positional argument or in --request. When stdin is a TTY, deletion requires confirmation and defaults to cancel. Use --yes (-y) to skip confirmation. With --non-interactive or non-TTY stdin, the request is sent without prompting. A successful response acknowledges deletion; cleanup can finish asynchronously. Inspect the snapshot with list to check its status.",
+            "examples": [
+                "agr instance snapshot delete snapshot-xxxx -o text",
+                "agr instance snapshot delete snapshot-xxxx --yes -o text",
+                "agr instance snapshot delete --request '{\"SnapshotId\":\"snapshot-xxxx\"}' --yes -o text"
+            ],
+            "fields": {
+                "SnapshotId": {
+                    "description": "Snapshot ID to delete; provide the positional argument or SnapshotId in --request."
+                }
+            }
+        },
+        "instance.snapshot.list": {
+            "short": "List sandbox snapshots (Beta)",
+            "long": "List saved sandbox snapshots or query specific snapshot IDs. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nUse --offset/--limit for offset pagination, or --max-results/--next-token for cursor pagination. Offset must be non-negative. Limit and MaxResults accept 0-100; 0 leaves that page-size option unset. If both page sizes are omitted or 0, the service uses 20. A nonempty NextToken conflicts with a positive Offset; positive MaxResults conflicts with positive Offset or Limit. Limit with NextToken is supported.\n\nPass a returned NextToken unchanged for the next page and keep SnapshotIds, Filters (including array order), and Limit unchanged. MaxResults may change between pages. The result includes SnapshotSet, TotalCount, and NextToken; an empty NextToken means there are no more pages. The CLI returns one page per invocation.",
+            "examples": [
+                "agr instance snapshot list --limit 20 -o text",
+                "agr instance snapshot list --snapshot-ids snapshot-xxxx -o text",
+                "agr instance snapshot list --max-results 20 -o text",
+                "agr instance snapshot list --max-results 20 --next-token '<token>' -o text",
+                "agr instance snapshot list --filters '[{\"Name\":\"status\",\"Values\":[\"ACTIVE\"]}]' -o text"
+            ],
+            "fields": {
+                "SnapshotIds": {
+                    "description": "Filter by snapshot IDs; repeat the flag for multiple IDs.",
+                    "inputs": {
+                        "snapshot-ids": {
+                            "usage": "Filter by snapshot IDs; repeat the flag for multiple IDs.",
+                            "format": "--snapshot-ids <id1> --snapshot-ids <id2>"
+                        }
+                    }
+                },
+                "Filters": {
+                    "description": "Filters as a JSON array, @file, or - for stdin.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Name\":\"<field>\",\"Values\":[\"<value>\"]}]",
+                            "fields": [
+                                "Name: filter name, for example status or snapshot-name",
+                                "Values: filter values"
+                            ]
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Non-negative pagination offset; positive values conflict with a nonempty NextToken or positive MaxResults.",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Non-negative pagination offset; positive values conflict with a nonempty NextToken or positive MaxResults."
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Page size, 0-100; 0 or omission leaves it unset. Positive values conflict with positive MaxResults.",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Page size, 0-100; 0 or omission leaves it unset. Positive values conflict with positive MaxResults."
+                        }
+                    }
+                },
+                "NextToken": {
+                    "description": "Cursor returned by the previous page; keep SnapshotIds, Filters (including array order), and Limit unchanged.",
+                    "inputs": {
+                        "next-token": {
+                            "usage": "Cursor returned by the previous page; keep SnapshotIds, Filters (including array order), and Limit unchanged."
+                        }
+                    }
+                },
+                "MaxResults": {
+                    "description": "Cursor page size, 0-100; 0 or omission leaves it unset. Positive values conflict with positive Offset or Limit.",
+                    "inputs": {
+                        "max-results": {
+                            "usage": "Cursor page size, 0-100; 0 or omission leaves it unset. Positive values conflict with positive Offset or Limit."
                         }
                     }
                 }

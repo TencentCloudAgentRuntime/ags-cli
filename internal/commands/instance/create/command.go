@@ -55,6 +55,16 @@ func Module() command.Module {
 				if err != nil {
 					return nil, err
 				}
+				sourceID, _ := apiReq["SourceInstanceId"].(string)
+				snapshotID, _ := apiReq["SnapshotId"].(string)
+				if sourceID != "" && snapshotID != "" {
+					return nil, output.NewUsageError("CONFLICTING_FLAGS", "cannot specify both SourceInstanceId and SnapshotId", "Use --source-instance-id to clone an instance or --snapshot-id to restore a saved snapshot; choose one source in --request as well.")
+				}
+				toolID, _ := apiReq["ToolId"].(string)
+				toolName, _ := apiReq["ToolName"].(string)
+				if snapshotID != "" && (toolID != "" || toolName != "") {
+					return nil, output.NewUsageError("CONFLICTING_FLAGS", "cannot specify ToolId or ToolName with SnapshotId", "Use --snapshot-id without --tool-id or --tool-name/-t; omit ToolId and ToolName from --request when restoring a saved snapshot.")
+				}
 
 				// Show spinner for interactive text mode only.
 				sp := progress.NewForCLI(deps.IO.ErrOut, cli.IsJSONOutput(), cli.NonInteractive(), deps.IO.IsStderrTTY(), cli.NoColor())
@@ -123,8 +133,8 @@ func validateToolSelection(req command.Request) error {
 	if toolName != "" && toolID != "" {
 		return output.NewUsageError("CONFLICTING_FLAGS", "cannot specify both --tool-name and --tool-id", "Provide either --tool-name or --tool-id.")
 	}
-	if toolName == "" && toolID == "" {
-		return output.NewUsageError("MISSING_REQUIRED_FLAG", "must specify either --tool-name/-t or --tool-id", "Provide --tool-name for a named tool or --tool-id for a cloud tool ID.")
+	if toolName == "" && toolID == "" && stringFlag(req, "source-instance-id") == "" && stringFlag(req, "snapshot-id") == "" {
+		return output.NewUsageError("MISSING_REQUIRED_FLAG", "must specify --tool-name/-t, --tool-id, --source-instance-id, or --snapshot-id", "Provide a tool name or ID, --source-instance-id to clone an instance, or --snapshot-id to restore a saved snapshot.")
 	}
 	return nil
 }

@@ -51,7 +51,6 @@ func Module() command.Module {
 	spec := generatedSpec
 	spec.Use = "delete <instance-id> [instance-id...]"
 	spec.Short = "Delete instances"
-	spec.Long = "Delete one or more sandbox instances. This operation executes immediately and does not prompt for confirmation."
 	spec.Aliases = []string{"rm", "del"}
 	spec.Args = []command.ArgSpec{
 		{Name: "instance-id", Required: true, Repeatable: true, Description: "Sandbox instance ID."},
@@ -75,6 +74,7 @@ func Module() command.Module {
 			Shorthand: "y",
 			Usage:     "Skip confirmation prompt",
 			Type:      command.FlagBool,
+			Default:   false,
 			Workflow:  true,
 		},
 	)

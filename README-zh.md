@@ -216,6 +216,53 @@ agr instance exec \
 `Data.ExecutionContext.TemporarySandboxInstance` 与
 `Data.ExecutionContext.Cleanup`，方便脚本检查工作流。
 
+## 沙箱快照、恢复与实例克隆
+
+Runtime Snapshot API 当前为 Beta，后续可能发生不兼容变更或被弃用。
+从已启用磁盘快照能力、处于运行状态的实例创建磁盘快照，保存返回的
+`Snapshot.SnapshotId`，再用该 ID 查询、恢复或删除：
+
+```bash
+agr instance snapshot create --instance-id ins-source --memory=false --snapshot-name checkpoint --client-token snapshot-001 -o text
+agr instance snapshot list --snapshot-ids snapshot-xxxx -o text
+agr instance create --snapshot-id snapshot-xxxx --client-token restore-001 -o text
+agr instance snapshot delete snapshot-xxxx -o text
+```
+
+请显式传入 `--memory=false`。省略时 CLI 不发送 `Memory`；服务端默认包含内存，
+除非源实例已配置为仅磁盘快照。当前暂不支持内存快照。
+重试创建时保持相同的 `ClientToken` 和请求参数。
+
+快照状态为 `ACTIVE` 后才能恢复。恢复会使用快照保存的工具配置创建新实例，
+因此不能再传入 `--tool-id` 或 `--tool-name/-t`，不会恢复运行中的进程和内存状态。
+`--snapshot-id` 与 `--source-instance-id`、`--tool-id`、`--tool-name/-t` 互斥，
+`--request` 中的 `SnapshotId` 也不能与 `SourceInstanceId`、`ToolId`、`ToolName` 同时指定。
+
+标准输入为 TTY 时，删除前会提示确认，默认取消。使用 `--yes`（`-y`）跳过确认；
+`--non-interactive` 或非 TTY 标准输入也会直接执行，不提示确认。
+删除成功表示请求已受理，清理可能异步完成。
+
+列表返回 `NextToken` 供后续翻页。先使用 `--max-results 20`，再传入返回的
+`--next-token`，并保持过滤条件、快照 ID（包括数组顺序）和 `Limit` 不变。
+`MaxResults` 可以在翻页时调整；`NextToken` 为空表示没有后续页。
+也支持 `--offset`/`--limit` 分页，以及 `--limit` 与 `--next-token` 组合。
+
+`Offset` 必须非负；`Limit` 和 `MaxResults` 接受 0–100，两者均省略或为 0 时，
+服务端使用默认页大小 20。正数 `MaxResults` 不能与正数 `Offset` 或 `Limit` 组合；
+非空 `NextToken` 不能与正数 `Offset` 组合。
+
+源实例必须已启用磁盘快照能力，未启用该能力的实例无法克隆。使用该源实例的 ID
+克隆出独立的新实例：
+
+```bash
+agr instance create --source-instance-id ins-source --client-token clone-001 -o text
+```
+
+新实例继承源实例的工具，因此可以省略工具选择参数；若提供，则必须与源实例的工具匹配。
+克隆会复制源实例的系统盘，之后两者的系统盘写入相互独立，不保留运行中的进程和内存状态。
+向 `--source-instance-id` 传入实例 ID 进行克隆；向 `--snapshot-id` 传入
+已保存的快照 ID 进行恢复。
+
 ## Debug Tool 创建
 
 使用 `agr instance debug --tool-id` 或 `--tool-name` 基于现有工具创建一份
@@ -393,6 +440,9 @@ agr explain <CODE>               解释错误码与修复建议
 
 agr instance create              创建实例
 agr instance list                列出实例
+agr instance snapshot create     创建沙箱快照（Beta）
+agr instance snapshot list       查询沙箱快照（Beta）
+agr instance snapshot delete     请求删除沙箱快照（Beta）
 agr instance get <id>            实例详情
 agr instance update <id>         更新 timeout / metadata
 agr instance pause <id>          暂停实例

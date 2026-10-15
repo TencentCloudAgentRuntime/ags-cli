@@ -52,6 +52,9 @@ import (
 	instancepause "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/pause"
 	instanceproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/proxy"
 	instanceresume "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/resume"
+	instancesnapshotcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/create"
+	instancesnapshotdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/delete"
+	instancesnapshotlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/list"
 	instanceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/update"
 	precacheimagetaskcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/create"
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
@@ -151,6 +154,9 @@ func Registry() (*command.Registry, error) {
 		instancepause.Module(),
 		instanceproxy.Module(),
 		instanceresume.Module(),
+		instancesnapshotcreate.GeneratedModule(),
+		instancesnapshotdelete.GeneratedModule(),
+		instancesnapshotlist.GeneratedModule(),
 		instanceupdate.Module(),
 		precacheimagetaskcreate.Module(),
 		precacheimagetaskget.Module(),

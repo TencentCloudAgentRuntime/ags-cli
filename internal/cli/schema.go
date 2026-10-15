@@ -959,6 +959,9 @@ func hasFlagType(flags []FlagSchema, typ string) bool {
 
 func buildHandwrittenSchemas() []CommandSchema {
 	schemas := []CommandSchema{
+		{Name: "instance.snapshot.create", Failures: []string{"INTERNAL_ERROR"}},
+		{Name: "instance.snapshot.list", Failures: []string{"INVALID_PAGINATION"}},
+		{Name: "instance.snapshot.delete", Failures: []string{"MISSING_REQUIRED_ARG"}},
 		{
 			Name: "instance.create", Summary: "Create a new sandbox instance",
 			Mutation: true, CreatesResource: true,
@@ -970,6 +973,8 @@ func buildHandwrittenSchemas() []CommandSchema {
 				AnyOf: []RequirementSchema{
 					{Required: []string{"ToolName"}},
 					{Required: []string{"ToolId"}},
+					{Required: []string{"SourceInstanceId"}},
+					{Required: []string{"SnapshotId"}},
 				},
 				Properties: map[string]PropertySchema{
 					"ToolName":            {Type: "string", CliFlag: cliFlag("tool-name")},
@@ -984,8 +989,10 @@ func buildHandwrittenSchemas() []CommandSchema {
 			},
 			Args: []ArgSchema{},
 			Flags: []FlagSchema{
-				{Name: "tool-name", Shorthand: "t", Type: "string"},
-				{Name: "tool-id", Type: "string"},
+				{Name: "tool-name", Shorthand: "t", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
+				{Name: "tool-id", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
+				{Name: "source-instance-id", Type: "string", IncompatibleWith: []string{"snapshot-id"}},
+				{Name: "snapshot-id", Type: "string", IncompatibleWith: []string{"source-instance-id", "tool-id", "tool-name"}},
 				{Name: "timeout", Type: "string"},
 				{Name: "mount-options", Type: "json"},
 				{Name: "custom-configuration", Type: "json"},
