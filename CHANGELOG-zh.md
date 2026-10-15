@@ -2,6 +2,53 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.7.0] - 2026-10-16
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 新增 Registry 生命周期命令，覆盖 Registry、Record、版本、审批决策、远程预览与
+  同步、审计日志和 Skill 包传输 URL。
+- 新增 Session 命令，覆盖会话空间（`agr session space`）、会话以及事件追加与查询，
+  支持过滤、分页、结构化事件载荷和可读的文本输出。
+- 新增 Beta 版沙箱快照命令（`agr instance snapshot create`、`list` 和
+  `delete`）。`agr instance create` 现在可以通过 `--source-instance-id` 克隆已有
+  实例，或通过 `--snapshot-id` 将 ACTIVE 状态的纯磁盘快照恢复为新实例。
+- 为 `agr pre-cache-image-task get` 新增 `--pre-cache-image-id`，可替代镜像
+  digest、镜像和镜像仓库类型的组合查询。
+- `--debug` 和 `AGR_DEBUG=1` 现在还会把完整的脱敏调试日志保存到
+  `~/.agr/logs/`，并在退出时打印日志路径；`--debug-log <path>` 会开启调试并追加
+  写入指定文件。失败信息会保留原始错误原因，并替换已知的凭据值。
+- 失败结果新增可选的 `Failure.Details` 上下文，包括阶段、操作、路径、端点、HTTP
+  状态码和请求 ID 等，覆盖配置、文件、云 API、代理和移动端隧道错误。
+  `agr schema -o json` 现在会在 `GlobalFlags` 中列出全局 flag。
+
+### Bug 修复
+- 修复 `agr credential secret get` 和 `agr credential oauth2 acquire` 把
+  `--token` 传入的业务 WorkloadIdentityToken 当作云 API STS token 发送的问题。
+  这两个命令需要 STS token 时，请通过 `TENCENTCLOUD_TOKEN` 或配置文件中的
+  `auth.token` 提供。
+- `agr instance mobile connect` 后台隧道启动失败时，保留其失败码和退出码，不再
+  报告笼统的失败。
+- `ClientError.NetworkError` 现在报告为 `Kind=network`，附带面向网络连通性的
+  提示，并在 `agr explain` 中提供说明；退出码不变。
+- `agr instance file download` 无法完整写入 stdout 或本地文件时报告失败，不再
+  报告成功。
+- 配置文件解析错误会报告文件路径、行号和列号。
+- 修正 `agr schema` 和 `agr explain` 中 `deployment get` 与 `deployment list`
+  的 `RequiresAuth: true` 及认证失败码。
+- 未知命令配合 `--help -o json` 时返回 `INVALID_USAGE` 和退出码 2，与文本模式
+  一致。
+- `deployment proxy` 和 `instance proxy` 的失败诊断默认只记录上游 origin，仅在
+  `--verbose` 时包含请求路径，避免默认记录携带凭据的请求路径。
+
+### 文档
+- 在 README 和 README-zh 中补充快照、恢复与克隆工作流、Session 工作流、Registry
+  命令和调试日志排障说明，并将安装示例更新到 v0.7.0。
+- 修正 `agr instance delete` 帮助，说明其 TTY 确认和 `--yes` 行为。
+- CONTRIBUTING 和 PATCH-VERIFICATION 中的 API patch 验证要求改为按变更影响确定。
+
 ## [0.7.0-preview.1] - 2026-09-18
 
 ### 破坏性变更

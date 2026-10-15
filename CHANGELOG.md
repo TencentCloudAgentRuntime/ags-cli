@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-10-16
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add Registry lifecycle commands for registries, records, versions, approval
+  decisions, remote preview/sync, audit logs, and Skill package transfer URLs.
+- Add Session commands for session spaces (`agr session space`), sessions, and
+  event append/list, with filtering, pagination, structured event payloads,
+  and human-readable text output.
+- Add Beta sandbox snapshot commands (`agr instance snapshot create`, `list`,
+  and `delete`). `agr instance create` can now clone an existing instance with
+  `--source-instance-id` or restore an ACTIVE disk-only snapshot into a new
+  instance with `--snapshot-id`.
+- Add `--pre-cache-image-id` to `agr pre-cache-image-task get`, as an
+  alternative to the image digest, image, and registry type selector.
+- `--debug` and `AGR_DEBUG=1` now also save full redacted debug logs to
+  `~/.agr/logs/` and print the log path on exit; `--debug-log <path>` enables
+  debug and appends to a chosen file. Failures keep their original cause, with
+  known credential values redacted.
+- Failures now include optional `Failure.Details` context, such as the stage,
+  operation, path, endpoint, HTTP status, and request ID, for configuration,
+  file, cloud API, proxy, and mobile tunnel errors. `agr schema -o json` now
+  lists the global flags in `GlobalFlags`.
+
+### Bug Fixes
+- Stop sending the business WorkloadIdentityToken from `--token` as the cloud
+  STS token in `agr credential secret get` and `agr credential oauth2 acquire`.
+  For these commands, provide an STS token through `TENCENTCLOUD_TOKEN` or
+  `auth.token` in the config file.
+- Preserve the failure code and exit code of the background tunnel when
+  `agr instance mobile connect` fails to start, instead of reporting a generic
+  failure.
+- Report `ClientError.NetworkError` with `Kind=network` and a
+  connectivity-oriented hint, and document it in `agr explain`; the exit code
+  is unchanged.
+- Report a failure when `agr instance file download` cannot finish writing to
+  stdout or to the local file, instead of reporting success.
+- Report configuration file parse errors with the file path, line, and column.
+- Report `RequiresAuth: true` and the authentication failure codes for
+  `deployment get` and `deployment list` in `agr schema` and `agr explain`.
+- Return `INVALID_USAGE` with exit code 2 for an unknown command with
+  `--help -o json`, consistent with text mode.
+- Limit `deployment proxy` and `instance proxy` failure diagnostics to the
+  upstream origin unless `--verbose` is set, so request paths that carry
+  credentials are not logged by default.
+
+### Docs
+- Add snapshot, restore, and clone workflows, the Session workflow, Registry
+  commands, and debug log troubleshooting to README and README-zh, and update
+  the installation examples to v0.7.0.
+- Correct `agr instance delete` help to describe its TTY confirmation and
+  `--yes` behavior.
+- Base API patch verification requirements in CONTRIBUTING and
+  PATCH-VERIFICATION on the impact of each change.
+
 ## [0.7.0-preview.1] - 2026-09-18
 
 ### Breaking Changes
