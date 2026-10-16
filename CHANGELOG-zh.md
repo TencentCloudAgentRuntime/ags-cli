@@ -39,10 +39,10 @@
   `agr schema -o json` 现在会在 `GlobalFlags` 中列出全局 flag。
 
 ### Bug 修复
-- 修复 `agr credential secret get` 和 `agr credential oauth2 acquire` 把
-  `--token` 传入的业务 WorkloadIdentityToken 当作云 API STS token 发送的问题。
-  这两个命令需要 STS token 时，请通过 `TENCENTCLOUD_TOKEN` 或配置文件中的
-  `auth.token` 提供。
+- 修复 `agr credential secret get` 和 `agr credential oauth2 acquire` 的 token
+  冲突：业务 WorkloadIdentityToken 改用 `--workload-identity-token`，全局
+  `--token` 统一用于云 API STS 认证；仍可通过 `TENCENTCLOUD_TOKEN` 或配置文件中的
+  `auth.token` 提供 STS token。
 - `agr instance file download` 无法完整写入 stdout 或本地文件时报告失败，不再
   报告成功。
 - 配置文件解析错误会报告文件路径、行号和列号。

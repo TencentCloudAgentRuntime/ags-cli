@@ -45,10 +45,10 @@ All notable changes to this project will be documented in this file.
   lists the global flags in `GlobalFlags`.
 
 ### Bug Fixes
-- Stop sending the business WorkloadIdentityToken from `--token` as the cloud
-  STS token in `agr credential secret get` and `agr credential oauth2 acquire`.
-  For these commands, provide an STS token through `TENCENTCLOUD_TOKEN` or
-  `auth.token` in the config file.
+- Fix token collisions in `agr credential secret get` and
+  `agr credential oauth2 acquire`: use `--workload-identity-token` for the
+  business WorkloadIdentityToken. The global `--token` flag now consistently
+  supplies the cloud STS token, alongside `TENCENTCLOUD_TOKEN` and `auth.token`.
 - Report a failure when `agr instance file download` cannot finish writing to
   stdout or to the local file, instead of reporting success.
 - Report configuration file parse errors with the file path, line, and column.
