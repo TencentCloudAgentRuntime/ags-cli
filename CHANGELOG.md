@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 ## [0.7.0] - 2026-10-16
 
 ### Breaking Changes
-- This release has no Breaking Changes.
+- Some failures of existing commands now return a different `Failure.Code`,
+  `Failure.Kind`, or exit code. Update scripts that branch on these fields:
+  - `ClientError.NetworkError` now has `Kind=network` instead of `error`, with a
+    connectivity-oriented hint and an `agr explain` entry; the exit code stays 1.
+  - `agr instance mobile connect` startup failures that returned
+    `INTERNAL_ERROR` (exit 1) now keep the background tunnel's classification,
+    such as `PORT_IN_USE` (exit 2), `TUNNEL_AUTH_FAILED` (exit 4),
+    `TUNNEL_READY_TIMEOUT`, `TUNNEL_EXITED`, or the cloud API error code.
+  - `agr instance login` without interactive mode returns `TTY_REQUIRED`
+    instead of `CLI_ERROR`; the exit code stays 2.
+  - `agr pre-cache-image-task get` without a complete selector returns
+    `MISSING_REQUIRED_INPUT` instead of `INVALID_USAGE` or
+    `MISSING_REQUIRED_FLAG`; the exit code stays 2.
+- An unknown command with `--help -o json` now fails with `INVALID_USAGE` and
+  exit code 2, consistent with text mode, instead of printing root help with
+  exit code 0. Use `agr --help -o json` or `agr schema -o json` to list
+  commands.
 
 ### Features
 - Add Registry lifecycle commands for registries, records, versions, approval
@@ -33,19 +49,11 @@ All notable changes to this project will be documented in this file.
   STS token in `agr credential secret get` and `agr credential oauth2 acquire`.
   For these commands, provide an STS token through `TENCENTCLOUD_TOKEN` or
   `auth.token` in the config file.
-- Preserve the failure code and exit code of the background tunnel when
-  `agr instance mobile connect` fails to start, instead of reporting a generic
-  failure.
-- Report `ClientError.NetworkError` with `Kind=network` and a
-  connectivity-oriented hint, and document it in `agr explain`; the exit code
-  is unchanged.
 - Report a failure when `agr instance file download` cannot finish writing to
   stdout or to the local file, instead of reporting success.
 - Report configuration file parse errors with the file path, line, and column.
 - Report `RequiresAuth: true` and the authentication failure codes for
   `deployment get` and `deployment list` in `agr schema` and `agr explain`.
-- Return `INVALID_USAGE` with exit code 2 for an unknown command with
-  `--help -o json`, consistent with text mode.
 - Limit `deployment proxy` and `instance proxy` failure diagnostics to the
   upstream origin unless `--verbose` is set, so request paths that carry
   credentials are not logged by default.
