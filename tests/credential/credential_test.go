@@ -89,7 +89,7 @@ var _ = Describe("agr credential commands", func() {
 		It("shows correct flags", func() {
 			result := cli.Run(context.Background(), "credential", "oauth2", "acquire", "--help")
 			result.ExpectSuccess()
-			Expect(result.Stdout).To(ContainSubstring("--token"))
+			Expect(result.Stdout).To(ContainSubstring("--workload-identity-token"))
 			Expect(result.Stdout).To(ContainSubstring("--credential-provider-id"))
 			Expect(result.Stdout).To(ContainSubstring("--flow"))
 			Expect(result.Stdout).To(ContainSubstring("--scopes"))

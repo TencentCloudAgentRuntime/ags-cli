@@ -654,21 +654,10 @@ func shouldAllowDiagnosticOutputOverride(cmd *cobra.Command) bool {
 var debugFlagExplicit bool
 
 func applyRawGlobalArgs(args []string) {
-	target, _, err := rootCmd.Find(args)
-	if err != nil {
-		target = nil // Leave unknown commands for Cobra to report.
-	}
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		if arg == "--" {
 			break
-		}
-		if name, inline := longFlagName(arg); shadowsGlobalFlag(target, name) {
-			// Match Cobra's flag ownership, including flags before the command.
-			if !inline && i+1 < len(args) && target.Flags().Lookup(name).NoOptDefVal == "" {
-				i++
-			}
-			continue
 		}
 		switch {
 		// This pre-parse keeps config/output/debug behavior available before
@@ -742,23 +731,6 @@ func applyRawGlobalArgs(args []string) {
 			showVersion = true
 		}
 	}
-}
-
-func longFlagName(arg string) (name string, inline bool) {
-	if !strings.HasPrefix(arg, "--") {
-		return "", false
-	}
-	name, _, inline = strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-	return name, inline
-}
-
-func shadowsGlobalFlag(cmd *cobra.Command, name string) bool {
-	if cmd == nil || cmd == rootCmd || name == "" {
-		return false
-	}
-	global := rootCmd.PersistentFlags().Lookup(name)
-	local := cmd.Flags().Lookup(name)
-	return global != nil && local != nil && local != global
 }
 
 func invalidNDJSONOutputError(cmd *cobra.Command) *output.CLIError {

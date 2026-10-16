@@ -261,9 +261,9 @@ func TestSecretGet(t *testing.T) {
 	fake := &fakeCP{resp: map[string]any{"Secret": "real-secret", "Metadata": []any{}}}
 	rt, _ := credsecretget.Module().Build(command.Deps{ControlPlane: fake})
 	result, err := rt.Handler.Run(context.Background(), command.Request{Flags: map[string]command.FlagValue{
-		"credential-provider-id": {String: "agc-g", Changed: true},
-		"token":                  {String: "eyJ-token", Changed: true},
-		"scope":                  {String: "read:user", Changed: true},
+		"credential-provider-id":  {String: "agc-g", Changed: true},
+		"workload-identity-token": {String: "eyJ-token", Changed: true},
+		"scope":                   {String: "read:user", Changed: true},
 	}})
 	if err != nil {
 		t.Fatal(err)
@@ -315,14 +315,14 @@ func TestOAuth2Acquire(t *testing.T) {
 	}}
 	rt, _ := credoauth2acquire.Module().Build(command.Deps{ControlPlane: fake})
 	result, err := rt.Handler.Run(context.Background(), command.Request{Flags: map[string]command.FlagValue{
-		"token":                  {String: "eyJ-tok", Changed: true},
-		"credential-provider-id": {String: "agc-oauth", Changed: true},
-		"flow":                   {String: "AUTHORIZATION_CODE", Changed: true},
-		"scopes":                 {Strings: []string{"read:user"}, Changed: true},
-		"return-url":             {String: "https://cb.example.com", Changed: true},
-		"custom-state":           {},
-		"force-authentication":   {},
-		"session-uri":            {},
+		"workload-identity-token": {String: "eyJ-tok", Changed: true},
+		"credential-provider-id":  {String: "agc-oauth", Changed: true},
+		"flow":                    {String: "AUTHORIZATION_CODE", Changed: true},
+		"scopes":                  {Strings: []string{"read:user"}, Changed: true},
+		"return-url":              {String: "https://cb.example.com", Changed: true},
+		"custom-state":            {},
+		"force-authentication":    {},
+		"session-uri":             {},
 	}})
 	if err != nil {
 		t.Fatal(err)
