@@ -20,8 +20,9 @@ All notable changes to this project will be documented in this file.
     `INTERNAL_ERROR` (exit 1) now keep the background tunnel's classification,
     such as `PORT_IN_USE` (exit 2), `TUNNEL_AUTH_FAILED` (exit 4),
     `TUNNEL_READY_TIMEOUT`, `TUNNEL_EXITED`, or the cloud API error code.
-  - `agr instance login` without interactive mode returns `TTY_REQUIRED`
-    instead of `CLI_ERROR`; the exit code stays 2.
+  - `agr instance login --non-interactive` run from a terminal now returns
+    `TTY_REQUIRED` instead of `CLI_ERROR`; the exit code stays 2. Without a
+    TTY, the command already returned `TTY_REQUIRED` and is unchanged.
   - `agr pre-cache-image-task get` without a complete selector returns
     `MISSING_REQUIRED_INPUT` instead of `INVALID_USAGE` or
     `MISSING_REQUIRED_FLAG`; the exit code stays 2.

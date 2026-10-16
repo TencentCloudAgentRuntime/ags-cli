@@ -18,8 +18,9 @@
   - `agr instance mobile connect` 启动失败时，原来返回 `INTERNAL_ERROR`（退出码 1），
     现在保留后台隧道的分类，例如 `PORT_IN_USE`（退出码 2）、`TUNNEL_AUTH_FAILED`
     （退出码 4）、`TUNNEL_READY_TIMEOUT`、`TUNNEL_EXITED` 或云 API 错误码。
-  - `agr instance login` 在非交互模式下返回 `TTY_REQUIRED`，不再返回 `CLI_ERROR`；
-    退出码仍为 2。
+  - 在终端中使用 `agr instance login --non-interactive` 时，现在返回
+    `TTY_REQUIRED`，不再返回 `CLI_ERROR`；退出码仍为 2。没有 TTY 时，原本就返回
+    `TTY_REQUIRED`，行为不变。
   - `agr pre-cache-image-task get` 未提供完整查询条件时返回
     `MISSING_REQUIRED_INPUT`，不再返回 `INVALID_USAGE` 或 `MISSING_REQUIRED_FLAG`；
     退出码仍为 2。
