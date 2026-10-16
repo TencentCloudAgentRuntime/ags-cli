@@ -54,6 +54,9 @@ All notable changes to this project will be documented in this file.
   lists the global flags in `GlobalFlags`.
 
 ### Bug Fixes
+- Pass the effective cloud STS token and explicit `--cloud-endpoint` to the
+  background tunnel process in `agr instance mobile connect`, fixing lost
+  `--token` credentials and ignored endpoint overrides.
 - Fix token collisions in `agr credential secret get` and
   `agr credential oauth2 acquire`: use `--workload-identity-token` for the
   business WorkloadIdentityToken. The global `--token` flag now consistently

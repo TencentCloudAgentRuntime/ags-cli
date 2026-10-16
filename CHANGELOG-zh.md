@@ -47,6 +47,9 @@
   `agr schema -o json` 现在会在 `GlobalFlags` 中列出全局 flag。
 
 ### Bug 修复
+- `agr instance mobile connect` 现在会将生效的云 API STS token 和显式指定的
+  `--cloud-endpoint` 传给后台隧道进程，修复命令行 `--token` 凭据丢失和端点覆盖
+  设置被忽略的问题。
 - 修复 `agr credential secret get` 和 `agr credential oauth2 acquire` 的 token
   冲突：业务 WorkloadIdentityToken 改用 `--workload-identity-token`，全局
   `--token` 统一用于云 API STS 认证；仍可通过 `TENCENTCLOUD_TOKEN` 或配置文件中的
