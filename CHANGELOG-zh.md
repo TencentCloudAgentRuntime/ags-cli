@@ -2,6 +2,76 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.8.0-preview.1] - 2026-10-16
+
+### 破坏性变更
+- Session Space 命令从 `agr session-space ...` 迁移到
+  `agr session space ...`，Schema ID 从 `session-space.*` 迁移到
+  `session.space.*`。旧路径和 ID 不保留别名，preview 脚本需要更新。
+- `agr volume-template create` 现在要求提供 `--volume-name-pattern`（或
+  `--request` 中的 `VolumeNamePattern`），与服务端契约一致。卷名称和存储路径
+  模式中需包含 `${reuse_key}`。
+- 部分已有命令的失败结果会返回不同的 `Failure.Code`、`Failure.Kind` 或退出码。
+  依赖这些字段分支的脚本需要更新：
+  - `ClientError.NetworkError` 的 `Kind` 由 `error` 改为 `network`，并附带面向网络
+    连通性的提示和 `agr explain` 说明；退出码仍为 1。
+  - `agr instance mobile connect` 启动失败时，原来返回 `INTERNAL_ERROR`（退出码 1），
+    现在保留后台隧道的分类，例如 `PORT_IN_USE`（退出码 2）、`TUNNEL_AUTH_FAILED`
+    （退出码 4）、`TUNNEL_READY_TIMEOUT`、`TUNNEL_EXITED` 或云 API 错误码。
+  - 在终端中使用 `agr instance login --non-interactive` 时，现在返回
+    `TTY_REQUIRED`，不再返回 `CLI_ERROR`；退出码仍为 2。没有 TTY 时，原本就返回
+    `TTY_REQUIRED`，行为不变。
+  - `agr pre-cache-image-task get` 未提供完整查询条件时返回
+    `MISSING_REQUIRED_INPUT`，不再返回 `INVALID_USAGE` 或 `MISSING_REQUIRED_FLAG`；
+    退出码仍为 2。
+- 未知命令配合 `--help -o json` 时返回 `INVALID_USAGE` 和退出码 2，与文本模式一致，
+  不再输出根命令帮助并以退出码 0 结束。需要列出命令时请使用
+  `agr --help -o json` 或 `agr schema -o json`。
+
+### 新功能
+- 为 Session Space、Session 和 Event 命令新增可读的文本输出，包括详情、表格和
+  分页信息。`agr session get` 现在暴露 `--num-recent-events` 和
+  `--after-timestamp`；当前 API 响应不含事件列表，读取历史仍需使用
+  `agr session event list`。
+- 新增 Beta 版沙箱快照命令（`agr instance snapshot create`、`list` 和
+  `delete`）。`agr instance create` 现在可以通过 `--source-instance-id` 克隆已有
+  实例，或通过 `--snapshot-id` 将 ACTIVE 状态的纯磁盘快照恢复为新实例。
+- 为 `agr pre-cache-image-task get` 新增 `--pre-cache-image-id`，可替代镜像
+  digest、镜像和镜像仓库类型的组合查询。预热任务 JSON 输出现在会保留服务端返回的
+  创建结果中的 `PreCacheImageId`，以及查询结果中的 ID、来源类型、缓存大小、创建
+  时间和最近使用时间。
+- `--debug` 和 `AGR_DEBUG=1` 现在还会把完整的脱敏调试日志保存到
+  `~/.agr/logs/`，并在退出时打印日志路径；`--debug-log <path>` 会开启调试并追加
+  写入指定文件。失败信息会保留原始错误原因，并替换已知的凭据值。
+- 失败结果新增可选的 `Failure.Details` 上下文，包括阶段、操作、路径、端点、HTTP
+  状态码和请求 ID 等，覆盖配置、文件、云 API、代理和移动端隧道错误。
+  `agr schema -o json` 现在会在 `GlobalFlags` 中列出全局 flag。
+
+### Bug 修复
+- `agr instance mobile connect` 现在会将生效的云 API STS token 和显式指定的
+  `--cloud-endpoint` 传给后台隧道进程，修复命令行 `--token` 凭据丢失和端点覆盖
+  设置被忽略的问题。
+- 修复 `agr credential secret get` 和 `agr credential oauth2 acquire` 的 token
+  冲突：业务 WorkloadIdentityToken 改用 `--workload-identity-token`，全局
+  `--token` 统一用于云 API STS 认证；仍可通过 `TENCENTCLOUD_TOKEN` 或配置文件中的
+  `auth.token` 提供 STS token。
+- `agr instance file download` 无法完整写入 stdout 或本地文件时报告失败，不再
+  报告成功。
+- 配置文件解析错误会报告文件路径、行号和列号。
+- 修正 `agr schema` 和 `agr explain` 中 `deployment get`、`deployment list`、
+  `volume list`、`volume-template list` 及 Session/Space/Event 读取命令的
+  `RequiresAuth: true` 及认证失败码。
+- `agr schema` 中 Registry 列表的分页字段改用 JSON Schema 的 `integer` 类型，
+  不再使用 `int64`。
+- `deployment proxy` 和 `instance proxy` 的失败诊断默认只记录上游 origin，仅在
+  `--verbose` 时包含请求路径，避免默认记录携带凭据的请求路径。
+
+### 文档
+- 在 README 和 README-zh 中补充快照、恢复与克隆工作流、Session 工作流、Registry
+  命令和调试日志排障说明，并将安装示例更新到 v0.7.0。
+- 修正 `agr instance delete` 帮助，说明其 TTY 确认和 `--yes` 行为。
+- CONTRIBUTING 和 PATCH-VERIFICATION 中的 API patch 验证要求改为按变更影响确定。
+
 ## [0.7.0] - 2026-10-16
 
 ### 破坏性变更
