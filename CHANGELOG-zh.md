@@ -2,6 +2,61 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.7.0] - 2026-10-16
+
+### 破坏性变更
+- 部分已有命令的失败结果会返回不同的 `Failure.Code`、`Failure.Kind` 或退出码。
+  依赖这些字段分支的脚本需要更新：
+  - `ClientError.NetworkError` 的 `Kind` 由 `error` 改为 `network`，并附带面向网络
+    连通性的提示和 `agr explain` 说明；退出码仍为 1。
+  - `agr instance mobile connect` 启动失败时，原来返回 `INTERNAL_ERROR`（退出码 1），
+    现在保留后台隧道的分类，例如 `PORT_IN_USE`（退出码 2）、`TUNNEL_AUTH_FAILED`
+    （退出码 4）、`TUNNEL_READY_TIMEOUT`、`TUNNEL_EXITED` 或云 API 错误码。
+  - `agr instance login` 在非交互模式下返回 `TTY_REQUIRED`，不再返回 `CLI_ERROR`；
+    退出码仍为 2。
+  - `agr pre-cache-image-task get` 未提供完整查询条件时返回
+    `MISSING_REQUIRED_INPUT`，不再返回 `INVALID_USAGE` 或 `MISSING_REQUIRED_FLAG`；
+    退出码仍为 2。
+- 未知命令配合 `--help -o json` 时返回 `INVALID_USAGE` 和退出码 2，与文本模式一致，
+  不再输出根命令帮助并以退出码 0 结束。需要列出命令时请使用
+  `agr --help -o json` 或 `agr schema -o json`。
+
+### 新功能
+- 新增 Registry 生命周期命令，覆盖 Registry、Record、版本、审批决策、远程预览与
+  同步、审计日志和 Skill 包传输 URL。
+- 新增 Session 命令，覆盖会话空间（`agr session space`）、会话以及事件追加与查询，
+  支持过滤、分页、结构化事件载荷和可读的文本输出。
+- 新增 Beta 版沙箱快照命令（`agr instance snapshot create`、`list` 和
+  `delete`）。`agr instance create` 现在可以通过 `--source-instance-id` 克隆已有
+  实例，或通过 `--snapshot-id` 将 ACTIVE 状态的纯磁盘快照恢复为新实例。
+- 为 `agr pre-cache-image-task get` 新增 `--pre-cache-image-id`，可替代镜像
+  digest、镜像和镜像仓库类型的组合查询。
+- `--debug` 和 `AGR_DEBUG=1` 现在还会把完整的脱敏调试日志保存到
+  `~/.agr/logs/`，并在退出时打印日志路径；`--debug-log <path>` 会开启调试并追加
+  写入指定文件。失败信息会保留原始错误原因，并替换已知的凭据值。
+- 失败结果新增可选的 `Failure.Details` 上下文，包括阶段、操作、路径、端点、HTTP
+  状态码和请求 ID 等，覆盖配置、文件、云 API、代理和移动端隧道错误。
+  `agr schema -o json` 现在会在 `GlobalFlags` 中列出全局 flag。
+
+### Bug 修复
+- 修复 `agr credential secret get` 和 `agr credential oauth2 acquire` 的 token
+  冲突：业务 WorkloadIdentityToken 改用 `--workload-identity-token`，全局
+  `--token` 统一用于云 API STS 认证；仍可通过 `TENCENTCLOUD_TOKEN` 或配置文件中的
+  `auth.token` 提供 STS token。
+- `agr instance file download` 无法完整写入 stdout 或本地文件时报告失败，不再
+  报告成功。
+- 配置文件解析错误会报告文件路径、行号和列号。
+- 修正 `agr schema` 和 `agr explain` 中 `deployment get` 与 `deployment list`
+  的 `RequiresAuth: true` 及认证失败码。
+- `deployment proxy` 和 `instance proxy` 的失败诊断默认只记录上游 origin，仅在
+  `--verbose` 时包含请求路径，避免默认记录携带凭据的请求路径。
+
+### 文档
+- 在 README 和 README-zh 中补充快照、恢复与克隆工作流、Session 工作流、Registry
+  命令和调试日志排障说明，并将安装示例更新到 v0.7.0。
+- 修正 `agr instance delete` 帮助，说明其 TTY 确认和 `--yes` 行为。
+- CONTRIBUTING 和 PATCH-VERIFICATION 中的 API patch 验证要求改为按变更影响确定。
+
 ## [0.7.0-preview.1] - 2026-09-18
 
 ### 破坏性变更
