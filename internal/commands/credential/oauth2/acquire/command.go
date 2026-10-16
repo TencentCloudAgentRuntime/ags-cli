@@ -23,15 +23,15 @@ If the user already has an active authorization, the token is returned directly.
 Otherwise an AuthorizationUrl and SessionUri are returned to start the 3LO flow.
 Use "agr credential oauth2 acquire --session-uri <uri>" to poll the session.
 
-Here --token is the business WorkloadIdentityToken, including when placed before
-the subcommand. For cloud authentication with an STS token, use TENCENTCLOUD_TOKEN
-or auth.token in the configuration file.`,
+Use --workload-identity-token for the business WorkloadIdentityToken.
+For cloud authentication, use the global --token flag for the STS session token,
+TENCENTCLOUD_TOKEN, or auth.token in the configuration file.`,
 		Examples: []string{
-			"agr credential oauth2 acquire --token eyJ... --credential-provider-id agc-xxx --flow AUTHORIZATION_CODE --scopes read:user --return-url https://example.com/cb",
-			"agr credential oauth2 acquire --token eyJ... --credential-provider-id agc-xxx --flow AUTHORIZATION_CODE --session-uri urn:ietf:... -o json",
+			"agr credential oauth2 acquire --workload-identity-token eyJ... --credential-provider-id agc-xxx --flow AUTHORIZATION_CODE --scopes read:user --return-url https://example.com/cb",
+			"agr credential oauth2 acquire --workload-identity-token eyJ... --credential-provider-id agc-xxx --flow AUTHORIZATION_CODE --session-uri urn:ietf:... -o json",
 		},
 		Flags: []command.FlagSpec{
-			{Name: "token", Usage: "WorkloadIdentityToken (required); cloud STS token uses TENCENTCLOUD_TOKEN or auth.token", Type: command.FlagString, Required: true},
+			{Name: "workload-identity-token", Usage: "WorkloadIdentityToken (required)", Type: command.FlagString, Required: true},
 			{Name: "credential-provider-id", Usage: "OAuth2 CredentialProvider ID (required)", Type: command.FlagString, Required: true},
 			{Name: "flow", Usage: "OAuth2 flow: AUTHORIZATION_CODE (required)", Type: command.FlagString, Required: true, Values: []string{"AUTHORIZATION_CODE"}},
 			{Name: "scopes", Usage: "OAuth2 scopes (repeatable)", Type: command.FlagStringArray},
@@ -56,7 +56,7 @@ or auth.token in the configuration file.`,
 			deps = deps.WithDefaults()
 			cp := deps.ControlPlane.(credential.ControlPlane)
 			return command.Runtime{Handler: command.HandlerFunc(func(ctx context.Context, req command.Request) (*command.Result, error) {
-				token := req.Flags["token"].String
+				token := req.Flags["workload-identity-token"].String
 				cli.MaskSecret(token)
 				params := map[string]any{
 					"WorkloadIdentityToken": token,

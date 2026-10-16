@@ -136,3 +136,67 @@ func init() { Registry["fixture"] = patchtest.Scenario{Assertions: []string{"beh
 		}
 	}
 }
+
+func TestExtractCommitPaddedArchive(t *testing.T) {
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := t.TempDir()
+	t.Chdir(repo)
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
+	t.Setenv("GIT_CONFIG_GLOBAL", "/dev/null")
+	gitCommand := func(args ...string) string {
+		t.Helper()
+		out, err := exec.CommandContext(t.Context(), realGit, args...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %s %v", args, out, err)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	gitCommand("init")
+	if err := os.WriteFile("payload.txt", []byte("committed fixture\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	gitCommand("add", "payload.txt")
+	gitCommand("-c", "user.name=Fixture", "-c", "user.email=fixture@example.com", "-c", "commit.gpgsign=false", "commit", "-m", "fixture")
+	head := gitCommand("rev-parse", "HEAD")
+	bin := t.TempDir()
+	// Extra zero records are valid tar padding, which tar may leave unread.
+	shim := `#!/bin/sh
+"$AGR_TEST_REAL_GIT" "$@" || exit $?
+if [ "$1" = archive ]; then
+  dd if=/dev/zero bs=1024 count=1024 2>/dev/null || exit $?
+  if [ "$AGR_TEST_ARCHIVE_FAIL" = 1 ]; then exit 1; fi
+fi
+`
+	if err := os.WriteFile(filepath.Join(bin, "git"), []byte(shim), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AGR_TEST_REAL_GIT", realGit)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	for _, fail := range []bool{false, true} {
+		name := "padding"
+		if fail {
+			name = "producer_failure"
+		}
+		t.Run(name, func(t *testing.T) {
+			value := "0"
+			if fail {
+				value = "1"
+			}
+			t.Setenv("AGR_TEST_ARCHIVE_FAIL", value)
+			out := t.TempDir()
+			err := extractCommit(t.Context(), head, out)
+			if (err != nil) != fail {
+				t.Fatalf("extract error=%v, want failure=%t", err, fail)
+			}
+			if !fail {
+				got, err := os.ReadFile(filepath.Join(out, "payload.txt"))
+				if err != nil || string(got) != "committed fixture\n" {
+					t.Fatalf("payload=%q err=%v", got, err)
+				}
+			}
+		})
+	}
+}

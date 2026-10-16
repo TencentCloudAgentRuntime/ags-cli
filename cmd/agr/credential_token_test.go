@@ -26,6 +26,7 @@ func TestCredentialTokenOwnership(t *testing.T) {
 		for _, tc := range []struct {
 			name, auth            string
 			inline, before, debug bool
+			cloudBefore           bool
 		}{
 			{name: "no_sts"},
 			{name: "env_sts", auth: "env"},
@@ -34,7 +35,12 @@ func TestCredentialTokenOwnership(t *testing.T) {
 			{name: "inline_config_sts", auth: "config", inline: true},
 			{name: "token_before_command", auth: "env", before: true},
 			{name: "inline_token_before_command", auth: "config", before: true, inline: true},
+			{name: "flag_sts", auth: "flag"},
+			{name: "inline_flag_sts", auth: "flag", inline: true},
+			{name: "flag_sts_before_command", auth: "flag", cloudBefore: true},
+			{name: "inline_flag_sts_before_command", auth: "flag", cloudBefore: true, inline: true},
 			{name: "debug_failure", auth: "env", debug: true},
+			{name: "debug_failure_flag_sts", auth: "flag", debug: true},
 		} {
 			t.Run(operation.name+"/"+tc.name, func(t *testing.T) {
 				type request struct {
@@ -57,9 +63,9 @@ func TestCredentialTokenOwnership(t *testing.T) {
 				defer server.Close()
 				home := t.TempDir()
 				args := append([]string{}, operation.args...)
-				tokenArgs := []string{"--token", workloadToken}
+				tokenArgs := []string{"--workload-identity-token", workloadToken}
 				if tc.inline {
-					tokenArgs = []string{"--token=" + workloadToken}
+					tokenArgs = []string{"--workload-identity-token=" + workloadToken}
 				}
 				if tc.before {
 					args = append(tokenArgs, args...)
@@ -68,6 +74,23 @@ func TestCredentialTokenOwnership(t *testing.T) {
 				}
 				env := []string{}
 				switch tc.auth {
+				case "flag":
+					// Explicit STS credentials must override both environment and file.
+					env = append(env, "TENCENTCLOUD_TOKEN=env-sts")
+					configPath := filepath.Join(home, "config.toml")
+					if err := os.WriteFile(configPath, []byte("[auth]\ntoken = \"config-sts\"\n"), 0600); err != nil {
+						t.Fatal(err)
+					}
+					args = append(args, "--config", configPath)
+					cloudArgs := []string{"--token", cloudToken}
+					if tc.inline {
+						cloudArgs = []string{"--token=" + cloudToken}
+					}
+					if tc.cloudBefore {
+						args = append(cloudArgs, args...)
+					} else {
+						args = append(args, cloudArgs...)
+					}
 				case "env":
 					env = append(env, "TENCENTCLOUD_TOKEN="+cloudToken)
 				case "config":
@@ -117,6 +140,40 @@ func TestCredentialTokenOwnership(t *testing.T) {
 				}
 			})
 		}
+		t.Run(operation.name+"/schema", func(t *testing.T) {
+			id := strings.Join(operation.args[:3], ".")
+			stdout, stderr, err := runTokenCLI(t, nil, t.TempDir(), nil, []string{"schema", id, "-o", "json"})
+			if err != nil {
+				t.Fatalf("schema failed: %v %s", err, stderr)
+			}
+			var envelope struct {
+				Data struct {
+					Flags []struct{ Name, Type string }
+				}
+			}
+			if err := json.Unmarshal([]byte(stdout), &envelope); err != nil {
+				t.Fatal(err)
+			}
+			found := false
+			for _, flag := range envelope.Data.Flags {
+				if flag.Name == "token" {
+					t.Error("schema still declares a local --token")
+				}
+				if flag.Name == "workload-identity-token" && flag.Type == "string" {
+					found = true
+				}
+			}
+			if !found {
+				t.Fatal("schema missing --workload-identity-token string flag")
+			}
+		})
+		t.Run(operation.name+"/missing_workload_token", func(t *testing.T) {
+			args := append(append([]string{}, operation.args...), "--token", cloudToken, "-o", "json")
+			stdout, stderr, err := runTokenCLI(t, nil, t.TempDir(), nil, args)
+			if err == nil || !strings.Contains(stdout+stderr, "workload-identity-token") {
+				t.Fatalf("cloud token must not satisfy the required workload token: exit=%v stdout=%s stderr=%s", err, stdout, stderr)
+			}
+		})
 		for _, output := range []string{"text", "json"} {
 			t.Run(operation.name+"/help_"+output, func(t *testing.T) {
 				args := append(append([]string{}, operation.args[:3]...), "--help", "-o", output)
@@ -124,7 +181,11 @@ func TestCredentialTokenOwnership(t *testing.T) {
 				if err != nil {
 					t.Fatalf("help failed: %v %s", err, stderr)
 				}
-				for _, want := range []string{"WorkloadIdentityToken", "TENCENTCLOUD_TOKEN", "auth.token"} {
+				wantHelp := []string{"--workload-identity-token", "WorkloadIdentityToken"}
+				if output == "text" {
+					wantHelp = append(wantHelp, "--token", "STS")
+				}
+				for _, want := range wantHelp {
 					if !strings.Contains(stdout, want) {
 						t.Errorf("help missing %q: %s", want, stdout)
 					}
