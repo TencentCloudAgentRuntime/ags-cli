@@ -149,7 +149,7 @@ var _ = Describe("Identity + Credential real E2E lifecycle", func() {
 
 		getDirect := cli.Run(ctx, "--output", "json", "credential", "secret", "get",
 			"--credential-provider-id", providerID,
-			"--token", token,
+			"--workload-identity-token", token,
 			"--scope", "scope-direct",
 		)
 		getDirect.ExpectSuccess()
@@ -157,7 +157,7 @@ var _ = Describe("Identity + Credential real E2E lifecycle", func() {
 
 		getStdin := cli.Run(ctx, "--output", "json", "credential", "secret", "get",
 			"--credential-provider-id", providerID,
-			"--token", token,
+			"--workload-identity-token", token,
 			"--scope", "scope-stdin",
 		)
 		getStdin.ExpectSuccess()

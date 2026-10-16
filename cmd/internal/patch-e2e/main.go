@@ -278,9 +278,12 @@ func extractCommit(ctx context.Context, commit, dir string) error {
 	extract := exec.CommandContext(ctx, "tar", "-xf", "-", "-C", dir)
 	extract.Stdin = reader
 	extractErr := extract.Run()
+	// tar may stop at the end marker before git finishes writing padding.
+	// Drain it before closing the pipe so the producer can exit normally.
+	_, readErr := io.Copy(io.Discard, reader)
 	_ = reader.Close()
 	archiveErr := archive.Wait()
-	if extractErr != nil || archiveErr != nil {
+	if extractErr != nil || readErr != nil || archiveErr != nil {
 		return fmt.Errorf("extract committed source failed")
 	}
 	return nil

@@ -392,7 +392,7 @@ func TestMock_CredentialSecretGet_MasksInText(t *testing.T) {
 	// Text mode should mask.
 	r := runAGR(t, ts.URL, "credential", "secret", "get",
 		"--credential-provider-id", "agc-g",
-		"--token", "eyJ-tok")
+		"--workload-identity-token", "eyJ-tok")
 	if r.exitCode != 0 {
 		t.Fatalf("exit %d\nstderr: %s", r.exitCode, r.stderr)
 	}
@@ -406,7 +406,7 @@ func TestMock_CredentialSecretGet_MasksInText(t *testing.T) {
 	// JSON mode should show full value.
 	r2 := runAGR(t, ts.URL, "credential", "secret", "get",
 		"--credential-provider-id", "agc-g",
-		"--token", "eyJ-tok", "-o", "json")
+		"--workload-identity-token", "eyJ-tok", "-o", "json")
 	if !strings.Contains(r2.stdout, "super-secret-value-1234") {
 		t.Fatalf("JSON mode should show full secret:\n%s", r2.stdout)
 	}
