@@ -187,8 +187,8 @@ func TestTransportLifecycleFailures(t *testing.T) {
 				case err := <-done:
 					t.Fatalf("exited before request arrived: %v\n%s\n%s", err, stdout.String(), stderr.String())
 				case <-ctx.Done():
-					<-done
-					t.Fatal("request never reached server")
+					err := <-done
+					t.Fatalf("request never reached server: %v", err)
 				}
 				if tc.mode == "cancel" {
 					if _, err := stdin.Write([]byte{1}); err != nil {
