@@ -2,6 +2,88 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0-preview.1] - 2026-10-16
+
+### Breaking Changes
+- Move Session Space commands from `agr session-space ...` to
+  `agr session space ...`, and schema IDs from `session-space.*` to
+  `session.space.*`. The old paths and IDs have no aliases; update preview
+  scripts to use the new paths.
+- `agr volume-template create` now requires `--volume-name-pattern` (or
+  `VolumeNamePattern` in `--request`), matching the server contract. Include
+  `${reuse_key}` in the volume name and storage path patterns.
+- Some failures of existing commands now return a different `Failure.Code`,
+  `Failure.Kind`, or exit code. Update scripts that branch on these fields:
+  - `ClientError.NetworkError` now has `Kind=network` instead of `error`, with a
+    connectivity-oriented hint and an `agr explain` entry; the exit code stays 1.
+  - `agr instance mobile connect` startup failures that returned
+    `INTERNAL_ERROR` (exit 1) now keep the background tunnel's classification,
+    such as `PORT_IN_USE` (exit 2), `TUNNEL_AUTH_FAILED` (exit 4),
+    `TUNNEL_READY_TIMEOUT`, `TUNNEL_EXITED`, or the cloud API error code.
+  - `agr instance login --non-interactive` run from a terminal now returns
+    `TTY_REQUIRED` instead of `CLI_ERROR`; the exit code stays 2. Without a
+    TTY, the command already returned `TTY_REQUIRED` and is unchanged.
+  - `agr pre-cache-image-task get` without a complete selector returns
+    `MISSING_REQUIRED_INPUT` instead of `INVALID_USAGE` or
+    `MISSING_REQUIRED_FLAG`; the exit code stays 2.
+- An unknown command with `--help -o json` now fails with `INVALID_USAGE` and
+  exit code 2, consistent with text mode, instead of printing root help with
+  exit code 0. Use `agr --help -o json` or `agr schema -o json` to list
+  commands.
+
+### Features
+- Add human-readable text output for Session Space, Session, and Event
+  commands, including details, tables, and pagination. `agr session get` now
+  exposes `--num-recent-events` and `--after-timestamp`; its current API
+  response has no event list, so use `agr session event list` to read history.
+- Add Beta sandbox snapshot commands (`agr instance snapshot create`, `list`,
+  and `delete`). `agr instance create` can now clone an existing instance with
+  `--source-instance-id` or restore an ACTIVE disk-only snapshot into a new
+  instance with `--snapshot-id`.
+- Add `--pre-cache-image-id` to `agr pre-cache-image-task get`, as an
+  alternative to the image digest, image, and registry type selector. Pre-cache
+  task JSON output preserves `PreCacheImageId` from creation and the ID,
+  source type, cached size, creation time, and last-used time from retrieval
+  when returned by the service.
+- `--debug` and `AGR_DEBUG=1` now also save full redacted debug logs to
+  `~/.agr/logs/` and print the log path on exit; `--debug-log <path>` enables
+  debug and appends to a chosen file. Failures keep their original cause, with
+  known credential values redacted.
+- Failures now include optional `Failure.Details` context, such as the stage,
+  operation, path, endpoint, HTTP status, and request ID, for configuration,
+  file, cloud API, proxy, and mobile tunnel errors. `agr schema -o json` now
+  lists the global flags in `GlobalFlags`.
+
+### Bug Fixes
+- Pass the effective cloud STS token and explicit `--cloud-endpoint` to the
+  background tunnel process in `agr instance mobile connect`, fixing lost
+  `--token` credentials and ignored endpoint overrides.
+- Fix token collisions in `agr credential secret get` and
+  `agr credential oauth2 acquire`: use `--workload-identity-token` for the
+  business WorkloadIdentityToken. The global `--token` flag now consistently
+  supplies the cloud STS token, alongside `TENCENTCLOUD_TOKEN` and `auth.token`.
+- Report a failure when `agr instance file download` cannot finish writing to
+  stdout or to the local file, instead of reporting success.
+- Report configuration file parse errors with the file path, line, and column.
+- Report `RequiresAuth: true` and the authentication failure codes for
+  `deployment get`, `deployment list`, `volume list`, and
+  `volume-template list`, and Session/Space/Event read commands in
+  `agr schema` and `agr explain`.
+- Use the JSON Schema type `integer` instead of `int64` for Registry list
+  pagination fields in `agr schema`.
+- Limit `deployment proxy` and `instance proxy` failure diagnostics to the
+  upstream origin unless `--verbose` is set, so request paths that carry
+  credentials are not logged by default.
+
+### Docs
+- Add snapshot, restore, and clone workflows, the Session workflow, Registry
+  commands, and debug log troubleshooting to README and README-zh, and update
+  the installation examples to v0.7.0.
+- Correct `agr instance delete` help to describe its TTY confirmation and
+  `--yes` behavior.
+- Base API patch verification requirements in CONTRIBUTING and
+  PATCH-VERIFICATION on the impact of each change.
+
 ## [0.7.0] - 2026-10-16
 
 ### Breaking Changes
