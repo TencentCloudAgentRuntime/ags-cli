@@ -70,6 +70,9 @@ confirms cleanup, including instances stopped, tools/volumes/templates absent
 and removal of the run-specific CFS directory. Supply the fixture via
 `AGR_VOLUME_CFS_FILESYSTEM_ID`, `AGR_VOLUME_TOOL_TYPE` and, when needed,
 `AGR_VOLUME_TOOL_ROLE_ARN`; never substitute invented identifiers.
+For a private NFS endpoint, supply its reachable test network as a JSON object in
+`AGR_VOLUME_NETWORK_CONFIGURATION` (including `NetworkMode` and the appropriate
+`VpcConfig`). The default is `PUBLIC`; it does not establish VPC reachability.
 
 ```bash
 # Credentials and fixture variables come from the reviewed test environment.
