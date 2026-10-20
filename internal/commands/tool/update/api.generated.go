@@ -65,7 +65,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "CustomConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"}}", Examples: []string{"agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}],\"Resources\":{\"Storage\":\"10Gi\"}}'"}, Type: command.FlagString},
+					{Name: "custom-configuration", Flag: "custom-configuration", Usage: "CustomConfiguration JSON object, @file, or - for stdin", Format: "{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Env\":[{\"Name\":\"KEY\",\"Value\":\"VAL\"}],\"Resources\":{\"CPU\":\"2\",\"Memory\":\"4Gi\",\"Storage\":\"10Gi\"},\"SecurityContext\":{\"Privileged\":false,\"Capabilities\":{\"Add\":[\"NET_BIND_SERVICE\"],\"Drop\":[\"ALL\"]}}}", Examples: []string{"agr tool update sdt-xxxx --custom-configuration '{\"Env\":[{\"Name\":\"MY_VAR\",\"Value\":\"new-value\"}],\"Resources\":{\"Storage\":\"10Gi\"}}'", "agr tool update sdt-xxxx --custom-configuration '{\"SecurityContext\":{\"Privileged\":false,\"Capabilities\":{\"Drop\":[\"ALL\"]}}}' -o text"}, Values: []string{"SecurityContext: container privileges and POSIX capabilities; Privileged defaults to true in the API"}, Type: command.FlagString},
 				},
 			},
 			{

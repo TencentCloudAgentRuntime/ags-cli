@@ -2,10 +2,49 @@ package controlplane
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
+
+func TestFillRequestSupportsStorageSecurityContract(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		request interface {
+			jsonRequest
+			ToJsonString() string
+		}
+	}{
+		{"tool.create", ags.NewCreateSandboxToolRequest()},
+		{"tool.update", ags.NewUpdateSandboxToolRequest()},
+		{"instance.create", ags.NewStartSandboxInstanceRequest()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var payload map[string]any
+			if err := json.Unmarshal([]byte(`{"CustomConfiguration":{"SecurityContext":{"Privileged":false,"Capabilities":{"Add":["NET_BIND_SERVICE"],"Drop":["ALL"]}}}}`), &payload); err != nil {
+				t.Fatal(err)
+			}
+			if tc.name == "tool.create" {
+				var mounts []any
+				if err := json.Unmarshal([]byte(`[{"Name":"existing","Volume":{"VolumeId":"vol-test"}},{"Name":"named","Volume":{"VolumeName":"workspace"}},{"Name":"derived","VolumeTemplate":{"VolumeTemplateName":"sessions","ReuseKey":"${metadata.session_id}"}}]`), &mounts); err != nil {
+					t.Fatal(err)
+				}
+				payload["StorageMounts"] = mounts
+			}
+			if err := fillRequest(tc.name, payload, tc.request); err != nil {
+				t.Fatal(err)
+			}
+			var got map[string]any
+			if err := json.Unmarshal([]byte(tc.request.ToJsonString()), &got); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, payload) {
+				t.Fatalf("SDK dropped nested fields or explicit false: got %#v, want %#v", got, payload)
+			}
+		})
+	}
+}
 
 func TestFillRequestSupportsToolComputerConfiguration(t *testing.T) {
 	payload := map[string]any{

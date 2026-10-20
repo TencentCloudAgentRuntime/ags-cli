@@ -186,8 +186,8 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 				t.Fatalf("preview omits %s: %v %s", group, err, out)
 			}
 		}
-		// SourceVolumeId is disabled: neither channel may advertise it, and the
-		// mount references must only appear in the preview skeleton.
+		// SourceVolumeId remains disabled. Canonical mount references belong to
+		// both channels even while Volume management commands remain preview-only.
 		out, err := exec.CommandContext(t.Context(), binary, "volume", "create", "--help").CombinedOutput()
 		if err != nil || strings.Contains(string(out), "source-volume-id") {
 			t.Fatalf("disabled SourceVolumeId exposed: %v %s", err, out)
@@ -199,17 +199,14 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 		if err != nil || strings.Contains(string(out), "AgentCbs") || strings.Contains(string(out), "AgentCBS") {
 			t.Fatalf("deferred AgentCBS create shape exposed: %v %s", err, out)
 		}
-		for _, tc := range []struct {
-			binary string
-			want   bool
-		}{{binary, true}, {stable, false}} {
-			out, err := exec.CommandContext(t.Context(), tc.binary, "tool", "create", "--generate-skeleton").CombinedOutput()
+		for _, candidate := range []string{binary, stable} {
+			out, err := exec.CommandContext(t.Context(), candidate, "tool", "create", "--generate-skeleton").CombinedOutput()
 			if err != nil {
 				t.Fatalf("skeleton: %v %s", err, out)
 			}
 			for _, reference := range []string{`"VolumeTemplateName"`, `"ReuseKey"`} {
-				if strings.Contains(string(out), reference) != tc.want {
-					t.Fatalf("mount reference %s present=%v, want %v: %s", reference, !tc.want, tc.want, out)
+				if !strings.Contains(string(out), reference) {
+					t.Fatalf("canonical mount reference %s missing: %s", reference, out)
 				}
 			}
 		}

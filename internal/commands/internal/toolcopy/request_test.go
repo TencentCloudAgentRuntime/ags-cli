@@ -1,5 +1,3 @@
-//go:build preview
-
 package toolcopy
 
 import "testing"

@@ -68,8 +68,8 @@ func Module() command.Module {
 			{
 				Name:     "custom-configuration",
 				Usage:    "CustomConfiguration JSON object for the debug instance, @file, or - for stdin",
-				Format:   `{"Env":[{"Name":"KEY","Value":"VAL"}]}`,
-				Examples: []string{`agr instance debug --tool-id sdt-xxxx --custom-configuration '{"Env":[{"Name":"MY_VAR","Value":"hello"}]}'`},
+				Format:   `{"Env":[{"Name":"KEY","Value":"VAL"}],"SecurityContext":{"Privileged":false,"Capabilities":{"Drop":["ALL"]}}}`,
+				Examples: []string{`agr instance debug --tool-id sdt-xxxx --custom-configuration '{"Env":[{"Name":"MY_VAR","Value":"hello"}]}'`, `agr instance debug --tool-id sdt-xxxx --custom-configuration '{"SecurityContext":{"Privileged":false,"Capabilities":{"Drop":["ALL"]}}}' -o text`},
 				Type:     command.FlagString, Workflow: true,
 			},
 			{

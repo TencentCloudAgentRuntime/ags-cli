@@ -30,8 +30,10 @@ and response shapes are now populated; the empty-shape warning in the original
   from help metadata; a migration hint does not register an old command alias.
 - DescribeQuotaOverview is explicitly raw-only via
   `agr api call DescribeQuotaOverview --request '{}'`; no new quota resource group.
-- Volume/VolumeTemplate and storage-mount extensions remain preview-only. The
-  remaining 36 API overlay operations rebase cleanly onto the canonical snapshot.
+- At the snapshot recorded above, Volume/VolumeTemplate and storage-mount
+  extensions were preview-only; the remaining 36 API overlay operations rebased
+  cleanly. For the later canonical mount-reference promotion and retained preview
+  management commands, see [issue #156 verification](storage-security-contract.md).
 - AGS/common are pinned to v1.3.188; this AGS release requires common v1.3.188.
   The repository still compares the full request and response shape before SDK
   decoding and uses signed dynamic JSON for unsupported contracts. SDK runtime
