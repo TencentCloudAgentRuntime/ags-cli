@@ -1,72 +1,6 @@
 [
   {
     "op": "add",
-    "path": "/objects/VolumeRef",
-    "value": {
-      "document": "对 Volume 的引用。VolumeName 与 VolumeId 至少提供一个。",
-      "members": [
-        {
-          "disabled": false,
-          "document": "<p>Volume 名称。服务端在当前认证 AppId 下解析为稳定 VolumeId。</p>",
-          "member": "string",
-          "name": "VolumeName",
-          "required": false,
-          "type": "string",
-          "example": "agent-workspace",
-          "output_required": false,
-          "value_allowed_null": false
-        },
-        {
-          "disabled": false,
-          "document": "<p>稳定 Volume ID，格式 vol-xxxxxxxx。</p>",
-          "member": "string",
-          "name": "VolumeId",
-          "required": false,
-          "type": "string",
-          "example": "vol-a1b2c3d4",
-          "output_required": false,
-          "value_allowed_null": false
-        }
-      ],
-      "type": "object",
-      "usage": "both"
-    }
-  },
-  {
-    "op": "add",
-    "path": "/objects/VolumeTemplateRef",
-    "value": {
-      "document": "对 VolumeTemplate 的引用以及派生规则。",
-      "members": [
-        {
-          "disabled": false,
-          "document": "<p>VolumeTemplate 名称。</p>",
-          "member": "string",
-          "name": "VolumeTemplateName",
-          "required": true,
-          "type": "string",
-          "example": "agent-session-workspace",
-          "output_required": false,
-          "value_allowed_null": false
-        },
-        {
-          "disabled": false,
-          "document": "<p>复用键，用于把模板派生成具体 Volume。可为字面量，也可为 ${metadata.xxx} 引用实例元数据。</p>",
-          "member": "string",
-          "name": "ReuseKey",
-          "required": false,
-          "type": "string",
-          "example": "${metadata.session_id}",
-          "output_required": false,
-          "value_allowed_null": false
-        }
-      ],
-      "type": "object",
-      "usage": "both"
-    }
-  },
-  {
-    "op": "add",
     "path": "/objects/CosSource",
     "value": {
       "document": "COS 真实存储来源。",
@@ -1263,36 +1197,6 @@
       "name": "删除 VolumeTemplate",
       "output": "DeleteVolumeTemplateResponse",
       "status": "online"
-    }
-  },
-  {
-    "op": "add",
-    "path": "/objects/StorageMount/members/-",
-    "value": {
-      "disabled": false,
-      "document": "<p>挂载已有 Volume。与 StorageSource、VolumeTemplate 互斥。</p>",
-      "member": "VolumeRef",
-      "name": "Volume",
-      "required": false,
-      "type": "object",
-      "example": "无",
-      "output_required": false,
-      "value_allowed_null": true
-    }
-  },
-  {
-    "op": "add",
-    "path": "/objects/StorageMount/members/-",
-    "value": {
-      "disabled": false,
-      "document": "<p>挂载 VolumeTemplate，按 ReuseKey 派生或复用具体 Volume。与 StorageSource、Volume 互斥。</p>",
-      "member": "VolumeTemplateRef",
-      "name": "VolumeTemplate",
-      "required": false,
-      "type": "object",
-      "example": "无",
-      "output_required": false,
-      "value_allowed_null": true
     }
   }
 ]

@@ -2,8 +2,10 @@ package patchscenarios
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +13,78 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchcoverage"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 )
+
+func TestMountCreateToolUsesFixtureNetwork(t *testing.T) {
+	for _, raw := range []string{"", `{"NetworkMode":"VPC","VpcConfig":{"NetworkConnectorId":"nc-fixture","SubnetIds":["subnet-fixture"],"SecurityGroupIds":["sg-fixture"]}}`} {
+		t.Run(raw, func(t *testing.T) {
+			t.Setenv("AGR_VOLUME_CFS_FILESYSTEM_ID", "cfs-fixture")
+			t.Setenv("AGR_VOLUME_TOOL_TYPE", "code-interpreter")
+			t.Setenv("AGR_VOLUME_NETWORK_CONFIGURATION", raw)
+			fixture, err := volumeMountStorageFromEnv()
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := map[string]any{"NetworkMode": "PUBLIC"}
+			if raw != "" {
+				if err := json.Unmarshal([]byte(raw), &want); err != nil {
+					t.Fatal(err)
+				}
+			}
+			requestLog := filepath.Join(t.TempDir(), "request.json")
+			binary := filepath.Join(t.TempDir(), "fake-agr")
+			script := `#!/bin/sh
+case "$1 $2" in
+  "tool create")
+    printf '%s' "$4" > "$REQUEST_LOG"
+    printf '%s\n' '{"Status":"succeeded","Data":{"ToolId":"tool-fixture"}}'
+    ;;
+  "tool list")
+    printf '%s\n' '{"Status":"succeeded","Data":{"Items":[{"ToolId":"tool-fixture","Status":"ACTIVE"}]}}'
+    ;;
+  *) exit 1 ;;
+esac
+`
+			if err := os.WriteFile(binary, []byte(script), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			registry := patchtest.Registry{"fixture-network": {
+				Assertions: []string{"network.forwarded"},
+				Run: func(s *patchtest.Session) error {
+					s.NoResources() // The fake CLI creates no resources.
+					if _, err := mountCreateTool(s, s.Context, &volumeMountOwned{}, fixture, "test", nil); err != nil {
+						return err
+					}
+					data, err := os.ReadFile(requestLog)
+					if err != nil {
+						return err
+					}
+					var request map[string]any
+					if err := json.Unmarshal(data, &request); err != nil {
+						return err
+					}
+					return s.Assert("network.forwarded", reflect.DeepEqual(request["NetworkConfiguration"], want))
+				},
+			}}
+			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{{Scenario: "fixture-network", Assertions: []string{"network.forwarded"}}}}
+			if _, err := patchtest.Run(t.Context(), plan, registry, binary, []string{"REQUEST_LOG=" + requestLog}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestVolumeMountRejectsInvalidFixtureNetwork(t *testing.T) {
+	t.Setenv("AGR_VOLUME_CFS_FILESYSTEM_ID", "cfs-fixture")
+	t.Setenv("AGR_VOLUME_TOOL_TYPE", "code-interpreter")
+	for _, raw := range []string{`invalid`, `null`, `[]`, `{}`, `{"NetworkMode":false}`} {
+		t.Run(raw, func(t *testing.T) {
+			t.Setenv("AGR_VOLUME_NETWORK_CONFIGURATION", raw)
+			if _, err := volumeMountStorageFromEnv(); err == nil {
+				t.Fatal("accepted malformed fixture network")
+			}
+		})
+	}
+}
 
 func TestMountStartInstanceTracksWaitFailureForCleanup(t *testing.T) {
 	for _, tc := range []struct {

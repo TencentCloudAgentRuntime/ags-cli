@@ -49,6 +49,7 @@ type volumeEnvelope struct {
 type volumeStorage struct {
 	cosEndpoint, cosBucket, cfsFileSystemID string
 	storageRoleArn, toolType, toolRoleArn   string
+	networkConfiguration                    map[string]any
 }
 
 func volumeStorageFromEnv() (volumeStorage, error) {

@@ -262,9 +262,10 @@ func runVolumeMountLifecycle(s *patchtest.Session) error {
 
 func volumeMountStorageFromEnv() (volumeStorage, error) {
 	fixture := volumeStorage{
-		cfsFileSystemID: os.Getenv("AGR_VOLUME_CFS_FILESYSTEM_ID"),
-		toolType:        os.Getenv("AGR_VOLUME_TOOL_TYPE"),
-		toolRoleArn:     os.Getenv("AGR_VOLUME_TOOL_ROLE_ARN"),
+		cfsFileSystemID:      os.Getenv("AGR_VOLUME_CFS_FILESYSTEM_ID"),
+		toolType:             os.Getenv("AGR_VOLUME_TOOL_TYPE"),
+		toolRoleArn:          os.Getenv("AGR_VOLUME_TOOL_ROLE_ARN"),
+		networkConfiguration: map[string]any{"NetworkMode": "PUBLIC"},
 	}
 	for name, value := range map[string]string{
 		"AGR_VOLUME_CFS_FILESYSTEM_ID": fixture.cfsFileSystemID,
@@ -272,6 +273,16 @@ func volumeMountStorageFromEnv() (volumeStorage, error) {
 	} {
 		if strings.TrimSpace(value) == "" {
 			return volumeStorage{}, fmt.Errorf("%s must identify a reviewed disposable mount fixture", name)
+		}
+	}
+	if raw := os.Getenv("AGR_VOLUME_NETWORK_CONFIGURATION"); raw != "" {
+		fixture.networkConfiguration = nil
+		if err := json.Unmarshal([]byte(raw), &fixture.networkConfiguration); err != nil {
+			return volumeStorage{}, errors.New("AGR_VOLUME_NETWORK_CONFIGURATION must be a JSON object")
+		}
+		mode, _ := fixture.networkConfiguration["NetworkMode"].(string)
+		if strings.TrimSpace(mode) == "" {
+			return volumeStorage{}, errors.New("AGR_VOLUME_NETWORK_CONFIGURATION requires NetworkMode")
 		}
 	}
 	return fixture, nil
@@ -326,7 +337,7 @@ func mountCreateTemplate(s *patchtest.Session, ctx context.Context, owned *volum
 func mountCreateTool(s *patchtest.Session, ctx context.Context, owned *volumeMountOwned, storage volumeStorage, name string, mounts []any) (string, error) {
 	request := map[string]any{
 		"ToolName": name, "ToolType": storage.toolType,
-		"NetworkConfiguration": map[string]any{"NetworkMode": "PUBLIC"}, "StorageMounts": mounts,
+		"NetworkConfiguration": storage.networkConfiguration, "StorageMounts": mounts,
 	}
 	if storage.toolRoleArn != "" {
 		request["RoleArn"] = storage.toolRoleArn
