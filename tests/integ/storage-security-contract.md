@@ -27,6 +27,12 @@ release 3.1.183.1. The checked-in snapshot matches upstream bytes, MD5
   over readback names in copied requests. Explicit configuration overrides keep
   their existing replacement semantics; debug's custom configuration overrides
   the instance configuration.
+- `tool fork --custom-configuration` replaces the entire object. Omitted fields
+  are not inherited: repeat every setting to retain, including `SecurityContext`
+  when changing resources. Omitting `SecurityContext` or its `Privileged` field
+  restores the API default `Privileged:true`. The fork help and examples make
+  this boundary explicit; the signed-request tests cover partial and empty
+  object overrides as well as inheritance and explicit security overrides.
 
 ## Local verification
 
@@ -44,16 +50,9 @@ Run both normal and `-tags preview` full suites, `apipatch check-all`,
 `apipatch rebase --upstream <downloaded-api.json>`, `apipatch coverage` and
 `cobragen check`. Check the affected help/schema in both channel binaries.
 
-Verified on 2026-10-20 against the local working tree:
-
-- `go test -race -p 4 -count=1 ./...` and the same command with `-tags preview`
-  passed in an isolated home without cloud credentials.
-- Canonical byte comparison, module verification, patch validation/rebase/coverage
-  and generated-output checks passed.
-- Actual stable/preview binary help/schema, command isolation, and Markdown/man
-  generation passed.
-
-These are local contract/transport checks. Real service acceptance, privilege
+Dated results and exact source/candidate identities are recorded in the
+[PR #157 verification report](https://github.com/TencentCloudAgentRuntime/ags-cli/pull/157#user-content-verification-report).
+These commands perform local contract/transport checks. Real service acceptance, privilege
 behavior and mounted data are not established by the loopback fixture.
 
 ## Real-service acceptance after promotion
@@ -78,7 +77,7 @@ For a private NFS endpoint, supply its reachable test network as a JSON object i
 # Credentials and fixture variables come from the reviewed test environment.
 AGR_REGION=<region> \
 AGR_VOLUME_MOUNT_E2E_BINARY=/absolute/path/to/agr-preview \
-go test ./internal/patchscenarios -run '^TestVolumeMountLive$' -count=1 -v -timeout=30m
+go test -tags preview ./internal/patchscenarios -run '^TestVolumeMountLive$' -count=1 -v -timeout=30m
 ```
 
 This explicit entry point runs all 12 registered mount assertions: Volume

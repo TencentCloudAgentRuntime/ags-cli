@@ -20,9 +20,10 @@ func TestStorageSecuritySignedRequests(t *testing.T) {
 	customJSON := `{"SecurityContext":{"Privileged":false,"Capabilities":{"Add":["NET_BIND_SERVICE"],"Drop":["ALL"]}}}`
 	mountsJSON := `[{"Name":"by-id","MountPath":"/id","ReadOnly":false,"Volume":{"VolumeId":"vol-test"}},{"Name":"by-name","MountPath":"/name","ReadOnly":true,"Volume":{"VolumeName":"workspace"}},{"Name":"template","MountPath":"/template","VolumeTemplate":{"VolumeTemplateName":"sessions","ReuseKey":"${metadata.session_id}"}}]`
 	overrideJSON := `{"SecurityContext":{"Privileged":true,"Capabilities":{"Drop":["NET_RAW"]}}}`
-	var custom, override map[string]any
+	partialJSON := `{"Resources":{"CPU":"4","Memory":"8Gi"}}`
+	var custom, override, partial map[string]any
 	var mounts []any
-	for raw, target := range map[string]any{customJSON: &custom, mountsJSON: &mounts, overrideJSON: &override} {
+	for raw, target := range map[string]any{customJSON: &custom, mountsJSON: &mounts, overrideJSON: &override, partialJSON: &partial} {
 		if err := json.Unmarshal([]byte(raw), target); err != nil {
 			t.Fatal(err)
 		}
@@ -86,6 +87,8 @@ func TestStorageSecuritySignedRequests(t *testing.T) {
 	cases = append(cases,
 		testCase{name: "fork inherits", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy"}, wantCustom: custom, wantMounts: true},
 		testCase{name: "fork overrides", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--custom-configuration", overrideJSON}, wantCustom: override, wantMounts: true},
+		testCase{name: "fork partial configuration replaces source", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--custom-configuration", partialJSON}, wantCustom: partial, wantMounts: true},
+		testCase{name: "fork empty configuration replaces source", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--custom-configuration", "{}"}, wantCustom: map[string]any{}, wantMounts: true},
 		testCase{name: "debug inherits", action: "CreateSandboxTool", args: []string{"instance", "debug", "--tool-id", "sdt-source"}, wantCustom: custom, wantMounts: true, debug: true},
 		testCase{name: "debug instance overrides", action: "StartSandboxInstance", args: []string{"instance", "debug", "--tool-id", "sdt-source", "--custom-configuration", overrideJSON}, wantCustom: override},
 	)
@@ -140,6 +143,9 @@ func TestStorageSecuritySignedRequests(t *testing.T) {
 				configuration, _ := request["CustomConfiguration"].(map[string]any)
 				if !reflect.DeepEqual(configuration["SecurityContext"], tc.wantCustom["SecurityContext"]) {
 					t.Fatalf("security context lost: %#v", configuration)
+				}
+				if strings.HasPrefix(tc.name, "fork ") && !reflect.DeepEqual(configuration, tc.wantCustom) {
+					t.Fatalf("fork configuration = %#v, want whole-object replacement %#v", configuration, tc.wantCustom)
 				}
 				if tc.wantMounts {
 					got, _ := request["StorageMounts"].([]any)
@@ -224,5 +230,47 @@ func TestStorageSecurityHelpAndSchema(t *testing.T) {
 				requireCliFlag(t, schema, "StorageMounts", "storage-mounts")
 			}
 		})
+	}
+}
+
+func TestForkCustomConfigurationHelp(t *testing.T) {
+	cmd, ok := findCobraCommand(contractRoot(), "tool.fork")
+	if !ok {
+		t.Fatal("tool fork command missing")
+	}
+	help := commandHelp(t, cmd)
+	for _, fragment := range []string{"Replace the entire CustomConfiguration", "omitted fields are not inherited", "repeat SecurityContext", "Privileged defaults to true"} {
+		if !strings.Contains(help, fragment) {
+			t.Errorf("fork help missing %q", fragment)
+		}
+	}
+	schema := schemaForCommand(t, "tool.fork")
+	for _, name := range []string{"custom-configuration", "computer-configuration"} {
+		examples := schema.Flags[name].Examples
+		if len(examples) == 0 {
+			t.Fatalf("%s lacks a fork example", name)
+		}
+		for _, example := range examples {
+			if !strings.HasPrefix(example, "agr tool fork ") {
+				t.Errorf("%s example invokes a different command: %s", name, example)
+			}
+			_, rest, overridesCustom := strings.Cut(example, "--custom-configuration '")
+			if !overridesCustom {
+				if name == "custom-configuration" {
+					t.Error("custom configuration example lacks its flag")
+				}
+				continue
+			}
+			raw, _, _ := strings.Cut(rest, "'")
+			var configuration struct {
+				SecurityContext *struct{ Privileged *bool }
+			}
+			if err := json.Unmarshal([]byte(raw), &configuration); err != nil {
+				t.Fatal(err)
+			}
+			if configuration.SecurityContext == nil || configuration.SecurityContext.Privileged == nil || *configuration.SecurityContext.Privileged {
+				t.Errorf("%s example drops explicit privilege restrictions: %s", name, example)
+			}
+		}
 	}
 }
