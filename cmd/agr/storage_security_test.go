@@ -21,20 +21,22 @@ func TestStorageSecuritySignedRequests(t *testing.T) {
 	mountsJSON := `[{"Name":"by-id","MountPath":"/id","ReadOnly":false,"Volume":{"VolumeId":"vol-test"}},{"Name":"by-name","MountPath":"/name","ReadOnly":true,"Volume":{"VolumeName":"workspace"}},{"Name":"template","MountPath":"/template","VolumeTemplate":{"VolumeTemplateName":"sessions","ReuseKey":"${metadata.session_id}"}}]`
 	overrideJSON := `{"SecurityContext":{"Privileged":true,"Capabilities":{"Drop":["NET_RAW"]}}}`
 	partialJSON := `{"Resources":{"CPU":"4","Memory":"8Gi"}}`
+	replacementMountsJSON := `[{"Name":"replacement","MountPath":"/replacement","Volume":{"VolumeId":"vol-replacement"}}]`
 	var custom, override, partial map[string]any
-	var mounts []any
-	for raw, target := range map[string]any{customJSON: &custom, mountsJSON: &mounts, overrideJSON: &override, partialJSON: &partial} {
+	var mounts, replacementMounts []any
+	for raw, target := range map[string]any{customJSON: &custom, mountsJSON: &mounts, overrideJSON: &override, partialJSON: &partial, replacementMountsJSON: &replacementMounts} {
 		if err := json.Unmarshal([]byte(raw), target); err != nil {
 			t.Fatal(err)
 		}
 	}
 	type testCase struct {
-		name, action string
-		args         []string
-		stdin        string
-		wantCustom   map[string]any
-		wantMounts   bool
-		debug        bool
+		name, action   string
+		args           []string
+		stdin          string
+		wantCustom     map[string]any
+		wantMounts     bool
+		mountsOverride []any
+		debug          bool
 	}
 	var cases []testCase
 	for _, command := range []struct {
@@ -89,6 +91,8 @@ func TestStorageSecuritySignedRequests(t *testing.T) {
 		testCase{name: "fork overrides", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--custom-configuration", overrideJSON}, wantCustom: override, wantMounts: true},
 		testCase{name: "fork partial configuration replaces source", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--custom-configuration", partialJSON}, wantCustom: partial, wantMounts: true},
 		testCase{name: "fork empty configuration replaces source", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--custom-configuration", "{}"}, wantCustom: map[string]any{}, wantMounts: true},
+		testCase{name: "fork replaces storage mounts", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--storage-mounts", replacementMountsJSON}, wantCustom: custom, wantMounts: true, mountsOverride: replacementMounts},
+		testCase{name: "fork clears storage mounts", action: "CreateSandboxTool", args: []string{"tool", "fork", "sdt-source", "-n", "copy", "--storage-mounts", "[]"}, wantCustom: custom, wantMounts: true, mountsOverride: []any{}},
 		testCase{name: "debug inherits", action: "CreateSandboxTool", args: []string{"instance", "debug", "--tool-id", "sdt-source"}, wantCustom: custom, wantMounts: true, debug: true},
 		testCase{name: "debug instance overrides", action: "StartSandboxInstance", args: []string{"instance", "debug", "--tool-id", "sdt-source", "--custom-configuration", overrideJSON}, wantCustom: override},
 	)
@@ -149,11 +153,15 @@ func TestStorageSecuritySignedRequests(t *testing.T) {
 				}
 				if tc.wantMounts {
 					got, _ := request["StorageMounts"].([]any)
-					wantLength := len(mounts)
+					want := mounts
+					if tc.mountsOverride != nil {
+						want = tc.mountsOverride
+					}
+					wantLength := len(want)
 					if tc.debug {
 						wantLength++ // The debug workflow adds its envd image mount.
 					}
-					if len(got) != wantLength || !reflect.DeepEqual(got[:len(mounts)], mounts) {
+					if len(got) != wantLength || !slices.EqualFunc(got[:len(want)], want, reflect.DeepEqual) {
 						t.Fatalf("volume references lost: %#v", got)
 					}
 				}
@@ -233,19 +241,28 @@ func TestStorageSecurityHelpAndSchema(t *testing.T) {
 	}
 }
 
-func TestForkCustomConfigurationHelp(t *testing.T) {
+func TestForkConfigurationHelp(t *testing.T) {
 	cmd, ok := findCobraCommand(contractRoot(), "tool.fork")
 	if !ok {
 		t.Fatal("tool fork command missing")
 	}
 	help := commandHelp(t, cmd)
-	for _, fragment := range []string{"Replace the entire CustomConfiguration", "omitted fields are not inherited", "repeat SecurityContext", "Privileged defaults to true"} {
-		if !strings.Contains(help, fragment) {
-			t.Errorf("fork help missing %q", fragment)
+	schema := schemaForCommand(t, "tool.fork")
+	for name, fragments := range map[string][]string{
+		"custom-configuration": {"Replace the entire CustomConfiguration", "omitted fields are not inherited", "repeat SecurityContext", "Privileged defaults to true"},
+		"storage-mounts":       {"Replace the entire StorageMounts array", "omitted mounts are not inherited"},
+	} {
+		flag := cmd.Flags().Lookup(name)
+		if flag == nil {
+			t.Fatalf("%s flag missing", name)
+		}
+		for _, fragment := range fragments {
+			if !strings.Contains(flag.Usage, fragment) || !strings.Contains(help, fragment) || !strings.Contains(schema.Flags[name].Description, fragment) {
+				t.Errorf("%s help/schema missing %q", name, fragment)
+			}
 		}
 	}
-	schema := schemaForCommand(t, "tool.fork")
-	for _, name := range []string{"custom-configuration", "computer-configuration"} {
+	for _, name := range []string{"custom-configuration", "computer-configuration", "storage-mounts"} {
 		examples := schema.Flags[name].Examples
 		if len(examples) == 0 {
 			t.Fatalf("%s lacks a fork example", name)
@@ -253,6 +270,17 @@ func TestForkCustomConfigurationHelp(t *testing.T) {
 		for _, example := range examples {
 			if !strings.HasPrefix(example, "agr tool fork ") {
 				t.Errorf("%s example invokes a different command: %s", name, example)
+			}
+			if !strings.Contains(help, example) {
+				t.Errorf("%s schema example absent from runtime help: %s", name, example)
+			}
+			if name == "storage-mounts" {
+				_, rest, found := strings.Cut(example, "--storage-mounts '")
+				raw, _, _ := strings.Cut(rest, "'")
+				var mounts []map[string]any
+				if err := json.Unmarshal([]byte(raw), &mounts); !found || err != nil || len(mounts) == 0 {
+					t.Errorf("storage-mounts example lacks a valid mount array: %s", example)
+				}
 			}
 			_, rest, overridesCustom := strings.Cut(example, "--custom-configuration '")
 			if !overridesCustom {

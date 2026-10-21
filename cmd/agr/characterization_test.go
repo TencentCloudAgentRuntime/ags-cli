@@ -702,6 +702,7 @@ type commandSchemaSnapshot struct {
 	Failures []string
 	Flags    map[string]struct {
 		Type             string
+		Description      string
 		Format           string
 		Examples         []string
 		Values           []string
@@ -832,6 +833,7 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 			Flags    []struct {
 				Name             string   `json:"Name"`
 				Type             string   `json:"Type"`
+				Description      string   `json:"Description"`
 				Format           string   `json:"Format"`
 				Examples         []string `json:"Examples"`
 				Values           []string `json:"Values"`
@@ -869,6 +871,7 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 		Examples: append([]string(nil), env.Data.Examples...),
 		Flags: map[string]struct {
 			Type             string
+			Description      string
 			Format           string
 			Examples         []string
 			Values           []string
@@ -891,6 +894,7 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 	for _, flag := range env.Data.Flags {
 		snapshot.Flags[flag.Name] = struct {
 			Type             string
+			Description      string
 			Format           string
 			Examples         []string
 			Values           []string
@@ -898,6 +902,7 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 			AllowsOutput     []string
 		}{
 			Type:             flag.Type,
+			Description:      flag.Description,
 			Format:           flag.Format,
 			Examples:         append([]string(nil), flag.Examples...),
 			Values:           flag.Values,
