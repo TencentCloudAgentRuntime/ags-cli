@@ -15,7 +15,8 @@ release 3.1.183.1. The checked-in snapshot matches upstream bytes, MD5
   Both channel request skeletons include the canonical mount references.
   The overlay-only plan now selects `volume.lifecycle` alone; it cannot establish
   mount acceptance. `TestVolumeMountLive` independently selects the complete
-  `volume.mount-lifecycle` scenario and its registered assertions after promotion.
+  `volume.mount-lifecycle` scenario after promotion, checking its 12 assertion IDs
+  against an acceptance contract independent of the registry before live execution.
 - Pin AGS/common to v1.3.194, the AGS release containing the new structs and its
   required common version. The existing SDK compatibility/dynamic transport
   selection remains in place.
@@ -80,7 +81,7 @@ AGR_VOLUME_MOUNT_E2E_BINARY=/absolute/path/to/agr-preview \
 go test -tags preview ./internal/patchscenarios -run '^TestVolumeMountLive$' -count=1 -v -timeout=30m
 ```
 
-This explicit entry point runs all 12 registered mount assertions: Volume
+This explicit entry point runs all 12 required mount assertions: Volume
 name/ID and template readback, real data read/write, read-only enforcement,
 template reuse/isolation, fork, invalid references, Delete/Retain reclaim
 policies and cleanup. It uses the preview candidate because fixture management
