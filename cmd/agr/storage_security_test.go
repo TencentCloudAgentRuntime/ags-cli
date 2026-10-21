@@ -247,6 +247,11 @@ func TestForkConfigurationHelp(t *testing.T) {
 		t.Fatal("tool fork command missing")
 	}
 	help := commandHelp(t, cmd)
+	for line := range strings.SplitSeq(help, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "agr tool create ") {
+			t.Errorf("fork help contains a create example: %s", line)
+		}
+	}
 	schema := schemaForCommand(t, "tool.fork")
 	for name, fragments := range map[string][]string{
 		"custom-configuration": {"Replace the entire CustomConfiguration", "omitted fields are not inherited", "repeat SecurityContext", "Privileged defaults to true"},
@@ -262,12 +267,13 @@ func TestForkConfigurationHelp(t *testing.T) {
 			}
 		}
 	}
-	for _, name := range []string{"custom-configuration", "computer-configuration", "storage-mounts"} {
-		examples := schema.Flags[name].Examples
-		if len(examples) == 0 {
+	for _, name := range []string{"custom-configuration", "computer-configuration", "storage-mounts", "network-configuration", "tags", "log-configuration"} {
+		if len(schema.Flags[name].Examples) == 0 {
 			t.Fatalf("%s lacks a fork example", name)
 		}
-		for _, example := range examples {
+	}
+	for name, flag := range schema.Flags {
+		for _, example := range flag.Examples {
 			if !strings.HasPrefix(example, "agr tool fork ") {
 				t.Errorf("%s example invokes a different command: %s", name, example)
 			}
