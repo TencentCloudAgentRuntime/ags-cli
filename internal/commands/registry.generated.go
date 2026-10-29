@@ -44,6 +44,7 @@ import (
 	instanceget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/get"
 	instancelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/list"
 	instancelogin "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/login"
+	instancelookup "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/lookup"
 	instancemobileadb "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/mobile/adb"
 	instancemobileconnect "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/mobile/connect"
 	instancemobiledisconnect "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/mobile/disconnect"
@@ -138,6 +139,7 @@ func Registry() (*command.Registry, error) {
 		instanceget.Module(),
 		instancelist.Module(),
 		instancelogin.Module(),
+		instancelookup.Module(),
 		instancemobileadb.Module(),
 		instancemobileconnect.Module(),
 		instancemobiledisconnect.Module(),
