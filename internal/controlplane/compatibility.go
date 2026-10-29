@@ -26,6 +26,7 @@ var sdkShapes = map[string]sdkShape{
 	"UpdateSandboxTool":           {reflect.TypeFor[ags.UpdateSandboxToolRequest](), reflect.TypeFor[ags.UpdateSandboxToolResponseParams]()},
 	"StartSandboxInstance":        {reflect.TypeFor[ags.StartSandboxInstanceRequest](), reflect.TypeFor[ags.StartSandboxInstanceResponseParams]()},
 	"DescribeSandboxInstanceList": {reflect.TypeFor[ags.DescribeSandboxInstanceListRequest](), reflect.TypeFor[ags.DescribeSandboxInstanceListResponseParams]()},
+	"DescribeSandboxInstances":    {reflect.TypeFor[ags.DescribeSandboxInstancesRequest](), reflect.TypeFor[ags.DescribeSandboxInstancesResponseParams]()},
 	"UpdateSandboxInstance":       {reflect.TypeFor[ags.UpdateSandboxInstanceRequest](), reflect.TypeFor[ags.UpdateSandboxInstanceResponseParams]()},
 	"PauseSandboxInstance":        {reflect.TypeFor[ags.PauseSandboxInstanceRequest](), reflect.TypeFor[ags.PauseSandboxInstanceResponseParams]()},
 	"ResumeSandboxInstance":       {reflect.TypeFor[ags.ResumeSandboxInstanceRequest](), reflect.TypeFor[ags.ResumeSandboxInstanceResponseParams]()},
