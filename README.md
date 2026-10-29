@@ -233,6 +233,23 @@ The JSON output of these commands includes
 `Data.ExecutionContext.TemporarySandboxInstance` and
 `Data.ExecutionContext.Cleanup` so scripts can inspect the workflow.
 
+## Look up known instances
+
+Use `instance lookup` for 1 to 100 known instance IDs in the current region:
+
+```bash
+agr instance lookup ins-xxxx ins-yyyy -o text
+agr instance lookup ins-xxxx ins-yyyy -o json --jq '.Data.InstanceSet[] | {InstanceId, Status}'
+```
+
+Lookup returns persisted lifecycle states without live container health queries,
+pagination, or a total count. The service determines result order and duplicate
+handling; the CLI preserves the returned order. Missing, deleted, or inaccessible
+instances are omitted, and an empty result is successful. Requests must include
+at least one ID. The caller needs permission for `DescribeSandboxInstances`.
+Use `--request` with inline JSON, `@file`, or `-` for stdin as an alternative to
+positional IDs; the two input modes cannot be combined.
+
 ## Sandbox snapshots, restoration, and instance cloning
 
 The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.
@@ -487,6 +504,7 @@ agr explain <CODE>               Explain errors and fixes
 
 agr instance create              Create a new instance
 agr instance list                List instances
+agr instance lookup <id> [id...] Look up persisted instance states by ID
 agr instance snapshot create     Create a sandbox snapshot (Beta)
 agr instance snapshot list       List sandbox snapshots (Beta)
 agr instance snapshot delete     Request snapshot deletion (Beta)

@@ -323,6 +323,23 @@
                 }
             }
         },
+        "instance.lookup": {
+            "short": "Look up instances by ID",
+            "long": "Look up 1 to 100 known sandbox instance IDs in the current region. Returns persisted lifecycle states without querying live container health, pagination, or a total count. Result order and duplicate handling are determined by the service; the CLI preserves the returned order. Missing, deleted, or inaccessible instances are omitted; an empty result is successful. Requests must include at least one ID. Direct API callers need permission for DescribeSandboxInstances. Use instance list for filtering and live health observations where enabled.",
+            "examples": [
+                "agr instance lookup ins-xxxx -o text",
+                "agr instance lookup ins-xxxx ins-yyyy -o text",
+                "agr instance lookup --request '{\"InstanceIds\":[\"ins-xxxx\",\"ins-yyyy\"]}' -o json",
+                "agr instance lookup --request @lookup.json -o json",
+                "printf '%s' '{\"InstanceIds\":[\"ins-xxxx\"]}' | agr instance lookup --request - -o json"
+            ],
+            "fields": {
+                "InstanceIds": {
+                    "description": "Sandbox instance IDs to look up: 1 to 100 non-empty strings, each at most 64 bytes without surrounding whitespace. Empty lists are invalid.",
+                    "required_hint": "Run agr instance lookup <instance-id> [instance-id...], or provide --request '{\"InstanceIds\":[\"ins-xxxx\"]}'."
+                }
+            }
+        },
         "instance.list": {
             "short": "List instances",
             "long": "List sandbox instances with optional filters.",

@@ -959,6 +959,7 @@ func hasFlagType(flags []FlagSchema, typ string) bool {
 
 func buildHandwrittenSchemas() []CommandSchema {
 	schemas := []CommandSchema{
+		{Name: "instance.lookup", Failures: []string{"INVALID_USAGE", "MISSING_REQUIRED_ARG", "INVALID_REQUEST_INPUT", "INTERNAL_ERROR"}},
 		{Name: "instance.snapshot.create", Failures: []string{"INTERNAL_ERROR"}},
 		{Name: "instance.snapshot.list", Failures: []string{"INVALID_PAGINATION"}},
 		{Name: "instance.snapshot.delete", Failures: []string{"MISSING_REQUIRED_ARG"}},

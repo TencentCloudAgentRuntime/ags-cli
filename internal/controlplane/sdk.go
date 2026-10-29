@@ -190,6 +190,12 @@ func (s *SDK) Call(ctx context.Context, action string, request map[string]any) (
 			return nil, fmt.Errorf("failed to list instances: %w", err)
 		}
 		return result, nil
+	case "DescribeSandboxInstances":
+		req := ags.NewDescribeSandboxInstancesRequest()
+		if err := fillRequest("instance.lookup", request, req); err != nil {
+			return nil, err
+		}
+		return callDescribeSandboxInstances(ctx, apiClient, req)
 	case "UpdateSandboxInstance":
 		req := ags.NewUpdateSandboxInstanceRequest()
 		if err := fillRequest("instance.update", request, req); err != nil {
@@ -405,6 +411,14 @@ func callStartSandboxInstance(ctx context.Context, sdk *ags.Client, req *ags.Sta
 
 func callDescribeSandboxInstanceList(ctx context.Context, sdk *ags.Client, req *ags.DescribeSandboxInstanceListRequest) (*ags.DescribeSandboxInstanceListResponseParams, error) {
 	resp, err := client.CallCloud(ctx, "DescribeSandboxInstanceList", req, sdk.DescribeSandboxInstanceListWithContext)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Response, nil
+}
+
+func callDescribeSandboxInstances(ctx context.Context, sdk *ags.Client, req *ags.DescribeSandboxInstancesRequest) (*ags.DescribeSandboxInstancesResponseParams, error) {
+	resp, err := client.CallCloud(ctx, "DescribeSandboxInstances", req, sdk.DescribeSandboxInstancesWithContext)
 	if err != nil {
 		return nil, err
 	}

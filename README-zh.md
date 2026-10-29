@@ -216,6 +216,22 @@ agr instance exec \
 `Data.ExecutionContext.TemporarySandboxInstance` 与
 `Data.ExecutionContext.Cleanup`，方便脚本检查工作流。
 
+## 按 ID 点查实例
+
+已知实例 ID 时，使用 `instance lookup` 查询当前地域内的 1～100 个实例：
+
+```bash
+agr instance lookup ins-xxxx ins-yyyy -o text
+agr instance lookup ins-xxxx ins-yyyy -o json --jq '.Data.InstanceSet[] | {InstanceId, Status}'
+```
+
+点查返回持久化生命周期状态，不查询实时容器健康状态，也不分页或统计总数。
+结果顺序和重复 ID 的处理由服务端决定，CLI 保留服务端返回顺序。
+不存在、已删除或无权限的实例会被省略，空结果仍为成功；请求必须提供至少一个 ID。
+调用者需要 `DescribeSandboxInstances` 权限。
+也可以通过 `--request` 传入 inline JSON、`@file` 或 `-`（stdin），
+但不能与位置参数 ID 混用。
+
 ## 沙箱快照、恢复与实例克隆
 
 Runtime Snapshot API 当前为 Beta，后续可能发生不兼容变更或被弃用。
@@ -440,6 +456,7 @@ agr explain <CODE>               解释错误码与修复建议
 
 agr instance create              创建实例
 agr instance list                列出实例
+agr instance lookup <id> [id...] 按 ID 点查实例持久化状态
 agr instance snapshot create     创建沙箱快照（Beta）
 agr instance snapshot list       查询沙箱快照（Beta）
 agr instance snapshot delete     请求删除沙箱快照（Beta）

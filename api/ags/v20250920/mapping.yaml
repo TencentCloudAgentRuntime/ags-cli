@@ -171,6 +171,16 @@ actions:
           - flag: snapshot-ids
             type: string_array
 
+  DescribeSandboxInstances:
+    command: instance.lookup
+    request: DescribeSandboxInstancesRequest
+    response: DescribeSandboxInstancesResponse
+    status: mapped
+    fields:
+      InstanceIds:
+        positional: true
+        parser: common.default_string_array
+
   DescribeSandboxInstanceList:
     command: instance.list
     request: DescribeSandboxInstanceListRequest
