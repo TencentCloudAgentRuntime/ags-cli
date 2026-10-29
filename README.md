@@ -243,9 +243,10 @@ agr instance lookup ins-xxxx ins-yyyy -o json --jq '.Data.InstanceSet[] | {Insta
 ```
 
 Lookup returns persisted lifecycle states without live container health queries,
-pagination, or a total count. Results are deduplicated in first-requested order;
-missing, deleted, or inaccessible instances are omitted, and an empty result is
-successful. The caller needs permission for `DescribeSandboxInstances`.
+pagination, or a total count. The service determines result order and duplicate
+handling; the CLI preserves the returned order. Missing, deleted, or inaccessible
+instances are omitted, and an empty result is successful. Requests must include
+at least one ID. The caller needs permission for `DescribeSandboxInstances`.
 Use `--request` with inline JSON, `@file`, or `-` for stdin as an alternative to
 positional IDs; the two input modes cannot be combined.
 

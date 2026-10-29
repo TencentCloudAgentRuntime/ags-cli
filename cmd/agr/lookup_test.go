@@ -88,27 +88,34 @@ func TestInstanceLookupInvalidInputsStayLocal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	invalidIDsFile := filepath.Join(t.TempDir(), "invalid-ids.json")
+	if err := os.WriteFile(invalidIDsFile, []byte(`{"InstanceIds":[" ins-a"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	for _, tc := range []struct {
-		name, stdin string
-		args        []string
+		name, stdin, code string
+		args              []string
 	}{
-		{"missing IDs", "", nil},
-		{"empty ID", "", []string{""}},
-		{"whitespace ID", "", []string{" ins-a"}},
-		{"long ID", "", []string{strings.Repeat("a", 65)}},
-		{"too many positionals", "", tooMany},
-		{"too many JSON IDs", "", []string{"--request", string(tooManyJSON)}},
-		{"empty object", "", []string{"--request", `{}`}},
-		{"empty array", "", []string{"--request", `{"InstanceIds":[]}`}},
-		{"null IDs", "", []string{"--request", `{"InstanceIds":null}`}},
-		{"scalar IDs", "", []string{"--request", `{"InstanceIds":"ins-a"}`}},
-		{"non-string ID", "", []string{"--request", `{"InstanceIds":[1]}`}},
-		{"null ID", "", []string{"--request", `{"InstanceIds":[null]}`}},
-		{"unknown field", "", []string{"--request", `{"InstanceIds":["ins-a"],"Limit":1}`}},
-		{"request conflict", "", []string{"ins-a", "--request", `{"InstanceIds":["ins-a"]}`}},
-		{"invalid JSON", "", []string{"--request", `{`}},
-		{"missing file", "", []string{"--request", "@/no/such/lookup.json"}},
-		{"closed stdin", "", []string{"--request", "-"}},
+		{"missing IDs", "", "INVALID_USAGE", nil},
+		{"empty ID", "", "INVALID_USAGE", []string{""}},
+		{"whitespace ID", "", "INVALID_USAGE", []string{" ins-a"}},
+		{"long ID", "", "INVALID_USAGE", []string{strings.Repeat("a", 65)}},
+		{"too many positionals", "", "INVALID_USAGE", tooMany},
+		{"too many JSON IDs", "", "INVALID_REQUEST_JSON", []string{"--request", string(tooManyJSON)}},
+		{"JSON whitespace ID", "", "INVALID_REQUEST_JSON", []string{"--request", `{"InstanceIds":[" ins-a"]}`}},
+		{"file whitespace ID", "", "INVALID_REQUEST_JSON", []string{"--request", "@" + invalidIDsFile}},
+		{"stdin whitespace ID", `{"InstanceIds":[" ins-a"]}`, "INVALID_REQUEST_JSON", []string{"--request", "-"}},
+		{"empty object", "", "MISSING_REQUIRED_ARG", []string{"--request", `{}`}},
+		{"empty array", "", "INVALID_REQUEST_JSON", []string{"--request", `{"InstanceIds":[]}`}},
+		{"null IDs", "", "MISSING_REQUIRED_ARG", []string{"--request", `{"InstanceIds":null}`}},
+		{"scalar IDs", "", "INVALID_REQUEST_JSON", []string{"--request", `{"InstanceIds":"ins-a"}`}},
+		{"non-string ID", "", "INVALID_REQUEST_JSON", []string{"--request", `{"InstanceIds":[1]}`}},
+		{"null ID", "", "INVALID_REQUEST_JSON", []string{"--request", `{"InstanceIds":[null]}`}},
+		{"unknown field", "", "INVALID_REQUEST_JSON", []string{"--request", `{"InstanceIds":["ins-a"],"Limit":1}`}},
+		{"request conflict", "", "REQUEST_ARG_CONFLICT", []string{"ins-a", "--request", `{"InstanceIds":["ins-a"]}`}},
+		{"invalid JSON", "", "INVALID_REQUEST_JSON", []string{"--request", `{`}},
+		{"missing file", "", "INVALID_REQUEST_INPUT", []string{"--request", "@/no/such/lookup.json"}},
+		{"closed stdin", "", "INVALID_REQUEST_JSON", []string{"--request", "-"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			args := append([]string{"instance", "lookup"}, tc.args...)
@@ -124,7 +131,7 @@ func TestInstanceLookupInvalidInputsStayLocal(t *testing.T) {
 			if err := json.Unmarshal(out, &envelope); err != nil {
 				t.Fatal(err)
 			}
-			if envelope.Status != "failed" || envelope.Failure.Kind != "usage" || envelope.Failure.Code == "" {
+			if envelope.Status != "failed" || envelope.Failure.Kind != "usage" || envelope.Failure.Code != tc.code {
 				t.Fatalf("invalid usage result: %s", out)
 			}
 			requireFailureCode(t, schemaForCommand(t, "instance.lookup"), envelope.Failure.Code)
@@ -161,7 +168,7 @@ func TestInstanceLookupSchemaAndHelp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, text := range []string{"lookup <instance-id> [instance-id...]", "1 to 100", "persisted", "Duplicate", "omitted", "DescribeSandboxInstances", "--request"} {
+	for _, text := range []string{"lookup <instance-id> [instance-id...]", "1 to 100", "persisted", "determined by the service", "at least one ID", "omitted", "DescribeSandboxInstances", "--request"} {
 		if !strings.Contains(out, text) {
 			t.Errorf("lookup help omits %q: %s", text, out)
 		}

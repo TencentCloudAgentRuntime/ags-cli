@@ -38,10 +38,12 @@ func Module() command.Module {
 			if err != nil {
 				return nil, err
 			}
+			failureCode := "INVALID_REQUEST_JSON"
 			if len(req.Args) > 0 {
 				request["InstanceIds"] = slices.Clone(req.Args)
+				failureCode = "INVALID_USAGE"
 			}
-			if err := validateIDs(request["InstanceIds"]); err != nil {
+			if err := validateIDs(request["InstanceIds"], failureCode); err != nil {
 				return nil, err
 			}
 			result, err := executor.Execute(ctx, request)
@@ -71,9 +73,9 @@ func Module() command.Module {
 	return module
 }
 
-func validateIDs(value any) error {
+func validateIDs(value any, failureCode string) error {
 	invalid := func(message string) error {
-		return output.NewUsageError("INVALID_REQUEST_JSON", message, "Provide 1 to 100 instance IDs, each non-empty, at most 64 bytes, and without surrounding whitespace.")
+		return output.NewUsageError(failureCode, message, "Provide 1 to 100 instance IDs, each non-empty, at most 64 bytes, and without surrounding whitespace.")
 	}
 	var ids []string
 	if err := apivalue.Project(value, &ids); err != nil {

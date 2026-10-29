@@ -14,7 +14,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"instance", "lookup"},
 			Use:          "lookup",
 			Short:        "Look up instances by ID",
-			Long:         "Look up 1 to 100 known sandbox instance IDs in the current region. Returns persisted lifecycle states without querying live container health, pagination, or a total count. Duplicate IDs are returned once in first-requested order. Missing, deleted, or inaccessible instances are omitted; an empty result is successful. Direct API callers need permission for DescribeSandboxInstances. Use instance list for filtering and live health observations where enabled.",
+			Long:         "Look up 1 to 100 known sandbox instance IDs in the current region. Returns persisted lifecycle states without querying live container health, pagination, or a total count. Result order and duplicate handling are determined by the service; the CLI preserves the returned order. Missing, deleted, or inaccessible instances are omitted; an empty result is successful. Requests must include at least one ID. Direct API callers need permission for DescribeSandboxInstances. Use instance list for filtering and live health observations where enabled.",
 			Examples:     []string{"agr instance lookup ins-xxxx -o text", "agr instance lookup ins-xxxx ins-yyyy -o text", "agr instance lookup --request '{\"InstanceIds\":[\"ins-xxxx\",\"ins-yyyy\"]}' -o json", "agr instance lookup --request @lookup.json -o json", "printf '%s' '{\"InstanceIds\":[\"ins-xxxx\"]}' | agr instance lookup --request - -o json"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{

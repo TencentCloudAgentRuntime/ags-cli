@@ -226,8 +226,9 @@ agr instance lookup ins-xxxx ins-yyyy -o json --jq '.Data.InstanceSet[] | {Insta
 ```
 
 点查返回持久化生命周期状态，不查询实时容器健康状态，也不分页或统计总数。
-结果去重后按 ID 首次出现的顺序返回；不存在、已删除或无权限的实例会被省略，
-空结果仍为成功。调用者需要 `DescribeSandboxInstances` 权限。
+结果顺序和重复 ID 的处理由服务端决定，CLI 保留服务端返回顺序。
+不存在、已删除或无权限的实例会被省略，空结果仍为成功；请求必须提供至少一个 ID。
+调用者需要 `DescribeSandboxInstances` 权限。
 也可以通过 `--request` 传入 inline JSON、`@file` 或 `-`（stdin），
 但不能与位置参数 ID 混用。
 
