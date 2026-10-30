@@ -2,6 +2,31 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.8.0-preview.2] - 2026-10-30
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 新增 `agr instance lookup <instance-id> [instance-id...]`，支持查询当前地域内
+  1～100 个已知实例。可使用位置参数，或通过 `--request` 传入 inline JSON、
+  `@file` 或 stdin，并提供文本和 JSON 输出。返回持久化生命周期状态，不查询实时
+  容器健康状态；不存在或无权限的实例可能被省略，空结果仍为成功。
+- 为 Tool 创建、更新和 fork，以及实例创建和 debug 新增
+  `CustomConfiguration.SecurityContext` 支持。可配置 `Privileged` 和
+  `Capabilities.Add/Drop`，保留显式的 `Privileged:false`；fork 未指定覆盖值时
+  保留源 Tool 的安全配置。
+
+### Bug 修复
+- 本版本没有 Bug 修复。
+
+### 文档
+- 在 README 和命令帮助中补充实例点查示例、权限要求及结果语义。
+- 补充安全配置、卷引用和 Tool fork 示例，明确对象或数组的整体替换语义，以及
+  未指定安全限制时 API 默认使用 `Privileged:true` 的行为。
+- 更新实例超时修改和按访问策略过滤 Tool 列表的 API 说明，并使卷引用说明与
+  公开 API 保持一致。
+
 ## [0.8.0-preview.1] - 2026-10-16
 
 ### 破坏性变更

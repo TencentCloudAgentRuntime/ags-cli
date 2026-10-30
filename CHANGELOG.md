@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0-preview.2] - 2026-10-30
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add `agr instance lookup <instance-id> [instance-id...]` to query 1–100 known
+  instances in the current region. Accept positional IDs or `--request` with
+  inline JSON, `@file`, or stdin, and provide text and JSON output. Results use
+  persisted lifecycle states without live container health queries; missing or
+  inaccessible instances may be omitted, and an empty result succeeds.
+- Support `CustomConfiguration.SecurityContext` for Tool creation, update and
+  fork, and instance creation and debug. Configure `Privileged` and
+  `Capabilities.Add/Drop`, preserve explicit `Privileged:false`, and retain
+  source security settings when forking without an override.
+
+### Bug Fixes
+- This release has no Bug Fixes.
+
+### Docs
+- Add instance lookup examples, permission requirements and result semantics
+  to the README and command help.
+- Expand security configuration, volume reference and Tool fork examples.
+  Clarify whole-object/whole-array replacement and the API's default
+  `Privileged:true` behavior when security restrictions are omitted.
+- Update API descriptions for instance timeout changes and Tool list filtering
+  by access policy, and align volume reference descriptions with the public API.
+
 ## [0.8.0-preview.1] - 2026-10-16
 
 ### Breaking Changes
