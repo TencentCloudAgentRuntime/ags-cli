@@ -32,7 +32,7 @@ curl -fsSL https://dl.tencentags.com/agr-cli/latest/install.sh | INSTALL_DIR="$H
 To install a specific version:
 
 ```bash
-curl -fsSL https://dl.tencentags.com/agr-cli/latest/install.sh | VERSION=v0.7.0 sh
+curl -fsSL https://dl.tencentags.com/agr-cli/latest/install.sh | VERSION=v0.7.1 sh
 ```
 
 To use GitHub Releases as a fallback source:
@@ -45,12 +45,12 @@ curl -fsSL https://github.com/TencentCloudAgentRuntime/ags-cli/releases/latest/d
 
 Download the latest release from [GitHub Releases](https://github.com/TencentCloudAgentRuntime/ags-cli/releases) and install manually.
 
-Set `VERSION` to the release you want (e.g. `0.7.0`):
+Set `VERSION` to the release you want (e.g. `0.7.1`):
 
 **macOS (Apple Silicon)**
 
 ```bash
-VERSION=0.7.0
+VERSION=0.7.1
 curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-darwin-arm64.tar.gz
 tar xzf agr-${VERSION}-darwin-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
@@ -60,7 +60,7 @@ rm agr-${VERSION}-darwin-arm64.tar.gz
 **macOS (Intel)**
 
 ```bash
-VERSION=0.7.0
+VERSION=0.7.1
 curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-darwin-amd64.tar.gz
 tar xzf agr-${VERSION}-darwin-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
@@ -70,7 +70,7 @@ rm agr-${VERSION}-darwin-amd64.tar.gz
 **Linux (x86_64)**
 
 ```bash
-VERSION=0.7.0
+VERSION=0.7.1
 curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-linux-amd64.tar.gz
 tar xzf agr-${VERSION}-linux-amd64.tar.gz
 sudo mv agr /usr/local/bin/agr
@@ -80,7 +80,7 @@ rm agr-${VERSION}-linux-amd64.tar.gz
 **Linux (ARM64)**
 
 ```bash
-VERSION=0.7.0
+VERSION=0.7.1
 curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-linux-arm64.tar.gz
 tar xzf agr-${VERSION}-linux-arm64.tar.gz
 sudo mv agr /usr/local/bin/agr
@@ -90,7 +90,7 @@ rm agr-${VERSION}-linux-arm64.tar.gz
 **Windows (x86_64) — PowerShell**
 
 ```powershell
-$VERSION = "0.7.0"
+$VERSION = "0.7.1"
 Invoke-WebRequest -Uri "https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/agr-${VERSION}-windows-amd64.zip" -OutFile "agr-${VERSION}-windows-amd64.zip"
 Expand-Archive "agr-${VERSION}-windows-amd64.zip" -DestinationPath .
 Move-Item agr.exe "$env:USERPROFILE\bin\agr.exe"
@@ -102,7 +102,7 @@ Remove-Item "agr-${VERSION}-windows-amd64.zip"
 ### Verify checksums
 
 ```bash
-VERSION=0.7.0
+VERSION=0.7.1
 curl -fLO https://github.com/TencentCloudAgentRuntime/ags-cli/releases/download/v${VERSION}/checksums.txt
 shasum -a 256 -c checksums.txt --ignore-missing
 ```
