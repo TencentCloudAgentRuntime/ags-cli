@@ -17,7 +17,7 @@ concurrency:
 jobs:
   changes:
     name: Changes and Pull Request Title
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -306,7 +306,7 @@ jobs:
       - lint
       - generator-gate
       - release-ready
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Verify all required CI jobs succeeded
         env:
