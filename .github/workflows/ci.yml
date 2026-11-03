@@ -1,27 +1,40 @@
 name: CI
 
 on:
+  # PR branches use pull_request so one update cannot start two full CI runs.
   push:
+    branches: [main, master]
+    tags: ['**']
   pull_request:
     types: [opened, edited, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# Give main/master and tags a unique group so even pending commits cannot be
+# superseded. PRs and manual feature-branch runs only need their newest run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.ref_type == 'branch' && github.ref_name != 'main' && github.ref_name != 'master' && github.ref) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.ref_type == 'branch' && github.ref_name != 'main' && github.ref_name != 'master') }}
+
 jobs:
-  pr-title:
-    name: Pull Request Title
-    runs-on: ubuntu-latest
+  changes:
+    name: Changes and Pull Request Title
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      # The PR files API caps results at 3000; never skip checks on a partial diff.
+      ci: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.changed_files >= 3000) || steps.filter.outputs.code == 'true' || steps.filter.outputs.changelog == 'true' }}
     steps:
       - name: Validate pull request title
+        if: github.event_name == 'pull_request'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         shell: bash
         run: |
-          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
-            exit 0
-          fi
-
           pattern='^(feat|fix|docs|style|refactor|test|chore)(\([^()]*[^()[:space:]][^()]*\))?!?: [^[:space:]].*$'
           if [[ "$PR_TITLE" =~ $pattern ]]; then
             exit 0
@@ -35,31 +48,45 @@ jobs:
           echo "Actual title: $PR_TITLE"
           exit 1
 
-  workflow-lint:
-    name: Workflow Lint
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'pull_request' && github.event.pull_request.changed_files < 3000
+        id: filter
+        with:
+          # PRs use the complete diff below the API cap, including earlier
+          # pushes. Main, tags and manual runs always validate everything.
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!man/**'
+            changelog:
+              - 'CHANGELOG*.md'
+
+  checks:
+    name: Workflow, Format and Release Checks
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
       - name: Check workflow files
-        uses: docker://rhysd/actionlint:1.7.12
-        with:
-          # actionlint 1.7.12 predates GitHub's concurrency.queue support.
-          # Keep the exception narrow; release routing tests assert queue: max.
-          args: >-
-            -color
-            -ignore "unexpected key \"queue\" for \"concurrency\" section"
-
-  fmt:
-    name: Format Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
+        run: |
+          curl -fsSL --retry 3 https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          # actionlint 1.7.12 predates concurrency.queue support.
+          "$RUNNER_TEMP/actionlint" -color -ignore 'unexpected key "queue" for "concurrency" section'
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          # gofmt uses neither dependencies nor compiled packages. Saving its
+          # empty cache would prevent build/test jobs from populating that key.
+          cache: false
 
       - name: Check gofmt
         run: |
@@ -70,33 +97,81 @@ jobs:
             exit 1
           fi
 
+      - name: Validate changelog structure
+        run: |
+          bash scripts/changelog.sh validate
+          bash scripts/changelog.sh validate-latest-release-notes-pair
+
+      - name: Test release channel routing (no credentials)
+        run: python3 scripts/test-release.py
+
+      - name: Test CI gates and shard completeness
+        run: python3 scripts/test-ci.py
+
   test:
-    name: Unit Tests (${{ matrix.os }}, ${{ matrix.channel }})
+    name: Unit Tests (${{ matrix.os }}, ${{ matrix.channel }}, ${{ matrix.shard }})
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         channel: [stable, preview]
+        shard: [unit, scenarios]
     env:
       GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
+      CACHE_PROFILE: test-${{ matrix.channel }}-${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v6
+
+      - name: Select test cache profile
+        run: |
+          mkdir -p build
+          printf '%s\n' "$CACHE_PROFILE" > build/.ci-cache-profile
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          # Separate race/coverage caches from formatting, native builds and
+          # the other shard/channel. Keep setup-go's module/build cache support.
+          cache-dependency-path: |
+            go.sum
+            go.mod
+            scripts/ci-tests.sh
+            build/.ci-cache-profile
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
+        env:
+          CI_TEST_SHARD: ${{ matrix.shard }}
+        run: bash scripts/ci-tests.sh "$CI_TEST_SHARD"
+
+  archive-compatibility:
+    name: Archived Runner Go 1.26 (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
 
       - name: Set up Go 1.26 for archive compatibility
         uses: actions/setup-go@v6
         with:
           go-version: '1.26.x'
+          cache-dependency-path: |
+            go.sum
+            go.mod
+            cmd/internal/patch-e2e/*_test.go
 
       - name: Test archived runner with Go 1.26 (no cloud credentials)
-        run: go test -v -race ./cmd/internal/patch-e2e -count=1
+        run: |
+          go test -v -race ./cmd/internal/patch-e2e -count=1
+          GOFLAGS=-tags=preview go test -v -race ./cmd/internal/patch-e2e -count=1
 
       - name: Test one-line installer
         run: |
@@ -111,6 +186,8 @@ jobs:
 
   lint:
     name: Lint
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -119,27 +196,22 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            go.mod
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
 
-  changelog-gate:
-    name: Changelog Gate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Validate changelog structure
-        run: |
-          bash scripts/changelog.sh validate
-          bash scripts/changelog.sh validate-latest-release-notes-pair
-
   generator-gate:
     name: API Generator Gate (${{ matrix.channel }})
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         channel: [stable, preview]
     env:
@@ -151,135 +223,109 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            go.mod
 
       - name: Validate all effective API metadata
         run: go run ./cmd/internal/apipatch check-all
 
-      - name: Mapping invariants
-        run: go test ./internal/apimeta/... -count=1
-
-      - name: Cobra flag contract (generated flags exist on commands)
-        run: go test ./cmd/agr -run "TestContract_GeneratedFlagsArePresentOnCobraCommands|TestContract_RequestFlagOnEveryMappedRequestCommand" -count=1
-
-      - name: Command metadata contracts
-        run: go test ./internal/commands/... -count=1
-
+      # Mapping, Cobra, command metadata and overlay tests are included in the
+      # complete race/coverage suite above; do not run those tests a second time.
       - name: Generator outputs are up to date
         run: go run ./cmd/internal/cobragen check
 
+      - name: Validate complete Patch coverage (no credentials)
+        if: matrix.channel == 'stable'
+        run: go run ./cmd/internal/apipatch coverage
+
       - name: Docs and man pages can be regenerated
-        # docs/ and man/ are NOT tracked in the repo; they are generated
-        # artifacts produced by the maintainer-only docgen tool
-        # (NextPlan §9.5). This step verifies the generation still
-        # works without requiring a baseline in the source tree and
-        # without exposing a user-facing `agr docs` command.
         run: |
           set -euo pipefail
           tmpdocs="$(mktemp -d)"
           tmpman="$(mktemp -d)"
-          go run ./cmd/internal/docgen markdown --dir "$tmpdocs"
-          go run ./cmd/internal/docgen man --dir "$tmpman"
+          go build -o "$RUNNER_TEMP/docgen" ./cmd/internal/docgen
+          "$RUNNER_TEMP/docgen" markdown --dir "$tmpdocs"
+          "$RUNNER_TEMP/docgen" man --dir "$tmpman"
           test -n "$(find "$tmpdocs" -mindepth 1 -maxdepth 1 -type f -print -quit)"
           test -n "$(find "$tmpman" -mindepth 1 -maxdepth 1 -type f -print -quit)"
 
-  patch-coverage:
-    name: Patch Contract Coverage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-      - name: Validate complete Patch coverage (no credentials)
-        run: go run ./cmd/internal/apipatch coverage
-
-  overlay-smoke:
-    name: CLI Overlay Smoke
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-
-      - name: Overlay create -> execute -> cleanup tests
-        run: |
-          go test ./internal/cli -run "TestResolveOverlay|TestOverlay_TempInstance|TestOverlay_InstanceExecTempLifecycleIntegration|TestOverlay_PreExecutionFailureForcesCleanup" -count=1 -v
-
-  integ-tests:
-    name: Integration Tests (no credentials)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-
-      - name: Run credential-free integration tests
-        run: go test ./tests/integ/ -v -count=1 -timeout 30s
-
   release-ready:
-    name: Release Ready (${{ matrix.channel }})
+    name: Release Ready (${{ matrix.channel }}, ${{ matrix.platform }})
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         channel: [stable, preview]
+        platform: [linux, darwin, windows]
     env:
       GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
+      TARGET_OS: ${{ matrix.platform }}
+      CACHE_PROFILE: build-${{ matrix.platform }}-${{ matrix.channel }}
     steps:
       - uses: actions/checkout@v6
+
+      - name: Select build cache profile
+        run: |
+          mkdir -p build
+          printf '%s\n' "$CACHE_PROFILE" > build/.ci-cache-profile
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            build/.ci-cache-profile
 
-      - name: Test release channel routing (no credentials)
-        run: python3 scripts/test-release.py
-
-      - name: Build all platforms
+      - name: Build target platforms
         run: |
           set -euo pipefail
           mkdir -p build
-          for os in linux darwin; do
-            for arch in amd64 arm64; do
-              GOOS="$os" GOARCH="$arch" go build -ldflags "-X main.Version=ci-$(date +%s) -X main.Commit=$(git rev-parse --short HEAD) -X main.BuildTime=$(date -u +%FT%TZ)" -o "build/agr-${os}-${arch}" ./cmd/agr
-            done
+          # Fixed metadata lets repeated builds reuse Go's link cache too.
+          LDFLAGS="-X main.Version=v0.0.0-ci -X main.Commit=$(git rev-parse --short HEAD) -X main.BuildTime=$(git show -s --format=%cI HEAD)"
+          arches=(amd64 arm64)
+          ext=""
+          if [[ "$TARGET_OS" == windows ]]; then arches=(amd64); ext=".exe"; fi
+          for arch in "${arches[@]}"; do
+            GOOS="$TARGET_OS" GOARCH="$arch" go build -ldflags "$LDFLAGS" -o "build/agr-${TARGET_OS}-${arch}${ext}" ./cmd/agr
           done
-          GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version=ci-$(date +%s) -X main.Commit=$(git rev-parse --short HEAD) -X main.BuildTime=$(date -u +%FT%TZ)" -o build/agr-windows-amd64.exe ./cmd/agr
 
       - name: agr version smoke test
+        if: matrix.platform == 'linux'
         run: |
-          go build -ldflags "-X main.Version=v0.0.0-ci -X main.Commit=$(git rev-parse --short HEAD) -X main.BuildTime=$(date -u +%FT%TZ)" -o agr-smoke ./cmd/agr
-          ./agr-smoke version
-          ./agr-smoke version -o json | grep -q '"Version":"v0.0.0-ci"'
-          # api list-actions / coverage are maintainer-only (NextPlan §9.4);
-          # smoke a known mapped resource command via `agr schema` instead.
-          ./agr-smoke schema instance.create -o json | grep -q '"Name":"instance.create"'
+          ./build/agr-linux-amd64 version
+          ./build/agr-linux-amd64 version -o json | grep -q '"Version":"v0.0.0-ci"'
+          ./build/agr-linux-amd64 schema instance.create -o json | grep -q '"Name":"instance.create"'
 
   # Keep this display name stable: the default-branch ruleset requires it.
+  # Do not skip this workflow with on.paths: docs-only PRs still need a result.
   ci-gate:
     name: CI Gate
     if: ${{ always() }}
     needs:
-      - pr-title
-      - workflow-lint
-      - fmt
+      - changes
+      - checks
       - test
+      - archive-compatibility
       - lint
-      - changelog-gate
       - generator-gate
-      - patch-coverage
-      - overlay-smoke
-      - integ-tests
       - release-ready
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Verify all required CI jobs succeeded
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"
+          RUN_CI: ${{ needs.changes.outputs.ci }}
+        run: |
+          jq -e '.changes.result == "success"' <<<"$NEEDS"
+          if [[ "$RUN_CI" == true ]]; then
+            jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"
+          elif [[ "$RUN_CI" == false ]]; then
+            jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<<"$NEEDS"
+          else
+            echo "Missing change classification" >&2
+            exit 1
+          fi
