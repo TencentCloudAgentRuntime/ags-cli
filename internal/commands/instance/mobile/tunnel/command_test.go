@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -71,14 +72,41 @@ func TestModuleDescriptor(t *testing.T) {
 }
 
 func TestRunTunnelForegroundLifecycle(t *testing.T) {
-	out := &bytes.Buffer{}
-	fake := &fakeTunnel{addr: "127.0.0.1:5555"}
-	result, err := buildRuntime(t, out, fake, nil).Handler.Run(context.Background(), request(false, 0))
-	if err != nil {
-		t.Fatalf("Run returned error: %v", err)
-	}
-	if !result.StreamDone || !fake.stopped || !strings.Contains(out.String(), "ADB Tunnel established") {
-		t.Fatalf("result=%#v stopped=%t out=%q", result, fake.stopped, out.String())
+	for _, tc := range []struct {
+		name        string
+		delayedStop bool
+	}{
+		{"immediate_stop", false},
+		{"stop_after_timeout", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out := &bytes.Buffer{}
+			stopRelease := make(chan struct{})
+			releaseStop := sync.OnceFunc(func() { close(stopRelease) })
+			t.Cleanup(releaseStop)
+			fake := &fakeTunnel{addr: "127.0.0.1:5555", stopWait: stopRelease, stopDone: make(chan struct{})}
+			if !tc.delayedStop {
+				releaseStop()
+			}
+			result, err := buildRuntime(t, out, fake, nil).Handler.Run(t.Context(), request(false, 0))
+			if err != nil {
+				t.Fatalf("Run returned error: %v", err)
+			}
+			if tc.delayedStop && !strings.Contains(out.String(), "Graceful shutdown timed out") {
+				t.Fatalf("expected bounded shutdown to time out, out=%q", out.String())
+			}
+			releaseStop()
+			// Run may return at its shutdown deadline before Stop finishes. Wait
+			// for the actual worker before reading the state it writes.
+			select {
+			case <-fake.stopDone:
+			case <-time.After(5 * time.Second):
+				t.Fatal("tunnel did not stop")
+			}
+			if !result.StreamDone || !fake.stopped || !strings.Contains(out.String(), "ADB Tunnel established") {
+				t.Fatalf("result=%#v stopped=%t out=%q", result, fake.stopped, out.String())
+			}
+		})
 	}
 }
 
@@ -154,6 +182,8 @@ type fakeTunnel struct {
 	startErr error
 	probeErr error
 	stopped  bool
+	stopWait <-chan struct{}
+	stopDone chan struct{}
 	opts     adbtunnel.TunnelOptions
 }
 
@@ -169,7 +199,15 @@ func (f *fakeTunnel) Start() (string, error) {
 
 func (f *fakeTunnel) Probe() error { return f.probeErr }
 
-func (f *fakeTunnel) Stop() { f.stopped = true }
+func (f *fakeTunnel) Stop() {
+	if f.stopWait != nil {
+		<-f.stopWait
+	}
+	f.stopped = true
+	if f.stopDone != nil {
+		close(f.stopDone)
+	}
+}
 
 func TestTunnelStartupFailureClassification(t *testing.T) {
 	for _, tc := range []struct {
