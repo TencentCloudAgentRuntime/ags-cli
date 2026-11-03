@@ -48,16 +48,12 @@ jobs:
           echo "Actual title: $PR_TITLE"
           exit 1
 
-      - uses: actions/checkout@v6
-        if: github.event_name != 'pull_request'
-
       - uses: dorny/paths-filter@v3
-        if: github.event_name != 'pull_request' || github.event.pull_request.changed_files < 3000
+        if: github.event_name == 'pull_request' && github.event.pull_request.changed_files < 3000
         id: filter
         with:
-          # Pushes compare the complete push with its previous tip; PRs use the
-          # complete PR diff below the API cap, including earlier pushes.
-          base: ${{ github.ref }}
+          # PRs use the complete diff below the API cap, including earlier
+          # pushes. Main, tags and manual runs always validate everything.
           predicate-quantifier: every
           filters: |
             code:
@@ -125,8 +121,14 @@ jobs:
         shard: [unit, scenarios]
     env:
       GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
+      CACHE_PROFILE: test-${{ matrix.channel }}-${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v6
+
+      - name: Select test cache profile
+        run: |
+          mkdir -p build
+          printf '%s\n' "$CACHE_PROFILE" > build/.ci-cache-profile
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -136,9 +138,9 @@ jobs:
           # the other shard/channel. Keep setup-go's module/build cache support.
           cache-dependency-path: |
             go.sum
+            go.mod
             scripts/ci-tests.sh
-            ${{ matrix.channel == 'preview' && 'internal/apimeta/build_channel_preview.go' || 'internal/apimeta/build_channel.go' }}
-            ${{ matrix.shard == 'unit' && 'cmd/agr/*_test.go' || 'internal/patchscenarios/*_test.go' }}
+            build/.ci-cache-profile
 
       - name: Run tests
         env:

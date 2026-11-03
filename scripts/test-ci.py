@@ -22,12 +22,12 @@ CONFIG = json.loads(subprocess.check_output(
 TRIGGERS = CONFIG.get("on", CONFIG.get("true"))
 
 
-def evaluate(expression, github, steps=None):
+def evaluate(expression, github, steps=None, matrix=None):
     expression = expression.removeprefix("${{").removesuffix("}}")
-    script = ('const [expression, github, steps] = JSON.parse(process.argv[1]);'
-              'console.log(JSON.stringify(Function("github", "steps", "return (" + expression + ");")(github, steps)));')
+    script = ('const [expression, github, steps, matrix] = JSON.parse(process.argv[1]);'
+              'console.log(JSON.stringify(Function("github", "steps", "matrix", "return (" + expression + ");")(github, steps, matrix)));')
     return json.loads(subprocess.check_output(
-        ["node", "-e", script, json.dumps([expression, github, steps or {}])], text=True))
+        ["node", "-e", script, json.dumps([expression, github, steps or {}, matrix or {}])], text=True))
 
 
 def context(event="pull_request", ref="refs/pull/164/merge", changed_files=2, run_id=1):
@@ -76,11 +76,39 @@ class CIRoutingTest(unittest.TestCase):
                 self.assertEqual(evaluate(CONFIG["jobs"]["changes"]["outputs"]["ci"], context(), steps), expected)
 
     def test_main_tag_and_manual_runs_always_validate(self):
-        docs_only = dict(filter=dict(outputs=dict(code="false", changelog="false")))
+        changes = CONFIG["jobs"]["changes"]
+        self.assertFalse(any(step.get("uses", "").startswith("actions/checkout@") for step in changes["steps"]))
+        filter_step = next(step for step in changes["steps"] if step.get("id") == "filter")
         for event, ref in [("push", "refs/heads/main"), ("push", "refs/heads/master"),
                            ("push", "refs/tags/v0.7.1"), ("workflow_dispatch", "refs/heads/feature/example")]:
             with self.subTest(event=event, ref=ref):
-                self.assertTrue(evaluate(CONFIG["jobs"]["changes"]["outputs"]["ci"], context(event, ref), docs_only))
+                github = context(event, ref)
+                self.assertTrue(evaluate(changes["outputs"]["ci"], github))
+                self.assertFalse(evaluate(filter_step["if"], github))
+
+    def test_test_cache_profiles_are_explicit_and_distinct(self):
+        job = CONFIG["jobs"]["test"]
+        setup = next(step for step in job["steps"] if step.get("uses", "").startswith("actions/setup-go@"))
+        cache_inputs = setup["with"]["cache-dependency-path"].splitlines()
+        self.assertIn("build/.ci-cache-profile", cache_inputs)
+        self.assertFalse(any("_test.go" in path for path in cache_inputs))
+        select_profile = next(step for step in job["steps"] if step.get("name") == "Select test cache profile")
+        self.assertLess(job["steps"].index(select_profile), job["steps"].index(setup))
+        axes = job["strategy"]["matrix"]
+        profiles = set()
+        with tempfile.TemporaryDirectory() as directory:
+            for channel in axes["channel"]:
+                for shard in axes["shard"]:
+                    matrix = dict(channel=channel, shard=shard)
+                    profile = re.sub(r"\$\{\{(.*?)\}\}",
+                                     lambda m: str(evaluate(m[1], context(), matrix=matrix)), job["env"]["CACHE_PROFILE"])
+                    result = subprocess.run(["bash", "-euo", "pipefail", "-c", select_profile["run"]],
+                                            cwd=directory, env=dict(os.environ, CACHE_PROFILE=profile), capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    content = (Path(directory) / "build/.ci-cache-profile").read_text()
+                    self.assertEqual(content, profile + "\n")
+                    profiles.add(content)
+        self.assertEqual(len(profiles), len(axes["channel"]) * len(axes["shard"]))
 
     def test_main_commits_have_independent_non_cancelling_groups(self):
         for ref in ("refs/heads/main", "refs/heads/master"):
