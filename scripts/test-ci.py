@@ -51,7 +51,8 @@ class ShardTest(unittest.TestCase):
         calls = root / "calls"
         calls.unlink(missing_ok=True)
         # Include a future package: additions must not silently escape both shards.
-        packages = ["example/cmd/agr", "example/internal/cli", "example/internal/patchscenarios",
+        packages = ["example/cmd/agr", "example/internal/cli", "example/internal/commands",
+                    "example/internal/commands/new/command", "example/internal/patchscenarios",
                     "example/tests/channels", "example/tests/integ", "example/new/package"]
         env = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
                    PACKAGES="\n".join(packages), CALLS=str(calls), LIST_STATUS=str(list_status))

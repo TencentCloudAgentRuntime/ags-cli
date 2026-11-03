@@ -9,13 +9,20 @@ esac
 
 # These packages build and exercise real CLI binaries. Run them on a separate
 # machine so they do not compete with the main race/coverage suite for CPUs.
-# Every other package, including newly added ones, belongs to the unit shard.
+# Command packages fill that shard's other workers while the real CLI suites
+# run. All other packages, including newly added ones, belong to the unit shard.
 all_packages=$(go list ./...)
+priority_packages=()
 packages=()
 while IFS= read -r package; do
   case "$package" in
     */tests/integ) continue ;;
-    */internal/patchscenarios|*/tests/channels) package_shard=scenarios ;;
+    */internal/patchscenarios|*/tests/channels)
+      if [[ "$shard" == scenarios ]]; then
+        priority_packages+=("$package")
+      fi
+      continue ;;
+    */internal/commands|*/internal/commands/*) package_shard=scenarios ;;
     *) package_shard=unit ;;
   esac
   if [[ "$package_shard" == "$shard" ]]; then
@@ -23,6 +30,9 @@ while IFS= read -r package; do
   fi
 done <<<"$all_packages"
 
+if [[ "$shard" == scenarios ]]; then
+  packages=("${priority_packages[@]}" "${packages[@]}")
+fi
 go test -v -race -coverprofile=coverage.out -count=1 "${packages[@]}"
 if [[ "$shard" == unit ]]; then
   # Keep the credential-free integration suite's explicit 30-second deadline,
