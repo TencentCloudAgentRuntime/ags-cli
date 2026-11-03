@@ -131,7 +131,7 @@ jobs:
           # the other shard/channel. Keep setup-go's module/build cache support.
           cache-dependency-path: |
             go.sum
-            .github/workflows/ci.yml
+            scripts/ci-tests.sh
             ${{ matrix.channel == 'preview' && 'internal/apimeta/build_channel_preview.go' || 'internal/apimeta/build_channel.go' }}
             ${{ matrix.shard == 'unit' && 'cmd/agr/*_test.go' || 'internal/patchscenarios/*_test.go' }}
 
@@ -158,7 +158,7 @@ jobs:
           go-version: '1.26.x'
           cache-dependency-path: |
             go.sum
-            .github/workflows/ci.yml
+            go.mod
             cmd/internal/patch-e2e/*_test.go
 
       - name: Test archived runner with Go 1.26 (no cloud credentials)
@@ -191,7 +191,7 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: |
             go.sum
-            .github/workflows/ci.yml
+            go.mod
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
@@ -218,7 +218,7 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: |
             go.sum
-            .github/workflows/ci.yml
+            go.mod
 
       - name: Validate all effective API metadata
         run: go run ./cmd/internal/apipatch check-all
@@ -256,8 +256,14 @@ jobs:
     env:
       GOFLAGS: ${{ matrix.channel == 'preview' && '-tags=preview' || '' }}
       TARGET_OS: ${{ matrix.platform }}
+      CACHE_PROFILE: build-${{ matrix.platform }}-${{ matrix.channel }}
     steps:
       - uses: actions/checkout@v6
+
+      - name: Select build cache profile
+        run: |
+          mkdir -p build
+          printf '%s\n' "$CACHE_PROFILE" > build/.ci-cache-profile
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -265,7 +271,7 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: |
             go.sum
-            .github/workflows/ci.yml
+            build/.ci-cache-profile
 
       - name: Build target platforms
         run: |

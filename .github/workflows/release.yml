@@ -31,6 +31,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+          # Keep complete five-platform release builds separate from short CI
+          # jobs, which could otherwise save this immutable cache first.
+          cache-dependency-path: |
+            go.sum
+            .github/workflows/release.yml
 
       - name: Validate tag and select release channel
         id: version
