@@ -1,15 +1,19 @@
 name: CI
 
 on:
+  # PR branches use pull_request so one update cannot start two full CI runs.
   push:
+    branches: [main, master]
+    tags: ['**']
   pull_request:
     types: [opened, edited, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 # Give main/master and tags a unique group so even pending commits cannot be
-# superseded. Feature branches and PRs only need their newest run.
+# superseded. PRs and manual feature-branch runs only need their newest run.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.ref_type == 'branch' && github.ref_name != 'main' && github.ref_name != 'master' && github.ref) || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.ref_type == 'branch' && github.ref_name != 'main' && github.ref_name != 'master') }}
@@ -22,8 +26,8 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      # Main and release tags always get a complete validation run.
-      ci: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref_type == 'tag' || steps.filter.outputs.code == 'true' || steps.filter.outputs.changelog == 'true' }}
+      # The PR files API caps results at 3000; never skip checks on a partial diff.
+      ci: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.changed_files >= 3000) || steps.filter.outputs.code == 'true' || steps.filter.outputs.changelog == 'true' }}
     steps:
       - name: Validate pull request title
         if: github.event_name == 'pull_request'
@@ -48,10 +52,11 @@ jobs:
         if: github.event_name != 'pull_request'
 
       - uses: dorny/paths-filter@v3
+        if: github.event_name != 'pull_request' || github.event.pull_request.changed_files < 3000
         id: filter
         with:
           # Pushes compare the complete push with its previous tip; PRs use the
-          # complete PR diff, including code from earlier pushes.
+          # complete PR diff below the API cap, including earlier pushes.
           base: ${{ github.ref }}
           predicate-quantifier: every
           filters: |
