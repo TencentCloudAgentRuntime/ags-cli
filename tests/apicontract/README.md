@@ -53,6 +53,12 @@ in both modes, inclusive start/exclusive end, text/default queries, and local
 validation plus service-enforced retention/future-time errors. Optional fields
 are checked when supplied; missing response fields are not fabricated.
 
+The group explicitly sets `AGR_NON_INTERACTIVE=1` on each CLI runner. The shared
+test runner removes ambient `AGR_*` variables, including the pipeline's setting;
+passing it to the subprocess suppresses automatic update notices while keeping
+the empty-stderr assertions intact. A credential-free warm-cache regression
+reproduces the notice and verifies this setup without calling any cloud API.
+
 These queries create no resources. They use existing events from a fixed six-day
 window ending two minutes before the run to leave indexing headroom. Pagination
 requires at least two results with distinct timestamps among the first 100 rows

@@ -22,7 +22,7 @@ var _ = Describe("Event center dedicated command", func() {
 	var query func(string, string, int, int, ...string) map[string]any
 
 	BeforeEach(func() {
-		cli = testutil.NewCLI()
+		cli = eventCenterLiveCLI(testutil.NewCLI())
 		DeferCleanup(cli.Cleanup)
 		// Leave indexing headroom and avoid the moving seven-day boundary.
 		end = time.Now().UTC().Add(-2 * time.Minute).Truncate(time.Second)
@@ -212,6 +212,13 @@ var _ = Describe("Event center dedicated command", func() {
 		}
 	})
 })
+
+func eventCenterLiveCLI(cli *testutil.CLI) *testutil.CLI {
+	// testutil deliberately drops ambient AGR_* variables. Set the actual
+	// subprocess mode explicitly so update notices cannot pollute assertions.
+	cli.ExtraEnv = append(cli.ExtraEnv, "AGR_NON_INTERACTIVE=1")
+	return cli
+}
 
 func eventCenterRows(data map[string]any) []map[string]any {
 	values, ok := data["Events"].([]any)
