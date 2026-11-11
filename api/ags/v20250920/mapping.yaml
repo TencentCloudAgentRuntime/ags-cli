@@ -26,6 +26,12 @@
 api_version: "v20250920"
 
 actions:
+  DescribeEventCenterEvents:
+    request: DescribeEventCenterEventsRequest
+    response: DescribeEventCenterEventsResponse
+    status: raw_only
+    reason: Event center queries use `agr api call DescribeEventCenterEvents`; a dedicated event center workflow is outside the sandbox and Registry commands.
+
   AcquireDeploymentToken:
     request: AcquireDeploymentTokenRequest
     response: AcquireDeploymentTokenResponse
@@ -391,10 +397,19 @@ actions:
     reason: Image cache management is available via agr api call; dedicated commands are outside the snapshot restore scope.
 
   DescribePreCacheImageList:
-    status: raw_only
+    command: pre-cache-image-task.list
     request: DescribePreCacheImageListRequest
     response: DescribePreCacheImageListResponse
-    reason: Image cache management is available via agr api call; dedicated commands are outside the snapshot restore scope.
+    status: mapped
+    fields:
+      Filters:
+        inputs:
+          - flag: filters
+            type: json
+      MaxResults:
+        inputs:
+          - flag: max-results
+            type: int
 
   DescribePreCacheImageTask:
     command: pre-cache-image-task.get

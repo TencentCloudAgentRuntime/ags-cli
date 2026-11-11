@@ -54,6 +54,9 @@ func Module() command.Module {
 // same selector contract before any control-plane call.
 func validateSelector(req map[string]any) error {
 	id, hasID := req["PreCacheImageId"]
+	if req["PreCacheType"] == "image_volume" && hasID {
+		return output.NewUsageError("CONFLICTING_INPUTS", "image_volume pre-cache tasks cannot be queried by task ID", "Use --pre-cache-type image_volume with <image-digest>, --image, and --image-registry-type; omit --pre-cache-image-id and PreCacheImageId from --request.")
+	}
 	tripleFields := []string{"Image", "ImageDigest", "ImageRegistryType"}
 	hasTriple := false
 	completeTriple := true
