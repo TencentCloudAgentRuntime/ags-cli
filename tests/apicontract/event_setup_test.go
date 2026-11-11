@@ -15,7 +15,7 @@ import (
 
 // This runs without live credentials. A warm update cache makes the original
 // stderr pollution deterministic, without contacting the version endpoint.
-func TestEventCenterLiveCLISuppressesUpdateNotices(t *testing.T) {
+func TestOperationalEventLiveCLISuppressesUpdateNotices(t *testing.T) {
 	t.Setenv("TENCENTCLOUD_SECRET_ID", "")
 	t.Setenv("TENCENTCLOUD_SECRET_KEY", "")
 	t.Setenv("TENCENTCLOUD_TOKEN", "")
@@ -53,7 +53,7 @@ func TestEventCenterLiveCLISuppressesUpdateNotices(t *testing.T) {
 	if before.ExitCode != 0 || !strings.Contains(before.Stderr, "Update available:") {
 		t.Fatalf("warm-cache control did not reproduce notice: exit=%d stderr=%s", before.ExitCode, before.Stderr)
 	}
-	after := eventCenterLiveCLI(cli).Run(t.Context(), "status", "-o", "text")
+	after := operationalEventLiveCLI(cli).Run(t.Context(), "status", "-o", "text")
 	if after.ExitCode != 0 || after.Stderr != "" || !strings.Contains(after.Stdout, "Region:") {
 		t.Fatalf("explicit non-interactive setup failed: exit=%d stderr=%s", after.ExitCode, after.Stderr)
 	}

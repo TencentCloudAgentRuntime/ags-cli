@@ -10,12 +10,12 @@ import (
 func APIDescriptor() apicli.APIDescriptor {
 	return apicli.APIDescriptor{
 		Spec: command.Spec{
-			ID:           "event-center.list",
-			Path:         []string{"event-center", "list"},
+			ID:           "event.list",
+			Path:         []string{"event", "list"},
 			Use:          "list",
 			Short:        "List operational events",
 			Long:         "Browse operational events in the configured account and region. Start with the recent events, filter a resource or tool with --filters, and use --mode Aggregate to inspect counts. Session conversation events use 'agr session event list'.\n\nAll seven query fields are optional and omitted fields use service defaults: Raw, Desc, offset 0, limit 10, EndTime=now, StartTime=EndTime minus 1 hour. The window is [StartTime, EndTime), within the last 7 days; timestamps use RFC3339. The service clock decides retention and future-time boundaries.\n\nRaw returns deduplicated events ordered by OccurredAt. Aggregate pages aggregation results ordered by LastOccurredAt, with optional Count, FirstOccurredAt and LastOccurredAt. Lifecycle events remain individual rows (Count=1). Optional fields may be absent. JSON preserves the full response, timestamp offsets, integer precision and unknown fields; Extensions is a JSON-encoded string, not an object.\n\nTo page repeatably, fix --start-time and --end-time using the returned effective window (when supplied), or provide both explicitly. Keep filters, mode, order and limit unchanged while increasing --offset. There is no automatic fetching of all pages. Filters accept inline JSON, @file or - for stdin; repeated --filters uses the last value. Complete --request input is mutually exclusive with field flags.",
-			Examples:     []string{"agr event-center list -o text", "agr event-center list --mode Aggregate --limit 20 -o json", "agr event-center list --filters '[{\"Name\":\"EventLevel\",\"Values\":[\"Warning\"]}]' -o json", "agr event-center list --filters @filters.json -o json", "cat filters.json | agr event-center list --filters - -o json", "agr event-center list --mode Raw --order Asc --start-time \"$START\" --end-time \"$END\" --offset 20 --limit 20 -o json"},
+			Examples:     []string{"agr event list -o text", "agr event list --mode Aggregate --limit 20 -o json", "agr event list --filters '[{\"Name\":\"EventLevel\",\"Values\":[\"Warning\"]}]' -o json", "agr event list --filters @filters.json -o json", "cat filters.json | agr event list --filters - -o json", "agr event list --mode Raw --order Asc --start-time \"$START\" --end-time \"$END\" --offset 20 --limit 20 -o json"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEventCenterEventsResponse",
@@ -23,7 +23,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			},
 		},
 		Groups: []command.GroupSpec{
-			{Path: []string{"event-center"}, Use: "event-center", Short: "Query operational events", Long: "Browse operational events in the configured account and region. Use list to filter resources, switch between Raw details and Aggregate results, and page through a fixed time window. Session conversation events use 'agr session event list'.", Examples: []string{"Example - Browse recent operational events:\n  agr event-center list -o text", "Example - Inspect aggregate results:\n  agr event-center list --mode Aggregate --limit 20 -o json"}},
+			{Path: []string{"event"}, Use: "event", Short: "Query operational events", Long: "Browse operational events in the configured account and region. Use list to filter resources, switch between Raw details and Aggregate results, and page through a fixed time window. Session conversation events use 'agr session event list'.", Examples: []string{"Example - Browse recent operational events:\n  agr event list -o text", "Example - Inspect aggregate results:\n  agr event list --mode Aggregate --limit 20 -o json"}},
 		},
 		API: apicli.APISpec{
 			Action:       "DescribeEventCenterEvents",

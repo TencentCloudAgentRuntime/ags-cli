@@ -483,16 +483,16 @@ with `agr schema session.space.create -o json`.
 
 ## Operational events
 
-Use `agr event-center list` to inspect operational events in the configured
+Use `agr event list` to inspect operational events in the configured
 account and region. These events describe cloud resources; conversation history
 is available through `agr session event list`.
 
 ```bash
-agr event-center list -o text
-agr event-center list --mode Aggregate --limit 20 -o json
-agr event-center list --filters '[{"Name":"ObjectId","Values":["<resource-id>"]}]' -o text
-agr event-center list --filters @filters.json -o json
-cat filters.json | agr event-center list --filters - -o json
+agr event list -o text
+agr event list --mode Aggregate --limit 20 -o json
+agr event list --filters '[{"Name":"ObjectId","Values":["<resource-id>"]}]' -o text
+agr event list --filters @filters.json -o json
+cat filters.json | agr event list --filters - -o json
 ```
 
 Replace `<resource-id>` with the resource's returned `ObjectId`. Filters support
@@ -511,10 +511,10 @@ For repeatable pagination, fix the same window, filters, mode, order and page
 size. For example, capture the effective window when it is returned:
 
 ```bash
-page=$(agr event-center list --mode Raw --order Asc --limit 20 -o json)
+page=$(agr event list --mode Raw --order Asc --limit 20 -o json)
 START=$(printf '%s\n' "$page" | jq -er '.Data.StartTime')
 END=$(printf '%s\n' "$page" | jq -er '.Data.EndTime')
-agr event-center list --mode Raw --order Asc --start-time "$START" --end-time "$END" --offset 20 --limit 20 -o json
+agr event list --mode Raw --order Asc --start-time "$START" --end-time "$END" --offset 20 --limit 20 -o json
 ```
 
 If the response omits either effective timestamp, choose explicit RFC3339 bounds
@@ -530,8 +530,8 @@ all event fields and unknown fields. Optional mode-specific fields may be absent
 timestamps retain their timezone offsets and integer values retain precision.
 `Extensions` is a JSON-encoded string, not an object. This read-only list supports
 text and JSON output; NDJSON remains reserved for streaming commands. Discover
-the interface with `agr event-center --help`, `agr event-center list --help`, or
-`agr schema event-center.list -o json`.
+the interface with `agr event --help`, `agr event list --help`, or
+`agr schema event.list -o json`.
 
 ## Low-level API access
 
@@ -591,7 +591,7 @@ agr session event ...            Append and list session events
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|list|get
-agr event-center list
+agr event list
 agr completion bash|zsh|fish|powershell
 ```
 

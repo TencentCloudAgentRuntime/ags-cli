@@ -27,7 +27,7 @@ import (
 	deploymentlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/list"
 	deploymentproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/proxy"
 	deploymentupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/update"
-	eventcenterlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/eventcenter/list"
+	eventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/event/list"
 	identitycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/create"
 	identitydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/delete"
 	identityget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/get"
@@ -124,7 +124,7 @@ func Registry() (*command.Registry, error) {
 		deploymentlist.Module(),
 		deploymentproxy.Module(),
 		deploymentupdate.Module(),
-		eventcenterlist.Module(),
+		eventlist.Module(),
 		identitycreate.Module(),
 		identitydelete.Module(),
 		identityget.Module(),

@@ -434,15 +434,15 @@ schema ID 不保留兼容别名。通过 `agr session --help`、
 
 ## 运维事件
 
-通过 `agr event-center list` 查询当前配置的账号和地域中的运维事件。这些事件
+通过 `agr event list` 查询当前配置的账号和地域中的运维事件。这些事件
 描述云资源；会话交互历史仍通过 `agr session event list` 查询。
 
 ```bash
-agr event-center list -o text
-agr event-center list --mode Aggregate --limit 20 -o json
-agr event-center list --filters '[{"Name":"ObjectId","Values":["<resource-id>"]}]' -o text
-agr event-center list --filters @filters.json -o json
-cat filters.json | agr event-center list --filters - -o json
+agr event list -o text
+agr event list --mode Aggregate --limit 20 -o json
+agr event list --filters '[{"Name":"ObjectId","Values":["<resource-id>"]}]' -o text
+agr event list --filters @filters.json -o json
+cat filters.json | agr event list --filters - -o json
 ```
 
 将 `<resource-id>` 替换为事件返回的资源 `ObjectId`。支持区分大小写的过滤名：
@@ -460,10 +460,10 @@ EndTime=当前时间、StartTime=EndTime 前一小时。时间使用 RFC3339，�
 窗口时，先保存两端再读取下一页：
 
 ```bash
-page=$(agr event-center list --mode Raw --order Asc --limit 20 -o json)
+page=$(agr event list --mode Raw --order Asc --limit 20 -o json)
 START=$(printf '%s\n' "$page" | jq -er '.Data.StartTime')
 END=$(printf '%s\n' "$page" | jq -er '.Data.EndTime')
-agr event-center list --mode Raw --order Asc --start-time "$START" --end-time "$END" --offset 20 --limit 20 -o json
+agr event list --mode Raw --order Asc --start-time "$START" --end-time "$END" --offset 20 --limit 20 -o json
 ```
 
 若响应缺少任一有效时间，请自行选择保留期内的 RFC3339 两端，并从 offset 0
@@ -475,8 +475,8 @@ agr event-center list --mode Raw --order Asc --start-time "$START" --end-time "$
 `TotalCount`、`RequestId`、可选的有效窗口/mode、全部事件字段和未知字段。
 模式相关字段可缺省；时间保留时区偏移，整数保留精度。`Extensions` 是 JSON
 编码的字符串，不是对象。此只读列表支持 text 和 JSON；NDJSON 仍限流式命令。
-通过 `agr event-center --help`、`agr event-center list --help` 或
-`agr schema event-center.list -o json` 查看接口。
+通过 `agr event --help`、`agr event list --help` 或
+`agr schema event.list -o json` 查看接口。
 
 ## 原始 API 调用
 
@@ -537,7 +537,7 @@ agr session event ...            追加和查询会话事件
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|list|get
-agr event-center list
+agr event list
 agr completion bash|zsh|fish|powershell
 ```
 

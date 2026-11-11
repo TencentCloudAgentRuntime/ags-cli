@@ -22,32 +22,32 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
-const eventCenterFilters = `[{"Name":"ObjectId","Values":["instance-one"]}]`
-const eventCenterRequest = `{"Filters":[{"Name":"ObjectId","Values":["instance-one"]}],"StartTime":"2026-11-09T22:00:00+08:00","EndTime":"2026-11-09T23:00:00.123456789+08:00","Offset":0,"Limit":20,"Order":"Asc","Mode":"Raw"}`
-const eventCenterItem = `{"EventId":"event-one","Source":"Sandbox","ObjectType":"SandboxInstance","ObjectId":"instance-one","EventLevel":"Warning","EventType":"SandboxStopping","Message":"Stopping","Reason":"Manual","Extensions":"{\"ToolId\":\"tool-one\"}","Future":9007199254740993`
+const operationalEventFilters = `[{"Name":"ObjectId","Values":["instance-one"]}]`
+const operationalEventRequest = `{"Filters":[{"Name":"ObjectId","Values":["instance-one"]}],"StartTime":"2026-11-09T22:00:00+08:00","EndTime":"2026-11-09T23:00:00.123456789+08:00","Offset":0,"Limit":20,"Order":"Asc","Mode":"Raw"}`
+const operationalEventItem = `{"EventId":"event-one","Source":"Sandbox","ObjectType":"SandboxInstance","ObjectId":"instance-one","EventLevel":"Warning","EventType":"SandboxStopping","Message":"Stopping","Reason":"Manual","Extensions":"{\"ToolId\":\"tool-one\"}","Future":9007199254740993`
 
 // Keep this task-level guard even if the Action has a reasoned raw-only route:
 // raw availability alone cannot satisfy the operational query workflow.
-func TestEventCenterWorkflowHasResourceCommand(t *testing.T) {
+func TestOperationalEventWorkflowHasResourceCommand(t *testing.T) {
 	catalog, err := apimeta.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
 	mapped := catalog.Mapping.Actions["DescribeEventCenterEvents"]
-	if mapped == nil || mapped.Status != "mapped" || mapped.Command != "event-center.list" || mapped.Request != "DescribeEventCenterEventsRequest" || mapped.Response != "DescribeEventCenterEventsResponse" {
-		t.Fatalf("event center workflow must expose event-center.list: %+v", mapped)
+	if mapped == nil || mapped.Status != "mapped" || mapped.Command != "event.list" || mapped.Request != "DescribeEventCenterEventsRequest" || mapped.Response != "DescribeEventCenterEventsResponse" {
+		t.Fatalf("operational event workflow must expose event.list: %+v", mapped)
 	}
 	root := contractRoot()
-	for _, id := range []string{"event-center", "event-center.list"} {
+	for _, id := range []string{"event", "event.list"} {
 		cmd, ok := findCobraCommand(root, id)
-		if !ok || !strings.Contains(commandHelp(t, cmd), "agr event-center list") {
-			t.Fatalf("missing discoverable event center workflow at %s", id)
+		if !ok || !strings.Contains(commandHelp(t, cmd), "agr event list") {
+			t.Fatalf("missing discoverable operational event workflow at %s", id)
 		}
 	}
-	if !strings.Contains(commandHelp(t, root), "event-center") {
-		t.Fatal("event center group is absent from root help")
+	if !strings.Contains(commandHelp(t, root), "event") {
+		t.Fatal("operational event group is absent from root help")
 	}
-	schema := schemaForCommand(t, "event-center.list")
+	schema := schemaForCommand(t, "event.list")
 	if !schema.RequiresAuth || !schema.SupportsRequest || !schema.SupportsJSON {
 		t.Fatalf("query schema capabilities: %+v", schema)
 	}
@@ -67,12 +67,12 @@ func TestEventCenterWorkflowHasResourceCommand(t *testing.T) {
 	}
 }
 
-type eventCenterCLIResult struct {
+type operationalEventCLIResult struct {
 	stdout, stderr []byte
 	code           int
 }
 
-func eventCenterCLI(t *testing.T, server *httptest.Server, stdin string, args ...string) eventCenterCLIResult {
+func operationalEventCLI(t *testing.T, server *httptest.Server, stdin string, args ...string) operationalEventCLIResult {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 	defer cancel()
@@ -93,10 +93,10 @@ func eventCenterCLI(t *testing.T, server *httptest.Server, stdin string, args ..
 		}
 		code = exited.ExitCode()
 	}
-	return eventCenterCLIResult{stdout.Bytes(), stderr.Bytes(), code}
+	return operationalEventCLIResult{stdout.Bytes(), stderr.Bytes(), code}
 }
 
-func eventCenterObject(t *testing.T, raw []byte) map[string]any {
+func operationalEventObject(t *testing.T, raw []byte) map[string]any {
 	t.Helper()
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -110,13 +110,13 @@ func eventCenterObject(t *testing.T, raw []byte) map[string]any {
 	return object
 }
 
-func TestEventCenterSignedTransport(t *testing.T) {
+func TestOperationalEventSignedTransport(t *testing.T) {
 	for _, input := range []string{"flags", "filters file", "filters stdin", "request", "request file", "request stdin", "repeated filters", "defaults", "aggregate", "optional", "empty"} {
 		for _, format := range []string{"json", "text"} {
 			t.Run(input+"/"+format, func(t *testing.T) {
 				requests := make(chan map[string]any, 1)
 				var wire string
-				filters, stdin := eventCenterFilters, ""
+				filters, stdin := operationalEventFilters, ""
 				switch input {
 				case "filters file":
 					path := filepath.Join(t.TempDir(), "filters.json")
@@ -127,12 +127,12 @@ func TestEventCenterSignedTransport(t *testing.T) {
 				case "filters stdin":
 					filters, stdin = "-", filters
 				}
-				args := []string{"event-center", "list", "--filters", filters, "--start-time", "2026-11-09T22:00:00+08:00", "--end-time", "2026-11-09T23:00:00.123456789+08:00", "--offset", "0", "--limit", "20", "--order", "Asc", "--mode", "Raw"}
-				wantRequest := eventCenterObject(t, []byte(eventCenterRequest))
-				wire = `{"Response":{"Events":[` + eventCenterItem + `,"OccurredAt":"2026-11-09T22:54:47.123456789+08:00"}],"TotalCount":9007199254740993,"RequestId":"query-one","StartTime":"2026-11-09T22:00:00+08:00","EndTime":"2026-11-09T23:00:00.123456789+08:00","Mode":"Raw","Future":9007199254740993}}`
+				args := []string{"event", "list", "--filters", filters, "--start-time", "2026-11-09T22:00:00+08:00", "--end-time", "2026-11-09T23:00:00.123456789+08:00", "--offset", "0", "--limit", "20", "--order", "Asc", "--mode", "Raw"}
+				wantRequest := operationalEventObject(t, []byte(operationalEventRequest))
+				wire = `{"Response":{"Events":[` + operationalEventItem + `,"OccurredAt":"2026-11-09T22:54:47.123456789+08:00"}],"TotalCount":9007199254740993,"RequestId":"query-one","StartTime":"2026-11-09T22:00:00+08:00","EndTime":"2026-11-09T23:00:00.123456789+08:00","Mode":"Raw","Future":9007199254740993}}`
 				switch input {
 				case "request", "request file", "request stdin":
-					value := eventCenterRequest
+					value := operationalEventRequest
 					switch input {
 					case "request file":
 						path := filepath.Join(t.TempDir(), "request.json")
@@ -143,21 +143,21 @@ func TestEventCenterSignedTransport(t *testing.T) {
 					case "request stdin":
 						value, stdin = "-", value
 					}
-					args = []string{"event-center", "list", "--request", value}
+					args = []string{"event", "list", "--request", value}
 				case "repeated filters":
-					args = append(args, "--filters", "[]", "--filters", eventCenterFilters)
+					args = append(args, "--filters", "[]", "--filters", operationalEventFilters)
 				case "defaults", "empty":
-					args, wantRequest = []string{"event-center", "list"}, map[string]any{}
+					args, wantRequest = []string{"event", "list"}, map[string]any{}
 					if input == "empty" {
 						wire = `{"Response":{"Events":[],"TotalCount":0,"RequestId":"query-empty"}}`
 					}
 				case "aggregate":
-					args = []string{"event-center", "list", "--mode", "Aggregate"}
+					args = []string{"event", "list", "--mode", "Aggregate"}
 					wantRequest = map[string]any{"Mode": "Aggregate"}
-					wire = `{"Response":{"Events":[` + eventCenterItem + `,"Count":9007199254740993,"FirstOccurredAt":"2026-11-09T22:00:01+08:00","LastOccurredAt":"2026-11-09T22:54:47.123456789+08:00"}],"TotalCount":1,"RequestId":"query-aggregate","Mode":"Aggregate"}}`
+					wire = `{"Response":{"Events":[` + operationalEventItem + `,"Count":9007199254740993,"FirstOccurredAt":"2026-11-09T22:00:01+08:00","LastOccurredAt":"2026-11-09T22:54:47.123456789+08:00"}],"TotalCount":1,"RequestId":"query-aggregate","Mode":"Aggregate"}}`
 				case "optional":
-					args, wantRequest = []string{"event-center", "list", "--mode", "Aggregate"}, map[string]any{"Mode": "Aggregate"}
-					wire = `{"Response":{"Events":[` + eventCenterItem + `}],"TotalCount":1,"RequestId":"query-optional"}}`
+					args, wantRequest = []string{"event", "list", "--mode", "Aggregate"}, map[string]any{"Mode": "Aggregate"}
+					wire = `{"Response":{"Events":[` + operationalEventItem + `}],"TotalCount":1,"RequestId":"query-optional"}}`
 				}
 				server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.Header.Get("X-TC-Action") != "DescribeEventCenterEvents" || r.Header.Get("Authorization") == "" || r.Header.Get("X-TC-Region") != "ap-guangzhou" {
@@ -167,18 +167,18 @@ func TestEventCenterSignedTransport(t *testing.T) {
 					if err != nil {
 						t.Error(err)
 					}
-					requests <- eventCenterObject(t, payload)
+					requests <- operationalEventObject(t, payload)
 					_, _ = io.WriteString(w, wire)
 				}))
 				defer server.Close()
-				result := eventCenterCLI(t, server, stdin, append(args, "-o", format)...)
+				result := operationalEventCLI(t, server, stdin, append(args, "-o", format)...)
 				if result.code != 0 || len(result.stderr) != 0 {
 					t.Fatalf("query failed: code=%d %s %s", result.code, result.stdout, result.stderr)
 				}
 				if format == "json" {
-					envelope := eventCenterObject(t, result.stdout)
-					want := eventCenterObject(t, []byte(wire))["Response"]
-					if envelope["Command"] != "event-center.list" || envelope["Status"] != "succeeded" || !reflect.DeepEqual(envelope["Data"], want) || len(envelope["Warnings"].([]any)) != 0 {
+					envelope := operationalEventObject(t, result.stdout)
+					want := operationalEventObject(t, []byte(wire))["Response"]
+					if envelope["Command"] != "event.list" || envelope["Status"] != "succeeded" || !reflect.DeepEqual(envelope["Data"], want) || len(envelope["Warnings"].([]any)) != 0 {
 						t.Fatalf("response changed: %s", result.stdout)
 					}
 				} else {
@@ -210,7 +210,7 @@ func TestEventCenterSignedTransport(t *testing.T) {
 	}
 }
 
-func TestEventCenterInvalidCLIInputsDoNotCallService(t *testing.T) {
+func TestOperationalEventInvalidCLIInputsDoNotCallService(t *testing.T) {
 	var calls atomic.Int32
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { calls.Add(1); _, _ = io.WriteString(w, `{}`) }))
 	defer server.Close()
@@ -237,16 +237,22 @@ func TestEventCenterInvalidCLIInputsDoNotCallService(t *testing.T) {
 	} {
 		for _, format := range []string{"json", "text"} {
 			t.Run(tc.name+"/"+format, func(t *testing.T) {
-				args := append([]string{"event-center", "list"}, tc.args...)
-				result := eventCenterCLI(t, server, tc.stdin, append(args, "-o", format)...)
+				args := append([]string{"event", "list"}, tc.args...)
+				result := operationalEventCLI(t, server, tc.stdin, append(args, "-o", format)...)
 				if result.code != 2 {
 					t.Fatalf("expected usage exit 2, got %d: %s %s", result.code, result.stdout, result.stderr)
 				}
 				if format == "json" {
-					envelope := eventCenterObject(t, result.stdout)
+					envelope := operationalEventObject(t, result.stdout)
 					failure := envelope["Failure"].(map[string]any)
-					if failure["Code"] != tc.code || failure["Kind"] != "usage" || failure["Hint"] == "" || len(result.stderr) != 0 {
+					if envelope["Command"] != "event.list" || failure["Code"] != tc.code || failure["Kind"] != "usage" || failure["Hint"] == "" || len(result.stderr) != 0 {
 						t.Fatalf("invalid error contract: %s %s", result.stdout, result.stderr)
+					}
+					if tc.name == "enum" {
+						hint := failure["Hint"].(string)
+						if !strings.Contains(hint, "agr event list --help") || !strings.Contains(hint, "agr schema event.list -o json") {
+							t.Fatalf("query diagnostics must lead to the current command and schema: %s", hint)
+						}
 					}
 				} else if len(result.stdout) != 0 || len(result.stderr) == 0 {
 					t.Fatalf("text diagnostics in wrong channel: %s %s", result.stdout, result.stderr)
@@ -255,7 +261,7 @@ func TestEventCenterInvalidCLIInputsDoNotCallService(t *testing.T) {
 		}
 	}
 	// A list is not a streaming command. Preserve the shared NDJSON rejection.
-	result := eventCenterCLI(t, server, "", "event-center", "list", "-o", "ndjson")
+	result := operationalEventCLI(t, server, "", "event", "list", "-o", "ndjson")
 	if result.code != 2 || len(result.stdout) != 0 || !bytes.Contains(result.stderr, []byte("NDJSON_REQUIRES_STREAM")) {
 		t.Fatalf("NDJSON rejection: code=%d %s %s", result.code, result.stdout, result.stderr)
 	}
@@ -264,7 +270,7 @@ func TestEventCenterInvalidCLIInputsDoNotCallService(t *testing.T) {
 	}
 }
 
-func TestEventCenterServiceErrorsAndMalformedResponses(t *testing.T) {
+func TestOperationalEventServiceErrorsAndMalformedResponses(t *testing.T) {
 	for _, tc := range []struct {
 		name, response, code, kind string
 		exit                       int
@@ -279,7 +285,7 @@ func TestEventCenterServiceErrorsAndMalformedResponses(t *testing.T) {
 			t.Run(tc.name+"/"+format, func(t *testing.T) {
 				server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = io.WriteString(w, tc.response) }))
 				defer server.Close()
-				result := eventCenterCLI(t, server, "", "event-center", "list", "--start-time", "2000-01-01T00:00:00Z", "-o", format)
+				result := operationalEventCLI(t, server, "", "event", "list", "--start-time", "2000-01-01T00:00:00Z", "-o", format)
 				if result.code != tc.exit {
 					t.Fatalf("exit=%d want=%d: %s %s", result.code, tc.exit, result.stdout, result.stderr)
 				}
@@ -293,7 +299,7 @@ func TestEventCenterServiceErrorsAndMalformedResponses(t *testing.T) {
 				if err := json.Unmarshal(result.stdout, &envelope); err != nil {
 					t.Fatal(err)
 				}
-				if envelope.Failure == nil || envelope.Failure.Code != tc.code || envelope.Failure.Kind != tc.kind || len(result.stderr) != 0 {
+				if envelope.Command != "event.list" || envelope.Failure == nil || envelope.Failure.Code != tc.code || envelope.Failure.Kind != tc.kind || len(result.stderr) != 0 {
 					t.Fatalf("failure contract: %s %s", result.stdout, result.stderr)
 				}
 				if strings.Contains(tc.response, `"Error"`) && (envelope.Failure.Details["RequestId"] != "request-error" || envelope.Failure.Hint == "") {

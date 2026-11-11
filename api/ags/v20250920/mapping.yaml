@@ -27,7 +27,7 @@ api_version: "v20250920"
 
 actions:
   DescribeEventCenterEvents:
-    command: event-center.list
+    command: event.list
     request: DescribeEventCenterEventsRequest
     response: DescribeEventCenterEventsResponse
     status: mapped

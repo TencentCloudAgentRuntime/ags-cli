@@ -86,7 +86,7 @@ func groupShort(group string) string {
 		return "Manage image pre-cache tasks"
 	case "deployment":
 		return "Manage deployments"
-	case "event-center":
+	case "event":
 		return "Query operational events"
 	case "session":
 		return "Manage session spaces, sessions, and events"
@@ -108,7 +108,7 @@ func groupLong(group string) string {
 		return "Manage API keys for AGR sandbox access."
 	case "deployment":
 		return "Manage deployments and related data-plane workflows."
-	case "event-center":
+	case "event":
 		return "Browse operational events in the configured account and region. Use list to filter resources, switch between Raw details and Aggregate results, and page through a fixed time window. Session conversation events use 'agr session event list'."
 	case "session":
 		return "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history."
@@ -179,8 +179,8 @@ func subgroupLong(group, sub string) string {
 
 func groupExamples(group string) []string {
 	switch group {
-	case "event-center":
-		return []string{"Example - Browse recent operational events:\n  agr event-center list -o text", "Example - Inspect aggregate results:\n  agr event-center list --mode Aggregate --limit 20 -o json"}
+	case "event":
+		return []string{"Example - Browse recent operational events:\n  agr event list -o text", "Example - Inspect aggregate results:\n  agr event list --mode Aggregate --limit 20 -o json"}
 	case "instance.snapshot":
 		return []string{"Example - Create and inspect a disk-only snapshot:\n  agr instance snapshot create --instance-id ins-xxxx --memory=false -o text\n  agr instance snapshot list -o text", "Example - Restore an ACTIVE snapshot into a new instance:\n  agr instance create --snapshot-id snapshot-xxxx -o text", "Example - Request snapshot deletion:\n  agr instance snapshot delete snapshot-xxxx -o text"}
 	case "session":

@@ -37,14 +37,14 @@ GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
 
-## Dedicated event-center acceptance
+## Dedicated operational event acceptance
 
-The `Event center dedicated command` group exercises actual CLI subprocesses
-through `agr event-center list`, separately from the raw-call sync check:
+The `Operational event command` group exercises actual CLI subprocesses
+through `agr event list`, separately from the raw-call sync check:
 
 ```sh
-AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Event center dedicated command'
-GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Event center dedicated command'
+AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Operational event command'
+GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Operational event command'
 ```
 
 Its six scenarios check nonempty Raw/Aggregate results and wire types, matching

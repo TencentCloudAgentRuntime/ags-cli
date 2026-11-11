@@ -66,7 +66,7 @@ func Module() command.Module {
 
 func invalidQuery(field, problem string) error {
 	return output.NewUsageError("INVALID_REQUEST_JSON", field+": "+problem,
-		"Run 'agr event-center list --help' for query constraints and examples, or 'agr schema event-center.list -o json' for request fields.")
+		"Run 'agr event list --help' for query constraints and examples, or 'agr schema event.list -o json' for request fields.")
 }
 
 // Validate the assembled payload, so flags and every --request transport have
@@ -143,7 +143,7 @@ func validateFilters(value any) error {
 		switch name {
 		case "Source", "ObjectType", "ObjectId", "EventType", "EventLevel", "Reason", "EventId", "ToolId", "ToolType", "Message":
 		default:
-			return invalidQuery(field+".Name", "use a supported, case-sensitive filter name from 'agr event-center list --help'")
+			return invalidQuery(field+".Name", "use a supported, case-sensitive filter name from 'agr event list --help'")
 		}
 		if seen[name] {
 			return invalidQuery(field+".Name", "filter names must not repeat; put values in one condition")
