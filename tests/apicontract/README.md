@@ -19,7 +19,7 @@ configuration. Keep credentials out of command arguments.
   `ReadyTime` is optional even for `Success`; when supplied, it must remain a
   valid completion timestamp.
 - List pagination checks require at least two existing image pre-cache resources.
-  They follow `NextToken` with unchanged options and verify an exact Image filter.
+  They follow `NextToken` with unchanged options and verify an `image` substring filter.
 - Registry checks browse `MARKETPLACE` without `RecordId`, verify the five new
   version fields, and exercise positive and negative metadata filters. A
   marketplace version with nonempty metadata must exist.

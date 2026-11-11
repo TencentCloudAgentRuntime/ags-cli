@@ -15,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "list",
 			Short:        "List image pre-cache tasks",
 			Long:         "List ordinary image pre-cache resources in the configured account and region. Image volume pre-caching is not included. Use list after create to find task IDs and inspect status, then get to query one task.\n\nText output shows task ID, image, status and ReadyTime. JSON retains PreCacheImageList, NextToken and optional TotalCount. ReadyTime is optional even for Success and is preserved exactly when supplied.\n\nUse --next-token with the returned NextToken to fetch another page. Keep filters, page size and --need-total-count unchanged. There is no offset pagination or automatic fetching of all pages.",
-			Examples:     []string{"agr pre-cache-image-task list -o text", "agr pre-cache-image-task list --filters '[{\"Name\":\"Status\",\"Values\":[\"Success\"]}]' -o json", "agr pre-cache-image-task list --max-results 20 --need-total-count -o json", "agr pre-cache-image-task list --max-results 20 --need-total-count --next-token '<token>' -o json", "agr pre-cache-image-task list --filters @filters.json -o json"},
+			Examples:     []string{"agr pre-cache-image-task list -o text", "agr pre-cache-image-task list --filters '[{\"Name\":\"status\",\"Values\":[\"Success\"]}]' -o json", "agr pre-cache-image-task list --max-results 20 --need-total-count -o json", "agr pre-cache-image-task list --max-results 20 --need-total-count --next-token '<token>' -o json", "agr pre-cache-image-task list --filters @filters.json -o json"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribePreCacheImageListResponse",
@@ -35,7 +35,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Filters",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "filters", Flag: "filters", Usage: "Filters as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"Status\",\"Values\":[\"Success\"]}]", Fields: []string{"Name: Image, ImageDigest, ImageRegistryType, Status, SourceType", "Values: values ORed within the same filter"}, Type: command.FlagString},
+					{Name: "filters", Flag: "filters", Usage: "Filters as JSON array, @file, or - for stdin", Format: "[{\"Name\":\"status\",\"Values\":[\"Success\"]}]", Fields: []string{"Name: pre-cache-image-id, image, image-digest, image-registry-type, status, source-type", "image: literal substring match; the other supported names match exact values", "Values: values ORed within the same filter; names are case-sensitive"}, Type: command.FlagString},
 				},
 			},
 			{

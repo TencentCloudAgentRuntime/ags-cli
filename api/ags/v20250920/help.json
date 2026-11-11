@@ -868,10 +868,11 @@
                     "inputs": {
                         "filters": {
                             "usage": "Filters as JSON array, @file, or - for stdin",
-                            "format": "[{\"Name\":\"Status\",\"Values\":[\"Success\"]}]",
+                            "format": "[{\"Name\":\"status\",\"Values\":[\"Success\"]}]",
                             "fields": [
-                                "Name: Image, ImageDigest, ImageRegistryType, Status, SourceType",
-                                "Values: values ORed within the same filter"
+                                "Name: pre-cache-image-id, image, image-digest, image-registry-type, status, source-type",
+                                "image: literal substring match; the other supported names match exact values",
+                                "Values: values ORed within the same filter; names are case-sensitive"
                             ]
                         }
                     }
@@ -903,7 +904,7 @@
             },
             "examples": [
                 "agr pre-cache-image-task list -o text",
-                "agr pre-cache-image-task list --filters '[{\"Name\":\"Status\",\"Values\":[\"Success\"]}]' -o json",
+                "agr pre-cache-image-task list --filters '[{\"Name\":\"status\",\"Values\":[\"Success\"]}]' -o json",
                 "agr pre-cache-image-task list --max-results 20 --need-total-count -o json",
                 "agr pre-cache-image-task list --max-results 20 --need-total-count --next-token '<token>' -o json",
                 "agr pre-cache-image-task list --filters @filters.json -o json"

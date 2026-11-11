@@ -38,7 +38,7 @@ func TestListRequestAndPresentationPreserveWireData(t *testing.T) {
 		t.Fatal(err)
 	}
 	result, err := runtime.Handler.Run(t.Context(), command.Request{Flags: map[string]command.FlagValue{
-		"filters":          {Name: "filters", Type: command.FlagString, String: `[{"Name":"Status","Values":["Success"]}]`, Changed: true},
+		"filters":          {Name: "filters", Type: command.FlagString, String: `[{"Name":"status","Values":["Success"]}]`, Changed: true},
 		"max-results":      {Name: "max-results", Type: command.FlagInt, Int: 20, Changed: true},
 		"next-token":       {Name: "next-token", Type: command.FlagString, String: "previous-cursor", Changed: true},
 		"need-total-count": {Name: "need-total-count", Type: command.FlagBool, Bool: false, Changed: true},
@@ -46,7 +46,7 @@ func TestListRequestAndPresentationPreserveWireData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]any{"Filters": []any{map[string]any{"Name": "Status", "Values": []any{"Success"}}}, "MaxResults": 20, "NextToken": "previous-cursor", "NeedTotalCount": false}
+	want := map[string]any{"Filters": []any{map[string]any{"Name": "status", "Values": []any{"Success"}}}, "MaxResults": 20, "NextToken": "previous-cursor", "NeedTotalCount": false}
 	if cp.action != "DescribePreCacheImageList" || !reflect.DeepEqual(cp.request, want) {
 		t.Fatalf("action=%s request=%v", cp.action, cp.request)
 	}

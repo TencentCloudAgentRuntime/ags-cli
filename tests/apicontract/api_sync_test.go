@@ -62,9 +62,9 @@ var _ = Describe("Synced public API contract", func() {
 		Expect(ready).NotTo(BeNil(), "requires an existing successful image pre-cache task")
 		id := ready["PreCacheImageId"].(string)
 		filters, err := json.Marshal([]map[string]any{
-			{"Name": "Image", "Values": []string{ready["Image"].(string)}},
-			{"Name": "ImageDigest", "Values": []string{ready["ImageDigest"].(string)}},
-			{"Name": "Status", "Values": []string{"Success"}},
+			{"Name": "image", "Values": []string{ready["Image"].(string)}},
+			{"Name": "image-digest", "Values": []string{ready["ImageDigest"].(string)}},
+			{"Name": "status", "Values": []string{"Success"}},
 		})
 		Expect(err).NotTo(HaveOccurred())
 		text := cli.Run(ctx, "pre-cache-image-task", "list", "--filters", string(filters), "-o", "text")
@@ -108,12 +108,12 @@ var _ = Describe("Synced public API contract", func() {
 		Expect(second["TotalCount"]).To(Equal(first["TotalCount"]))
 
 		image := items[0].(map[string]any)["Image"].(string)
-		filters, err := json.Marshal([]map[string]any{{"Name": "Image", "Values": []string{image}}})
+		filters, err := json.Marshal([]map[string]any{{"Name": "image", "Values": []string{image}}})
 		Expect(err).NotTo(HaveOccurred())
 		filtered := run("pre-cache-image-task", "list", "--filters", string(filters), "--max-results", "100").Data["PreCacheImageList"].([]any)
 		Expect(filtered).NotTo(BeEmpty())
 		for _, value := range filtered {
-			Expect(value.(map[string]any)["Image"]).To(Equal(image))
+			Expect(value.(map[string]any)["Image"]).To(ContainSubstring(image))
 		}
 	})
 

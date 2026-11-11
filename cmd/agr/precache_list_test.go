@@ -49,8 +49,8 @@ func TestPrecacheWorkflowHasResourceCommands(t *testing.T) {
 }
 
 func TestPrecacheListSignedTransport(t *testing.T) {
-	const filters = `[{"Name":"Status","Values":["Success"]}]`
-	const request = `{"Filters":[{"Name":"Status","Values":["Success"]}],"MaxResults":20,"NextToken":"cursor","NeedTotalCount":false}`
+	const filters = `[{"Name":"status","Values":["Success"]}]`
+	const request = `{"Filters":[{"Name":"status","Values":["Success"]}],"MaxResults":20,"NextToken":"cursor","NeedTotalCount":false}`
 	for _, mode := range []string{"flags", "filters file", "filters stdin", "request", "text", "empty"} {
 		t.Run(mode, func(t *testing.T) {
 			requests := make(chan map[string]any, 1)
@@ -134,7 +134,7 @@ func TestPrecacheListSignedTransport(t *testing.T) {
 				if len(payload) != 0 {
 					t.Fatalf("default flags changed the request: %v", payload)
 				}
-			} else if len(payload) != 4 || payload["MaxResults"] != float64(20) || payload["NeedTotalCount"] != false || payload["NextToken"] != "cursor" || payload["Filters"].([]any)[0].(map[string]any)["Name"] != "Status" {
+			} else if len(payload) != 4 || payload["MaxResults"] != float64(20) || payload["NeedTotalCount"] != false || payload["NextToken"] != "cursor" || payload["Filters"].([]any)[0].(map[string]any)["Name"] != "status" {
 				t.Fatalf("request changed: %v", payload)
 			}
 		})
