@@ -481,6 +481,58 @@ Discover each layer with `agr session --help`, `agr session space --help`, or
 `agr session event --help`. For automation, use `-o json` and inspect the interface
 with `agr schema session.space.create -o json`.
 
+## Operational events
+
+Use `agr event-center list` to inspect operational events in the configured
+account and region. These events describe cloud resources; conversation history
+is available through `agr session event list`.
+
+```bash
+agr event-center list -o text
+agr event-center list --mode Aggregate --limit 20 -o json
+agr event-center list --filters '[{"Name":"ObjectId","Values":["<resource-id>"]}]' -o text
+agr event-center list --filters @filters.json -o json
+cat filters.json | agr event-center list --filters - -o json
+```
+
+Replace `<resource-id>` with the resource's returned `ObjectId`. Filters support
+the case-sensitive names `Source`, `ObjectType`, `ObjectId`, `EventType`,
+`EventLevel`, `Reason`, `EventId`, `ToolId`, `ToolType` and `Message`. There may be
+at most 12 conditions with distinct names, each with 1–20 nonempty values of at
+most 256 bytes. Repeated `--filters` uses the last value. A complete `--request`
+also accepts inline JSON, `@file` or stdin, and cannot be mixed with field flags.
+
+All seven query members are optional. The service defaults to `Raw`, `Desc`,
+offset 0, limit 10, EndTime=now and StartTime=EndTime minus one hour. RFC3339
+timestamps define an inclusive start and exclusive end, within the last seven
+days. The service clock controls retention and future-time checks.
+
+For repeatable pagination, fix the same window, filters, mode, order and page
+size. For example, capture the effective window when it is returned:
+
+```bash
+page=$(agr event-center list --mode Raw --order Asc --limit 20 -o json)
+START=$(printf '%s\n' "$page" | jq -er '.Data.StartTime')
+END=$(printf '%s\n' "$page" | jq -er '.Data.EndTime')
+agr event-center list --mode Raw --order Asc --start-time "$START" --end-time "$END" --offset 20 --limit 20 -o json
+```
+
+If the response omits either effective timestamp, choose explicit RFC3339 bounds
+within the retention window and restart from offset 0. Offset ranges from 0 to
+10000; limit ranges from 1 to 100. The command fetches one page at a time.
+`Raw` pages deduplicated events ordered by `OccurredAt`; `Aggregate` pages
+aggregation results ordered by `LastOccurredAt`. Lifecycle events remain
+individual aggregate rows with Count=1.
+
+Text output shows the resource, type, level, reason and applicable times/count.
+JSON retains `Events`, `TotalCount`, `RequestId`, optional effective window/mode,
+all event fields and unknown fields. Optional mode-specific fields may be absent;
+timestamps retain their timezone offsets and integer values retain precision.
+`Extensions` is a JSON-encoded string, not an object. This read-only list supports
+text and JSON output; NDJSON remains reserved for streaming commands. Discover
+the interface with `agr event-center --help`, `agr event-center list --help`, or
+`agr schema event-center.list -o json`.
+
 ## Low-level API access
 
 For undocumented fields or debugging, use the raw API channel:
@@ -539,6 +591,7 @@ agr session event ...            Append and list session events
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|list|get
+agr event-center list
 agr completion bash|zsh|fish|powershell
 ```
 

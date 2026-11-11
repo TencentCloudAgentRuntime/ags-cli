@@ -36,3 +36,28 @@ configuration. Keep credentials out of command arguments.
 GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
+
+## Dedicated event-center acceptance
+
+The `Event center dedicated command` group exercises actual CLI subprocesses
+through `agr event-center list`, separately from the raw-call sync check:
+
+```sh
+AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Event center dedicated command'
+GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Event center dedicated command'
+```
+
+Its six scenarios check nonempty Raw/Aggregate results and wire types, matching
+and nonmatching ObjectId filters, fixed-window pagination and Asc/Desc sorting
+in both modes, inclusive start/exclusive end, text/default queries, and local
+validation plus service-enforced retention/future-time errors. Optional fields
+are checked when supplied; missing response fields are not fabricated.
+
+These queries create no resources. They use existing events from a fixed six-day
+window ending two minutes before the run to leave indexing headroom. Pagination
+requires at least two results with distinct timestamps among the first 100 rows
+in each mode, avoiding assumptions about tie ordering. Missing fixtures fail the
+scenario; empty results or skipped suites do not satisfy dedicated acceptance.
+The default one-hour query may be empty; nonempty acceptance uses the explicit
+fixed window. Record the tested commit, build channel, environment alias,
+timestamps, pass/fail/skip counts and any fixture limits with the live result.

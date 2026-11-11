@@ -859,6 +859,91 @@
             },
             "long": "Create an image pre-cache task. JSON output includes PreCacheImageId for subsequent get requests."
         },
+        "event-center.list": {
+            "short": "List operational events",
+            "long": "Browse operational events in the configured account and region. Start with the recent events, filter a resource or tool with --filters, and use --mode Aggregate to inspect counts. Session conversation events use 'agr session event list'.\n\nAll seven query fields are optional and omitted fields use service defaults: Raw, Desc, offset 0, limit 10, EndTime=now, StartTime=EndTime minus 1 hour. The window is [StartTime, EndTime), within the last 7 days; timestamps use RFC3339. The service clock decides retention and future-time boundaries.\n\nRaw returns deduplicated events ordered by OccurredAt. Aggregate pages aggregation results ordered by LastOccurredAt, with optional Count, FirstOccurredAt and LastOccurredAt. Lifecycle events remain individual rows (Count=1). Optional fields may be absent. JSON preserves the full response, timestamp offsets, integer precision and unknown fields; Extensions is a JSON-encoded string, not an object.\n\nTo page repeatably, fix --start-time and --end-time using the returned effective window (when supplied), or provide both explicitly. Keep filters, mode, order and limit unchanged while increasing --offset. There is no automatic fetching of all pages. Filters accept inline JSON, @file or - for stdin; repeated --filters uses the last value. Complete --request input is mutually exclusive with field flags.",
+            "fields": {
+                "Filters": {
+                    "description": "Filters as JSON array, @file, or - for stdin",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as JSON array, @file, or - for stdin",
+                            "format": "[{\"Name\":\"ObjectId\",\"Values\":[\"<resource-id>\"]}]",
+                            "fields": [
+                                "Name: Source, ObjectType, ObjectId, EventType, EventLevel, Reason, EventId, ToolId, ToolType, Message (case-sensitive)",
+                                "At most 12 conditions; names must not repeat",
+                                "Values: 1 to 20 nonempty strings per condition, at most 256 bytes each",
+                                "Repeated --filters uses the last value; --request cannot be combined with field flags"
+                            ]
+                        }
+                    }
+                },
+                "StartTime": {
+                    "description": "Inclusive RFC3339 start, within the last 7 days; service default: EndTime minus 1 hour",
+                    "inputs": {
+                        "start-time": {
+                            "usage": "Inclusive RFC3339 start, within the last 7 days; service default: EndTime minus 1 hour"
+                        }
+                    }
+                },
+                "EndTime": {
+                    "description": "Exclusive RFC3339 end, no later than service now; service default: now",
+                    "inputs": {
+                        "end-time": {
+                            "usage": "Exclusive RFC3339 end, no later than service now; service default: now"
+                        }
+                    }
+                },
+                "Offset": {
+                    "description": "Page offset from 0 to 10000 (service default: 0); keep window, filters, mode and order unchanged",
+                    "inputs": {
+                        "offset": {
+                            "usage": "Page offset from 0 to 10000 (service default: 0); keep window, filters, mode and order unchanged"
+                        }
+                    }
+                },
+                "Limit": {
+                    "description": "Page size from 1 to 100 (service default: 10)",
+                    "inputs": {
+                        "limit": {
+                            "usage": "Page size from 1 to 100 (service default: 10)"
+                        }
+                    }
+                },
+                "Order": {
+                    "description": "Time order: Asc or Desc (service default: Desc); Raw uses OccurredAt, Aggregate uses LastOccurredAt",
+                    "inputs": {
+                        "order": {
+                            "usage": "Time order: Asc or Desc (service default: Desc); Raw uses OccurredAt, Aggregate uses LastOccurredAt",
+                            "values": [
+                                "Asc",
+                                "Desc"
+                            ]
+                        }
+                    }
+                },
+                "Mode": {
+                    "description": "Query mode: Raw or Aggregate (service default: Raw); lifecycle events remain individual rows",
+                    "inputs": {
+                        "mode": {
+                            "usage": "Query mode: Raw or Aggregate (service default: Raw); lifecycle events remain individual rows",
+                            "values": [
+                                "Raw",
+                                "Aggregate"
+                            ]
+                        }
+                    }
+                }
+            },
+            "examples": [
+                "agr event-center list -o text",
+                "agr event-center list --mode Aggregate --limit 20 -o json",
+                "agr event-center list --filters '[{\"Name\":\"EventLevel\",\"Values\":[\"Warning\"]}]' -o json",
+                "agr event-center list --filters @filters.json -o json",
+                "cat filters.json | agr event-center list --filters - -o json",
+                "agr event-center list --mode Raw --order Asc --start-time \"$START\" --end-time \"$END\" --offset 20 --limit 20 -o json"
+            ]
+        },
         "pre-cache-image-task.list": {
             "short": "List image pre-cache tasks",
             "long": "List ordinary image pre-cache resources in the configured account and region. Image volume pre-caching is not included. Use list after create to find task IDs and inspect status, then get to query one task.\n\nText output shows task ID, image, status and ReadyTime. JSON retains PreCacheImageList, NextToken and optional TotalCount. ReadyTime is optional even for Success and is preserved exactly when supplied.\n\nUse --next-token with the returned NextToken to fetch another page. Keep filters, page size and --need-total-count unchanged. There is no offset pagination or automatic fetching of all pages.",
