@@ -67,19 +67,21 @@ func TestPrecacheListSignedTransport(t *testing.T) {
 			}))
 			defer server.Close()
 			input, stdin := filters, ""
-			if mode == "filters file" {
+			switch mode {
+			case "filters file":
 				path := filepath.Join(t.TempDir(), "filters.json")
 				if err := os.WriteFile(path, []byte(filters), 0600); err != nil {
 					t.Fatal(err)
 				}
 				input = "@" + path
-			} else if mode == "filters stdin" {
+			case "filters stdin":
 				input, stdin = "-", filters
 			}
 			args := []string{"pre-cache-image-task", "list", "--filters", input, "--max-results", "20", "--next-token", "cursor", "--need-total-count=false"}
-			if mode == "request" {
+			switch mode {
+			case "request":
 				args = []string{"pre-cache-image-task", "list", "--request", request}
-			} else if mode == "empty" {
+			case "empty":
 				args = []string{"pre-cache-image-task", "list"}
 			}
 			format := "json"
@@ -90,7 +92,7 @@ func TestPrecacheListSignedTransport(t *testing.T) {
 			cmd := exec.CommandContext(t.Context(), os.Args[0], append([]string{"-test.run=^TestTransportLifecycleHelper$", "--"}, args...)...)
 			home := t.TempDir()
 			cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.Certificate().Raw})
-			cmd.Env = []string{"HOME=" + home, "USERPROFILE=" + home, "PATH=" + os.Getenv("PATH"), "AGR_TRANSPORT_LIFECYCLE_HELPER=success", "GORACE=atexit_sleep_ms=0", "TENCENTCLOUD_SECRET_ID=fake", "TENCENTCLOUD_SECRET_KEY=fake", "AGR_REGION=ap-guangzhou", "AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(server.URL, "https://"), "AGR_TRANSPORT_TEST_CERT=" + string(cert)}
+			cmd.Env = []string{"HOME=" + home, "USERPROFILE=" + home, "PATH=" + os.Getenv("PATH"), "AGR_TRANSPORT_LIFECYCLE_HELPER=success", "GORACE=atexit_sleep_ms=0", "GOCOVERDIR=" + t.TempDir(), "TENCENTCLOUD_SECRET_ID=fake", "TENCENTCLOUD_SECRET_KEY=fake", "AGR_REGION=ap-guangzhou", "AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(server.URL, "https://"), "AGR_TRANSPORT_TEST_CERT=" + string(cert)}
 			cmd.Stdin = strings.NewReader(stdin)
 			var stderr bytes.Buffer
 			cmd.Stderr = &stderr

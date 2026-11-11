@@ -115,6 +115,26 @@ var _ = Describe("Synced public API contract", func() {
 		for _, value := range filtered {
 			Expect(value.(map[string]any)["Image"]).To(ContainSubstring(image))
 		}
+		fixture := items[0].(map[string]any)
+		for _, selector := range []struct{ name, field string }{
+			{"pre-cache-image-id", "PreCacheImageId"},
+			{"image-registry-type", "ImageRegistryType"},
+			{"source-type", "SourceType"},
+		} {
+			By("querying the service with the " + selector.name + " filter")
+			value := fixture[selector.field].(string)
+			Expect(value).NotTo(BeEmpty())
+			filters, err := json.Marshal([]map[string]any{{"Name": selector.name, "Values": []string{value}}})
+			Expect(err).NotTo(HaveOccurred())
+			rows := run("pre-cache-image-task", "list", "--filters", string(filters), "--max-results", "100").Data["PreCacheImageList"].([]any)
+			Expect(rows).NotTo(BeEmpty(), selector.name)
+			for _, row := range rows {
+				Expect(row.(map[string]any)[selector.field]).To(Equal(value), selector.name)
+			}
+			if selector.name == "pre-cache-image-id" {
+				Expect(rows).To(HaveLen(1))
+			}
+		}
 	})
 
 	It("browses marketplace versions and filters metadata without RecordId", func() {
