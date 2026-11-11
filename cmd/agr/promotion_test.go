@@ -36,6 +36,7 @@ func TestPrecachePromotedContract(t *testing.T) {
 		{"legacy triple", []string{"get", "sha256:test", "--image", "nginx:latest", "--image-registry-type", "personal"}, "", "DescribePreCacheImageTask"},
 		{"image type", []string{"get", "--pre-cache-image-id", "cache-test", "--pre-cache-type", "image"}, "", "DescribePreCacheImageTask"},
 		{"volume type", []string{"get", "sha256:test", "--image", "nginx:latest", "--image-registry-type", "personal", "--pre-cache-type", "image_volume"}, "", "DescribePreCacheImageTask"},
+		{"volume without ReadyTime", []string{"get", "sha256:test", "--image", "nginx:latest", "--image-registry-type", "personal", "--pre-cache-type", "image_volume"}, "", "DescribePreCacheImageTask"},
 		{"volume JSON", []string{"get", "--request", `{"Image":"nginx:latest","ImageDigest":"sha256:test","ImageRegistryType":"personal","PreCacheType":"image_volume"}`}, "", "DescribePreCacheImageTask"},
 		{"create", []string{"create", "--image", "nginx:latest", "--image-registry-type", "personal"}, "", "CreatePreCacheImageTask"},
 	} {
@@ -48,7 +49,9 @@ func TestPrecachePromotedContract(t *testing.T) {
 				response["CachedImageSizeBytes"] = json.Number("9007199254740993")
 				response["CreateTime"] = "created"
 				response["LastUsedTime"] = "used"
-				response["ReadyTime"] = "2026-11-09T22:54:47+08:00"
+				if tc.name != "volume without ReadyTime" {
+					response["ReadyTime"] = "2026-11-09T22:54:47+08:00"
+				}
 			}
 			requests := make(chan map[string]any, 1)
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +102,11 @@ func TestPrecachePromotedContract(t *testing.T) {
 			for key, want := range response {
 				if envelope.Data[key] != want {
 					t.Errorf("%s=%v want %v", key, envelope.Data[key], want)
+				}
+			}
+			if tc.name == "volume without ReadyTime" {
+				if _, present := envelope.Data["ReadyTime"]; present {
+					t.Fatalf("optional ReadyTime was fabricated: %v", envelope.Data["ReadyTime"])
 				}
 			}
 			select {

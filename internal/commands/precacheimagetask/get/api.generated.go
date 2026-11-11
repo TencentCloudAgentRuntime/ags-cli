@@ -14,7 +14,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"pre-cache-image-task", "get"},
 			Use:          "get [image-digest] [flags]",
 			Short:        "Describe an image pre-cache task",
-			Long:         "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.\n\n--pre-cache-type defaults to image. For image_volume, use the complete image triple; task ID lookup is not supported. ReadyTime is returned when pre-caching completes and may be absent while pending.",
+			Long:         "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.\n\n--pre-cache-type defaults to image. For image_volume, use the complete image triple; task ID lookup is not supported. ReadyTime is optional; when present it is the pre-caching completion timestamp.",
 			Examples:     []string{"Example - Query by task ID:\n  agr pre-cache-image-task get --pre-cache-image-id cache-example -o json", "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json", "Example - Query image volume pre-caching:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal --pre-cache-type image_volume -o json"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{

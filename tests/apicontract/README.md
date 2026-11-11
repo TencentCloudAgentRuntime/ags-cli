@@ -15,6 +15,8 @@ configuration. Keep credentials out of command arguments.
   results. They compare its exact `ReadyTime` through list and task lookup,
   including the timezone offset. An accepted `image_volume` lookup may return
   `Pending`; that verifies query support, not successful volume pre-warming.
+  `ReadyTime` is optional even for `Success`; when supplied, it must remain a
+  valid completion timestamp.
 - Registry checks browse `MARKETPLACE` without `RecordId`, verify the five new
   version fields, and exercise positive and negative metadata filters. A
   marketplace version with nonempty metadata must exist.

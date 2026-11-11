@@ -70,8 +70,12 @@ var _ = Describe("Synced public API contract", func() {
 		data := run("pre-cache-image-task", "get", ready["ImageDigest"].(string), "--image", ready["Image"].(string), "--image-registry-type", ready["ImageRegistryType"].(string), "--pre-cache-type", "image_volume").Data
 		// A pending volume proves lookup support; it does not prove pre-warming completed.
 		Expect(data["Status"]).NotTo(BeEmpty())
-		if data["Status"] == "Success" {
-			Expect(data).To(HaveKey("ReadyTime"))
+		// ReadyTime is optional even for Success; preserve and validate it when supplied.
+		if readyAt, present := data["ReadyTime"]; present {
+			stamp, ok := readyAt.(string)
+			Expect(ok).To(BeTrue())
+			_, err := time.Parse(time.RFC3339Nano, stamp)
+			Expect(err).NotTo(HaveOccurred())
 		}
 		invalid := cli.Run(ctx, "pre-cache-image-task", "get", "--pre-cache-image-id", id, "--pre-cache-type", "image_volume", "-o", "json")
 		invalid.ExpectExit(2)
