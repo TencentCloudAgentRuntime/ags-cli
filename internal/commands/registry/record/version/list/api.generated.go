@@ -14,7 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"registry", "record", "version", "list"},
 			Use:          "list",
 			Short:        "List record versions",
-			Long:         "List record versions.",
+			Long:         "List versions within an explicit registry scope. --registry-id is required: use a registry ID for private versions or the exact value MARKETPLACE for approved marketplace versions. --record-id is optional in both scopes; omit it to browse across records.\n\nFilters accept JSON, @file, or - for stdin. Supported names: status, source_type, label, search, descriptor_type, supported_harness_engine, supported_harness_version, and metadata.<key>. Provide supported_harness_engine and supported_harness_version together; values are case-sensitive. record_id and version_id filters are not supported. Different filter names are ANDed; values within one filter are ORed.\n\nResults include record display fields Name, Description and DescriptorType, version SupportedHarnessVersions, Metadata as Name/Value entries, and ContentReadyTime when available. Record display fields reflect the current record rather than an immutable version snapshot.",
+			Examples:     []string{"agr registry record version list --registry-id reg-xxxx -o json", "agr registry record version list --registry-id MARKETPLACE --limit 20 --offset 0 -o json", "agr registry record version list --registry-id MARKETPLACE --filters '[{\"Name\":\"supported_harness_engine\",\"Values\":[\"pi\"]},{\"Name\":\"supported_harness_version\",\"Values\":[\"1.3.0\"]}]' -o json", "agr registry record version list --registry-id reg-xxxx --record-id rec-xxxx --filters '[{\"Name\":\"metadata.category\",\"Values\":[\"agent\"]}]' -o json"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeRegistryRecordVersionListResponse",
@@ -37,15 +38,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "registry-id", Flag: "registry-id", Usage: "Registry ID. (required)", Type: command.FlagString},
+					{Name: "registry-id", Flag: "registry-id", Usage: "Required registry scope: a registry ID or the exact value MARKETPLACE.", Type: command.FlagString},
 				},
 			},
 			{
-				Name:     "RecordId",
-				Required: true,
-				Parser:   "common.default_string",
+				Name:   "RecordId",
+				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "record-id", Flag: "record-id", Usage: "Record ID. (required)", Type: command.FlagString},
+					{Name: "record-id", Flag: "record-id", Usage: "Optional record ID. Omit to browse versions across records in the selected registry.", Type: command.FlagString},
 				},
 			},
 			{
@@ -66,7 +66,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "Filters",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "filters", Flag: "filters", Usage: "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.", Type: command.FlagString},
+					{Name: "filters", Flag: "filters", Usage: "Filters as Name/Values objects; JSON, @file, or - for stdin. Harness engine/version filters must be paired.", Format: "[{\"Name\":\"metadata.category\",\"Values\":[\"agent\"]}]", Fields: []string{"Name: status, source_type, label, search, descriptor_type, supported_harness_engine, supported_harness_version, metadata.<key>", "Values: case-sensitive values; harness engine and version must match the same supported harness entry", "record_id and version_id filters are not supported"}, Type: command.FlagString},
 				},
 			},
 		},

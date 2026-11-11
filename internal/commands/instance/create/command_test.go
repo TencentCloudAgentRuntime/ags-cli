@@ -187,6 +187,7 @@ func TestModuleWaitsAfterCreatingExactlyOnce(t *testing.T) {
 		t.Fatalf("Build: %v", err)
 	}
 	flags := withChanged(allInstanceCreateFlags(), "tool-name", "tool-name")
+	flags = withChanged(flags, "start-mode", "WAIT_UNTIL_HEALTHY")
 	flags["wait"] = command.FlagValue{Name: "wait", Type: command.FlagBool, Bool: true}
 	result, err := runtime.Handler.Run(context.Background(), command.Request{Flags: flags})
 	if err != nil {
@@ -194,6 +195,9 @@ func TestModuleWaitsAfterCreatingExactlyOnce(t *testing.T) {
 	}
 	if cp.calls != 1 || cp.getCalls != 1 {
 		t.Fatalf("Call = %d, GetInstance = %d", cp.calls, cp.getCalls)
+	}
+	if cp.request["StartMode"] != "WAIT_UNTIL_HEALTHY" {
+		t.Fatalf("StartMode = %v", cp.request["StartMode"])
 	}
 	if result.Data.(map[string]any)["Status"] != running || len(result.Effects) != 1 {
 		t.Fatalf("result = %#v", result)

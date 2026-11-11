@@ -201,7 +201,7 @@
         },
         "instance.create": {
             "short": "Create a new sandbox instance",
-            "long": "Create a new sandbox instance from a tool template, clone an existing instance, or restore a saved snapshot.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nTo restore a saved disk-only snapshot into a new instance, use --snapshot-id. The snapshot must be ACTIVE. Restoration uses the tool configuration saved in the snapshot. Do not supply --tool-id or --tool-name/-t with --snapshot-id. Running processes and memory state are not restored. --snapshot-id conflicts with --source-instance-id, --tool-id, and --tool-name/-t. In --request, SnapshotId cannot be combined with SourceInstanceId, ToolId, or ToolName. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port",
+            "long": "Create a new sandbox instance from a tool template, clone an existing instance, or restore a saved snapshot.\n\nTo create an instance from a tool, the tool must already exist. Create one first with `agr tool create`, or pass an existing --tool-id.\n\nUse --tool-name/-t for tool name or --tool-id for tool ID.\n\nTo clone an existing instance, use --source-instance-id. The source must have disk snapshot support enabled. Instances without this capability cannot be cloned. The new instance inherits the source tool, so a tool selector is optional. If supplied, it must match the source tool. Cloning copies the source system disk into a separate new instance without preserving running processes or memory state. SourceInstanceId is an instance ID, not a saved snapshot ID.\n\nTo restore a saved disk-only snapshot into a new instance, use --snapshot-id. The snapshot must be ACTIVE. Restoration uses the tool configuration saved in the snapshot. Do not supply --tool-id or --tool-name/-t with --snapshot-id. Running processes and memory state are not restored. --snapshot-id conflicts with --source-instance-id, --tool-id, and --tool-name/-t. In --request, SnapshotId cannot be combined with SourceInstanceId, ToolId, or ToolName. The Runtime Snapshot API is Beta and may change incompatibly or be discontinued.\n\nComplex API fields such as --mount-options, --metadata, and --custom-configuration accept JSON, @file, or - for stdin.\n\nAuth mode (--auth-mode):\n  DEFAULT  Use backend default (currently TOKEN)\n  TOKEN    All ports require X-Access-Token\n  PUBLIC   envd management port (49983) requires token; other ports open\n  NONE     No authentication on any port\n\n--start-mode WAIT_UNTIL_HEALTHY requests durable background creation for supported WAA and GPU sandboxes. Acceptance can return STARTING; use --wait to wait for RUNNING and check the final result. It cannot be combined with cloning or snapshot restoration.",
             "examples": [
                 "agr instance create --tool-id sdt-xxxx",
                 "agr instance create --tool-name my-tool",
@@ -209,7 +209,8 @@
                 "agr instance create --tool-id sdt-xxxx --mount-options '[{\"Name\":\"data\",\"MountPath\":\"/workspace\"}]'",
                 "agr instance create -t my-tool --auth-mode NONE",
                 "agr instance create --source-instance-id ins-source -o text",
-                "agr instance create --snapshot-id snapshot-xxxx -o text"
+                "agr instance create --snapshot-id snapshot-xxxx -o text",
+                "agr instance create --tool-id sdt-xxxx --start-mode WAIT_UNTIL_HEALTHY --wait -o json"
             ],
             "fields": {
                 "ToolName": {
@@ -261,6 +262,9 @@
                             ],
                             "values": [
                                 "SecurityContext: container privileges and POSIX capabilities; Privileged defaults to true in the API"
+                            ],
+                            "fields": [
+                                "Resources.GPUResourceGroupId: an existing purchased GPU resource group in the current account; CPU and Memory can be omitted when the group supplies them. At instance creation, the group must match the tool binding."
                             ]
                         }
                     }
@@ -317,6 +321,18 @@
                             "usage": "Restore an ACTIVE saved disk-only snapshot; conflicts with --source-instance-id, --tool-id, and --tool-name/-t (Beta)",
                             "examples": [
                                 "agr instance create --snapshot-id snapshot-xxxx -o text"
+                            ]
+                        }
+                    }
+                },
+                "StartMode": {
+                    "description": "Start mode: DEFAULT (synchronous, default) or WAIT_UNTIL_HEALTHY (durable background creation, WAA and GPU sandboxes only). Background creation may return STARTING; use --wait to wait for RUNNING.",
+                    "inputs": {
+                        "start-mode": {
+                            "usage": "Start mode: DEFAULT (synchronous, default) or WAIT_UNTIL_HEALTHY (durable background creation, WAA and GPU sandboxes only). Background creation may return STARTING; use --wait to wait for RUNNING.",
+                            "values": [
+                                "DEFAULT",
+                                "WAIT_UNTIL_HEALTHY"
                             ]
                         }
                     }
@@ -626,6 +642,9 @@
                             ],
                             "values": [
                                 "SecurityContext: container privileges and POSIX capabilities; Privileged defaults to true in the API"
+                            ],
+                            "fields": [
+                                "Resources.GPUResourceGroupId: an existing purchased GPU resource group in the current account; CPU and Memory can be omitted when the group supplies them. At instance creation, the group must match the tool binding."
                             ]
                         }
                     }
@@ -774,6 +793,9 @@
                             ],
                             "values": [
                                 "SecurityContext: container privileges and POSIX capabilities; Privileged defaults to true in the API"
+                            ],
+                            "fields": [
+                                "Resources.GPUResourceGroupId: an existing purchased GPU resource group in the current account; CPU and Memory can be omitted when the group supplies them. At instance creation, the group must match the tool binding."
                             ]
                         }
                     }
@@ -865,18 +887,31 @@
                     }
                 },
                 "PreCacheImageId": {
-                    "description": "Pre-cache task ID. Use alone instead of the image triple.",
+                    "description": "Pre-cache task ID for image pre-caching only. Use alone instead of the image triple.",
                     "inputs": {
                         "pre-cache-image-id": {
-                            "usage": "Pre-cache task ID. Use alone instead of the image triple."
+                            "usage": "Pre-cache task ID for image pre-caching only. Use alone instead of the image triple."
+                        }
+                    }
+                },
+                "PreCacheType": {
+                    "description": "Pre-cache type: image (default) or image_volume. image_volume requires the image triple and cannot use a task ID.",
+                    "inputs": {
+                        "pre-cache-type": {
+                            "usage": "Pre-cache type: image (default) or image_volume. image_volume requires the image triple and cannot use a task ID.",
+                            "values": [
+                                "image",
+                                "image_volume"
+                            ]
                         }
                     }
                 }
             },
-            "long": "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.",
+            "long": "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.\n\n--pre-cache-type defaults to image. For image_volume, use the complete image triple; task ID lookup is not supported. ReadyTime is returned when pre-caching completes and may be absent while pending.",
             "examples": [
                 "Example - Query by task ID:\n  agr pre-cache-image-task get --pre-cache-image-id cache-example -o json",
-                "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json"
+                "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json",
+                "Example - Query image volume pre-caching:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal --pre-cache-type image_volume -o json"
             ]
         },
         "registry.record.approve": {
@@ -1323,21 +1358,21 @@
         },
         "registry.record.version.list": {
             "short": "List record versions",
-            "long": "List record versions.",
+            "long": "List versions within an explicit registry scope. --registry-id is required: use a registry ID for private versions or the exact value MARKETPLACE for approved marketplace versions. --record-id is optional in both scopes; omit it to browse across records.\n\nFilters accept JSON, @file, or - for stdin. Supported names: status, source_type, label, search, descriptor_type, supported_harness_engine, supported_harness_version, and metadata.<key>. Provide supported_harness_engine and supported_harness_version together; values are case-sensitive. record_id and version_id filters are not supported. Different filter names are ANDed; values within one filter are ORed.\n\nResults include record display fields Name, Description and DescriptorType, version SupportedHarnessVersions, Metadata as Name/Value entries, and ContentReadyTime when available. Record display fields reflect the current record rather than an immutable version snapshot.",
             "fields": {
                 "RegistryId": {
-                    "description": "Registry ID.",
+                    "description": "Required registry scope: a registry ID or the exact value MARKETPLACE.",
                     "inputs": {
                         "registry-id": {
-                            "usage": "Registry ID."
+                            "usage": "Required registry scope: a registry ID or the exact value MARKETPLACE."
                         }
                     }
                 },
                 "RecordId": {
-                    "description": "Record ID.",
+                    "description": "Optional record ID. Omit to browse versions across records in the selected registry.",
                     "inputs": {
                         "record-id": {
-                            "usage": "Record ID."
+                            "usage": "Optional record ID. Omit to browse versions across records in the selected registry."
                         }
                     }
                 },
@@ -1358,14 +1393,26 @@
                     }
                 },
                 "Filters": {
-                    "description": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin.",
+                    "description": "Filters as Name/Values objects; JSON, @file, or - for stdin. Harness engine/version filters must be paired.",
                     "inputs": {
                         "filters": {
-                            "usage": "Filters as Name/Values objects. Accepts JSON, @file, or - for stdin."
+                            "usage": "Filters as Name/Values objects; JSON, @file, or - for stdin. Harness engine/version filters must be paired.",
+                            "format": "[{\"Name\":\"metadata.category\",\"Values\":[\"agent\"]}]",
+                            "fields": [
+                                "Name: status, source_type, label, search, descriptor_type, supported_harness_engine, supported_harness_version, metadata.<key>",
+                                "Values: case-sensitive values; harness engine and version must match the same supported harness entry",
+                                "record_id and version_id filters are not supported"
+                            ]
                         }
                     }
                 }
-            }
+            },
+            "examples": [
+                "agr registry record version list --registry-id reg-xxxx -o json",
+                "agr registry record version list --registry-id MARKETPLACE --limit 20 --offset 0 -o json",
+                "agr registry record version list --registry-id MARKETPLACE --filters '[{\"Name\":\"supported_harness_engine\",\"Values\":[\"pi\"]},{\"Name\":\"supported_harness_version\",\"Values\":[\"1.3.0\"]}]' -o json",
+                "agr registry record version list --registry-id reg-xxxx --record-id rec-xxxx --filters '[{\"Name\":\"metadata.category\",\"Values\":[\"agent\"]}]' -o json"
+            ]
         },
         "registry.skill-package.download-url": {
             "short": "Get a skill package download URL",

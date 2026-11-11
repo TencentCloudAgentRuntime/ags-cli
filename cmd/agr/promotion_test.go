@@ -34,6 +34,9 @@ func TestPrecachePromotedContract(t *testing.T) {
 		{"ID stdin", []string{"get", "--request", "-"}, `{"PreCacheImageId":"cache-test"}`, "DescribePreCacheImageTask"},
 		{"ID file", []string{"get", "--request", "@file"}, "", "DescribePreCacheImageTask"},
 		{"legacy triple", []string{"get", "sha256:test", "--image", "nginx:latest", "--image-registry-type", "personal"}, "", "DescribePreCacheImageTask"},
+		{"image type", []string{"get", "--pre-cache-image-id", "cache-test", "--pre-cache-type", "image"}, "", "DescribePreCacheImageTask"},
+		{"volume type", []string{"get", "sha256:test", "--image", "nginx:latest", "--image-registry-type", "personal", "--pre-cache-type", "image_volume"}, "", "DescribePreCacheImageTask"},
+		{"volume JSON", []string{"get", "--request", `{"Image":"nginx:latest","ImageDigest":"sha256:test","ImageRegistryType":"personal","PreCacheType":"image_volume"}`}, "", "DescribePreCacheImageTask"},
 		{"create", []string{"create", "--image", "nginx:latest", "--image-registry-type", "personal"}, "", "CreatePreCacheImageTask"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -45,6 +48,7 @@ func TestPrecachePromotedContract(t *testing.T) {
 				response["CachedImageSizeBytes"] = json.Number("9007199254740993")
 				response["CreateTime"] = "created"
 				response["LastUsedTime"] = "used"
+				response["ReadyTime"] = "2026-11-09T22:54:47+08:00"
 			}
 			requests := make(chan map[string]any, 1)
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +108,12 @@ func TestPrecachePromotedContract(t *testing.T) {
 				}
 				if tc.name == "legacy triple" && (len(req) != 3 || req["ImageDigest"] != "sha256:test") {
 					t.Fatalf("triple: %v", req)
+				}
+				if strings.HasPrefix(tc.name, "volume") && (len(req) != 4 || req["PreCacheType"] != "image_volume") {
+					t.Fatalf("image volume: %v", req)
+				}
+				if tc.name == "image type" && (len(req) != 2 || req["PreCacheType"] != "image") {
+					t.Fatalf("explicit image: %v", req)
 				}
 			default:
 				t.Fatal("no API request")
@@ -318,6 +328,8 @@ func TestPrecacheInvalidSelector(t *testing.T) {
 		{"null ID", nil, `{"PreCacheImageId":null}`},
 		{"null triple", nil, `{"Image":null,"ImageDigest":"sha256:x","ImageRegistryType":"personal"}`},
 		{"mixed null", nil, `{"PreCacheImageId":"c","Image":null}`},
+		{"volume ID", []string{"--pre-cache-image-id", "c", "--pre-cache-type", "image_volume"}, `{"PreCacheImageId":"c","PreCacheType":"image_volume"}`},
+		{"volume partial triple", []string{"--image", "a", "--pre-cache-type", "image_volume"}, `{"Image":"a","PreCacheType":"image_volume"}`},
 	}
 	for _, tc := range cases {
 		for _, transport := range []string{"flags", "inline", "file", "stdin"} {

@@ -424,12 +424,12 @@ func fixForCLIUsageCode(code string) []string {
 	case "UNSUPPORTED_LANGUAGE":
 		return []string{"Use one of: python, javascript, typescript, r, java, bash."}
 	case "MISSING_REQUIRED_INPUT":
-		return []string{"For agr pre-cache-image-task get, provide a non-empty --pre-cache-image-id alone, or <image-digest> with --image and --image-registry-type."}
+		return []string{"For agr pre-cache-image-task get, provide a non-empty --pre-cache-image-id alone for image pre-caching, or <image-digest> with --image and --image-registry-type. --pre-cache-type image_volume requires the complete image triple."}
 	case "CONFLICTING_INPUTS":
 		return []string{
 			"Use only one of the mutually exclusive input forms documented by the command help.",
 			"For agr instance code run, use only one of -c/--code, -f/--file, or piped stdin.",
-			"For agr pre-cache-image-task get, use --pre-cache-image-id alone or the complete image triple (<image-digest>, --image, --image-registry-type), not both.",
+			"For agr pre-cache-image-task get, use --pre-cache-image-id alone for image pre-caching or the complete image triple (<image-digest>, --image, --image-registry-type), not both. --pre-cache-type image_volume requires the triple and cannot use a task ID.",
 		}
 	case "ADB_NOT_FOUND":
 		return []string{"Install Android SDK Platform-Tools or set ADB_PATH to a valid adb binary."}

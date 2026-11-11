@@ -17,7 +17,7 @@ import (
 // Cover the real CLI, signing, SDK decoding and derived-tool projection in both
 // channels. Explicit false and nested references must reach the wire unchanged.
 func TestStorageSecuritySignedRequests(t *testing.T) {
-	customJSON := `{"SecurityContext":{"Privileged":false,"Capabilities":{"Add":["NET_BIND_SERVICE"],"Drop":["ALL"]}}}`
+	customJSON := `{"Resources":{"GPUResourceGroupId":"gpug-fixture"},"SecurityContext":{"Privileged":false,"Capabilities":{"Add":["NET_BIND_SERVICE"],"Drop":["ALL"]}}}`
 	mountsJSON := `[{"Name":"by-id","MountPath":"/id","ReadOnly":false,"Volume":{"VolumeId":"vol-test"}},{"Name":"by-name","MountPath":"/name","ReadOnly":true,"Volume":{"VolumeName":"workspace"}},{"Name":"template","MountPath":"/template","VolumeTemplate":{"VolumeTemplateName":"sessions","ReuseKey":"${metadata.session_id}"}}]`
 	overrideJSON := `{"SecurityContext":{"Privileged":true,"Capabilities":{"Drop":["NET_RAW"]}}}`
 	partialJSON := `{"Resources":{"CPU":"4","Memory":"8Gi"}}`

@@ -14,8 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"pre-cache-image-task", "get"},
 			Use:          "get [image-digest] [flags]",
 			Short:        "Describe an image pre-cache task",
-			Long:         "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.",
-			Examples:     []string{"Example - Query by task ID:\n  agr pre-cache-image-task get --pre-cache-image-id cache-example -o json", "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json"},
+			Long:         "Describe an image pre-cache task using either --pre-cache-image-id or the image-digest positional argument together with --image and --image-registry-type.\n\n--pre-cache-type defaults to image. For image_volume, use the complete image triple; task ID lookup is not supported. ReadyTime is returned when pre-caching completes and may be absent while pending.",
+			Examples:     []string{"Example - Query by task ID:\n  agr pre-cache-image-task get --pre-cache-image-id cache-example -o json", "Example - Query by image triple:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal -o json", "Example - Query image volume pre-caching:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal --pre-cache-type image_volume -o json"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
 				{Name: "image-digest", Description: "Image digest."},
@@ -59,7 +59,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "PreCacheImageId",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "pre-cache-image-id", Flag: "pre-cache-image-id", Usage: "Pre-cache task ID. Use alone instead of the image triple.", Type: command.FlagString},
+					{Name: "pre-cache-image-id", Flag: "pre-cache-image-id", Usage: "Pre-cache task ID for image pre-caching only. Use alone instead of the image triple.", Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "PreCacheType",
+				Parser: "common.default_string",
+				Inputs: []apicli.InputSpec{
+					{Name: "pre-cache-type", Flag: "pre-cache-type", Usage: "Pre-cache type: image (default) or image_volume. image_volume requires the image triple and cannot use a task ID.", Values: []string{"image", "image_volume"}, Type: command.FlagString},
 				},
 			},
 		},
