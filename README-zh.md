@@ -490,7 +490,7 @@ agr session event ...            追加和查询会话事件
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
-agr pre-cache-image-task create|get
+agr pre-cache-image-task create|list|get
 agr completion bash|zsh|fish|powershell
 ```
 

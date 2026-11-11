@@ -538,7 +538,7 @@ agr session event ...            Append and list session events
 
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
-agr pre-cache-image-task create|get
+agr pre-cache-image-task create|list|get
 agr completion bash|zsh|fish|powershell
 ```
 

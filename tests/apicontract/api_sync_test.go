@@ -50,7 +50,7 @@ var _ = Describe("Synced public API contract", func() {
 	})
 
 	It("preserves ReadyTime and supports image volume selectors", func(ctx SpecContext) {
-		rows := raw("DescribePreCacheImageList", `{"MaxResults":100}`)["PreCacheImageList"].([]any)
+		rows := run("pre-cache-image-task", "list", "--max-results", "100").Data["PreCacheImageList"].([]any)
 		var ready map[string]any
 		for _, value := range rows {
 			row := value.(map[string]any)
@@ -61,6 +61,17 @@ var _ = Describe("Synced public API contract", func() {
 		}
 		Expect(ready).NotTo(BeNil(), "requires an existing successful image pre-cache task")
 		id := ready["PreCacheImageId"].(string)
+		filters, err := json.Marshal([]map[string]any{
+			{"Name": "Image", "Values": []string{ready["Image"].(string)}},
+			{"Name": "ImageDigest", "Values": []string{ready["ImageDigest"].(string)}},
+			{"Name": "Status", "Values": []string{"Success"}},
+		})
+		Expect(err).NotTo(HaveOccurred())
+		text := cli.Run(ctx, "pre-cache-image-task", "list", "--filters", string(filters), "-o", "text")
+		text.ExpectSuccess()
+		Expect(text.Stdout).To(ContainSubstring("READY TIME"))
+		Expect(text.Stdout).To(ContainSubstring(id))
+		Expect(text.Stdout).To(ContainSubstring(ready["ReadyTime"].(string)))
 		for _, mode := range [][]string{nil, {"--pre-cache-type", "image"}} {
 			data := run(append([]string{"pre-cache-image-task", "get", "--pre-cache-image-id", id}, mode...)...).Data
 			Expect(data["ReadyTime"]).To(Equal(ready["ReadyTime"]))
@@ -80,6 +91,30 @@ var _ = Describe("Synced public API contract", func() {
 		invalid := cli.Run(ctx, "pre-cache-image-task", "get", "--pre-cache-image-id", id, "--pre-cache-type", "image_volume", "-o", "json")
 		invalid.ExpectExit(2)
 		Expect(invalid.Envelope().Failure.Code).To(Equal("CONFLICTING_INPUTS"))
+	})
+
+	It("lists pre-cache tasks through filters and cursor pagination", func() {
+		args := []string{"pre-cache-image-task", "list", "--max-results", "1", "--need-total-count"}
+		first := run(args...).Data
+		items := first["PreCacheImageList"].([]any)
+		Expect(items).To(HaveLen(1))
+		Expect(testutil.NumberField(first, "TotalCount")).To(BeNumerically(">", 1), "requires at least two existing image pre-cache resources")
+		cursor := first["NextToken"].(string)
+		Expect(cursor).NotTo(BeEmpty())
+		second := run(append(args, "--next-token", cursor)...).Data
+		nextItems := second["PreCacheImageList"].([]any)
+		Expect(nextItems).To(HaveLen(1))
+		Expect(nextItems[0].(map[string]any)["PreCacheImageId"]).NotTo(Equal(items[0].(map[string]any)["PreCacheImageId"]))
+		Expect(second["TotalCount"]).To(Equal(first["TotalCount"]))
+
+		image := items[0].(map[string]any)["Image"].(string)
+		filters, err := json.Marshal([]map[string]any{{"Name": "Image", "Values": []string{image}}})
+		Expect(err).NotTo(HaveOccurred())
+		filtered := run("pre-cache-image-task", "list", "--filters", string(filters), "--max-results", "100").Data["PreCacheImageList"].([]any)
+		Expect(filtered).NotTo(BeEmpty())
+		for _, value := range filtered {
+			Expect(value.(map[string]any)["Image"]).To(Equal(image))
+		}
 	})
 
 	It("browses marketplace versions and filters metadata without RecordId", func() {

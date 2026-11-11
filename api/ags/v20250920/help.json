@@ -859,6 +859,56 @@
             },
             "long": "Create an image pre-cache task. JSON output includes PreCacheImageId for subsequent get requests."
         },
+        "pre-cache-image-task.list": {
+            "short": "List image pre-cache tasks",
+            "long": "List ordinary image pre-cache resources in the configured account and region. Image volume pre-caching is not included. Use list after create to find task IDs and inspect status, then get to query one task.\n\nText output shows task ID, image, status and ReadyTime. JSON retains PreCacheImageList, NextToken and optional TotalCount. ReadyTime is optional even for Success and is preserved exactly when supplied.\n\nUse --next-token with the returned NextToken to fetch another page. Keep filters, page size and --need-total-count unchanged. There is no offset pagination or automatic fetching of all pages.",
+            "fields": {
+                "Filters": {
+                    "description": "Filters as JSON, @file, or - for stdin. Different filters are ANDed; values within one filter are ORed.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Filters as JSON array, @file, or - for stdin",
+                            "format": "[{\"Name\":\"Status\",\"Values\":[\"Success\"]}]",
+                            "fields": [
+                                "Name: Image, ImageDigest, ImageRegistryType, Status, SourceType",
+                                "Values: values ORed within the same filter"
+                            ]
+                        }
+                    }
+                },
+                "MaxResults": {
+                    "description": "Page size from 1 to 100; service default is 20.",
+                    "inputs": {
+                        "max-results": {
+                            "usage": "Page size from 1 to 100 (service default: 20)"
+                        }
+                    }
+                },
+                "NextToken": {
+                    "description": "Cursor returned by the previous page; keep other request parameters unchanged.",
+                    "inputs": {
+                        "next-token": {
+                            "usage": "Pagination cursor from NextToken; keep filters, page size and total-count option unchanged"
+                        }
+                    }
+                },
+                "NeedTotalCount": {
+                    "description": "Include the exact total count (default false).",
+                    "inputs": {
+                        "need-total-count": {
+                            "usage": "Include TotalCount in the response; keep the same value on subsequent pages"
+                        }
+                    }
+                }
+            },
+            "examples": [
+                "agr pre-cache-image-task list -o text",
+                "agr pre-cache-image-task list --filters '[{\"Name\":\"Status\",\"Values\":[\"Success\"]}]' -o json",
+                "agr pre-cache-image-task list --max-results 20 --need-total-count -o json",
+                "agr pre-cache-image-task list --max-results 20 --need-total-count --next-token '<token>' -o json",
+                "agr pre-cache-image-task list --filters @filters.json -o json"
+            ]
+        },
         "pre-cache-image-task.get": {
             "short": "Describe an image pre-cache task",
             "fields": {

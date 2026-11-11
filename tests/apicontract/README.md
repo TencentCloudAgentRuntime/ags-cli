@@ -12,11 +12,14 @@ Credentials, region, endpoint and domain use the existing `tests/testutil`
 configuration. Keep credentials out of command arguments.
 
 - Pre-cache checks require an existing successful task in the first 100 list
-  results. They compare its exact `ReadyTime` through list and task lookup,
-  including the timezone offset. An accepted `image_volume` lookup may return
+  results of `agr pre-cache-image-task list`. They compare its exact `ReadyTime`
+  through list JSON, the text table and task lookup, including the timezone
+  offset. An accepted `image_volume` lookup may return
   `Pending`; that verifies query support, not successful volume pre-warming.
   `ReadyTime` is optional even for `Success`; when supplied, it must remain a
   valid completion timestamp.
+- List pagination checks require at least two existing image pre-cache resources.
+  They follow `NextToken` with unchanged options and verify an exact Image filter.
 - Registry checks browse `MARKETPLACE` without `RecordId`, verify the five new
   version fields, and exercise positive and negative metadata filters. A
   marketplace version with nonempty metadata must exist.

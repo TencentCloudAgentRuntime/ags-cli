@@ -59,6 +59,7 @@ import (
 	instanceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/update"
 	precacheimagetaskcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/create"
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
+	precacheimagetasklist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/list"
 	registryauditloglist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/auditlog/list"
 	registrycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/create"
 	registrydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/registry/delete"
@@ -162,6 +163,7 @@ func Registry() (*command.Registry, error) {
 		instanceupdate.Module(),
 		precacheimagetaskcreate.Module(),
 		precacheimagetaskget.Module(),
+		precacheimagetasklist.Module(),
 		registryauditloglist.GeneratedModule(),
 		registrycreate.GeneratedModule(),
 		registrydelete.GeneratedModule(),
