@@ -27,6 +27,7 @@ import (
 	deploymentlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/list"
 	deploymentproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/proxy"
 	deploymentupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/update"
+	eventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/event/list"
 	harnessacp "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/acp"
 	harnesscreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/create"
 	harnessdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/delete"
@@ -156,6 +157,7 @@ func Registry() (*command.Registry, error) {
 		deploymentlist.Module(),
 		deploymentproxy.Module(),
 		deploymentupdate.Module(),
+		eventlist.Module(),
 		harnessacp.Module(),
 		harnesscreate.Module(),
 		harnessdelete.Module(),

@@ -27,10 +27,10 @@ api_version: "v20250920"
 
 actions:
   DescribeEventCenterEvents:
+    command: event.list
     request: DescribeEventCenterEventsRequest
     response: DescribeEventCenterEventsResponse
-    status: raw_only
-    reason: Event center queries use `agr api call DescribeEventCenterEvents`; a dedicated event center workflow is outside the sandbox and Registry commands.
+    status: mapped
 
   AcquireDeploymentToken:
     request: AcquireDeploymentTokenRequest

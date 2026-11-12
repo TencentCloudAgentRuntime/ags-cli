@@ -432,6 +432,52 @@ schema ID 不保留兼容别名。通过 `agr session --help`、
 自动化使用 `-o json`，接口结构可通过
 `agr schema session.space.create -o json` 查看。
 
+## 运维事件
+
+通过 `agr event list` 查询当前配置的账号和地域中的运维事件。这些事件
+描述云资源；会话交互历史仍通过 `agr session event list` 查询。
+
+```bash
+agr event list -o text
+agr event list --mode Aggregate --limit 20 -o json
+agr event list --filters '[{"Name":"ObjectId","Values":["<resource-id>"]}]' -o text
+agr event list --filters @filters.json -o json
+cat filters.json | agr event list --filters - -o json
+```
+
+将 `<resource-id>` 替换为事件返回的资源 `ObjectId`。支持区分大小写的过滤名：
+`Source`、`ObjectType`、`ObjectId`、`EventType`、`EventLevel`、`Reason`、
+`EventId`、`ToolId`、`ToolType` 和 `Message`。最多 12 个条件，名称不能重复；
+每项包含 1–20 个非空值，每值不超过 256 字节。重复 `--filters` 时最后一个
+值生效。完整 `--request` 同样支持 inline JSON、`@file` 和 stdin，不能与字段
+flag 混用。
+
+七个查询成员都可省略，由服务端补默认值：`Raw`、`Desc`、offset 0、limit 10、
+EndTime=当前时间、StartTime=EndTime 前一小时。时间使用 RFC3339，查询范围
+包含起点、不包含终点，限制在最近七天内。保留期和未来时间校验以服务端时钟为准。
+
+分页时固定相同的时间窗口、filters、mode、order 和页大小。例如响应返回有效
+窗口时，先保存两端再读取下一页：
+
+```bash
+page=$(agr event list --mode Raw --order Asc --limit 20 -o json)
+START=$(printf '%s\n' "$page" | jq -er '.Data.StartTime')
+END=$(printf '%s\n' "$page" | jq -er '.Data.EndTime')
+agr event list --mode Raw --order Asc --start-time "$START" --end-time "$END" --offset 20 --limit 20 -o json
+```
+
+若响应缺少任一有效时间，请自行选择保留期内的 RFC3339 两端，并从 offset 0
+重新查询。Offset 范围为 0–10000，limit 为 1–100；命令每次只取一页。
+`Raw` 按去重后的事件分页，使用 `OccurredAt` 排序；`Aggregate` 按聚合结果
+分页，使用 `LastOccurredAt` 排序。生命周期事件在聚合模式下仍逐条展示，Count=1。
+
+文本展示资源、类型、级别、原因及对应时间/次数。JSON 保留 `Events`、
+`TotalCount`、`RequestId`、可选的有效窗口/mode、全部事件字段和未知字段。
+模式相关字段可缺省；时间保留时区偏移，整数保留精度。`Extensions` 是 JSON
+编码的字符串，不是对象。此只读列表支持 text 和 JSON；NDJSON 仍限流式命令。
+通过 `agr event --help`、`agr event list --help` 或
+`agr schema event.list -o json` 查看接口。
+
 ## 原始 API 调用
 
 每个已映射 API 操作的稳定入口仍是对应的资源命令。当需要调试或访问
@@ -491,6 +537,7 @@ agr session event ...            追加和查询会话事件
 agr tool list/create/fork/get/update/delete
 agr apikey create/list/delete
 agr pre-cache-image-task create|list|get
+agr event list
 agr completion bash|zsh|fish|powershell
 ```
 
