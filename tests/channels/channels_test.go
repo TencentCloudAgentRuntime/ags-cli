@@ -59,6 +59,28 @@ func TestChannelBinaries(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	// Fixture operations extend the real overlays: handwritten preview wrappers
+	// depend on the generated descriptors of the checked-in preview contract.
+	extend := func(name string, fixture any) {
+		t.Helper()
+		existing, err := os.ReadFile(filepath.Join(work, "api/ags/v20250920", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var ops []any
+		if err := json.Unmarshal(existing, &ops); err != nil {
+			t.Fatal(err)
+		}
+		encoded, err := json.Marshal(fixture)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var added []any
+		if err := json.Unmarshal(encoded, &added); err != nil {
+			t.Fatal(err)
+		}
+		write(name, append(ops, added...))
+	}
 	member := func(name, kind, typ string) map[string]any {
 		return map[string]any{"name": name, "type": kind, "member": typ, "required": false}
 	}
@@ -107,9 +129,9 @@ func TestChannelBinaries(t *testing.T) {
 		map[string]any{"op": "replace", "path": descriptionPath, "value": member("Description", "object", "NetworkConfiguration")},
 	)
 
-	write("api.patch.json", patch)
-	write("mapping.patch.json", []any{map[string]any{"op": "test", "path": "/actions/CreateSandboxTool/fields/Description/inputs/0/type", "value": "string"}, map[string]any{"op": "replace", "path": "/actions/CreateSandboxTool/fields/Description/inputs/0/type", "value": "json"}, add("/actions/StartSandboxInstance/fields/ClientToken", map[string]any{"excluded": true}), add("/actions/PreviewProbe", map[string]any{"command": "workspace.probe", "request": "PreviewProbeRequest", "response": "PreviewProbeResponse", "status": "mapped"}), add("/actions/StartSandboxInstance/fields/PreviewProbe", map[string]any{"flag": "preview-probe-alias"})})
-	write("help.patch.json", []any{map[string]any{"op": "test", "path": "/commands/instance.create/fields/ClientToken/inputs", "value": map[string]any{"client-token": map[string]any{"usage": "Client token for duplicate creation protection"}}}, map[string]any{"op": "remove", "path": "/commands/instance.create/fields/ClientToken/inputs"}, add("/commands/workspace.probe", map[string]any{"short": "Preview module fixture"}), add("/commands/instance.create/fields/PreviewProbe", map[string]any{"description": "Preview input fixture"})})
+	extend("api.patch.json", patch)
+	extend("mapping.patch.json", []any{map[string]any{"op": "test", "path": "/actions/CreateSandboxTool/fields/Description/inputs/0/type", "value": "string"}, map[string]any{"op": "replace", "path": "/actions/CreateSandboxTool/fields/Description/inputs/0/type", "value": "json"}, add("/actions/StartSandboxInstance/fields/ClientToken", map[string]any{"excluded": true}), add("/actions/PreviewProbe", map[string]any{"command": "workspace.probe", "request": "PreviewProbeRequest", "response": "PreviewProbeResponse", "status": "mapped"}), add("/actions/StartSandboxInstance/fields/PreviewProbe", map[string]any{"flag": "preview-probe-alias"})})
+	extend("help.patch.json", []any{map[string]any{"op": "test", "path": "/commands/instance.create/fields/ClientToken/inputs", "value": map[string]any{"client-token": map[string]any{"usage": "Client token for duplicate creation protection"}}}, map[string]any{"op": "remove", "path": "/commands/instance.create/fields/ClientToken/inputs"}, add("/commands/workspace.probe", map[string]any{"short": "Preview module fixture"}), add("/commands/instance.create/fields/PreviewProbe", map[string]any{"description": "Preview input fixture"})})
 	goRun := func(args ...string) []byte {
 		t.Helper()
 		cmd := exec.CommandContext(t.Context(), "go", args...)
@@ -154,7 +176,11 @@ func Module() command.Module {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(generator, bytes.Replace(generatorBase, []byte("var previewWorkflowIDs = []string{}"), []byte(`var previewWorkflowIDs = []string{"workspace.local"}`), 1), 0644); err != nil {
+	marker := []byte("var previewWorkflowIDs = []string{")
+	if !bytes.Contains(generatorBase, marker) {
+		t.Fatal("previewWorkflowIDs declaration not found")
+	}
+	if err := os.WriteFile(generator, bytes.Replace(generatorBase, marker, append(append([]byte(nil), marker...), []byte(`"workspace.local",`)...), 1), 0644); err != nil {
 		t.Fatal(err)
 	}
 	goRun("run", "./cmd/internal/cobragen")
@@ -397,6 +423,25 @@ func Module() command.Module {
 	invalidList = false
 	mu.Unlock()
 	// Promotion is a base-contract change, independent of SDK publication.
+	// Render with only the fixture operations so checked-in preview features
+	// are withdrawn together with their preview-only handwritten wrappers.
+	for _, name := range []string{"api.patch.json", "mapping.patch.json", "help.patch.json"} {
+		var fixtureOps []any
+		switch name {
+		case "api.patch.json":
+			for _, op := range patch {
+				fixtureOps = append(fixtureOps, op)
+			}
+		default:
+			fixtureOps = []any{}
+		}
+		write(name, fixtureOps)
+	}
+	for _, dir := range previewOnlyCommandDirs(t, work) {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Fatal(err)
+		}
+	}
 	promoted := goRun("run", "./cmd/internal/apipatch", "render")
 	// Promote only field additions; withdraw the fixture-only command.
 	var base map[string]any
@@ -426,4 +471,45 @@ func Module() command.Module {
 		t.Fatalf("promoted field lost: %s", out)
 	}
 	t.Log("stable/preview isolation, signed requests, create/get/wait/list/fork and promotion verified")
+}
+
+// previewOnlyCommandDirs finds command packages whose every non-test Go file is
+// preview-only, so withdrawing the checked-in preview overlays also withdraws
+// their handwritten wrappers.
+func previewOnlyCommandDirs(t *testing.T, work string) []string {
+	t.Helper()
+	var dirs []string
+	root := filepath.Join(work, "internal/commands")
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || !entry.IsDir() || path == root {
+			return err
+		}
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+		sources, previewOnly := 0, true
+		for _, file := range entries {
+			name := file.Name()
+			if file.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+				continue
+			}
+			sources++
+			data, err := os.ReadFile(filepath.Join(path, name))
+			if err != nil {
+				return err
+			}
+			if !bytes.HasPrefix(data, []byte("//go:build preview\n")) {
+				previewOnly = false
+			}
+		}
+		if sources > 0 && previewOnly && !strings.Contains(path, "workspace") {
+			dirs = append(dirs, path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dirs
 }

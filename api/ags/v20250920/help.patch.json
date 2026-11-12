@@ -452,5 +452,465 @@
         "Example - Delete by name:\n  agr volume-template delete --volume-template-name agent-session-workspace"
       ]
     }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.engine.list",
+    "value": {
+      "short": "List available Harness Engines and versions",
+      "long": "List the Harness Engine and version combinations offered in the current region. Use these values for --engine and --engine-version. Available in preview builds.",
+      "examples": [
+        "Example - Show available engines:\n  agr harness engine list -o text",
+        "Example - Read the versions of one engine:\n  agr harness engine list -o json --jq '.Data.HarnessEngineSet[] | select(.HarnessEngine==\"pi\") | .HarnessEngineVersion'"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.create",
+    "value": {
+      "short": "Create a harness and publish revision 1",
+      "long": "Create a harness from the shortcut flags or a complete --request body. Managed harnesses run in VPC mode only: --role-arn, --subnet-id and --security-group-id are required and cannot be changed after create. The service saves the draft, creates revision 1, and starts publishing it asynchronously: it creates a Sandbox Tool and then a Deployment.\n\nWithout --wait the command returns after the request is accepted. With --wait it polls revision 1 until PUBLISHED or PUBLISH_FAILED. Timing out or pressing Ctrl+C stops only the local wait.\n\nCreate is not idempotent and the CLI never retries it. If the result is unknown after a timeout, check with 'agr harness list --name <name>' before running create again. Available in preview builds.",
+      "preserve_flag_order": true,
+      "examples": [
+        "Example - Minimal harness with one model:\n  agr harness create --name my-agent --engine pi --engine-version 1.3.0 \\\n    --model mp-a1b2c3d4:hy3 \\\n    --role-arn qcs::cam::uin/100000000001:roleName/AgentRole \\\n    --subnet-id subnet-a1b2c3d4 --security-group-id sg-a1b2c3d4 --wait -o text",
+        "Example - Two providers with an explicit default model, a Skill and a prompt file:\n  agr harness create --name support-bot --engine pi --engine-version 1.3.0 \\\n    --model mp-a1b2c3d4:hy3 --model mp-e5f6g7h8:deepseek-v3 --default-model mp-e5f6g7h8:deepseek-v3 \\\n    --skill reg-0123abcd/rec-0123abcd/rv-0123abcd --system-prompt @prompt.md \\\n    --role-arn qcs::cam::uin/100000000001:roleName/AgentRole \\\n    --subnet-id subnet-a1b2c3d4 --security-group-id sg-a1b2c3d4 \\\n    --initialize-configuration @init.json --tags team=support",
+        "Example - Preview the final request without creating anything:\n  agr harness create --name my-agent --engine pi --engine-version 1.3.0 \\\n    --model mp-a1b2c3d4:hy3 --role-arn qcs::cam::uin/100000000001:roleName/AgentRole \\\n    --subnet-id subnet-a1b2c3d4 --security-group-id sg-a1b2c3d4 --dry-run -o json",
+        "Example - Create from a complete request body:\n  agr harness create --generate-skeleton > harness.json\n  agr harness create --request @harness.json --wait"
+      ],
+      "fields": {
+        "HarnessName": {
+          "description": "Harness name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources.",
+          "inputs": {
+            "name": {
+              "usage": "Harness name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources."
+            }
+          }
+        },
+        "HarnessEngine": {
+          "description": "Harness Engine, for example pi or dsh. List values with 'agr harness engine list'.",
+          "inputs": {
+            "engine": {
+              "usage": "Harness Engine, for example pi or dsh. List values with 'agr harness engine list'."
+            }
+          }
+        },
+        "HarnessEngineVersion": {
+          "description": "Harness Engine version offered by the current region.",
+          "inputs": {
+            "engine-version": {
+              "usage": "Harness Engine version offered by the current region."
+            }
+          }
+        },
+        "SystemPrompt": {
+          "description": "Base system prompt, or @file. An empty string clears the override and keeps the engine's native prompt.",
+          "inputs": {
+            "system-prompt": {
+              "usage": "Base system prompt, or @file. An empty string clears the override and keeps the engine's native prompt."
+            }
+          }
+        },
+        "MCPServers": {
+          "description": "MCP servers as a JSON array, @file, or - for stdin. The list replaces the current MCP servers; [] removes all.",
+          "inputs": {
+            "mcp-servers": {
+              "usage": "MCP servers as a JSON array, @file, or - for stdin. The list replaces the current MCP servers; [] removes all.",
+              "format": "[{\"Name\":\"<name>\",\"Source\":{\"Remote\":{\"URL\":\"https://...\"}}|{\"Registry\":{\"RegistryId\":\"<id>\",\"RecordId\":\"<id>\",\"VersionId\":\"<id>\"}},\"Credential\":{\"CredentialProviderId\":\"<id>\",\"UserId\":\"<id>\",\"Scope\":\"<scope>\"},\"Headers\":[{\"Name\":\"Authorization\",\"Value\":\"Bearer ${credential}\"}]}]",
+              "fields": [
+                "Name: unique, case-sensitive; Pi accepts ASCII letters, digits, '_' and '-'",
+                "Source: exactly one of Remote (Streamable HTTP URL) or Registry (fixed version)",
+                "Credential: optional SecretMultiUser reference; ${credential} in header values is replaced with it",
+                "Headers: optional; override Registry headers with the same name"
+              ]
+            }
+          }
+        },
+        "InitializeConfiguration": {
+          "description": "Initialization configuration as JSON, @file, or - for stdin. Applied only when the Sandbox Tool and Deployment are first created; it cannot be changed later. --role-arn, --subnet-id and --security-group-id set the matching SandboxTool fields in this object.",
+          "inputs": {
+            "initialize-configuration": {
+              "usage": "Initialization configuration as JSON, @file, or - for stdin. Applied only when the Sandbox Tool and Deployment are first created; it cannot be changed later. --role-arn, --subnet-id and --security-group-id set the matching SandboxTool fields in this object.",
+              "format": "{\"SandboxTool\":{\"RoleArn\":\"<arn>\",\"NetworkConfiguration\":{\"NetworkMode\":\"VPC\",\"VpcConfig\":{\"SubnetIds\":[\"<subnet>\"],\"SecurityGroupIds\":[\"<sg>\"]}},\"CustomConfiguration\":{\"Resources\":{...},\"Env\":[...]},\"StorageMounts\":[...],\"LogConfiguration\":{...}},\"Deployment\":{\"ScalingConfiguration\":{...},\"LifecycleConfiguration\":{...},\"AffinityConfiguration\":{...}}}",
+              "fields": [
+                "SandboxTool.RoleArn: required; role used to create the Sandbox Tool and read Registry and TokenHub sources",
+                "SandboxTool.NetworkConfiguration: VPC only; VpcConfig.SubnetIds and VpcConfig.SecurityGroupIds are required",
+                "SandboxTool.CustomConfiguration.Env: names must not use platform-reserved prefixes",
+                "Deployment: scaling, idle lifecycle and affinity of the managed Deployment"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.get",
+    "value": {
+      "short": "Describe a harness draft and its resources",
+      "long": "Show the editable draft configuration, status, and the Sandbox Tool and Deployment IDs of a harness. The draft may differ from the published revision; use 'agr harness status' to see what is live. Available in preview builds.",
+      "examples": [
+        "Example - Inspect a harness:\n  agr harness get hns-a1b2c3d4 -o text",
+        "Example - Read the Deployment ID for scripts:\n  agr harness get hns-a1b2c3d4 -o json --jq '.Data.Harness.ResourceInfo.DeploymentId'"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.list",
+    "value": {
+      "short": "List harnesses",
+      "long": "List harnesses in the current account and region with filter shortcuts or raw --filters. Results are sorted by ID in descending order. Available in preview builds.",
+      "examples": [
+        "Example - List harnesses:\n  agr harness list -o text",
+        "Example - Find harnesses by exact name:\n  agr harness list --name my-agent -o text",
+        "Example - Harnesses whose deletion failed:\n  agr harness list --status DELETE_FAILED -o text",
+        "Example - Every harness ID for scripts:\n  agr harness list --all -o json --jq '.Data.HarnessSet[].HarnessId'"
+      ],
+      "fields": {
+        "Filters": {
+          "description": "Filters as a JSON array, @file, or - for stdin. Combined with shortcut filters; one filter name may appear only once.",
+          "inputs": {
+            "filters": {
+              "usage": "Filters as a JSON array, @file, or - for stdin. Combined with shortcut filters; one filter name may appear only once.",
+              "format": "[{\"Name\":\"<filter>\",\"Values\":[\"<value>\"]}]",
+              "values": [
+                "harness-id: exact Harness ID",
+                "harness-name: exact name; cannot be combined with harness-name-like",
+                "harness-name-like: literal substring of the name",
+                "status: ACTIVE, DELETING or DELETE_FAILED",
+                "tool-id: exact Sandbox Tool ID",
+                "deployment-id: exact Deployment ID",
+                "tag-key, tag-value, tag:<key>: exact tag match"
+              ]
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset, default 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset, default 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Page size, default 50, range 1-1000.",
+          "inputs": {
+            "limit": {
+              "usage": "Page size, default 50, range 1-1000."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.update",
+    "value": {
+      "short": "Update the harness draft",
+      "long": "Change the editable draft of a harness. Omitted flags keep their current values; array flags replace the whole list. The change is not live until you create and publish a revision: 'agr harness revision create <harness-id> --publish --wait'.\n\nInitialization settings and the role cannot be changed after create. Available in preview builds.",
+      "preserve_flag_order": true,
+      "examples": [
+        "Example - Change the system prompt, then publish:\n  agr harness update hns-a1b2c3d4 --system-prompt @prompt.md\n  agr harness revision create hns-a1b2c3d4 --publish --wait",
+        "Example - Switch the default model among selected models:\n  agr harness update hns-a1b2c3d4 --model mp-a1b2c3d4:hy3 --model mp-a1b2c3d4:hy3-lite --default-model mp-a1b2c3d4:hy3-lite",
+        "Example - Remove all MCP servers and the session space:\n  agr harness update hns-a1b2c3d4 --mcp-servers '[]' --session-space-id ''",
+        "Example - Replace custom tags only (does not create a revision):\n  agr harness update hns-a1b2c3d4 --tags env=prod --tags team=agents"
+      ],
+      "fields": {
+        "HarnessName": {
+          "description": "New harness name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources.",
+          "inputs": {
+            "name": {
+              "usage": "New harness name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources."
+            }
+          }
+        },
+        "HarnessEngine": {
+          "description": "Harness Engine. Changing it revalidates the selected Plugins.",
+          "inputs": {
+            "engine": {
+              "usage": "Harness Engine. Changing it revalidates the selected Plugins."
+            }
+          }
+        },
+        "HarnessEngineVersion": {
+          "description": "Harness Engine version.",
+          "inputs": {
+            "engine-version": {
+              "usage": "Harness Engine version."
+            }
+          }
+        },
+        "SystemPrompt": {
+          "description": "Base system prompt, or @file. An empty string clears the override and keeps the engine's native prompt.",
+          "inputs": {
+            "system-prompt": {
+              "usage": "Base system prompt, or @file. An empty string clears the override and keeps the engine's native prompt."
+            }
+          }
+        },
+        "MCPServers": {
+          "description": "MCP servers as a JSON array, @file, or - for stdin. The list replaces the current MCP servers; [] removes all.",
+          "inputs": {
+            "mcp-servers": {
+              "usage": "MCP servers as a JSON array, @file, or - for stdin. The list replaces the current MCP servers; [] removes all.",
+              "format": "[{\"Name\":\"<name>\",\"Source\":{\"Remote\":{\"URL\":\"https://...\"}}|{\"Registry\":{\"RegistryId\":\"<id>\",\"RecordId\":\"<id>\",\"VersionId\":\"<id>\"}},\"Credential\":{\"CredentialProviderId\":\"<id>\",\"UserId\":\"<id>\",\"Scope\":\"<scope>\"},\"Headers\":[{\"Name\":\"Authorization\",\"Value\":\"Bearer ${credential}\"}]}]",
+              "fields": [
+                "Name: unique, case-sensitive; Pi accepts ASCII letters, digits, '_' and '-'",
+                "Source: exactly one of Remote (Streamable HTTP URL) or Registry (fixed version)",
+                "Credential: optional SecretMultiUser reference; ${credential} in header values is replaced with it",
+                "Headers: optional; override Registry headers with the same name"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.delete",
+    "value": {
+      "short": "Delete a harness and its Deployment",
+      "long": "Delete a harness. The service deletes the managed Deployment and then removes the harness, its revisions, and references. The Sandbox Tool, model providers, session spaces, Registry assets, and credentials are kept; remove the Sandbox Tool with 'agr tool delete' if it is no longer needed.\n\nInteractive terminals ask for confirmation. Non-interactive callers must pass --yes. A DELETE_FAILED harness can be deleted again. Available in preview builds.",
+      "examples": [
+        "Example - Preview the deletion:\n  agr harness delete hns-a1b2c3d4 --dry-run",
+        "Example - Delete and wait until the harness is gone:\n  agr harness delete hns-a1b2c3d4 --yes --wait"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.revision.create",
+    "value": {
+      "short": "Freeze the harness draft as a new revision",
+      "long": "Create an immutable revision from the current harness draft. The revision pins the latest revision of each referenced model provider and starts as UNPUBLISHED. Use --publish to publish it in the same command; the two requests are not a transaction, so a publish failure still returns the new revision number. Available in preview builds.",
+      "examples": [
+        "Example - Freeze and publish the draft:\n  agr harness revision create hns-a1b2c3d4 --publish --wait -o text",
+        "Example - Freeze with a name and publish later:\n  agr harness revision create hns-a1b2c3d4 --name release-candidate -o text\n  agr harness revision publish hns-a1b2c3d4 3 --wait"
+      ],
+      "fields": {
+        "HarnessRevisionName": {
+          "description": "Revision name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources. Defaults to v<revision>.",
+          "inputs": {
+            "name": {
+              "usage": "Revision name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources. Defaults to v<revision>."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.revision.get",
+    "value": {
+      "short": "Describe a harness revision",
+      "long": "Show the frozen configuration and publish status of one revision. StatusReason explains PUBLISH_FAILED. Available in preview builds.",
+      "examples": [
+        "Example - Inspect revision 2:\n  agr harness revision get hns-a1b2c3d4 2 -o text",
+        "Example - Read only the status:\n  agr harness revision get hns-a1b2c3d4 2 -o json --jq '.Data.HarnessRevision.Status'"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.revision.list",
+    "value": {
+      "short": "List harness revisions",
+      "long": "List retained revisions of a harness, newest first. The service keeps the latest 10 revisions plus PUBLISHED and PUBLISHING ones. Available in preview builds.",
+      "examples": [
+        "Example - Show revision history:\n  agr harness revision list hns-a1b2c3d4 -o text",
+        "Example - Find the live revision number:\n  agr harness revision list hns-a1b2c3d4 -o json --jq '.Data.HarnessRevisionSet[] | select(.Status==\"PUBLISHED\") | .Revision'"
+      ],
+      "fields": {
+        "Offset": {
+          "description": "Pagination offset, default 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset, default 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Page size, default 50, range 1-1000.",
+          "inputs": {
+            "limit": {
+              "usage": "Page size, default 50, range 1-1000."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/harness.revision.publish",
+    "value": {
+      "short": "Publish a harness revision",
+      "long": "Publish a revision asynchronously. UNPUBLISHED, PUBLISH_FAILED and SUPERSEDED revisions can be published; republishing an earlier revision is how you roll back. If the revision is already PUBLISHED, the command reports AlreadyPublished and sends no request, so retries are safe.\n\nPublishing changes only instances created afterwards; existing instances and sessions keep their configuration. Available in preview builds.",
+      "examples": [
+        "Example - Publish and wait for the outcome:\n  agr harness revision publish hns-a1b2c3d4 3 --wait -o text",
+        "Example - Roll back to revision 1:\n  agr harness revision publish hns-a1b2c3d4 1 --wait"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.create",
+    "value": {
+      "short": "Create a model provider",
+      "long": "Create a model connection and register its models. Choose exactly one source: --base-url for an OpenAI-compatible service (with an optional SecretMultiUser credential), or --tokenhub-api-key-id for TokenHub. Creating a provider also creates revision 1. Create is not idempotent. Available in preview builds.",
+      "preserve_flag_order": true,
+      "examples": [
+        "Example - TokenHub source with one text model:\n  agr model-provider create --name my-models --tokenhub-api-key-id <api-key-id> --model hy3",
+        "Example - OpenAI-compatible source with a managed credential and a vision model:\n  agr model-provider create --name my-models --base-url https://llm.example.com/v1 \\\n    --credential-provider-id agc-a1b2c3d4 --credential-user-id model-user --credential-scope inference \\\n    --model deepseek-v3 --model qwen-vl:TEXT,IMAGE",
+        "Example - Full model capabilities from a file:\n  agr model-provider create --name my-models --tokenhub-api-key-id <api-key-id> --models @models.json"
+      ],
+      "fields": {
+        "ModelProviderName": {
+          "description": "Model provider name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources.",
+          "inputs": {
+            "name": {
+              "usage": "Model provider name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.get",
+    "value": {
+      "short": "Describe a model provider",
+      "long": "Show the current source, registered models and tags of a model provider. Secrets are never returned. Available in preview builds.",
+      "examples": [
+        "Example - Inspect a provider:\n  agr model-provider get mp-a1b2c3d4 -o text"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.list",
+    "value": {
+      "short": "List model providers",
+      "long": "List model providers in the current account and region with filter shortcuts or raw --filters. Available in preview builds.",
+      "examples": [
+        "Example - List providers:\n  agr model-provider list -o text",
+        "Example - TokenHub providers only:\n  agr model-provider list --type TOKENHUB -o text"
+      ],
+      "fields": {
+        "Filters": {
+          "description": "Filters as a JSON array, @file, or - for stdin. Combined with shortcut filters; one filter name may appear only once.",
+          "inputs": {
+            "filters": {
+              "usage": "Filters as a JSON array, @file, or - for stdin. Combined with shortcut filters; one filter name may appear only once.",
+              "format": "[{\"Name\":\"<filter>\",\"Values\":[\"<value>\"]}]",
+              "values": [
+                "model-provider-id: exact ID",
+                "model-provider-name: exact name; cannot be combined with model-provider-name-like",
+                "model-provider-name-like: literal substring of the name",
+                "type: OPENAI_COMPATIBLE or TOKENHUB",
+                "tag-key, tag-value, tag:<key>: exact tag match"
+              ]
+            }
+          }
+        },
+        "Offset": {
+          "description": "Pagination offset, default 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset, default 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Page size, default 50, range 1-1000.",
+          "inputs": {
+            "limit": {
+              "usage": "Page size, default 50, range 1-1000."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.update",
+    "value": {
+      "short": "Update a model provider",
+      "long": "Update the name, source or registered models of a model provider. Every configuration change creates a new revision; changing only tags does not. A new source replaces the old one completely, including its credential. --model or --models replaces the whole model list; removing a model still selected by a harness draft fails.\n\nHarnesses pick up the change only after 'agr harness revision create'. Available in preview builds.",
+      "preserve_flag_order": true,
+      "examples": [
+        "Example - Register an additional model:\n  agr model-provider update mp-a1b2c3d4 --model hy3 --model hy3-lite",
+        "Example - Switch to another TokenHub API key:\n  agr model-provider update mp-a1b2c3d4 --tokenhub-api-key-id <api-key-id>"
+      ],
+      "fields": {
+        "ModelProviderName": {
+          "description": "New model provider name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources.",
+          "inputs": {
+            "name": {
+              "usage": "New model provider name. DNS-1123 subdomain: lowercase letters, digits, '-' and '.', at most 253 characters. Names may repeat; use the returned ID to address resources."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.delete",
+    "value": {
+      "short": "Delete a model provider",
+      "long": "Delete a model provider. Deletion fails with ResourceInUse while any harness draft or retained harness revision references it. Available in preview builds.",
+      "examples": [
+        "Example - Delete a provider:\n  agr model-provider delete mp-a1b2c3d4 --yes"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.revision.get",
+    "value": {
+      "short": "Describe a model provider revision",
+      "long": "Show the frozen source and models of one model provider revision. Available in preview builds.",
+      "examples": [
+        "Example - Inspect revision 1:\n  agr model-provider revision get mp-a1b2c3d4 1 -o text"
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/model-provider.revision.list",
+    "value": {
+      "short": "List model provider revisions",
+      "long": "List retained revisions of a model provider, newest first. Available in preview builds.",
+      "examples": [
+        "Example - Show revision history:\n  agr model-provider revision list mp-a1b2c3d4 -o text"
+      ],
+      "fields": {
+        "Offset": {
+          "description": "Pagination offset, default 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Pagination offset, default 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Page size, default 50, range 1-1000.",
+          "inputs": {
+            "limit": {
+              "usage": "Page size, default 50, range 1-1000."
+            }
+          }
+        }
+      }
+    }
   }
 ]

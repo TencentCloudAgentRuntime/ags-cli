@@ -500,6 +500,12 @@ func positionalDescription(name string) string {
 		return "Image digest."
 	case "deployment-id":
 		return "Deployment ID."
+	case "harness-id":
+		return "Harness ID, such as hns-a1b2c3d4."
+	case "model-provider-id":
+		return "Model provider ID, such as mp-a1b2c3d4."
+	case "revision":
+		return "Revision number."
 	default:
 		return strings.TrimSpace(exported(name) + ".")
 	}
@@ -638,6 +644,22 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"delete:volume-template"}
 	case "volume-template.update":
 		return []string{"update:volume-template"}
+	case "harness.create":
+		return []string{"create:harness", "create:harness-revision", "update:harness-revision"}
+	case "harness.update":
+		return []string{"update:harness"}
+	case "harness.delete":
+		return []string{"delete:harness", "delete:deployment"}
+	case "harness.revision.create":
+		return []string{"create:harness-revision"}
+	case "harness.revision.publish":
+		return []string{"update:harness-revision"}
+	case "model-provider.create":
+		return []string{"create:model-provider", "create:model-provider-revision"}
+	case "model-provider.update":
+		return []string{"update:model-provider", "create:model-provider-revision"}
+	case "model-provider.delete":
+		return []string{"delete:model-provider"}
 	}
 	return nil
 }
@@ -767,7 +789,14 @@ func mappedRegistryModule(cmd commandModel, channels ...apimeta.Channel) (regist
 }
 
 // Explicit registration keeps preview-only workflows out of stable imports.
-var previewWorkflowIDs = []string{}
+var previewWorkflowIDs = []string{
+	"harness.acp",
+	"harness.endpoint",
+	"harness.prompt",
+	"harness.proxy",
+	"harness.revision.diff",
+	"harness.status",
+}
 
 func staticWorkflowModules() []registryModule {
 	ids := []string{

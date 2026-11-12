@@ -1198,5 +1198,3548 @@
       "output": "DeleteVolumeTemplateResponse",
       "status": "online"
     }
+  },
+  {
+    "op": "add",
+    "path": "/objects/Harness",
+    "value": {
+      "document": "Harness 当前配置及状态。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 名称。</p>",
+          "example": "production-assistant",
+          "member": "string",
+          "name": "HarnessName",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>当前可编辑配置。</p>",
+          "example": "无",
+          "member": "HarnessSpec",
+          "name": "Spec",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>关联资源信息。</p>",
+          "example": "无",
+          "member": "HarnessResourceInfo",
+          "name": "ResourceInfo",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 状态。</p><p>枚举值：</p><ul><li>ACTIVE</li><li>DELETING</li><li>DELETE_FAILED</li></ul>",
+          "example": "DELETE_FAILED",
+          "member": "string",
+          "name": "Status",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>删除失败的原因。</p>",
+          "example": "Associated resource cleanup failed",
+          "member": "string",
+          "name": "StatusReason",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>创建时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "CreatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>更新时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "UpdatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>资源标签。</p>",
+          "example": "无",
+          "member": "Tag",
+          "name": "Tags",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessEngineInfo",
+    "value": {
+      "document": "Harness Engine 及版本。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 标识。</p>",
+          "example": "pi",
+          "member": "string",
+          "name": "HarnessEngine",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 版本列表。</p>",
+          "example": "[\"release-a\", \"release-b\"]",
+          "member": "string",
+          "name": "HarnessEngineVersion",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessRevision",
+    "value": {
+      "document": "Harness 修订配置及发布状态。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>修订号。</p>",
+          "example": "2",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 修订名称。</p>",
+          "example": "v2",
+          "member": "string",
+          "name": "HarnessRevisionName",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>该修订的配置。</p>",
+          "example": "无",
+          "member": "HarnessRevisionSpec",
+          "name": "Spec",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>发布状态。</p><p>枚举值：</p><ul><li>UNPUBLISHED</li><li>PUBLISHING</li><li>PUBLISHED</li><li>PUBLISH_FAILED</li><li>SUPERSEDED</li></ul>",
+          "example": "PUBLISHING",
+          "member": "string",
+          "name": "Status",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>发布状态说明。</p>",
+          "example": "Publication accepted; waiting for execution.",
+          "member": "string",
+          "name": "StatusReason",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>创建时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "CreatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>更新时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "UpdatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessSpec",
+    "value": {
+      "document": "Harness 当前配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 标识。</p>",
+          "example": "pi",
+          "member": "string",
+          "name": "HarnessEngine",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 版本。</p>",
+          "example": "release-a",
+          "member": "string",
+          "name": "HarnessEngineVersion",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接及模型。</p>",
+          "example": "无",
+          "member": "ModelProviderReferenceInput",
+          "name": "ModelProviders",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型。</p>",
+          "example": "无",
+          "member": "ModelSelectionInput",
+          "name": "DefaultModel",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>会话持久化配置。</p>",
+          "example": "无",
+          "member": "HarnessSessionConfiguration",
+          "name": "SessionConfiguration",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>基础系统提示词。</p>",
+          "example": "You are a helpful assistant.",
+          "member": "string",
+          "name": "SystemPrompt",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Skill 版本列表。</p>",
+          "example": "无",
+          "member": "SkillReference",
+          "name": "Skills",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Plugin 版本列表。</p>",
+          "example": "无",
+          "member": "PluginReference",
+          "name": "Plugins",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>MCP 连接列表。</p>",
+          "example": "无",
+          "member": "MCPConnection",
+          "name": "MCPServers",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/MCPConnection",
+    "value": {
+      "document": "MCP 连接配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>MCP 连接名称。</p>",
+          "example": "docs",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>MCP 服务来源。</p>",
+          "example": "无",
+          "member": "MCPSource",
+          "name": "Source",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>托管凭据引用。</p>",
+          "example": "无",
+          "member": "CredentialReference",
+          "name": "Credential",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>HTTP 请求头。</p>",
+          "example": "无",
+          "member": "HTTPHeader",
+          "name": "Headers",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProviderReference",
+    "value": {
+      "document": "修订引用的模型连接。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>引用的模型连接修订号。</p>",
+          "example": "2",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>选用的模型 ID 列表。</p>",
+          "example": "[\"model-a\"]",
+          "member": "string",
+          "name": "Models",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelSelection",
+    "value": {
+      "document": "Harness 修订使用的默认模型。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接修订号。</p>",
+          "example": "2",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型 ID。</p>",
+          "example": "model-b",
+          "member": "string",
+          "name": "Model",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelSelectionUpdate",
+    "value": {
+      "document": "默认模型的修改参数。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型 ID。</p>",
+          "example": "model-b",
+          "member": "string",
+          "name": "Model",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProviderReferenceInput",
+    "value": {
+      "document": "选用的模型连接。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>选用的模型 ID 列表。</p>",
+          "example": "[\"model-a\"]",
+          "member": "string",
+          "name": "Models",
+          "type": "list",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelSelectionInput",
+    "value": {
+      "document": "默认模型。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型 ID。</p>",
+          "example": "model-b",
+          "member": "string",
+          "name": "Model",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CredentialReference",
+    "value": {
+      "document": "SecretMultiUser 托管凭据引用。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>SecretMultiUser 凭据提供方 ID。</p>",
+          "example": "agc-abcdefgh",
+          "member": "string",
+          "name": "CredentialProviderId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>凭据所属用户 ID。</p>",
+          "example": "model-service-user",
+          "member": "string",
+          "name": "UserId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>凭据作用域。</p>",
+          "example": "inference",
+          "member": "string",
+          "name": "Scope",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/RegistryReference",
+    "value": {
+      "document": "Agent Registry 资产的指定版本。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Registry ID。</p>",
+          "example": "reg-0123abcd",
+          "member": "string",
+          "name": "RegistryId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Registry 资产 ID。</p>",
+          "example": "rec-0123abcd",
+          "member": "string",
+          "name": "RecordId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Registry 资产版本 ID。</p>",
+          "example": "rv-0123abcd",
+          "member": "string",
+          "name": "VersionId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SkillSource",
+    "value": {
+      "document": "Skill 来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Agent Registry 资产版本。</p>",
+          "example": "无",
+          "member": "RegistryReference",
+          "name": "Registry",
+          "type": "object",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SkillReference",
+    "value": {
+      "document": "Skill 版本引用。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Skill 来源。</p>",
+          "example": "无",
+          "member": "SkillSource",
+          "name": "Source",
+          "type": "object",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/PluginSource",
+    "value": {
+      "document": "Plugin 来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Agent Registry 资产版本。</p>",
+          "example": "无",
+          "member": "RegistryReference",
+          "name": "Registry",
+          "type": "object",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/PluginReference",
+    "value": {
+      "document": "Plugin 版本引用。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Plugin 来源。</p>",
+          "example": "无",
+          "member": "PluginSource",
+          "name": "Source",
+          "type": "object",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/MCPRemoteSource",
+    "value": {
+      "document": "MCP 服务地址。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>MCP 服务的 HTTP(S) 地址。</p>",
+          "example": "https://docs.example.com/mcp",
+          "member": "string",
+          "name": "URL",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/MCPSource",
+    "value": {
+      "document": "MCP 服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Agent Registry 资产版本。</p>",
+          "example": "无",
+          "member": "RegistryReference",
+          "name": "Registry",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>手动配置的 MCP 服务地址。</p>",
+          "example": "无",
+          "member": "MCPRemoteSource",
+          "name": "Remote",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HTTPHeader",
+    "value": {
+      "document": "HTTP 请求头。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>请求头名称。</p>",
+          "example": "X-API-Key",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>请求头值。</p>",
+          "example": "Bearer ${credential}",
+          "member": "string",
+          "name": "Value",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessResourceInfo",
+    "value": {
+      "document": "关联资源信息。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>关联的 Sandbox Tool ID。</p>",
+          "example": "sdt-abcdefgh",
+          "member": "string",
+          "name": "ToolId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>关联的 Deployment ID。</p>",
+          "example": "dep-abcdefgh",
+          "member": "string",
+          "name": "DeploymentId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessSessionConfiguration",
+    "value": {
+      "document": "Session Space 配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>用于持久化会话的 Session Space ID</p>",
+          "example": "space-example",
+          "member": "string",
+          "name": "SessionSpaceId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessSessionConfigurationInput",
+    "value": {
+      "document": "Session Space 配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>用于持久化会话的 Session Space ID</p>",
+          "example": "space-example",
+          "member": "string",
+          "name": "SessionSpaceId",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessInitializeConfiguration",
+    "value": {
+      "document": "初始化配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Sandbox Tool 初始化配置。</p>",
+          "example": "无",
+          "member": "HarnessSandboxToolConfiguration",
+          "name": "SandboxTool",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Deployment 初始化配置。</p>",
+          "example": "无",
+          "member": "HarnessDeploymentConfiguration",
+          "name": "Deployment",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessSandboxToolConfiguration",
+    "value": {
+      "document": "Sandbox Tool 初始化配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Sandbox Tool 角色 ARN。</p>",
+          "example": "qcs::cam::uin/100000000001:roleName/AgentRuntimeHarnessRole",
+          "member": "string",
+          "name": "RoleArn",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>网络配置。</p>",
+          "example": "无",
+          "member": "HarnessNetworkConfiguration",
+          "name": "NetworkConfiguration",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>实例自定义配置。</p>",
+          "example": "无",
+          "member": "HarnessCustomConfiguration",
+          "name": "CustomConfiguration",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>存储挂载列表。</p>",
+          "example": "无",
+          "member": "HarnessStorageMount",
+          "name": "StorageMounts",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>日志采集配置。</p>",
+          "example": "无",
+          "member": "HarnessLogConfiguration",
+          "name": "LogConfiguration",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessNetworkConfiguration",
+    "value": {
+      "document": "Sandbox Tool 网络配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>网络模式。</p><p>枚举值：</p><ul><li>PUBLIC</li><li>VPC</li><li>SANDBOX</li></ul>",
+          "example": "VPC",
+          "member": "string",
+          "name": "NetworkMode",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>VPC 子网及安全组配置。</p>",
+          "example": "无",
+          "member": "HarnessVpcConfig",
+          "name": "VpcConfig",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessVpcConfig",
+    "value": {
+      "document": "VPC 网络配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>子网 ID 列表。</p>",
+          "example": "[\"subnet-abcdefgh\"]",
+          "member": "string",
+          "name": "SubnetIds",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>安全组 ID 列表。</p>",
+          "example": "[\"sg-abcdefgh\"]",
+          "member": "string",
+          "name": "SecurityGroupIds",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessCustomConfiguration",
+    "value": {
+      "document": "Sandbox Tool 自定义配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>实例资源规格。</p>",
+          "example": "无",
+          "member": "HarnessResourceConfiguration",
+          "name": "Resources",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>追加到 Harness 管理环境变量之后的环境变量。</p>",
+          "example": "无",
+          "member": "HarnessEnvironmentVariable",
+          "name": "Env",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessEnvironmentVariable",
+    "value": {
+      "document": "环境变量。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>环境变量名称，不能使用平台保留前缀。</p>",
+          "example": "LOG_LEVEL",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>环境变量值。</p>",
+          "example": "info",
+          "member": "string",
+          "name": "Value",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessResourceConfiguration",
+    "value": {
+      "document": "实例资源规格。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>CPU 核数。</p>",
+          "example": "2",
+          "member": "string",
+          "name": "CPU",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>内存容量。</p>",
+          "example": "2Gi",
+          "member": "string",
+          "name": "Memory",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>实例磁盘容量。</p>",
+          "example": "5Gi",
+          "member": "string",
+          "name": "Storage",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessStorageMount",
+    "value": {
+      "document": "存储挂载配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>挂载名称。</p>",
+          "example": "workspace",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>容器内挂载路径。</p>",
+          "example": "/workspace",
+          "member": "string",
+          "name": "MountPath",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>存储后端配置。</p>",
+          "example": "无",
+          "member": "HarnessStorageSource",
+          "name": "StorageSource",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>已有存储卷。</p>",
+          "example": "无",
+          "member": "HarnessVolumeReference",
+          "name": "Volume",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>存储卷模板。</p>",
+          "example": "无",
+          "member": "HarnessVolumeTemplateReference",
+          "name": "VolumeTemplate",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>是否只读挂载。</p>",
+          "example": "false",
+          "member": "bool",
+          "name": "ReadOnly",
+          "type": "bool",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessStorageSource",
+    "value": {
+      "document": "存储后端配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>COS 存储来源。</p>",
+          "example": "无",
+          "member": "HarnessCosStorageSource",
+          "name": "Cos",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>CFS 存储来源。</p>",
+          "example": "无",
+          "member": "HarnessCfsStorageSource",
+          "name": "Cfs",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>镜像存储来源。</p>",
+          "example": "无",
+          "member": "HarnessImageStorageSource",
+          "name": "Image",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>AgentBucket 存储来源。</p>",
+          "example": "无",
+          "member": "HarnessAgentBucketStorageSource",
+          "name": "AgentBucket",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessCosStorageSource",
+    "value": {
+      "document": "COS 存储挂载来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>COS 访问地址。</p>",
+          "example": "cos.ap-guangzhou.myqcloud.com",
+          "member": "string",
+          "name": "Endpoint",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>COS 存储桶名称。</p>",
+          "example": "example-1250000000",
+          "member": "string",
+          "name": "BucketName",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>存储桶内路径。</p>",
+          "example": "/workspace",
+          "member": "string",
+          "name": "BucketPath",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessCfsStorageSource",
+    "value": {
+      "document": "CFS 存储挂载来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>CFS 文件系统 ID。</p>",
+          "example": "cfs-abcdefgh",
+          "member": "string",
+          "name": "FileSystemId",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>文件系统内路径。</p>",
+          "example": "/data",
+          "member": "string",
+          "name": "Path",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessImageStorageSource",
+    "value": {
+      "document": "镜像存储挂载来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>镜像地址。</p>",
+          "example": "example.tencentcloudcr.com/agents/workspace:latest",
+          "member": "string",
+          "name": "Reference",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>镜像仓库类型。</p><p>枚举值：</p><ul><li>enterprise</li><li>personal</li></ul>",
+          "example": "enterprise",
+          "member": "string",
+          "name": "ImageRegistryType",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>镜像内的子路径。</p>",
+          "example": "workspace",
+          "member": "string",
+          "name": "SubPath",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessAgentBucketStorageSource",
+    "value": {
+      "document": "AgentBucket 存储挂载来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>知识库 ID。</p>",
+          "example": "library-example",
+          "member": "string",
+          "name": "LibraryId",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>空间 ID。</p>",
+          "example": "space-example",
+          "member": "string",
+          "name": "SpaceId",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>访问域名。</p>",
+          "example": "agentbucket.example.com",
+          "member": "string",
+          "name": "AccessDomain",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessVolumeReference",
+    "value": {
+      "document": "已有存储卷。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>存储卷 ID。</p>",
+          "example": "volume-example",
+          "member": "string",
+          "name": "VolumeId",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>存储卷名称。</p>",
+          "example": "workspace",
+          "member": "string",
+          "name": "VolumeName",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessVolumeTemplateReference",
+    "value": {
+      "document": "存储卷模板引用。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>存储卷模板名称。</p>",
+          "example": "workspace-template",
+          "member": "string",
+          "name": "VolumeTemplateName",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>存储卷复用标识。</p>",
+          "example": "session-example",
+          "member": "string",
+          "name": "ReuseKey",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessLogConfiguration",
+    "value": {
+      "document": "日志采集配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>CLS 日志目标。</p>",
+          "example": "无",
+          "member": "HarnessCLSConfig",
+          "name": "CLSConfig",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>日志采集来源。</p>",
+          "example": "无",
+          "member": "HarnessLogSources",
+          "name": "LogSources",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessCLSConfig",
+    "value": {
+      "document": "CLS 日志目标。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>CLS 日志主题 ID。</p>",
+          "example": "11111111-2222-3333-4444-555555555555",
+          "member": "string",
+          "name": "TopicId",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessLogSources",
+    "value": {
+      "document": "日志采集来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>日志文件路径列表。</p>",
+          "example": "[\"/var/log/app.log\"]",
+          "member": "string",
+          "name": "Files",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessDeploymentConfiguration",
+    "value": {
+      "document": "Deployment 初始化配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>实例伸缩配置。</p>",
+          "example": "无",
+          "member": "HarnessScalingConfiguration",
+          "name": "ScalingConfiguration",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>实例亲和配置。</p>",
+          "example": "无",
+          "member": "HarnessAffinityConfiguration",
+          "name": "AffinityConfiguration",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>实例空闲处理策略。</p>",
+          "example": "无",
+          "member": "HarnessLifecycleConfiguration",
+          "name": "LifecycleConfiguration",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessScalingConfiguration",
+    "value": {
+      "document": "实例伸缩配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>最小实例数。</p>",
+          "example": "1",
+          "member": "int64",
+          "name": "MinInstanceCount",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>最大实例数。</p>",
+          "example": "1",
+          "member": "int64",
+          "name": "MaxInstanceCount",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>单实例最大并发数。</p>",
+          "example": "200",
+          "member": "int64",
+          "name": "MaxInstanceRequestConcurrency",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessLifecycleConfiguration",
+    "value": {
+      "document": "实例空闲处理策略。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>空闲超时秒数。</p>",
+          "example": "300",
+          "member": "int64",
+          "name": "IdleTimeoutSeconds",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>空闲处理动作。</p><p>枚举值：</p><ul><li>STOP</li><li>PAUSE</li></ul>",
+          "example": "STOP",
+          "member": "string",
+          "name": "IdleAction",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessAffinityConfiguration",
+    "value": {
+      "document": "请求与实例的亲和配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>亲和模式。</p><p>枚举值：</p><ul><li></li><li>BEST_EFFORT</li><li>STRICT</li><li>EXCLUSIVE</li><li>EXCLUSIVE_BEST_EFFORT</li></ul>",
+          "example": "BEST_EFFORT",
+          "member": "string",
+          "name": "Mode",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>亲和标识请求头。</p>",
+          "example": "X-Tencent-Agr-Affinity-Id",
+          "member": "string",
+          "name": "HeaderName",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/MCPSourceInput",
+    "value": {
+      "document": "MCP 服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Agent Registry 资产版本。</p>",
+          "example": "无",
+          "member": "RegistryReference",
+          "name": "Registry",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>手动配置的 MCP 服务地址。</p>",
+          "example": "无",
+          "member": "MCPRemoteSource",
+          "name": "Remote",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/MCPConnectionInput",
+    "value": {
+      "document": "MCP 连接配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>MCP 连接名称。</p>",
+          "example": "docs",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>MCP 服务来源。</p>",
+          "example": "无",
+          "member": "MCPSourceInput",
+          "name": "Source",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>托管凭据引用。</p>",
+          "example": "无",
+          "member": "CredentialReference",
+          "name": "Credential",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>HTTP 请求头。</p>",
+          "example": "无",
+          "member": "HTTPHeader",
+          "name": "Headers",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProvider",
+    "value": {
+      "document": "模型连接及登记模型。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接名称。</p>",
+          "example": "production-models",
+          "member": "string",
+          "name": "ModelProviderName",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>当前模型连接配置。</p>",
+          "example": "无",
+          "member": "ModelProviderSpec",
+          "name": "Spec",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>创建时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "CreatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>更新时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "UpdatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>资源标签。</p>",
+          "example": "无",
+          "member": "Tag",
+          "name": "Tags",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProviderRevision",
+    "value": {
+      "document": "模型连接历史修订。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>修订号。</p>",
+          "example": "1",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接修订名称。</p>",
+          "example": "v1",
+          "member": "string",
+          "name": "ModelProviderRevisionName",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>该修订的模型连接配置。</p>",
+          "example": "无",
+          "member": "ModelProviderSpec",
+          "name": "Spec",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>创建时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "CreatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>更新时间。</p>",
+          "example": "2026-10-19T08:00:00Z",
+          "member": "datetime_iso",
+          "name": "UpdatedTime",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProviderSpec",
+    "value": {
+      "document": "模型连接配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型服务来源。</p>",
+          "example": "无",
+          "member": "ModelProviderSource",
+          "name": "Source",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>登记模型列表。</p>",
+          "example": "无",
+          "member": "RegisteredModel",
+          "name": "Models",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/OpenAICompatibleSource",
+    "value": {
+      "document": "OpenAI 兼容模型服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型服务地址。</p>",
+          "example": "https://models.example.com/v1",
+          "member": "string",
+          "name": "BaseURL",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>托管凭据引用。</p>",
+          "example": "无",
+          "member": "CredentialReference",
+          "name": "Credential",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/RegisteredModel",
+    "value": {
+      "document": "登记模型的能力和规格。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>上游模型或部署 ID。</p>",
+          "example": "model-a",
+          "member": "string",
+          "name": "ID",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型展示名称。</p>",
+          "example": "Model A",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>支持的输入类型。</p><p>枚举值：</p><ul><li>TEXT</li><li>IMAGE</li></ul>",
+          "example": "[\"TEXT\"]",
+          "member": "string",
+          "name": "Input",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型是否支持推理。</p>",
+          "example": "false",
+          "member": "bool",
+          "name": "Reasoning",
+          "type": "bool",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>上下文窗口（Token）。</p>",
+          "example": "32768",
+          "member": "int64",
+          "name": "ContextWindow",
+          "type": "int",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>最大输出 Token 数。</p>",
+          "example": "4096",
+          "member": "int64",
+          "name": "MaxOutputTokens",
+          "type": "int",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/TokenHubSource",
+    "value": {
+      "document": "TokenHub 模型服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>TokenHub API Key ID。</p>",
+          "example": "apikey-abcdefgh",
+          "member": "string",
+          "name": "ApiKeyId",
+          "type": "string",
+          "required": false,
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "both"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/OpenAICompatibleSourceInput",
+    "value": {
+      "document": "OpenAI 兼容模型服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型服务地址。</p>",
+          "example": "https://models.example.com/v1",
+          "member": "string",
+          "name": "BaseURL",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>托管凭据引用。</p>",
+          "example": "无",
+          "member": "CredentialReference",
+          "name": "Credential",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/RegisteredModelInput",
+    "value": {
+      "document": "登记模型的能力和规格。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>上游模型或部署 ID。</p>",
+          "example": "model-b",
+          "member": "string",
+          "name": "ID",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型展示名称。</p>",
+          "example": "Model B",
+          "member": "string",
+          "name": "Name",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>支持的输入类型。</p><p>枚举值：</p><ul><li>TEXT</li><li>IMAGE</li></ul>",
+          "example": "[\"TEXT\"]",
+          "member": "string",
+          "name": "Input",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型是否支持推理。</p>",
+          "example": "true",
+          "member": "bool",
+          "name": "Reasoning",
+          "type": "bool",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>上下文窗口（Token）。</p>",
+          "example": "65536",
+          "member": "int64",
+          "name": "ContextWindow",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>最大输出 Token 数。</p>",
+          "example": "8192",
+          "member": "int64",
+          "name": "MaxOutputTokens",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/HarnessRevisionSpec",
+    "value": {
+      "document": "Harness 修订配置。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 标识。</p>",
+          "example": "pi",
+          "member": "string",
+          "name": "HarnessEngine",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 版本。</p>",
+          "example": "release-a",
+          "member": "string",
+          "name": "HarnessEngineVersion",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接及模型。</p>",
+          "example": "无",
+          "member": "ModelProviderReference",
+          "name": "ModelProviders",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型。</p>",
+          "example": "无",
+          "member": "ModelSelection",
+          "name": "DefaultModel",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>会话持久化配置。</p>",
+          "example": "无",
+          "member": "HarnessSessionConfiguration",
+          "name": "SessionConfiguration",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>基础系统提示词。</p>",
+          "example": "You are a helpful assistant.",
+          "member": "string",
+          "name": "SystemPrompt",
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Skill 版本列表。</p>",
+          "example": "无",
+          "member": "SkillReference",
+          "name": "Skills",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Plugin 版本列表。</p>",
+          "example": "无",
+          "member": "PluginReference",
+          "name": "Plugins",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>MCP 连接列表。</p>",
+          "example": "无",
+          "member": "MCPConnection",
+          "name": "MCPServers",
+          "type": "list",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProviderSource",
+    "value": {
+      "document": "模型服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>OpenAI 兼容模型服务。</p>",
+          "example": "无",
+          "member": "OpenAICompatibleSource",
+          "name": "OpenAICompatible",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>TokenHub 模型服务。</p>",
+          "example": "无",
+          "member": "TokenHubSource",
+          "name": "TokenHub",
+          "type": "object",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ],
+      "usage": "out"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModelProviderSourceInput",
+    "value": {
+      "document": "模型服务来源。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>OpenAI 兼容模型服务。</p>",
+          "example": "无",
+          "member": "OpenAICompatibleSourceInput",
+          "name": "OpenAICompatible",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>TokenHub 模型服务。</p>",
+          "example": "无",
+          "member": "TokenHubSource",
+          "name": "TokenHub",
+          "type": "object",
+          "required": false
+        }
+      ],
+      "usage": "in"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateHarnessRequest",
+    "value": {
+      "document": "CreateHarness请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 名称。</p>",
+          "example": "production-assistant",
+          "member": "string",
+          "name": "HarnessName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 标识。</p>",
+          "example": "pi",
+          "member": "string",
+          "name": "HarnessEngine",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 版本。</p>",
+          "example": "release-a",
+          "member": "string",
+          "name": "HarnessEngineVersion",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接及模型。</p>",
+          "example": "无",
+          "member": "ModelProviderReferenceInput",
+          "name": "ModelProviders",
+          "type": "list",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型。</p>",
+          "example": "无",
+          "member": "ModelSelectionInput",
+          "name": "DefaultModel",
+          "type": "object",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>会话持久化配置。</p>",
+          "example": "无",
+          "member": "HarnessSessionConfigurationInput",
+          "name": "SessionConfiguration",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>基础系统提示词。</p>",
+          "example": "You are a helpful assistant.",
+          "member": "string",
+          "name": "SystemPrompt",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Skill 版本列表。</p>",
+          "example": "无",
+          "member": "SkillReference",
+          "name": "Skills",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Plugin 版本列表。</p>",
+          "example": "无",
+          "member": "PluginReference",
+          "name": "Plugins",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>MCP 连接列表。</p>",
+          "example": "无",
+          "member": "MCPConnectionInput",
+          "name": "MCPServers",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>初始化配置。</p>",
+          "example": "无",
+          "member": "HarnessInitializeConfiguration",
+          "name": "InitializeConfiguration",
+          "type": "object",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>自定义标签。</p>",
+          "example": "无",
+          "member": "Tag",
+          "name": "Tags",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateHarnessResponse",
+    "value": {
+      "document": "CreateHarness返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 信息。</p>",
+          "example": "无",
+          "member": "Harness",
+          "name": "Harness",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateHarness",
+    "value": {
+      "document": "创建 Harness。",
+      "input": "CreateHarnessRequest",
+      "name": "创建 Harness",
+      "output": "CreateHarnessResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessRequest",
+    "value": {
+      "document": "DescribeHarness请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessResponse",
+    "value": {
+      "document": "DescribeHarness返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 信息。</p>",
+          "example": "无",
+          "member": "Harness",
+          "name": "Harness",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarness",
+    "value": {
+      "document": "查询 Harness。",
+      "input": "DescribeHarnessRequest",
+      "name": "查询 Harness",
+      "output": "DescribeHarnessResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessListRequest",
+    "value": {
+      "document": "DescribeHarnessList请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>过滤条件。</p>",
+          "example": "无",
+          "member": "Filter",
+          "name": "Filters",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>分页偏移量。</p>",
+          "example": "0",
+          "member": "int64",
+          "name": "Offset",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>每页结果数。</p>",
+          "example": "50",
+          "member": "int64",
+          "name": "Limit",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessListResponse",
+    "value": {
+      "document": "DescribeHarnessList返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>资源总数。</p>",
+          "example": "1",
+          "member": "int64",
+          "name": "TotalCount",
+          "type": "int",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 列表。</p>",
+          "example": "无",
+          "member": "Harness",
+          "name": "HarnessSet",
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessList",
+    "value": {
+      "document": "查询 Harness 列表。",
+      "input": "DescribeHarnessListRequest",
+      "name": "查询 Harness 列表",
+      "output": "DescribeHarnessListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyHarnessRequest",
+    "value": {
+      "document": "ModifyHarness请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 名称。</p>",
+          "example": "",
+          "member": "string",
+          "name": "HarnessName",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 标识。</p>",
+          "example": "",
+          "member": "string",
+          "name": "HarnessEngine",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 版本。</p>",
+          "example": "",
+          "member": "string",
+          "name": "HarnessEngineVersion",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接及模型。</p>",
+          "example": "无",
+          "member": "ModelProviderReferenceInput",
+          "name": "ModelProviders",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>默认模型。</p>",
+          "example": "无",
+          "member": "ModelSelectionUpdate",
+          "name": "DefaultModel",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>会话持久化配置。</p>",
+          "example": "无",
+          "member": "HarnessSessionConfigurationInput",
+          "name": "SessionConfiguration",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>基础系统提示词。</p>",
+          "example": "",
+          "member": "string",
+          "name": "SystemPrompt",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Skill 版本列表。</p>",
+          "example": "无",
+          "member": "SkillReference",
+          "name": "Skills",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Plugin 版本列表。</p>",
+          "example": "无",
+          "member": "PluginReference",
+          "name": "Plugins",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>MCP 连接列表。</p>",
+          "example": "无",
+          "member": "MCPConnectionInput",
+          "name": "MCPServers",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>自定义标签。</p>",
+          "example": "无",
+          "member": "Tag",
+          "name": "Tags",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyHarnessResponse",
+    "value": {
+      "document": "ModifyHarness返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 信息。</p>",
+          "example": "无",
+          "member": "Harness",
+          "name": "Harness",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyHarness",
+    "value": {
+      "document": "修改 Harness。",
+      "input": "ModifyHarnessRequest",
+      "name": "修改 Harness",
+      "output": "ModifyHarnessResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteHarnessRequest",
+    "value": {
+      "document": "DeleteHarness请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteHarnessResponse",
+    "value": {
+      "document": "DeleteHarness返回参数结构体",
+      "members": [
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteHarness",
+    "value": {
+      "document": "删除 Harness。",
+      "input": "DeleteHarnessRequest",
+      "name": "删除 Harness",
+      "output": "DeleteHarnessResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateHarnessRevisionRequest",
+    "value": {
+      "document": "CreateHarnessRevision请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 修订名称。</p>",
+          "example": "",
+          "member": "string",
+          "name": "HarnessRevisionName",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateHarnessRevisionResponse",
+    "value": {
+      "document": "CreateHarnessRevision返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 修订信息。</p>",
+          "example": "无",
+          "member": "HarnessRevision",
+          "name": "HarnessRevision",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateHarnessRevision",
+    "value": {
+      "document": "创建 Harness 修订。",
+      "input": "CreateHarnessRevisionRequest",
+      "name": "创建 Harness 修订",
+      "output": "CreateHarnessRevisionResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessRevisionRequest",
+    "value": {
+      "document": "DescribeHarnessRevision请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>修订号。</p>",
+          "example": "2",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessRevisionResponse",
+    "value": {
+      "document": "DescribeHarnessRevision返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 修订信息。</p>",
+          "example": "无",
+          "member": "HarnessRevision",
+          "name": "HarnessRevision",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessRevision",
+    "value": {
+      "document": "查询 Harness 修订。",
+      "input": "DescribeHarnessRevisionRequest",
+      "name": "查询 Harness 修订",
+      "output": "DescribeHarnessRevisionResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessRevisionListRequest",
+    "value": {
+      "document": "DescribeHarnessRevisionList请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>分页偏移量。</p>",
+          "example": "0",
+          "member": "int64",
+          "name": "Offset",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>每页结果数。</p>",
+          "example": "50",
+          "member": "int64",
+          "name": "Limit",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessRevisionListResponse",
+    "value": {
+      "document": "DescribeHarnessRevisionList返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>资源总数。</p>",
+          "example": "2",
+          "member": "int64",
+          "name": "TotalCount",
+          "type": "int",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Harness 修订列表。</p>",
+          "example": "无",
+          "member": "HarnessRevision",
+          "name": "HarnessRevisionSet",
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessRevisionList",
+    "value": {
+      "document": "查询 Harness 修订列表。",
+      "input": "DescribeHarnessRevisionListRequest",
+      "name": "查询 Harness 修订列表",
+      "output": "DescribeHarnessRevisionListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/PublishHarnessRevisionRequest",
+    "value": {
+      "document": "PublishHarnessRevision请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness ID。</p>",
+          "example": "hns-abcdefgh",
+          "member": "string",
+          "name": "HarnessId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>修订号。</p>",
+          "example": "2",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/PublishHarnessRevisionResponse",
+    "value": {
+      "document": "PublishHarnessRevision返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness 修订信息。</p>",
+          "example": "无",
+          "member": "HarnessRevision",
+          "name": "HarnessRevision",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/PublishHarnessRevision",
+    "value": {
+      "document": "发布 Harness 修订。",
+      "input": "PublishHarnessRevisionRequest",
+      "name": "发布 Harness 修订",
+      "output": "PublishHarnessRevisionResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessEngineListRequest",
+    "value": {
+      "document": "DescribeHarnessEngineList请求参数结构体",
+      "members": [],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeHarnessEngineListResponse",
+    "value": {
+      "document": "DescribeHarnessEngineList返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Harness Engine 及版本列表。</p>",
+          "example": "无",
+          "member": "HarnessEngineInfo",
+          "name": "HarnessEngineSet",
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessEngineList",
+    "value": {
+      "document": "查询 Harness Engine 列表。",
+      "input": "DescribeHarnessEngineListRequest",
+      "name": "查询 Harness Engine 列表",
+      "output": "DescribeHarnessEngineListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateModelProviderRequest",
+    "value": {
+      "document": "CreateModelProvider请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接名称。</p>",
+          "example": "production-models",
+          "member": "string",
+          "name": "ModelProviderName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型服务来源。</p>",
+          "example": "无",
+          "member": "ModelProviderSourceInput",
+          "name": "Source",
+          "type": "object",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>登记模型列表。</p>",
+          "example": "无",
+          "member": "RegisteredModelInput",
+          "name": "Models",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>自定义标签。</p>",
+          "example": "无",
+          "member": "Tag",
+          "name": "Tags",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateModelProviderResponse",
+    "value": {
+      "document": "CreateModelProvider返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接信息。</p>",
+          "example": "无",
+          "member": "ModelProvider",
+          "name": "ModelProvider",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateModelProvider",
+    "value": {
+      "document": "创建模型连接。",
+      "input": "CreateModelProviderRequest",
+      "name": "创建模型连接",
+      "output": "CreateModelProviderResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderRequest",
+    "value": {
+      "document": "DescribeModelProvider请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderResponse",
+    "value": {
+      "document": "DescribeModelProvider返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接信息。</p>",
+          "example": "无",
+          "member": "ModelProvider",
+          "name": "ModelProvider",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProvider",
+    "value": {
+      "document": "查询模型连接。",
+      "input": "DescribeModelProviderRequest",
+      "name": "查询模型连接",
+      "output": "DescribeModelProviderResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderListRequest",
+    "value": {
+      "document": "DescribeModelProviderList请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>过滤条件。</p>",
+          "example": "无",
+          "member": "Filter",
+          "name": "Filters",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>分页偏移量。</p>",
+          "example": "0",
+          "member": "int64",
+          "name": "Offset",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>每页结果数。</p>",
+          "example": "50",
+          "member": "int64",
+          "name": "Limit",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderListResponse",
+    "value": {
+      "document": "DescribeModelProviderList返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>资源总数。</p>",
+          "example": "1",
+          "member": "int64",
+          "name": "TotalCount",
+          "type": "int",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接列表。</p>",
+          "example": "无",
+          "member": "ModelProvider",
+          "name": "ModelProviderSet",
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProviderList",
+    "value": {
+      "document": "查询模型连接列表。",
+      "input": "DescribeModelProviderListRequest",
+      "name": "查询模型连接列表",
+      "output": "DescribeModelProviderListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyModelProviderRequest",
+    "value": {
+      "document": "ModifyModelProvider请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接名称。</p>",
+          "example": "",
+          "member": "string",
+          "name": "ModelProviderName",
+          "type": "string",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型服务来源。</p>",
+          "example": "无",
+          "member": "ModelProviderSourceInput",
+          "name": "Source",
+          "type": "object",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>登记模型列表。</p>",
+          "example": "无",
+          "member": "RegisteredModelInput",
+          "name": "Models",
+          "type": "list",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>自定义标签。</p>",
+          "example": "无",
+          "member": "Tag",
+          "name": "Tags",
+          "type": "list",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyModelProviderResponse",
+    "value": {
+      "document": "ModifyModelProvider返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接信息。</p>",
+          "example": "无",
+          "member": "ModelProvider",
+          "name": "ModelProvider",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyModelProvider",
+    "value": {
+      "document": "修改模型连接。",
+      "input": "ModifyModelProviderRequest",
+      "name": "修改模型连接",
+      "output": "ModifyModelProviderResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteModelProviderRequest",
+    "value": {
+      "document": "DeleteModelProvider请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteModelProviderResponse",
+    "value": {
+      "document": "DeleteModelProvider返回参数结构体",
+      "members": [
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteModelProvider",
+    "value": {
+      "document": "删除模型连接。",
+      "input": "DeleteModelProviderRequest",
+      "name": "删除模型连接",
+      "output": "DeleteModelProviderResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderRevisionRequest",
+    "value": {
+      "document": "DescribeModelProviderRevision请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>修订号。</p>",
+          "example": "1",
+          "member": "uint64",
+          "name": "Revision",
+          "type": "int",
+          "required": true
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderRevisionResponse",
+    "value": {
+      "document": "DescribeModelProviderRevision返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接修订信息。</p>",
+          "example": "无",
+          "member": "ModelProviderRevision",
+          "name": "ModelProviderRevision",
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProviderRevision",
+    "value": {
+      "document": "查询模型连接修订。",
+      "input": "DescribeModelProviderRevisionRequest",
+      "name": "查询模型连接修订",
+      "output": "DescribeModelProviderRevisionResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderRevisionListRequest",
+    "value": {
+      "document": "DescribeModelProviderRevisionList请求参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>模型连接 ID。</p>",
+          "example": "mp-abcdefgh",
+          "member": "string",
+          "name": "ModelProviderId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "disabled": false,
+          "document": "<p>分页偏移量。</p>",
+          "example": "0",
+          "member": "int64",
+          "name": "Offset",
+          "type": "int",
+          "required": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>每页结果数。</p>",
+          "example": "50",
+          "member": "int64",
+          "name": "Limit",
+          "type": "int",
+          "required": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeModelProviderRevisionListResponse",
+    "value": {
+      "document": "DescribeModelProviderRevisionList返回参数结构体",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>资源总数。</p>",
+          "example": "2",
+          "member": "int64",
+          "name": "TotalCount",
+          "type": "int",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>模型连接修订列表。</p>",
+          "example": "无",
+          "member": "ModelProviderRevision",
+          "name": "ModelProviderRevisionSet",
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "document": "唯一请求 ID，由服务端生成，每次请求都会返回（若请求因其他原因未能抵达服务端，则该次请求不会获得 RequestId）。定位问题时需要提供该次请求的 RequestId。",
+          "member": "string",
+          "name": "RequestId",
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProviderRevisionList",
+    "value": {
+      "document": "查询模型连接修订列表。",
+      "input": "DescribeModelProviderRevisionListRequest",
+      "name": "查询模型连接修订列表",
+      "output": "DescribeModelProviderRevisionListResponse",
+      "status": "online"
+    }
   }
 ]

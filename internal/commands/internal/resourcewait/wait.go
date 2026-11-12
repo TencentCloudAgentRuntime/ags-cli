@@ -25,13 +25,14 @@ const (
 type Operation string
 
 const (
-	OperationGet    Operation = "get"
-	OperationCreate Operation = "create"
-	OperationUpdate Operation = "update"
-	OperationPause  Operation = "pause"
-	OperationResume Operation = "resume"
-	OperationDelete Operation = "delete"
-	OperationFork   Operation = "fork"
+	OperationGet     Operation = "get"
+	OperationCreate  Operation = "create"
+	OperationUpdate  Operation = "update"
+	OperationPause   Operation = "pause"
+	OperationResume  Operation = "resume"
+	OperationDelete  Operation = "delete"
+	OperationFork    Operation = "fork"
+	OperationPublish Operation = "publish"
 )
 
 // Decision describes how a policy interprets one observed status.
@@ -58,6 +59,9 @@ type Policy struct {
 	IsInProgress      func(string) bool
 	NotFoundIsSuccess bool
 	TimeoutHint       func(string) string
+	// FailureHint replaces the generic "agr <type> get <id>" hint for failed
+	// or preempted outcomes when the inspect command differs.
+	FailureHint func(string) string
 }
 
 // Options controls one wait operation.
@@ -237,6 +241,85 @@ func WaitForDeploymentDeletion[T any](
 	}, deploymentDeletePolicy(), options)
 }
 
+// HarnessRevisionPublishPolicy treats SUPERSEDED as preempted: another revision
+// finished publishing after this one, so it is no longer live.
+func HarnessRevisionPublishPolicy(harnessID string, revision int64) Policy {
+	inspect := fmt.Sprintf("agr harness revision get %s %d", harnessID, revision)
+	return Policy{
+		Operation: OperationPublish,
+		Decide: func(observation Observation) Decision {
+			switch normalizeStatus(observation.Status) {
+			case "PUBLISHED":
+				return Success
+			case "PUBLISH_FAILED":
+				return Failed
+			case "SUPERSEDED":
+				return Preempted
+			default:
+				return Continue
+			}
+		},
+		FailureHint: func(string) string {
+			return fmt.Sprintf("Read StatusReason with '%s', fix the cause, then retry with 'agr harness revision publish %s %d --wait'.", inspect, harnessID, revision)
+		},
+		TimeoutHint: func(string) string {
+			return fmt.Sprintf("Publishing continues on the server. Check with '%s' or continue with 'agr harness revision publish %s %d --wait'.", inspect, harnessID, revision)
+		},
+	}
+}
+
+// WaitForHarnessRevisionPublish polls one revision until its publish outcome.
+func WaitForHarnessRevisionPublish[T any](
+	ctx context.Context,
+	harnessID string,
+	revision int64,
+	get func(context.Context, string) (T, error),
+	options Options,
+) (T, error) {
+	return waitFor(ctx, "harness revision", fmt.Sprintf("%s/%d", harnessID, revision), get, func(value T) string {
+		object, _ := apivalue.Decode(value)
+		return object.String("Status")
+	}, func(value T) string {
+		object, _ := apivalue.Decode(value)
+		return object.String("StatusReason")
+	}, HarnessRevisionPublishPolicy(harnessID, revision), options)
+}
+
+func harnessDeletePolicy() Policy {
+	return Policy{
+		Operation: OperationDelete,
+		Decide: func(observation Observation) Decision {
+			if normalizeStatus(observation.Status) == "DELETE_FAILED" {
+				return Failed
+			}
+			return Continue
+		},
+		NotFoundIsSuccess: true,
+		FailureHint: func(harnessID string) string {
+			return fmt.Sprintf("Read StatusReason with 'agr harness get %s', then retry with 'agr harness delete %s --yes --wait'.", harnessID, harnessID)
+		},
+		TimeoutHint: func(harnessID string) string {
+			return fmt.Sprintf("Deletion continues on the server. Check with 'agr harness get %s'.", harnessID)
+		},
+	}
+}
+
+// WaitForHarnessDeletion waits until a Harness is absent or DELETE_FAILED.
+func WaitForHarnessDeletion[T any](
+	ctx context.Context,
+	harnessID string,
+	get func(context.Context, string) (T, error),
+	options Options,
+) (T, error) {
+	return waitFor(ctx, "harness", harnessID, get, func(value T) string {
+		object, _ := apivalue.Decode(value)
+		return object.String("Status")
+	}, func(value T) string {
+		object, _ := apivalue.Decode(value)
+		return object.String("StatusReason")
+	}, harnessDeletePolicy(), options)
+}
+
 func waitFor[T any](
 	ctx context.Context,
 	resourceType string,
@@ -287,9 +370,9 @@ func waitFor[T any](
 		case Success:
 			return resource, nil
 		case Failed:
-			return zero, waitStatusError("WAIT_FAILED", output.KindGenericError, resourceType, resourceID, policy.Operation, lastStatus, statusReason, attempts, startedAt)
+			return zero, withFailureHint(waitStatusError("WAIT_FAILED", output.KindGenericError, resourceType, resourceID, policy.Operation, lastStatus, statusReason, attempts, startedAt), policy, resourceID)
 		case Preempted:
-			return zero, waitStatusError("WAIT_PREEMPTED", output.KindConflict, resourceType, resourceID, policy.Operation, lastStatus, statusReason, attempts, startedAt)
+			return zero, withFailureHint(waitStatusError("WAIT_PREEMPTED", output.KindConflict, resourceType, resourceID, policy.Operation, lastStatus, statusReason, attempts, startedAt), policy, resourceID)
 		case Continue:
 		}
 
@@ -459,7 +542,7 @@ func waitStatusError(
 	statusReason string,
 	attempts int,
 	startedAt time.Time,
-) error {
+) *output.CLIError {
 	message := fmt.Sprintf("%s %s %s finished with status %q", resourceType, resourceID, operation, status)
 	hint := fmt.Sprintf("Inspect the resource with 'agr %s get %s'.", resourceType, resourceID)
 	if code == "WAIT_PREEMPTED" {
@@ -479,6 +562,13 @@ func waitStatusError(
 		Hint:    hint,
 		Details: details,
 	})
+}
+
+func withFailureHint(err *output.CLIError, policy Policy, resourceID string) error {
+	if policy.FailureHint != nil {
+		err.Failure.Hint = policy.FailureHint(resourceID)
+	}
+	return err
 }
 
 func waitForNextPoll(ctx context.Context, interval time.Duration) error {

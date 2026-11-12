@@ -37,6 +37,14 @@ func newTokenManager(
 	return &tokenManager{lifecycle: lifecycle, acquire: acquire, now: now}
 }
 
+// NewTokenSource returns a refreshing Deployment token provider bound to
+// lifecycle, shared with harness data-plane commands.
+func NewTokenSource(lifecycle context.Context, cp ControlPlane, deploymentID string, now func() time.Time) func(context.Context) (string, error) {
+	return newTokenManager(lifecycle, func(ctx context.Context) (*ags.AcquireDeploymentTokenResponseParams, error) {
+		return acquireToken(ctx, cp, deploymentID)
+	}, now).Token
+}
+
 func (m *tokenManager) Token(ctx context.Context) (string, error) {
 	if token, fresh := m.current(true); fresh {
 		return token, nil
