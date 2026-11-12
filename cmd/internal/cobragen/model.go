@@ -210,6 +210,7 @@ func groupExamples(group string) []string {
 			"Example - Create a harness and wait for revision 1 to publish:\n  agr harness engine list -o text\n  agr harness create --name my-agent --engine pi --engine-version 1.3.0 \\\n    --model mp-a1b2c3d4:hy3 --role-arn qcs::cam::uin/100000000001:roleName/AgentRole \\\n    --subnet-id subnet-a1b2c3d4 --security-group-id sg-a1b2c3d4 --wait -o text",
 			"Example - Change the draft, then publish it:\n  agr harness update hns-a1b2c3d4 --system-prompt @prompt.md -o text\n  agr harness revision diff hns-a1b2c3d4 live draft -o text\n  agr harness revision create hns-a1b2c3d4 --publish --wait -o text",
 			"Example - Check what is live and connect:\n  agr harness status hns-a1b2c3d4 -o text\n  agr harness prompt hns-a1b2c3d4 'Say hello' -o text",
+			"Example - Add an official MCP server from the tool market:\n  agr harness tool list --type mcp -o text\n  agr harness tool get rec-a1b2c3d4 -o text\n  agr harness update hns-a1b2c3d4 --mcp deepwiki=MARKETPLACE/rec-a1b2c3d4/rv-a1b2c3d4 -o text",
 		}
 	case "session.event":
 		return []string{"Example - Append a prepared event:\n  agr session event append --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --event @event.json -o text", "Example - Read the next page of history:\n  agr session event list --space-id space-a1b2c3d4 --user-id user-123 --session-id session-123 --offset 50 --limit 50 -o text"}

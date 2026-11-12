@@ -199,6 +199,13 @@ func (f *harnessFake) handle(action string, req map[string]any) (map[string]any,
 		return map[string]any{}, ""
 	case "DescribeModelProviderList":
 		return map[string]any{"ModelProviderSet": []any{}, "TotalCount": 0}, ""
+	case "DescribeRegistryRecordVersionList":
+		return map[string]any{"VersionSet": []any{marketMCP(), marketPlugin()}, "TotalCount": 2}, ""
+	case "DescribeRegistryRecord":
+		if req["RecordId"] != "rec-plugin" {
+			return nil, "ResourceNotFound:record not found"
+		}
+		return map[string]any{"Record": map[string]any{"RecordId": "rec-plugin", "Name": "lint", "DescriptorType": "PLUGIN"}, "Version": marketPlugin(), "ResolvedBy": "DEFAULT_STABLE"}, ""
 	}
 	f.t.Errorf("unexpected action %s", action)
 	return map[string]any{}, ""
@@ -477,5 +484,81 @@ func TestModelProviderShortcuts(t *testing.T) {
 	}
 	if got, _ := json.Marshal(fake.last("DescribeModelProviderList")["Filters"]); string(got) != `[{"Name":"type","Values":["TOKENHUB"]},{"Name":"tag:env","Values":["a","b"]}]` {
 		t.Fatalf("filters = %s", got)
+	}
+}
+
+func marketMCP() map[string]any {
+	return map[string]any{
+		"DescriptorType": "MCP", "Name": "GitHub", "RecordId": "rec-gh", "VersionId": "rv-gh", "VersionName": "1.0", "Status": "APPROVED", "ContentStatus": "READY",
+		"Descriptors": `{"name":"com.github/github","remotes":[{"type":"streamable-http","url":"https://api.example.com/mcp/","headers":[{"name":"Authorization","value":"Bearer {token}","variables":{"token":{"isSecret":true,"isRequired":true}}}]}]}`,
+		"Metadata":    []any{map[string]any{"Name": "requires_credentials", "Value": "true"}}, "SupportedHarnessVersions": []any{},
+	}
+}
+
+func marketPlugin() map[string]any {
+	return map[string]any{
+		"DescriptorType": "PLUGIN", "Name": "lint", "RecordId": "rec-plugin", "VersionId": "rv-plugin", "VersionName": "2.0", "Status": "APPROVED", "ContentStatus": "READY",
+		"SupportedHarnessVersions": []any{map[string]any{"HarnessEngine": "pi", "HarnessEngineVersion": "1.2.0"}},
+	}
+}
+
+func TestHarnessToolMarket(t *testing.T) {
+	fake := newHarnessFake(t)
+	fake.seedHarness("PUBLISHED")
+	server := httptest.NewTLSServer(fake)
+	defer server.Close()
+
+	result, _, err := runHarness(t, server, "harness", "tool", "list", "--type", "plugin", "--search", "lint", "--compatible-with", "hns-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := fake.last("DescribeRegistryRecordVersionList")
+	if got, _ := json.Marshal(request); string(got) != `{"Filters":[{"Name":"label","Values":["stable"]},{"Name":"descriptor_type","Values":["PLUGIN"]},{"Name":"search","Values":["lint"]},{"Name":"supported_harness_engine","Values":["pi"]},{"Name":"supported_harness_version","Values":["1.3.0"]}],"Limit":100,"Offset":0,"RegistryId":"MARKETPLACE"}` {
+		t.Fatalf("request = %s", got)
+	}
+	tools := result.Data["Tools"].([]any)
+	plugin := tools[1].(map[string]any)
+	if result.Data["HarnessEngineVersion"] != "1.3.0" || plugin["Compatible"] != false || plugin["UnusableReason"] != "does not declare support for pi@1.3.0" {
+		t.Fatalf("plugin = %+v", plugin)
+	}
+
+	result, _, err = runHarness(t, server, "harness", "tool", "get", "MARKETPLACE/rec-plugin")
+	if err != nil || result.Data["Tool"].(map[string]any)["Reference"] != "MARKETPLACE/rec-plugin/rv-plugin" {
+		t.Fatalf("get: %v %+v", err, result.Data)
+	}
+	if got, _ := json.Marshal(fake.last("DescribeRegistryRecord")); string(got) != `{"RecordId":"rec-plugin","RegistryId":"MARKETPLACE"}` {
+		t.Fatalf("stable get request = %s", got)
+	}
+	for name, args := range map[string][]string{
+		"INVALID_TOOL_REFERENCE": {"harness", "tool", "get", "rec-a/rv-a/extra"},
+		"INVALID_TOOL_TYPE":      {"harness", "tool", "list", "--type", "a2a"},
+		"FLAG_CONFLICT":          {"harness", "tool", "list", "--compatible-with", "hns-test", "--engine", "pi"},
+		"MISSING_REQUIRED_FLAG":  {"harness", "tool", "list", "--engine", "pi"},
+		"INVALID_PAGINATION":     {"harness", "tool", "list", "--all", "--limit", "5"},
+	} {
+		if result, _, err := runHarness(t, server, args...); err == nil || failureCode(result) != name {
+			t.Fatalf("%v: code = %q, want %s", args, failureCode(result), name)
+		}
+	}
+}
+
+func TestHarnessCreateWithMCPShortcuts(t *testing.T) {
+	fake := newHarnessFake(t)
+	server := httptest.NewTLSServer(fake)
+	defer server.Close()
+	_, _, err := runHarness(t, server, "harness", "create", "--name", "agent", "--engine", "pi", "--engine-version", "1.3.0",
+		"--model", "mp-a:hy3", "--role-arn", "r", "--subnet-id", "s", "--security-group-id", "g",
+		"--mcp", "github=MARKETPLACE/rec-gh/rv-gh", "--mcp-credential", "github=agc-1/u-1/default", "--mcp-header", "github:Authorization=Bearer ${credential}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := json.Marshal(fake.last("CreateHarness")["MCPServers"])
+	if string(got) != `[{"Credential":{"CredentialProviderId":"agc-1","Scope":"default","UserId":"u-1"},"Headers":[{"Name":"Authorization","Value":"Bearer ${credential}"}],"Name":"github","Source":{"Registry":{"RecordId":"rec-gh","RegistryId":"MARKETPLACE","VersionId":"rv-gh"}}}]` {
+		t.Fatalf("MCPServers = %s", got)
+	}
+	before := len(fake.actions())
+	result, _, err := runHarness(t, server, "harness", "update", "hns-test", "--mcp", "a=MARKETPLACE/r/v", "--mcp-servers", "[]")
+	if err == nil || failureCode(result) != "FLAG_CONFLICT" || len(fake.actions()) != before {
+		t.Fatalf("conflict: %v %+v", err, result.Failure)
 	}
 }

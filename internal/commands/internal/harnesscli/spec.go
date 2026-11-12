@@ -14,7 +14,7 @@ import (
 )
 
 // Workflow flags that feed Harness spec fields excluded from generated flags.
-var specShortcuts = []string{"model", "default-model", "skill", "plugin", "session-space-id", "tags"}
+var specShortcuts = append([]string{"model", "default-model", "skill", "plugin", "session-space-id", "tags"}, MCPShortcuts...)
 
 // CreateShortcuts adds the create-only initialization shortcuts.
 var CreateShortcuts = append(slices.Clone(specShortcuts), "role-arn", "subnet-id", "security-group-id")
@@ -32,7 +32,7 @@ func SpecFlags(update bool) []command.FlagSpec {
 	if update {
 		clearHint = " Pass '' once to remove all."
 	}
-	return []command.FlagSpec{
+	flags := []command.FlagSpec{
 		StringArrayFlag("model", "Selected model as <model-provider-id>:<model-id>; repeat for more models."+replace, "--model mp-a1b2c3d4:hy3"),
 		StringFlag("default-model", "Default model as <model-provider-id>:<model-id>; must be one of the selected models. Optional when exactly one model is selected."),
 		StringArrayFlag("skill", "Skill from Agent Registry as <registry-id>/<record-id>/<version-id>; repeat for more."+replace+clearHint, "--skill MARKETPLACE/rec-0123abcd/rv-0123abcd"),
@@ -40,6 +40,7 @@ func SpecFlags(update bool) []command.FlagSpec {
 		StringFlag("session-space-id", "Session space that persists native session history (pi and dsh only)."+map[bool]string{true: " Pass '' to remove it.", false: ""}[update]),
 		StringArrayFlag("tags", "Custom tag as key=value; repeat for more."+replace+map[bool]string{true: " Pass '' once to clear custom tags.", false: ""}[update]),
 	}
+	return append(flags, MCPFlags(update)...)
 }
 
 // InitializationFlags are the create-only SandboxTool shortcuts.
@@ -110,6 +111,16 @@ func ApplySpecShortcuts(req command.Request, request map[string]any, update bool
 			return err
 		}
 		request["Tags"] = tags
+	}
+	servers, ok, err := MCPServers(req)
+	if err != nil {
+		return err
+	}
+	if ok {
+		if len(servers) == 0 && !update {
+			return output.NewUsageError("INVALID_MCP", "--mcp '' cannot be used on create", "Omit --mcp to create without MCP servers.")
+		}
+		request["MCPServers"] = servers
 	}
 	return nil
 }
