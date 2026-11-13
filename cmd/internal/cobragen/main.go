@@ -798,6 +798,7 @@ var previewWorkflowIDs = []string{
 	"harness.status",
 	"harness.tool.get",
 	"harness.tool.list",
+	"harness.web",
 }
 
 func staticWorkflowModules() []registryModule {

@@ -51,7 +51,7 @@ func Module() command.Module {
 			harnesscli.StringFlag("cwd", "Working directory inside the instance (default /workspace); must exist there"),
 			harnesscli.StringFlag("session-id", "Continue an existing ACP session instead of creating one; do not send concurrent turns to the same session"),
 			harnesscli.StringFlag("affinity-id", "Affinity value from an earlier run, to reach the same instance"),
-			{Name: "timeout", Usage: "Maximum time for the turn, such as 5m (default 10m)", Type: command.FlagString, Workflow: true},
+			{Name: "timeout", Usage: "Maximum time for endpoint/token preparation, session setup and the turn, such as 5m (default 10m)", Type: command.FlagString, Workflow: true},
 		},
 		Output: command.OutputSpec{DataType: "HarnessPromptData", Description: "Reply text, stop reason, session and affinity identifiers.", Effects: []string{"read:harness", "read:deployment-token", "read:acp-session"}},
 	}
@@ -108,7 +108,11 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 		cwd = defaultCwd
 	}
 	harnessID := req.ArgValues["harness-id"]
-	endpoint, _, err := harnesscli.ResolveEndpoint(ctx, deps, client, harnessID, harnesscli.String(req, "affinity-id"))
+	turnCtx, cancelTurn := context.WithTimeout(ctx, timeout)
+	defer cancelTurn()
+	signalCtx, stop := signal.NotifyContext(turnCtx, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	endpoint, _, err := harnesscli.PrepareEndpoint(signalCtx, deps, client, harnessID, harnesscli.String(req, "affinity-id"))
 	if err != nil {
 		return nil, err
 	}
@@ -119,11 +123,6 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	case cli.IsJSONOutput():
 		mode = renderNone
 	}
-	turnCtx, cancelTurn := context.WithTimeout(ctx, timeout)
-	defer cancelTurn()
-	signalCtx, stop := signal.NotifyContext(turnCtx, syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
 	sink := &updates{mode: mode, out: deps.IO.Out, errOut: deps.IO.ErrOut, events: output.NewNDJSONWriter(deps.IO.Out, "harness.prompt")}
 	session, err := acpclient.Connect(signalCtx, endpoint, sink)
 	if err != nil {

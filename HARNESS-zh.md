@@ -54,11 +54,44 @@ agr harness prompt "$HARNESS_ID" 'What did I ask you to reply with?' \
 agr harness prompt "$HARNESS_ID" - -o ndjson < task.md
 ~~~
 
+`--timeout` 覆盖端点/token 准备、ACP 初始化、建会话及本轮对话。
 Ctrl+C 或 `--timeout` 会请求取消，远端轮次仍可能完成；未完成请求不会自动重发。
 JSON/NDJSON 失败结果保留已取得的会话和亲和标识。
 `harness proxy --port 0 -o ndjson` 在第一条 `ready` 事件返回
 本机 ACP 地址，并运行到被中断；不支持单信封 `-o json`。
 编辑器可以使用 `harness acp` 的 stdio ACP 接口。
+
+## 打开 DSH Web 控制台
+
+对于具有 **PUBLISHED DSH 修订**、且 Deployment 为 **ACTIVE** 的 Harness：
+
+~~~bash
+agr harness web "$HARNESS_ID" -o text
+~~~
+
+CLI 使用当前地域和 `--domain` 配置，打开 Deployment 的 **3080** 服务端口对应
+的 HTTPS Webview 根路径。现有 ACP 入口仍使用 8080 的 `/acp`。引擎判断以
+已发布修订为准，草稿中的引擎变更不会影响这个判断。
+
+浏览器在运行 CLI 的机器上启动。命令请求启动浏览器后即退出，`Opened` 不代表
+页面已就绪。浏览器访问可能按 Deployment 现有策略启动实例，无需本地代理或
+持续运行 CLI。
+
+~~~bash
+# 只返回安全地址：不打开浏览器，也不获取 token。
+agr harness web "$HARNESS_ID" --no-open -o json
+# SSH/无浏览器环境：显式获取登录链接，复制到浏览器打开。
+agr harness web "$HARNESS_ID" --no-open --show-token -o json \
+  --jq '.Data | {AccessURL, ExpiresAt}'
+# 进入控制台时指定亲和标识。
+agr harness web "$HARNESS_ID" --affinity-id "$AFFINITY_ID" -o text
+~~~
+
+`WebURL` 始终不包含 token。只有 `--show-token` 才会在文本/JSON 中输出带凭证的
+`AccessURL` 和 `ExpiresAt`，请妥善保护链接。token 或浏览器认证过期后重新运行
+命令即可。`--affinity-id` 设置首次请求的 `affinity_id` 查询参数，后续请求通过
+网关 Cookie 保持亲和；同一域名的标签页共享 Cookie，不提供实例隔离。
+命令不会发布修订或修改 Deployment 配置。
 
 ## 接入真实 MCP
 

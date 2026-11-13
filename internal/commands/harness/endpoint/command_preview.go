@@ -29,7 +29,7 @@ func Module() command.Module {
 		Long: "Print the public ACP Streamable HTTP address of a published harness and the headers a client must send. Use it to connect your own program, SDK, or tool directly.\n\n" +
 			"Clients must send X-Access-Token and echo the affinity header value returned by the service on every later request, so one conversation stays on one instance.\n\n" +
 			"--show-token issues a short-lived Deployment token and prints it; the CLI does not refresh tokens for external clients. For long-running services, call AcquireDeploymentToken from your backend before ExpiresAt. --check performs one ACP initialize handshake to prove an instance is reachable; PUBLISHED alone does not.\n\n" +
-			"For browsers and tools that cannot add headers, use 'agr harness proxy'; for stdio ACP clients use 'agr harness acp'. Available in preview builds.",
+			"For the native DSH browser console, use 'agr harness web'. For ACP tools that cannot add headers, use 'agr harness proxy'; for stdio ACP clients use 'agr harness acp'. Available in preview builds.",
 		Examples: []string{
 			"Example - Show the address and required headers:\n  agr harness endpoint hns-a1b2c3d4 -o text",
 			"Example - Get the URL and a token for a script:\n  agr harness endpoint hns-a1b2c3d4 --show-token -o json --jq '.Data | {AcpURL, Headers, ExpiresAt}'",

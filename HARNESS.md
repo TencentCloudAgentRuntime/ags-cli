@@ -58,12 +58,49 @@ agr harness prompt "$HARNESS_ID" 'What did I ask you to reply with?' \
 agr harness prompt "$HARNESS_ID" - -o ndjson < task.md
 ~~~
 
-Ctrl+C or `--timeout` requests cancellation; the remote turn may still finish.
+`--timeout` covers endpoint/token preparation, ACP initialization, session setup
+and the turn. Ctrl+C or `--timeout` requests cancellation; the remote turn may still finish.
 Unfinished turns are never automatically resent. JSON/NDJSON failures preserve
 available session and affinity identifiers.
 `harness proxy --port 0 -o ndjson` emits the local ACP address in its first
 `ready` event and runs until interrupted; single-envelope `-o json` is
 unsupported. `harness acp` provides stdio ACP for editors.
+
+## Open the DSH Web console
+
+For a Harness with a **PUBLISHED DSH revision** and an **ACTIVE Deployment**:
+
+~~~bash
+agr harness web "$HARNESS_ID" -o text
+~~~
+
+The CLI opens the native DSH console at the Deployment's HTTPS Webview root on
+service port **3080**, using the configured region and `--domain`. The existing
+ACP endpoint remains on 8080 at `/acp`. The published revision determines the
+engine even when the draft has changed.
+
+The browser starts on the machine running the CLI. The command exits after
+requesting the launch; `Opened` does not confirm that the page is ready. The
+browser request may start an instance under the Deployment's existing policy.
+No local proxy or running CLI process is needed.
+
+~~~bash
+# Safe URL only: no browser and no token acquisition.
+agr harness web "$HARNESS_ID" --no-open -o json
+# SSH/headless: explicitly return a login link to copy into your browser.
+agr harness web "$HARNESS_ID" --no-open --show-token -o json \
+  --jq '.Data | {AccessURL, ExpiresAt}'
+# Request an affinity when entering the console.
+agr harness web "$HARNESS_ID" --affinity-id "$AFFINITY_ID" -o text
+~~~
+
+`WebURL` never contains a token. Only `--show-token` includes the
+credential-bearing `AccessURL` and `ExpiresAt` in text/JSON output; protect that
+link. Rerun the command when the token or browser authentication expires.
+`--affinity-id` sets the initial `affinity_id` query parameter; subsequent browser
+requests use the gateway cookie. Tabs on the same host share that cookie and
+do not provide instance isolation. The command does not publish revisions or
+change Deployment configuration.
 
 ## Add a real MCP server
 

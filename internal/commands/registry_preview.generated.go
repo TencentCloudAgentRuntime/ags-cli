@@ -46,6 +46,7 @@ import (
 	harnesstoolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/tool/get"
 	harnesstoollist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/tool/list"
 	harnessupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/update"
+	harnessweb "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/web"
 	identitycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/create"
 	identitydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/delete"
 	identityget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/get"
@@ -176,6 +177,7 @@ func Registry() (*command.Registry, error) {
 		harnesstoolget.Module(),
 		harnesstoollist.Module(),
 		harnessupdate.Module(),
+		harnessweb.Module(),
 		identitycreate.Module(),
 		identitydelete.Module(),
 		identityget.Module(),

@@ -330,6 +330,9 @@ func Module() command.Module {
 	if stableNames["workspace.probe"] || stableNames["workspace.local"] {
 		t.Fatal("preview schema leaked into stable")
 	}
+	if stableNames["harness.web"] || !previewNames["harness.web"] {
+		t.Fatal("harness.web must be available only in preview")
+	}
 	for _, binary := range []string{stable, preview} {
 		completion := run(binary, true, "__complete", "")
 		if bytes.Contains(completion, []byte("workspace")) != (binary == preview) {
