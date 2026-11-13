@@ -114,5 +114,482 @@
       "response": "DeleteVolumeTemplateResponse",
       "status": "mapped"
     }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessEngineList",
+    "value": {
+      "command": "harness.engine.list",
+      "request": "DescribeHarnessEngineListRequest",
+      "response": "DescribeHarnessEngineListResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateHarness",
+    "value": {
+      "command": "harness.create",
+      "request": "CreateHarnessRequest",
+      "response": "CreateHarnessResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviders": {
+          "excluded": true
+        },
+        "DefaultModel": {
+          "excluded": true
+        },
+        "Skills": {
+          "excluded": true
+        },
+        "Plugins": {
+          "excluded": true
+        },
+        "MCPServers": {
+          "inputs": [
+            {
+              "flag": "mcp-servers",
+              "type": "json"
+            }
+          ]
+        },
+        "SessionConfiguration": {
+          "excluded": true
+        },
+        "Tags": {
+          "excluded": true
+        },
+        "HarnessName": {
+          "inputs": [
+            {
+              "flag": "name",
+              "type": "string"
+            }
+          ]
+        },
+        "HarnessEngine": {
+          "inputs": [
+            {
+              "flag": "engine",
+              "type": "string"
+            }
+          ]
+        },
+        "HarnessEngineVersion": {
+          "inputs": [
+            {
+              "flag": "engine-version",
+              "type": "string"
+            }
+          ]
+        },
+        "InitializeConfiguration": {
+          "inputs": [
+            {
+              "flag": "initialize-configuration",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarness",
+    "value": {
+      "command": "harness.get",
+      "request": "DescribeHarnessRequest",
+      "response": "DescribeHarnessResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessList",
+    "value": {
+      "command": "harness.list",
+      "request": "DescribeHarnessListRequest",
+      "response": "DescribeHarnessListResponse",
+      "status": "mapped",
+      "fields": {
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        },
+        "Filters": {
+          "inputs": [
+            {
+              "flag": "filters",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyHarness",
+    "value": {
+      "command": "harness.update",
+      "request": "ModifyHarnessRequest",
+      "response": "ModifyHarnessResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        },
+        "ModelProviders": {
+          "excluded": true
+        },
+        "DefaultModel": {
+          "excluded": true
+        },
+        "Skills": {
+          "excluded": true
+        },
+        "Plugins": {
+          "excluded": true
+        },
+        "MCPServers": {
+          "inputs": [
+            {
+              "flag": "mcp-servers",
+              "type": "json"
+            }
+          ]
+        },
+        "SessionConfiguration": {
+          "excluded": true
+        },
+        "Tags": {
+          "excluded": true
+        },
+        "HarnessName": {
+          "inputs": [
+            {
+              "flag": "name",
+              "type": "string"
+            }
+          ]
+        },
+        "HarnessEngine": {
+          "inputs": [
+            {
+              "flag": "engine",
+              "type": "string"
+            }
+          ]
+        },
+        "HarnessEngineVersion": {
+          "inputs": [
+            {
+              "flag": "engine-version",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteHarness",
+    "value": {
+      "command": "harness.delete",
+      "request": "DeleteHarnessRequest",
+      "response": "DeleteHarnessResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateHarnessRevision",
+    "value": {
+      "command": "harness.revision.create",
+      "request": "CreateHarnessRevisionRequest",
+      "response": "CreateHarnessRevisionResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        },
+        "HarnessRevisionName": {
+          "inputs": [
+            {
+              "flag": "name",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessRevision",
+    "value": {
+      "command": "harness.revision.get",
+      "request": "DescribeHarnessRevisionRequest",
+      "response": "DescribeHarnessRevisionResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        },
+        "Revision": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeHarnessRevisionList",
+    "value": {
+      "command": "harness.revision.list",
+      "request": "DescribeHarnessRevisionListRequest",
+      "response": "DescribeHarnessRevisionListResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        },
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/PublishHarnessRevision",
+    "value": {
+      "command": "harness.revision.publish",
+      "request": "PublishHarnessRevisionRequest",
+      "response": "PublishHarnessRevisionResponse",
+      "status": "mapped",
+      "fields": {
+        "HarnessId": {
+          "positional": true
+        },
+        "Revision": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateModelProvider",
+    "value": {
+      "command": "model-provider.create",
+      "request": "CreateModelProviderRequest",
+      "response": "CreateModelProviderResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviderName": {
+          "inputs": [
+            {
+              "flag": "name",
+              "type": "string"
+            }
+          ]
+        },
+        "Source": {
+          "excluded": true
+        },
+        "Models": {
+          "excluded": true
+        },
+        "Tags": {
+          "excluded": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProvider",
+    "value": {
+      "command": "model-provider.get",
+      "request": "DescribeModelProviderRequest",
+      "response": "DescribeModelProviderResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviderId": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProviderList",
+    "value": {
+      "command": "model-provider.list",
+      "request": "DescribeModelProviderListRequest",
+      "response": "DescribeModelProviderListResponse",
+      "status": "mapped",
+      "fields": {
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        },
+        "Filters": {
+          "inputs": [
+            {
+              "flag": "filters",
+              "type": "json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyModelProvider",
+    "value": {
+      "command": "model-provider.update",
+      "request": "ModifyModelProviderRequest",
+      "response": "ModifyModelProviderResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviderId": {
+          "positional": true
+        },
+        "ModelProviderName": {
+          "inputs": [
+            {
+              "flag": "name",
+              "type": "string"
+            }
+          ]
+        },
+        "Source": {
+          "excluded": true
+        },
+        "Models": {
+          "excluded": true
+        },
+        "Tags": {
+          "excluded": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteModelProvider",
+    "value": {
+      "command": "model-provider.delete",
+      "request": "DeleteModelProviderRequest",
+      "response": "DeleteModelProviderResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviderId": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProviderRevision",
+    "value": {
+      "command": "model-provider.revision.get",
+      "request": "DescribeModelProviderRevisionRequest",
+      "response": "DescribeModelProviderRevisionResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviderId": {
+          "positional": true
+        },
+        "Revision": {
+          "positional": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeModelProviderRevisionList",
+    "value": {
+      "command": "model-provider.revision.list",
+      "request": "DescribeModelProviderRevisionListRequest",
+      "response": "DescribeModelProviderRevisionListResponse",
+      "status": "mapped",
+      "fields": {
+        "ModelProviderId": {
+          "positional": true
+        },
+        "Offset": {
+          "inputs": [
+            {
+              "flag": "offset",
+              "type": "int"
+            }
+          ]
+        },
+        "Limit": {
+          "inputs": [
+            {
+              "flag": "limit",
+              "type": "int"
+            }
+          ]
+        }
+      }
+    }
   }
 ]

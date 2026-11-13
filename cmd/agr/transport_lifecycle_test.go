@@ -55,10 +55,25 @@ func TestTransportLifecycleHelper(t *testing.T) {
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
-	http.DefaultTransport = transport
+	http.DefaultTransport = lifecycleTestTransport{transport}
 	cli.RootCmd().SetContext(ctx)
 	main()
 	os.Exit(0)
+}
+
+// Route only the Web fixture host to the already trusted loopback API server.
+// This exists solely in the test binary; production has no endpoint/TLS bypass.
+type lifecycleTestTransport struct{ base http.RoundTripper }
+
+func (t lifecycleTestTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.URL.Scheme == "https" && req.URL.Host == "3080-dpl-test-webview.ap-guangzhou.agents.tencentags.com" {
+		clone := req.Clone(req.Context())
+		address := *req.URL
+		address.Host = os.Getenv("AGR_CLOUD_ENDPOINT")
+		clone.URL = &address
+		return t.base.RoundTrip(clone)
+	}
+	return t.base.RoundTrip(req)
 }
 
 func TestTransportLifecycleFailures(t *testing.T) {

@@ -409,6 +409,14 @@ agr deployment proxy "$deployment_id" 3000:8080 --affinity-id "$affinity_id"
 `--affinity-id` is rejected when the Deployment does not enable affinity. The
 proxy keeps affinity IDs only in memory and never persists them to disk.
 
+## Managed Harness (preview)
+
+Preview builds provide `agr model-provider` and `agr harness` for creating an
+agent, talking over ACP, publishing revisions and rolling back. The
+[Harness walkthrough](HARNESS.md) covers prerequisites, conversation
+recovery, real MCP tools and cleanup. Publishing affects new instances; existing
+instances keep their snapshot.
+
 ## Cloud endpoint vs data-plane domain
 
 | Flag                         | Default                  | Controls                         |
