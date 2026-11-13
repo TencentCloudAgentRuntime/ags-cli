@@ -57,11 +57,41 @@ A model answer alone cannot pass. Pi uses server-qualified tool names through
 `codemode`; adapt the prompt to the reviewed engine. Select a result marker
 specific to successful content, rather than the MCP endpoint's own address.
 
-Run the three cases together:
+For the native DSH Web browser case, supply a separately pinned DSH version
+and a Node-compatible runner with **Playwright 1.64.1** and Chromium installed:
+
+~~~bash
+export AGR_HARNESS_WEB_E2E=1
+export AGR_HARNESS_WEB_ENGINE_VERSION=0.2.1-rc.2
+export AGR_HARNESS_WEB_RUNNER=/absolute/path/to/node
+export NODE_PATH=/absolute/path/to/node_modules
+~~~
+
+Use a reviewed available DSH version. The runner receives `-e <script>` and a
+credential-bearing JSON input on stdin. It must run on the same approved host
+as the CLI tests; it does not need cloud credentials. The embedded script
+launches Chromium, and retains login cookies only in memory. With an existing
+Playwright container installation, a Node-compatible wrapper can instead run
+the pinned image (on the approved container runner):
+
+~~~bash
+#!/bin/sh
+exec docker run --rm --init -i --ipc=host \
+  -v /absolute/path/to/browser-dependencies:/browser:ro \
+  -e NODE_PATH=/browser/node_modules \
+  mcr.microsoft.com/playwright:v1.64.1-noble node "$@"
+~~~
+
+The mounted directory must already contain Playwright 1.64.1. Test inputs and
+the wrapper are supplied by the operator, outside source control. No registry
+creation or attachment is required. A missing opt-in skips Web; missing runner
+inputs after opt-in fail before creating resources.
+
+Run all four cases together:
 
 ~~~bash
 build/live/harness-live.test \
-  -test.run '^TestHarness(Live|RuntimeLive|MCPLive)$' -test.v -test.timeout 30m
+  -test.run '^TestHarness(Live|RuntimeLive|MCPLive|WebLive)$' -test.v -test.timeout 30m
 ~~~
 
 Alternatively use `go test -count=1 -v -timeout 30m ./internal/patchscenarios`
@@ -73,6 +103,16 @@ success and SIGINT cancellation, stdio ACP initialization/EOF, proxy initializat
 connection deletion and shutdown, JSON-output rejection, model behavior through
 revision 1 → 2 → 1, new instances and retained older snapshots.
 MCP E2E separately creates, publishes and invokes the pinned real server.
+Web E2E creates a separate DSH fixture. It checks safe/headless output without
+starting an instance, then captures the default OS launch request after the real
+CLI readiness wait. Chromium must reach HTTP 200 on its first navigation, follow
+the 307 token exchange, retain Secure/HttpOnly cookies, reject anonymous access
+with 401, re-enter using only cookies, establish the native WebSocket with 101,
+select an existing workspace and display an exact standalone assistant reply.
+It verifies the confirmed affinity keeps readiness and browser access on one
+instance, with capacity for two so an accidental extra instance cannot be hidden
+by a one-instance limit. Browser controls wait for visible/enabled UI state and
+an editable composer; no fixed sleeps or repeated clicks are used.
 
 Cleanup is registered before creation. It enumerates only each owned Tool's
 instances, stops and checks them, deletes the owned Harness, Tool and provider,

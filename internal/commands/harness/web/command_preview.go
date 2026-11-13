@@ -7,7 +7,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -30,7 +34,7 @@ func Module() command.Module {
 		Use:   "web <harness-id>",
 		Short: "Open the native DSH Web console in your browser",
 		Long: "Open the native DSH console at the Deployment's HTTPS Webview entry on service port 3080, using the configured region and data-plane domain. Requires a PUBLISHED DSH revision and an ACTIVE Deployment. The draft engine does not determine the live console.\n\n" +
-			"By default, acquire a Deployment token, start the browser on the machine running the CLI, and exit. Opened means the browser launch was requested; it does not prove the page is ready. Browser access may start an instance according to the Deployment policy. No local proxy or persistent CLI process is needed.\n\n" +
+			"By default, acquire a Deployment token, wait for HTTP 200 on the native console, start the browser on the machine running the CLI, and exit. Preparation and readiness have a 90s deadline (change with --timeout); Ctrl+C cancels the wait. Only startup HTTP 404/502/503 responses are retried. The confirmed affinity is carried into the browser URL. Opened means the browser launch was requested; it does not prove the browser rendered the page. The readiness request may start an instance according to the Deployment policy. No local proxy or persistent CLI process is needed.\n\n" +
 			"--no-open prints only the safe URL and does not acquire a token unless --show-token is also set. --show-token explicitly includes AccessURL and ExpiresAt in text/JSON output; treat the link as a credential. For SSH or headless use, combine --no-open --show-token and copy AccessURL to your browser. Rerun the command when the token or browser authentication expires.\n\n" +
 			"--affinity-id sets the initial affinity_id query parameter. The gateway maintains browser affinity using a cookie shared by tabs on the same host; tabs are not isolated instances. Available in preview builds.",
 		Examples: []string{
@@ -45,6 +49,7 @@ func Module() command.Module {
 			harnesscli.BoolFlag("no-open", "Print the URL without starting a browser; acquire no token unless --show-token is set"),
 			harnesscli.BoolFlag("show-token", "Acquire a Deployment token and include the credential-bearing AccessURL and ExpiresAt in output"),
 			harnesscli.StringFlag("affinity-id", "Set affinity_id on the initial Webview URL; browser tabs on the same host share the affinity cookie"),
+			harnesscli.StringFlag("timeout", "Maximum time for preparation and Web readiness before browser launch, such as 2m (default 90s); --no-open skips readiness"),
 		},
 		Output: command.OutputSpec{DataType: "HarnessWebData", Description: "Safe Webview URL, published revision, browser launch status, and optionally AccessURL and ExpiresAt.", Effects: []string{"read:harness", "read:deployment", "read:deployment-token"}},
 	}
@@ -68,6 +73,17 @@ func Module() command.Module {
 }
 
 func run(ctx context.Context, client harnesscli.Client, plane harnesscli.DeploymentPlane, req command.Request, openBrowser func(string) error) (*command.Result, error) {
+	timeout := 90 * time.Second
+	if raw := harnesscli.String(req, "timeout"); raw != "" {
+		var err error
+		if timeout, err = time.ParseDuration(raw); err != nil || timeout <= 0 {
+			return nil, output.NewUsageError("INVALID_TIMEOUT", "Invalid --timeout", "Use a positive Go duration such as 90s or 2m.")
+		}
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -123,6 +139,21 @@ func run(ctx context.Context, client harnesscli.Client, plane harnesscli.Deploym
 		cli.MaskSecret(token.Value)
 		query.Set("token", token.Value)
 		webURL.RawQuery = query.Encode()
+		if !noOpen {
+			affinity, err := waitForWeb(ctx, webURL, http.DefaultTransport, time.Second)
+			if err != nil {
+				return nil, err
+			}
+			if affinity != "" {
+				query.Set("affinity_id", affinity)
+				webURL.RawQuery = query.Encode()
+				safeQuery := webURL.Query()
+				safeQuery.Del("token")
+				safeURL := *webURL
+				safeURL.RawQuery = safeQuery.Encode()
+				data["WebURL"] = safeURL.String()
+			}
+		}
 		if showToken {
 			data["AccessURL"], data["ExpiresAt"] = webURL.String(), token.ExpiresAt
 		}

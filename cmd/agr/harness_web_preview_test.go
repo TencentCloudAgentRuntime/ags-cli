@@ -24,6 +24,8 @@ type harnessWebFake struct {
 	deploymentStatus string
 	token            string
 	failAction       string
+	webCalls         int
+	webStatus        int
 }
 
 func newHarnessWebFake(t *testing.T) *harnessWebFake {
@@ -35,6 +37,28 @@ func newHarnessWebFake(t *testing.T) *harnessWebFake {
 }
 
 func (f *harnessWebFake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		f.webCalls++
+		if r.URL.Query().Get("token") != "" {
+			http.SetCookie(w, &http.Cookie{Name: "tencentags-deployment-token", Value: f.token, Path: "/", Secure: true, HttpOnly: true})
+			http.SetCookie(w, &http.Cookie{Name: "tencentags-deployment-affinity-id", Value: "confirmed-instance", Path: "/", Secure: true, HttpOnly: true})
+			http.Redirect(w, r, "https://"+r.Host+"/", http.StatusTemporaryRedirect)
+			return
+		}
+		if cookie, err := r.Cookie("tencentags-deployment-token"); err != nil || cookie.Value != f.token || r.URL.Query().Get("affinity_id") != "confirmed-instance" || r.Referer() != "" {
+			f.t.Error("readiness lost authentication/confirmed affinity or forwarded the credential Referer")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if f.webStatus != 0 {
+			w.WriteHeader(f.webStatus)
+			return
+		}
+		_, _ = w.Write([]byte("ready"))
+		return
+	}
 	action := r.Header.Get("X-TC-Action")
 	if r.Header.Get("Authorization") == "" {
 		f.t.Error("unsigned Cloud API request")
@@ -118,6 +142,9 @@ func TestHarnessWebNoOpen(t *testing.T) {
 			slices.Sort(want)
 			if !slices.Equal(actions, want) {
 				t.Fatalf("side effects: got %v, want %v", actions, want)
+			}
+			if fake.webCalls != 0 {
+				t.Fatal("--no-open contacted the data plane")
 			}
 			if strings.Contains(stderr, webTestToken) || strings.Contains(stderr, url.QueryEscape(webTestToken)) {
 				t.Fatalf("token leaked to stderr: %s", stderr)
@@ -227,8 +254,11 @@ func TestHarnessWebBrowserLaunch(t *testing.T) {
 				time.Sleep(10 * time.Millisecond)
 			}
 			address, err := url.Parse(strings.TrimSpace(string(launched)))
-			if err != nil || address.Host != "3080-dpl-test-webview.ap-guangzhou.agents.tencentags.com" || address.Query().Get("token") != webTestToken {
+			if err != nil || address.Host != "3080-dpl-test-webview.ap-guangzhou.agents.tencentags.com" || address.Query().Get("token") != webTestToken || address.Query().Get("affinity_id") != "confirmed-instance" {
 				t.Fatalf("launched URL=%v err=%v", address, err)
+			}
+			if fake.webCalls < 2 {
+				t.Fatal("browser launched before native Web readiness was checked")
 			}
 			logs, err := os.ReadFile(logPath)
 			if err != nil {
@@ -275,6 +305,56 @@ func TestHarnessWebBrowserLaunchFailure(t *testing.T) {
 	}
 }
 
+func TestHarnessWebReadinessFailureDoesNotLaunch(t *testing.T) {
+	for _, format := range []string{"json", "text"} {
+		for _, status := range []int{401, 502} {
+			t.Run(fmt.Sprintf("%s/%d", format, status), func(t *testing.T) {
+				fake := newHarnessWebFake(t)
+				fake.webStatus = status
+				server := httptest.NewTLSServer(fake)
+				defer server.Close()
+				dir := t.TempDir()
+				marker := filepath.Join(dir, "unexpected-launch")
+				script := fmt.Sprintf("#!/bin/sh\nprintf launched > '%s'\n", strings.ReplaceAll(marker, "'", "'\\''"))
+				for _, launcher := range []string{"open", "xdg-open"} {
+					if err := os.WriteFile(filepath.Join(dir, launcher), []byte(script), 0o700); err != nil {
+						t.Fatal(err)
+					}
+				}
+				t.Setenv("PATH", dir)
+				logPath := filepath.Join(dir, "debug.log")
+				out, stderr, err := runSnapshotCLIWithOutput(t, server, strings.NewReader(""), format,
+					"harness", "web", "hns-test", "--timeout", "1s", "--debug-log", logPath)
+				code := "WEB_READY_FAILED"
+				if status == 502 {
+					code = "WEB_READY_TIMEOUT"
+				}
+				if err == nil || !strings.Contains(string(out)+stderr, code) || fake.webCalls < 2 {
+					t.Fatalf("readiness: err=%v stdout=%s stderr=%s calls=%d", err, out, stderr, fake.webCalls)
+				}
+				if _, err := os.Stat(marker); !os.IsNotExist(err) {
+					t.Fatal("failed readiness still launched a browser")
+				}
+				logs, err := os.ReadFile(logPath)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, value := range []string{string(out), stderr, string(logs)} {
+					if strings.Contains(value, webTestToken) || strings.Contains(value, url.QueryEscape(webTestToken)) || strings.Contains(value, "token=") {
+						t.Fatal("readiness failure leaked a credential")
+					}
+				}
+				if format == "json" {
+					var result harnessRun
+					if err := json.Unmarshal(out, &result); err != nil || result.Status != "failed" || failureCode(result) != code {
+						t.Fatalf("readiness failure lost its JSON envelope: %s", out)
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestHarnessWebSchemaAndHelp(t *testing.T) {
 	fake := newHarnessWebFake(t)
 	server := httptest.NewTLSServer(fake)
@@ -284,7 +364,7 @@ func TestHarnessWebSchemaAndHelp(t *testing.T) {
 		t.Fatalf("web schema: err=%v data=%+v", err, schema.Data)
 	}
 	flags, _ := schema.Data["Flags"].([]any)
-	for name, kind := range map[string]string{"no-open": "bool", "show-token": "bool", "affinity-id": "string"} {
+	for name, kind := range map[string]string{"no-open": "bool", "show-token": "bool", "affinity-id": "string", "timeout": "string"} {
 		if !slices.ContainsFunc(flags, func(flag any) bool {
 			value := flag.(map[string]any)
 			return value["Name"] == name && value["Type"] == kind
@@ -296,7 +376,7 @@ func TestHarnessWebSchemaAndHelp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("help: %v stderr=%s", err, stderr)
 	}
-	for _, text := range []string{"web <harness-id>", "3080", "--no-open", "--show-token", "--affinity-id"} {
+	for _, text := range []string{"web <harness-id>", "3080", "--no-open", "--show-token", "--affinity-id", "--timeout", "90s", "404/502/503"} {
 		if !strings.Contains(string(out), text) {
 			t.Errorf("help missing %q: %s", text, out)
 		}

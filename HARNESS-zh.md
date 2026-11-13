@@ -73,9 +73,11 @@ CLI 使用当前地域和 `--domain` 配置，打开 Deployment 的 **3080** 服
 的 HTTPS Webview 根路径。现有 ACP 入口仍使用 8080 的 `/acp`。引擎判断以
 已发布修订为准，草稿中的引擎变更不会影响这个判断。
 
-浏览器在运行 CLI 的机器上启动。命令请求启动浏览器后即退出，`Opened` 不代表
-页面已就绪。浏览器访问可能按 Deployment 现有策略启动实例，无需本地代理或
-持续运行 CLI。
+CLI 会先等待原生 Web 入口返回 HTTP 200，再在运行 CLI 的机器上启动浏览器。
+端点准备和就绪等待共用 90 秒超时，可通过 `--timeout 2m` 调整，Ctrl+C 可取消。
+仅重试启动期的 HTTP 404/502/503；认证失败立即返回。网关确认的 affinity 会带入
+浏览器 URL。探测请求可能按 Deployment 现有策略启动实例。命令请求启动浏览器后
+退出；`Opened` 确认启动请求，不保证浏览器已完成页面渲染，无需本地代理或常驻 CLI。
 
 ~~~bash
 # 只返回安全地址：不打开浏览器，也不获取 token。
@@ -89,7 +91,9 @@ agr harness web "$HARNESS_ID" --affinity-id "$AFFINITY_ID" -o text
 
 `WebURL` 始终不包含 token。只有 `--show-token` 才会在文本/JSON 中输出带凭证的
 `AccessURL` 和 `ExpiresAt`，请妥善保护链接。token 或浏览器认证过期后重新运行
-命令即可。`--affinity-id` 设置首次请求的 `affinity_id` 查询参数，后续请求通过
+命令即可。`--no-open`（包括 `--no-open --show-token`）跳过就绪探测，不启动实例；
+复制链接后首次用浏览器打开时可能遇到冷启动。
+`--affinity-id` 设置首次请求的 `affinity_id` 查询参数，后续请求通过
 网关 Cookie 保持亲和；同一域名的标签页共享 Cookie，不提供实例隔离。
 命令不会发布修订或修改 Deployment 配置。
 

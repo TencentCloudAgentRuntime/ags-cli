@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -64,7 +66,16 @@ func webConfig(t *testing.T) {
 	t.Cleanup(func() { *cfg = previous })
 	cfg.Region, cfg.Domain = "ap-chongqing", "tencentags.com"
 	cfg.Auth.SecretID, cfg.Auth.SecretKey = "fake-id", "fake-key"
+	transport := http.DefaultTransport
+	t.Cleanup(func() { http.DefaultTransport = transport })
+	http.DefaultTransport = webRoundTrip(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader("ready")), Header: http.Header{}, Request: req}, nil
+	})
 }
+
+type webRoundTrip func(*http.Request) (*http.Response, error)
+
+func (f webRoundTrip) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
 
 func TestWebBrowserAndOutput(t *testing.T) {
 	webConfig(t)

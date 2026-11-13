@@ -79,10 +79,14 @@ service port **3080**, using the configured region and `--domain`. The existing
 ACP endpoint remains on 8080 at `/acp`. The published revision determines the
 engine even when the draft has changed.
 
-The browser starts on the machine running the CLI. The command exits after
-requesting the launch; `Opened` does not confirm that the page is ready. The
-browser request may start an instance under the Deployment's existing policy.
-No local proxy or running CLI process is needed.
+Before opening a browser on the machine running the CLI, the command waits for
+HTTP 200 on the native Web entry. Preparation and readiness share a 90-second
+deadline; use `--timeout 2m` to change it, or Ctrl+C to cancel. Only startup
+HTTP 404/502/503 responses are retried; authentication errors fail immediately.
+The gateway's confirmed affinity is carried into the browser URL. The readiness
+request may start an instance under the Deployment's existing policy. The command
+exits after requesting the launch; `Opened` confirms that launch request, not
+successful rendering in the browser. No local proxy or running CLI process is needed.
 
 ~~~bash
 # Safe URL only: no browser and no token acquisition.
@@ -97,6 +101,8 @@ agr harness web "$HARNESS_ID" --affinity-id "$AFFINITY_ID" -o text
 `WebURL` never contains a token. Only `--show-token` includes the
 credential-bearing `AccessURL` and `ExpiresAt` in text/JSON output; protect that
 link. Rerun the command when the token or browser authentication expires.
+`--no-open`, including `--no-open --show-token`, skips readiness requests and
+does not start an instance; the browser may encounter a cold start on first use.
 `--affinity-id` sets the initial `affinity_id` query parameter; subsequent browser
 requests use the gateway cookie. Tabs on the same host share that cookie and
 do not provide instance isolation. The command does not publish revisions or
