@@ -363,6 +363,12 @@ agr deployment proxy "$deployment_id" 3000:8080
 `127.0.0.1`；通过 `--address` 监听非回环地址会把调试代理暴露到网络，并输出
 风险提示。
 
+## 托管 Harness（preview）
+
+Preview 构建提供 `agr model-provider` 和 `agr harness`，支持创建 Agent、
+通过 ACP 对话、发布修订与回滚。[完整使用流程](HARNESS-zh.md) 包含前置资源、
+会话恢复、真实 MCP 接入与清理。发布影响新实例，已有实例保留原快照。
+
 ## 控制面端点与数据面域名
 
 | Flag | 默认值 | 作用对象 |

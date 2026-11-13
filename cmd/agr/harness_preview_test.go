@@ -562,3 +562,20 @@ func TestHarnessCreateWithMCPShortcuts(t *testing.T) {
 		t.Fatalf("conflict: %v %+v", err, result.Failure)
 	}
 }
+
+func TestHarnessProxyJSONContract(t *testing.T) {
+	fake := newHarnessFake(t)
+	server := httptest.NewTLSServer(fake)
+	defer server.Close()
+	result, _, err := runHarness(t, server, "harness", "proxy", "hns-test")
+	if err == nil || failureCode(result) != "UNSUPPORTED_OUTPUT" || !strings.Contains(result.Failure.Hint, "-o ndjson") {
+		t.Fatalf("JSON proxy: error=%v failure=%+v", err, result.Failure)
+	}
+	if len(fake.actions()) != 0 {
+		t.Fatalf("unsupported output reached the cloud: %v", fake.actions())
+	}
+	schema, _, err := runHarness(t, server, "schema", "harness.proxy")
+	if err != nil || schema.Data["SupportsJson"] != false || schema.Data["SupportsNdjson"] != true {
+		t.Fatalf("proxy schema: error=%v data=%+v", err, schema.Data)
+	}
+}

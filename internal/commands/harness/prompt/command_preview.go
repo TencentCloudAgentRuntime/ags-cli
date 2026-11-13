@@ -168,6 +168,9 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 			failure = output.NewCLIError(&output.Failure{Code: "PROMPT_TIMEOUT", Kind: output.KindTimeout, Message: fmt.Sprintf("no reply within %s; session/cancel was sent", timeout), Hint: "Raise --timeout, or continue with --session-id and --affinity-id."})
 		}
 		failure.Failure.Details = data
+		if mode == renderNDJSON {
+			return sink.finishNDJSON(data, failure), nil
+		}
 		return nil, failure
 	}
 	data["StopReason"] = string(response.StopReason)
@@ -192,8 +195,7 @@ func restore(ctx context.Context, session *acpclient.Session, sessionID, cwd str
 func finish(mode renderMode, sink *updates, data map[string]any) *command.Result {
 	switch mode {
 	case renderNDJSON:
-		_ = sink.events.WriteCompleted(data)
-		return &command.Result{StreamDone: true}
+		return sink.finishNDJSON(data, nil)
 	case renderText:
 		sink.endText()
 		fmt.Fprintf(sink.errOut, "\n[%s] session %s", data["StopReason"], data["SessionId"])
@@ -244,11 +246,25 @@ func (u *updates) reset() {
 	u.order = nil
 }
 
+func (u *updates) finishNDJSON(data map[string]any, failure *output.CLIError) *command.Result {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	// Stop accepting updates before writing the terminal event. The SDK may
+	// still drain queued notifications while the connection is closing.
+	u.tools = nil
+	if failure != nil {
+		_ = u.events.WriteFailed(data, failure.Failure)
+		return &command.Result{StreamDone: true, ExitCode: failure.ExitCode, Cause: failure}
+	}
+	_ = u.events.WriteCompleted(data)
+	return &command.Result{StreamDone: true}
+}
+
 func (u *updates) SessionUpdate(_ context.Context, notification acp.SessionNotification) error {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	if u.tools == nil {
-		// Replayed history during load arrives before reset; ignore it.
+		// Ignore replayed history before reset and late updates after finishing.
 		return nil
 	}
 	if u.mode == renderNDJSON {

@@ -95,6 +95,7 @@ func (b *Bridge) Affinity() string {
 // or a remote stream fails. It always closes the remote connection.
 func (b *Bridge) Run(ctx context.Context, in io.Reader) error {
 	ctx, cancel := context.WithCancel(ctx)
+	defer b.close()
 	defer cancel()
 	lines := make(chan []byte)
 	readErr := make(chan error, 1)
@@ -114,7 +115,6 @@ func (b *Bridge) Run(ctx context.Context, in io.Reader) error {
 		}
 		readErr <- scanner.Err()
 	}()
-	defer b.close()
 	for {
 		select {
 		case <-ctx.Done():
@@ -173,7 +173,7 @@ func (b *Bridge) send(ctx context.Context, line []byte) error {
 		return nil
 	case response.StatusCode >= 200 && response.StatusCode < 300:
 		// A direct JSON reply is also valid transport behavior.
-		return b.forwardBody(response)
+		return b.forwardBody(ctx, response)
 	default:
 		return b.replyError(message.ID, httpError(message.Method, response))
 	}
@@ -195,13 +195,13 @@ func (b *Bridge) initialize(ctx context.Context, line []byte) error {
 	b.mu.Lock()
 	b.connection = connection
 	b.mu.Unlock()
-	if err := b.forwardBody(response); err != nil {
+	if err := b.forwardBody(ctx, response); err != nil {
 		return err
 	}
 	return b.openStream(ctx, "")
 }
 
-func (b *Bridge) forwardBody(response *http.Response) error {
+func (b *Bridge) forwardBody(ctx context.Context, response *http.Response) error {
 	data, err := io.ReadAll(io.LimitReader(response.Body, maxMessageBytes+1))
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func (b *Bridge) forwardBody(response *http.Response) error {
 		return errors.New("ACP response exceeds the message size limit")
 	}
 	if data = bytes.TrimSpace(data); len(data) > 0 {
-		b.deliver(data)
+		b.deliver(ctx, data)
 	}
 	return nil
 }
@@ -226,7 +226,7 @@ func (b *Bridge) trackNew(id json.RawMessage) {
 
 // deliver writes one inbound message and opens a session stream when a new
 // session ID first appears in a session/new result.
-func (b *Bridge) deliver(data []byte) {
+func (b *Bridge) deliver(ctx context.Context, data []byte) {
 	var message envelope
 	if json.Unmarshal(data, &message) == nil && message.Method == "" && len(message.ID) > 0 {
 		b.mu.Lock()
@@ -239,7 +239,7 @@ func (b *Bridge) deliver(data []byte) {
 			}
 			if json.Unmarshal(message.Result, &result) == nil && result.SessionID != "" {
 				// Open before forwarding so the next prompt cannot race the stream.
-				b.ensureSessionStream(context.Background(), result.SessionID)
+				b.ensureSessionStream(ctx, result.SessionID)
 			}
 		}
 	}
@@ -262,7 +262,7 @@ func (b *Bridge) ensureSessionStream(ctx context.Context, session string) {
 
 // openStream starts an SSE reader and returns once the stream is established.
 func (b *Bridge) openStream(ctx context.Context, session string) error {
-	streamCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+	streamCtx, cancel := context.WithCancel(ctx)
 	b.mu.Lock()
 	if _, exists := b.streams[session]; exists {
 		b.mu.Unlock()
@@ -281,18 +281,16 @@ func (b *Bridge) openStream(ctx context.Context, session string) error {
 		cancel()
 		return httpError("stream", response)
 	}
-	b.wg.Add(1)
-	go func() {
-		defer b.wg.Done()
+	b.wg.Go(func() {
 		defer func() { _ = response.Body.Close() }()
-		err := readSSE(response.Body, b.deliver)
+		err := readSSE(response.Body, func(data []byte) { b.deliver(streamCtx, data) })
 		if streamCtx.Err() == nil {
 			if err == nil {
 				err = errors.New("ACP event stream closed by the server")
 			}
 			b.fail(err)
 		}
-	}()
+	})
 	return nil
 }
 

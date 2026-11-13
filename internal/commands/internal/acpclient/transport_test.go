@@ -157,6 +157,111 @@ func TestCancelStopsTurn(t *testing.T) {
 	}
 }
 
+// Leave the GET pending before any response headers arrive, as on a stalled
+// upstream. Releasing it also lets the unfixed bridge shut down after failure.
+func blockedStreamServer(t *testing.T, session string) (*httptest.Server, <-chan struct{}, func()) {
+	t.Helper()
+	agent := newFakeAgent(t)
+	started, release := make(chan struct{}), make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.Header.Get(headerSession) == session {
+			close(started)
+			select {
+			case <-r.Context().Done():
+			case <-release:
+			}
+			return
+		}
+		agent.ServeHTTP(w, r)
+	}))
+	t.Cleanup(server.Close)
+	return server, started, sync.OnceFunc(func() { close(release) })
+}
+
+func TestBridgeCancelWhileOpeningStream(t *testing.T) {
+	for _, session := range []string{"", "sess-9"} {
+		name := "connection"
+		if session != "" {
+			name = "session-load"
+		}
+		t.Run(name, func(t *testing.T) {
+			server, started, release := blockedStreamServer(t, session)
+			ctx, cancel := context.WithCancel(t.Context())
+			in, input := io.Pipe()
+			bridge := NewBridge(endpoint(server), io.Discard)
+			done := make(chan struct{})
+			var runErr error
+			go func() {
+				runErr = bridge.Run(ctx, in)
+				close(done)
+			}()
+			t.Cleanup(func() {
+				release()
+				cancel()
+				_ = input.Close()
+				_ = in.Close()
+				select {
+				case <-done:
+				case <-time.After(5 * time.Second):
+					t.Error("bridge did not shut down after releasing the stalled GET")
+				}
+			})
+			if _, err := io.WriteString(input, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}`+"\n"); err != nil {
+				t.Fatal(err)
+			}
+			if session != "" {
+				if _, err := io.WriteString(input, `{"jsonrpc":"2.0","id":2,"method":"session/load","params":{"sessionId":"sess-9","cwd":"/workspace","mcpServers":[]}}`+"\n"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			select {
+			case <-started:
+			case <-time.After(5 * time.Second):
+				t.Fatal("stream GET did not start")
+			}
+			cancel()
+			select {
+			case <-done:
+				if !errors.Is(runErr, context.Canceled) {
+					t.Fatalf("Run returned %v, want cancellation", runErr)
+				}
+			case <-time.After(time.Second):
+				t.Fatal("cancellation did not interrupt the pending stream GET")
+			}
+		})
+	}
+}
+
+func TestSessionCloseWhileOpeningStream(t *testing.T) {
+	server, started, release := blockedStreamServer(t, "")
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	session, err := Connect(ctx, endpoint(server), &recorder{})
+	if err != nil {
+		release()
+		t.Fatal(err)
+	}
+	defer func() {
+		release()
+		session.Close()
+	}()
+	select {
+	case <-started:
+	case <-ctx.Done():
+		t.Fatal("stream GET did not start")
+	}
+	done := make(chan struct{})
+	go func() {
+		session.Close()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Session.Close did not interrupt the pending stream GET")
+	}
+}
+
 func TestPlatformErrorIsClassified(t *testing.T) {
 	agent := newFakeAgent(t)
 	agent.status = http.StatusServiceUnavailable

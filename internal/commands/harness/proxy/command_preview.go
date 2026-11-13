@@ -36,14 +36,13 @@ func Module() command.Module {
 		Use:   "proxy <harness-id>",
 		Short: "Serve the harness ACP endpoint on a local address for testing",
 		Long: "Start a local HTTP proxy to the harness Deployment. The proxy adds and refreshes the access token and keeps the affinity value, so browsers, IDE plugins and ACP SDKs can connect to http://127.0.0.1:<port>/acp without credentials.\n\n" +
-			"The proxy runs until interrupted. With -o ndjson it prints one 'ready' event with the local URL, then stays running; agents can start it in the background and read the first line. Use --port 0 to pick a free port.\n\n" +
+			"The proxy runs until interrupted. With -o ndjson it prints one 'ready' event with the local URL, then stays running; agents can start it in the background and read the first line. Single-envelope -o json is not supported; use -o text or -o ndjson. Use --port 0 to pick a free port.\n\n" +
 			"Intended for local testing. To connect a client directly, use 'agr harness endpoint'. Available in preview builds.",
 		Examples: []string{
 			"Example - Serve on port 8080:\n  agr harness proxy hns-a1b2c3d4",
 			"Example - Pick a free port and read the URL from the first NDJSON line:\n  agr harness proxy hns-a1b2c3d4 --port 0 -o ndjson",
 			"Example - Resume the instance of an earlier session:\n  agr harness proxy hns-a1b2c3d4 --affinity-id <affinity-id>",
 		},
-		SupportsJSON:   true,
 		SupportsNDJSON: true,
 		Args:           []command.ArgSpec{{Name: "harness-id", Required: true, Description: "Harness ID, such as hns-a1b2c3d4."}},
 		Flags: []command.FlagSpec{
@@ -92,6 +91,10 @@ func runtimeOf(injected any) Runtime {
 }
 
 func run(ctx context.Context, req command.Request, deps command.Deps, client harnesscli.Client, plane deploymentproxy.ControlPlane, runtime Runtime) (*command.Result, error) {
+	if cli.IsJSON() {
+		return nil, output.NewUsageError("UNSUPPORTED_OUTPUT", "harness proxy does not support -o json",
+			"Use -o ndjson for streaming ready/affinity/completed events, or -o text for local testing.")
+	}
 	port := req.Flags["port"].Int
 	if !req.Flags["port"].Changed {
 		port = harnesscli.ACPPort
