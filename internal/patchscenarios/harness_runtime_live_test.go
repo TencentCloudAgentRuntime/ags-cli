@@ -190,7 +190,7 @@ func (s runtimeSession) flags() []string {
 }
 
 func (r *harnessRuntime) prompt(text string, session runtimeSession) map[string]any {
-	args := []string{"harness", "prompt", r.harness, text, "--cwd", "/tmp", "--timeout", "120s"}
+	args := []string{"harness", "prompt", r.harness, text, "--timeout", "120s"}
 	if session.id != "" {
 		args = append(args, session.flags()...)
 	}
@@ -277,6 +277,7 @@ func TestHarnessRuntimeLive(t *testing.T) {
 	r.create(runtimePrompt(1), "", 6)
 	data := r.prompt("Reply only AGR_RUNTIME_OK. Do not use tools.", runtimeSession{})
 	requireReply(t, data, "AGR_RUNTIME_OK")
+	t.Log("prompt without --cwd succeeded with the default /workspace")
 	first := sessionOf(t, data)
 	continued := r.prompt("What exact AGR marker did I request in my previous message? Reply only that marker.", first)
 	requireReply(t, continued, "AGR_RUNTIME_OK")

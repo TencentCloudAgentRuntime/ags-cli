@@ -67,8 +67,9 @@ build/live/harness-live.test \
 Alternatively use `go test -count=1 -v -timeout 30m ./internal/patchscenarios`
 with the same opt-ins. Disable caching and report skipped cases separately.
 
-Runtime E2E checks real prompts, conversation continuation, NDJSON success and
-SIGINT cancellation, stdio ACP initialization/EOF, proxy initialization,
+Runtime E2E omits `--cwd` from its JSON and NDJSON prompts to exercise the
+default `/workspace`, including conversation continuation. It checks NDJSON
+success and SIGINT cancellation, stdio ACP initialization/EOF, proxy initialization,
 connection deletion and shutdown, JSON-output rejection, model behavior through
 revision 1 → 2 → 1, new instances and retained older snapshots.
 MCP E2E separately creates, publishes and invokes the pinned real server.

@@ -49,7 +49,7 @@ func (r *harnessRuntime) events(args ...string) ([]runtimeEvent, error) {
 
 func (r *harnessRuntime) streamSuccess(session runtimeSession) {
 	r.t.Helper()
-	args := []string{"harness", "prompt", r.harness, "Reply only AGR_STREAM_OK. Do not use tools.", "--cwd", "/tmp", "--timeout", "120s"}
+	args := []string{"harness", "prompt", r.harness, "Reply only AGR_STREAM_OK. Do not use tools.", "--timeout", "120s"}
 	events, err := r.events(append(args, session.flags()...)...)
 	if err != nil || !runtimeTerminal(events, "started", "completed") {
 		r.t.Fatal("invalid successful NDJSON lifecycle")
@@ -247,7 +247,7 @@ func (r *harnessRuntime) streamCancel(session runtimeSession) {
 	r.t.Helper()
 	args := []string{"harness", "prompt", r.harness,
 		"Print the numbers 1 through 10000, one per line. Begin immediately. Do not use tools.",
-		"--cwd", "/tmp", "--timeout", "120s", "-o", "ndjson"}
+		"--timeout", "120s", "-o", "ndjson"}
 	p := r.start(append(args, session.flags()...)...)
 	var events []runtimeEvent
 	for {
