@@ -28,9 +28,14 @@ func runSnapshotCLI(t *testing.T, server *httptest.Server, stdin string, args ..
 
 func runSnapshotCLIWithStdin(t *testing.T, server *httptest.Server, stdin io.Reader, args ...string) ([]byte, string, error) {
 	t.Helper()
+	return runSnapshotCLIWithOutput(t, server, stdin, "json", args...)
+}
+
+func runSnapshotCLIWithOutput(t *testing.T, server *httptest.Server, stdin io.Reader, format string, args ...string) ([]byte, string, error) {
+	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
-	args = append(args, "-o", "json")
+	args = append(args, "-o", format)
 	cmd := exec.CommandContext(ctx, os.Args[0], append([]string{"-test.run=^TestTransportLifecycleHelper$", "--"}, args...)...)
 	home := t.TempDir()
 	cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.Certificate().Raw})

@@ -13,7 +13,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	acp "github.com/coder/acp-go-sdk"
 
@@ -24,6 +27,156 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
+
+func TestPromptDeadlineInterruptsStalledPOST(t *testing.T) {
+	flags := cli.RootCmd().PersistentFlags()
+	flag := flags.Lookup("output")
+	previous, changed := flag.Value.String(), flag.Changed
+	t.Cleanup(func() { _ = flags.Set("output", previous); flag.Changed = changed })
+	for _, tc := range []struct {
+		format, cancel string
+	}{
+		{"json", "accepted"}, {"text", "accepted"}, {"ndjson", "accepted"},
+		{"json", "rejected"}, {"ndjson", "stalled"},
+	} {
+		t.Run(tc.format+"/cancel-"+tc.cancel, func(t *testing.T) {
+			if err := flags.Set("output", tc.format); err != nil {
+				t.Fatal(err)
+			}
+			release := make(chan struct{})
+			releasePOST := sync.OnceFunc(func() { close(release) })
+			defer releasePOST()
+			arrived, interrupted := make(chan struct{}), make(chan struct{})
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("X-Tencent-Agr-Affinity-Id", "aff-timeout")
+				switch r.Method {
+				case http.MethodGet:
+					w.Header().Set("Content-Type", "text/event-stream")
+					w.(http.Flusher).Flush()
+					<-r.Context().Done()
+					return
+				case http.MethodDelete:
+					w.WriteHeader(http.StatusNoContent)
+					return
+				}
+				var message struct {
+					ID     json.RawMessage        `json:"id"`
+					Method string                 `json:"method"`
+					Params acp.CancelNotification `json:"params"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
+					t.Error(err)
+					return
+				}
+				switch message.Method {
+				case "initialize":
+					w.Header().Set("Acp-Connection-Id", "conn-timeout")
+					_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": message.ID, "result": map[string]any{"protocolVersion": 1, "agentCapabilities": map[string]any{}, "authMethods": []any{}}})
+				case "session/new":
+					_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": message.ID, "result": map[string]any{"sessionId": "sess-timeout"}})
+				case "session/prompt":
+					close(arrived)
+					select {
+					case <-r.Context().Done():
+						close(interrupted)
+					case <-release:
+					}
+					w.WriteHeader(http.StatusAccepted)
+				case "session/cancel":
+					if message.Params.SessionId != "sess-timeout" || r.Header.Get("Acp-Session-Id") != "sess-timeout" || r.Header.Get("Acp-Connection-Id") != "conn-timeout" || r.Header.Get("X-Access-Token") != "test-token" || r.Header.Get("X-Tencent-Agr-Affinity-Id") != "aff-timeout" {
+						t.Error("cancellation lost the session, connection, token or affinity")
+					}
+					switch tc.cancel {
+					case "rejected":
+						w.WriteHeader(http.StatusServiceUnavailable)
+					case "stalled":
+						select {
+						case <-r.Context().Done():
+						case <-release:
+						}
+					default:
+						w.WriteHeader(http.StatusAccepted)
+					}
+				case "$/cancel_request":
+					w.WriteHeader(http.StatusAccepted)
+				default:
+					t.Errorf("unexpected method %s", message.Method)
+				}
+			}))
+			defer server.Close()
+			// Release blocked handlers before Server.Close even on failure.
+			defer releasePOST()
+			ios, _, stdout, _ := iostreams.Test()
+			deps := command.Deps{IO: ios, Values: map[string]any{
+				harnesscli.DataPlaneKey: func(string) (acpclient.Endpoint, harnesscli.Target) {
+					return acpclient.Endpoint{URL: server.URL, HTTP: server.Client(), AffinityHeader: "X-Tencent-Agr-Affinity-Id", Token: func(context.Context) (string, error) { return "test-token", nil }}, harnesscli.Target{}
+				},
+			}}
+			req := command.Request{ArgValues: map[string]string{"harness-id": "hns-test", "text": "hello"}, Flags: map[string]command.FlagValue{"timeout": {Changed: true, String: "300ms"}}}
+			var result *command.Result
+			var runErr error
+			done := make(chan struct{})
+			go func() { result, runErr = run(t.Context(), req, deps, harnesscli.Client{}); close(done) }()
+			select {
+			case <-arrived:
+			case <-time.After(2 * time.Second):
+				t.Fatal("prompt never reached the blocked POST")
+			}
+			budget := 2 * time.Second
+			if tc.cancel == "stalled" {
+				budget = 6 * time.Second
+			}
+			select {
+			case <-done:
+			case <-time.After(budget):
+				releasePOST()
+				<-done
+				t.Fatal("prompt outlived its deadline and cancellation budget while POST was blocked")
+			}
+			select {
+			case <-interrupted:
+			case <-time.After(time.Second):
+				t.Fatal("deadline did not cancel the in-flight prompt POST")
+			}
+			var failure *output.Failure
+			if tc.format == "ndjson" {
+				if result == nil || !result.StreamDone || result.ExitCode == 0 || runErr != nil {
+					t.Fatalf("result=%+v error=%v", result, runErr)
+				}
+				decoder := json.NewDecoder(stdout)
+				var events []output.NDJSONEvent
+				for {
+					var event output.NDJSONEvent
+					if err := decoder.Decode(&event); errors.Is(err, io.EOF) {
+						break
+					} else if err != nil {
+						t.Fatal(err)
+					}
+					events = append(events, event)
+				}
+				if len(events) != 2 || events[0].Type != "started" || events[1].Type != "failed" {
+					t.Fatalf("expected one terminal failed event: %+v", events)
+				}
+				failure = events[1].Failure
+			} else {
+				var cliErr *output.CLIError
+				if !errors.As(runErr, &cliErr) || cliErr.ExitCode == 0 {
+					t.Fatalf("expected nonzero timeout result: %v", runErr)
+				}
+				failure = cliErr.Failure
+			}
+			if failure == nil || failure.Code != "PROMPT_TIMEOUT" || failure.Details["SessionId"] != "sess-timeout" || failure.Details["AffinityId"] != "aff-timeout" {
+				t.Fatalf("timeout lost recovery identifiers: %+v", failure)
+			}
+			if tc.cancel != "accepted" && (strings.Contains(failure.Message, "was sent") || strings.Contains(failure.Message, "was accepted")) {
+				t.Fatalf("timeout falsely claimed cancellation: %s", failure.Message)
+			}
+			if tc.cancel == "accepted" && !strings.Contains(failure.Message, "was accepted") {
+				t.Fatalf("timeout did not confirm the accepted cancellation: %s", failure.Message)
+			}
+		})
+	}
+}
 
 func TestPromptNDJSONIgnoresUpdatesAfterCompletion(t *testing.T) {
 	var stdout bytes.Buffer

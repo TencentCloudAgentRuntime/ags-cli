@@ -39,11 +39,14 @@ agr harness revision publish "$HARNESS_ID" 1 --wait -o text
 ~~~
 
 `PUBLISHED` confirms active platform resources. A readiness probe can start an
-instance. The prompt's working directory must exist inside that instance.
+instance. `prompt` defaults to `/workspace`; use `--cwd` to choose another
+directory that exists inside the instance, and keep it unchanged when continuing
+a session. With `harness acp`, the editor supplies `cwd`: its path is forwarded
+unchanged and must also exist inside the remote instance.
 
 ~~~bash
 agr harness endpoint "$HARNESS_ID" --check -o text
-agr harness prompt "$HARNESS_ID" 'Reply only HELLO' --cwd /tmp -o json
+agr harness prompt "$HARNESS_ID" 'Reply only HELLO' -o json
 ~~~
 
 Copy `Data.SessionId` and `Data.AffinityId` into `SESSION_ID` and
@@ -51,12 +54,13 @@ Copy `Data.SessionId` and `Data.AffinityId` into `SESSION_ID` and
 
 ~~~bash
 agr harness prompt "$HARNESS_ID" 'What did I ask you to reply with?' \
-  --cwd /tmp --session-id "$SESSION_ID" --affinity-id "$AFFINITY_ID" -o json
-agr harness prompt "$HARNESS_ID" - --cwd /tmp -o ndjson < task.md
+  --session-id "$SESSION_ID" --affinity-id "$AFFINITY_ID" -o json
+agr harness prompt "$HARNESS_ID" - -o ndjson < task.md
 ~~~
 
-Ctrl+C cancels the current turn; it is never automatically resent. JSON/NDJSON
-failures preserve available session and affinity identifiers.
+Ctrl+C or `--timeout` requests cancellation; the remote turn may still finish.
+Unfinished turns are never automatically resent. JSON/NDJSON failures preserve
+available session and affinity identifiers.
 `harness proxy --port 0 -o ndjson` emits the local ACP address in its first
 `ready` event and runs until interrupted; single-envelope `-o json` is
 unsupported. `harness acp` provides stdio ACP for editors.
@@ -100,6 +104,26 @@ retain their startup configuration. A new session or ACP connection can reuse
 an existing instance.** Account for the Deployment's scaling/affinity policy
 when verifying publication. The opt-in tests use distinct exclusive instances
 and also assert that older snapshots remain unchanged.
+
+## Limits and security
+
+- Each MCP server accepts one managed credential. Every `${credential}` template
+  for that server uses the same credential; other secret header values are stored
+  as plaintext in the Harness configuration and its revisions. Create/update warn
+  about non-empty plaintext values on headers whose names contain `Authorization`,
+  `Key`, `Token` or `Secret` (case-insensitive), unless the value uses `${credential}`.
+  `revision diff` and `status` hide all MCP header values, including credential
+  templates; requests and stored values remain unchanged. Other configuration
+  read/preview outputs can contain plaintext.
+- MCP names use 1-32 ASCII letters, digits, `_` or `-`. Pi treats `-` and `_` as
+  equivalent, so names such as `my-tool` and `my_tool` collide.
+- Sessions from the same Harness share its Harness ID as the session-space
+  `UserId`; there is no per-end-user isolation within that Harness. Use a single
+  writer per session and send turns serially.
+- Harness and ModelProvider configurations store references to TokenHub keys.
+  At publication, the resolved key is written as a literal into the Sandbox
+  Tool's `NetworkPolicy` header-injection rule. Identities allowed to describe
+  that Tool can read the key; scope Tool read permissions accordingly.
 
 ## Clean up owned resources
 

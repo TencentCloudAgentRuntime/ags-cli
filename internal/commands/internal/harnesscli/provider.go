@@ -34,7 +34,7 @@ func ProviderFlags(update bool) []command.FlagSpec {
 		StringFlag("credential-provider-id", "SecretMultiUser credential provider for --base-url; use with --credential-user-id and --credential-scope"),
 		StringFlag("credential-user-id", "Credential user ID for --base-url"),
 		StringFlag("credential-scope", "Credential scope for --base-url"),
-		StringFlag("tokenhub-api-key-id", "TokenHub API key ID; the key value is read at publish time and never stored."+sourceNote),
+		StringFlag("tokenhub-api-key-id", "TokenHub API key ID. At publish time its value is embedded in the Sandbox Tool NetworkPolicy header-injection rule; identities allowed to describe the Tool can read the key."+sourceNote),
 		StringArrayFlag("model", "Registered model as <model-id>[:TEXT,IMAGE]; repeat for more. Without a suffix the model is text-only."+replace, "--model hy3", "--model qwen-vl:TEXT,IMAGE"),
 		{Name: "models", Usage: "Registered models as a JSON array, @file, or - for stdin, for capabilities such as Reasoning, ContextWindow and MaxOutputTokens." + replace, Type: command.FlagString, Workflow: true,
 			Format: `[{"ID":"<model-id>","Name":"<display name>","Input":["TEXT"],"Reasoning":true,"ContextWindow":32768,"MaxOutputTokens":4096}]`},

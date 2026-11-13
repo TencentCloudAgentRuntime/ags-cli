@@ -35,7 +35,7 @@ func Module() command.Module {
 		Short: "Send one prompt to a harness and stream the reply",
 		Long: "Connect to the harness over ACP, send one prompt turn, and stream the agent's reply. Use it to smoke-test a published harness without another client.\n\n" +
 			"Pass the prompt as an argument or '-' to read stdin. Text output streams the reply to stdout and tool progress to stderr; -o json returns one envelope with the reply, StopReason, SessionId and AffinityId; -o ndjson streams ACP session updates.\n\n" +
-			"Each run is a new ACP connection. To continue a conversation, pass the returned --session-id and --affinity-id; without the affinity value the request may reach another instance, and without a session space an earlier session may not exist there. Tool permission requests are answered 'cancelled'. Ctrl+C sends session/cancel; an unfinished turn is never resent. Available in preview builds.",
+			"Each run is a new ACP connection. To continue a conversation, pass the returned --session-id and --affinity-id; without the affinity value the request may reach another instance, and without a session space an earlier session may not exist there. Tool permission requests are answered 'cancelled'. Ctrl+C or timeout requests cancellation; the remote turn may still finish. An unfinished turn is never resent. Available in preview builds.",
 		Examples: []string{
 			"Example - Ask one question:\n  agr harness prompt hns-a1b2c3d4 'List the files in /workspace'",
 			"Example - Continue the same conversation:\n  agr harness prompt hns-a1b2c3d4 'Remember cedar' -o json --jq '.Data | {SessionId, AffinityId}'\n  agr harness prompt hns-a1b2c3d4 'What did I ask you to remember?' --session-id <session-id> --affinity-id <affinity-id>",
@@ -49,7 +49,7 @@ func Module() command.Module {
 		},
 		Flags: []command.FlagSpec{
 			harnesscli.StringFlag("cwd", "Working directory inside the instance (default /workspace); must exist there"),
-			harnesscli.StringFlag("session-id", "Continue an existing ACP session instead of creating one"),
+			harnesscli.StringFlag("session-id", "Continue an existing ACP session instead of creating one; do not send concurrent turns to the same session"),
 			harnesscli.StringFlag("affinity-id", "Affinity value from an earlier run, to reach the same instance"),
 			{Name: "timeout", Usage: "Maximum time for the turn, such as 5m (default 10m)", Type: command.FlagString, Workflow: true},
 		},
@@ -147,11 +147,14 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	sink.reset()
 	started := time.Now()
 	response, promptErr := session.Conn.Prompt(signalCtx, acp.PromptRequest{SessionId: acp.SessionId(sessionID), Prompt: []acp.ContentBlock{acp.TextBlock(text)}})
+	cancelNote := "session/cancel was not confirmed"
 	if promptErr != nil && signalCtx.Err() != nil {
 		// Interrupted or timed out: ask the agent to stop, but report the
 		// outcome as unknown because the turn may still finish remotely.
 		cancelCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
-		_ = session.Conn.Cancel(cancelCtx, acp.CancelNotification{SessionId: acp.SessionId(sessionID)})
+		if session.Cancel(cancelCtx, sessionID) == nil {
+			cancelNote = "session/cancel was accepted"
+		}
 		cancel()
 	}
 	data := map[string]any{
@@ -165,7 +168,7 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	if promptErr != nil {
 		failure := rpcFailure("PROMPT_FAILED", session.Err(promptErr), "The turn outcome is unknown and was not resent. Inspect the session or send the next prompt explicitly.")
 		if errors.Is(signalCtx.Err(), context.DeadlineExceeded) {
-			failure = output.NewCLIError(&output.Failure{Code: "PROMPT_TIMEOUT", Kind: output.KindTimeout, Message: fmt.Sprintf("no reply within %s; session/cancel was sent", timeout), Hint: "Raise --timeout, or continue with --session-id and --affinity-id."})
+			failure = output.NewCLIError(&output.Failure{Code: "PROMPT_TIMEOUT", Kind: output.KindTimeout, Message: fmt.Sprintf("no reply within %s; %s; the turn outcome is unknown", timeout, cancelNote), Hint: "Raise --timeout, or continue with --session-id and --affinity-id."})
 		}
 		failure.Failure.Details = data
 		if mode == renderNDJSON {

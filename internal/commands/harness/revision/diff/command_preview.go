@@ -25,7 +25,7 @@ func Module() command.Module {
 		Use:   "diff <harness-id> <from> <to>",
 		Short: "Compare two revisions, or a revision and the draft",
 		Long: "Show field-level differences between two harness configurations. Each side is a revision number, 'live' (the PUBLISHED revision), 'latest' (the newest revision) or 'draft' (the editable configuration). Comparing with 'draft' shows what the next 'revision create' would freeze.\n\n" +
-			"Between two revisions, a changed model provider pin (provider@revision) is reported because it changes the runtime configuration. The draft has no pins, so they are ignored when one side is 'draft'. Differences do not change the exit code; read Data.Changed. Available in preview builds.",
+			"Between two revisions, a changed model provider pin (provider@revision) is reported because it changes the runtime configuration. The draft has no pins, so they are ignored when one side is 'draft'. All MCP header values, including credential templates, are redacted in JSON and text; changes are computed from the original values. Differences do not change the exit code; read Data.Changed. Available in preview builds.",
 		Examples: []string{
 			"Example - What would the next publish change:\n  agr harness revision diff hns-a1b2c3d4 live draft -o text",
 			"Example - Compare two revisions:\n  agr harness revision diff hns-a1b2c3d4 1 2 -o text",

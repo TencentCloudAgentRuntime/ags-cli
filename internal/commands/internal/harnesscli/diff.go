@@ -145,6 +145,7 @@ func join(path, key string) string {
 
 // FormatChange renders one change as a single readable line.
 func FormatChange(change Change) string {
+	change = change.redacted()
 	switch change.Op {
 	case "add":
 		return fmt.Sprintf("+ %s  %s", change.Path, compact(change.New))

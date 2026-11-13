@@ -73,6 +73,7 @@ func (e Env) WithAPI(api apicli.APIDescriptor) Env {
 
 // Execute sends the request and decodes the response object.
 func (e Env) Execute(ctx context.Context, request map[string]any) (*command.Result, apivalue.Object, error) {
+	warnings := e.warnMCPHeaders(request)
 	result, err := e.Executor.Execute(ctx, request)
 	if err != nil {
 		return nil, nil, err
@@ -81,6 +82,7 @@ func (e Env) Execute(ctx context.Context, request map[string]any) (*command.Resu
 	if err != nil {
 		return nil, nil, err
 	}
+	result.Warnings = append(result.Warnings, warnings...)
 	return result, response, nil
 }
 
@@ -107,7 +109,8 @@ func WithCreated(err error, ids map[string]any, prefix, fix string) error {
 // DryRun returns the request that would be sent, without sending it.
 func (e Env) DryRun(request map[string]any) *command.Result {
 	return &command.Result{
-		Data: map[string]any{"DryRun": true, "Action": e.API.API.Action, "Request": request},
+		Warnings: e.warnMCPHeaders(request),
+		Data:     map[string]any{"DryRun": true, "Action": e.API.API.Action, "Request": request},
 		Text: func(w io.Writer) {
 			fmt.Fprintf(w, "Dry run: %s would be sent with:\n", e.API.API.Action)
 			encoded, _ := json.MarshalIndent(request, "", "  ")
@@ -116,6 +119,14 @@ func (e Env) DryRun(request map[string]any) *command.Result {
 		},
 		MetaExtra: map[string]any{"Action": e.API.API.Action, "DryRun": true},
 	}
+}
+
+func (e Env) warnMCPHeaders(request map[string]any) []string {
+	warnings := mcpHeaderWarnings(request)
+	for _, warning := range warnings {
+		fmt.Fprintln(e.Deps.IO.ErrOut, "Warning: "+warning)
+	}
+	return warnings
 }
 
 // Next writes a follow-up command hint to stderr in text mode only, keeping

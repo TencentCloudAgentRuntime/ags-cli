@@ -36,11 +36,13 @@ agr harness revision get "$HARNESS_ID" 1 -o text
 agr harness revision publish "$HARNESS_ID" 1 --wait -o text
 ~~~
 
-`PUBLISHED` 表示平台资源已激活。端点探测可启动实例；工作目录必须在实例内存在。
+`PUBLISHED` 表示平台资源已激活。端点探测可启动实例。`prompt` 默认使用
+`/workspace`；可通过 `--cwd` 指定实例内已存在的其他目录，续聊时保持相同目录。
+`harness acp` 原样转发编辑器发送的 `cwd`，该路径也必须在远端实例内存在。
 
 ~~~bash
 agr harness endpoint "$HARNESS_ID" --check -o text
-agr harness prompt "$HARNESS_ID" 'Reply only HELLO' --cwd /tmp -o json
+agr harness prompt "$HARNESS_ID" 'Reply only HELLO' -o json
 ~~~
 
 将 `Data.SessionId`、`Data.AffinityId` 保存为 `SESSION_ID`、`AFFINITY_ID`，
@@ -48,12 +50,13 @@ agr harness prompt "$HARNESS_ID" 'Reply only HELLO' --cwd /tmp -o json
 
 ~~~bash
 agr harness prompt "$HARNESS_ID" 'What did I ask you to reply with?' \
-  --cwd /tmp --session-id "$SESSION_ID" --affinity-id "$AFFINITY_ID" -o json
-agr harness prompt "$HARNESS_ID" - --cwd /tmp -o ndjson < task.md
+  --session-id "$SESSION_ID" --affinity-id "$AFFINITY_ID" -o json
+agr harness prompt "$HARNESS_ID" - -o ndjson < task.md
 ~~~
 
-Ctrl+C 取消当前轮次，未完成请求不会自动重发。JSON/NDJSON 失败结果保留已取得的
-会话和亲和标识。`harness proxy --port 0 -o ndjson` 在第一条 `ready` 事件返回
+Ctrl+C 或 `--timeout` 会请求取消，远端轮次仍可能完成；未完成请求不会自动重发。
+JSON/NDJSON 失败结果保留已取得的会话和亲和标识。
+`harness proxy --port 0 -o ndjson` 在第一条 `ready` 事件返回
 本机 ACP 地址，并运行到被中断；不支持单信封 `-o json`。
 编辑器可以使用 `harness acp` 的 stdio ACP 接口。
 
@@ -91,6 +94,22 @@ agr harness revision publish "$HARNESS_ID" 1 --wait -o text
 **发布影响后续创建的新实例，已有实例和会话保留启动配置。新会话或新的 ACP
 连接仍可能复用旧实例。** 验证新版本时，应结合 Deployment 的扩缩容和亲和配置
 确保分配新实例。可选 E2E 使用独占的不同实例，同时验证旧快照不变。
+
+## 限制与安全
+
+- 每个 MCP 服务支持一个托管凭据，该服务所有 `${credential}` 模板使用同一凭据；
+  其他敏感请求头值以明文保存在 Harness 配置及其修订中。创建/更新时，对名称包含
+  `Authorization`、`Key`、`Token` 或 `Secret`（不区分大小写）且不含 `${credential}`
+  的非空明文请求头值给出告警。
+  `revision diff` 和 `status` 隐藏所有 MCP 请求头值，包括凭据模板；请求和存储值
+  保持原样。其他配置读取/预览输出可能包含明文。
+- MCP 名称使用 1-32 个 ASCII 字母、数字、`_` 或 `-`。Pi 将 `-` 和 `_` 视为相同，
+  例如 `my-tool` 与 `my_tool` 会冲突。
+- 同一 Harness 的会话在 SessionSpace 中共享该 Harness ID 作为 `UserId`，
+  Harness 内没有按终端用户隔离。同一会话应只有一个写入者，串行发送 turn。
+- Harness 和 ModelProvider 配置保存 TokenHub 密钥的引用。发布时，解析出的密钥会
+  作为字面值写入底层 Sandbox Tool 的 `NetworkPolicy` 请求头注入规则；具备该 Tool
+  查询权限的身份可以读到密钥，应据此设置 Tool 的读取权限。
 
 ## 清理本次资源
 

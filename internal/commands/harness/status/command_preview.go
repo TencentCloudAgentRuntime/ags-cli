@@ -23,7 +23,7 @@ func Module() command.Module {
 		Use:   "status <harness-id>",
 		Short: "Show the live revision, pending publish and next step of a harness",
 		Long: "Summarize a harness in one read-only call: the PUBLISHED revision new instances use, the newest revision and its publish status, whether the draft differs from the live revision, and the suggested next command.\n\n" +
-			"Data.Next is a command string for agents; it is empty when nothing needs attention. Available in preview builds.",
+			"Data.Next is a command string for agents; it is empty when nothing needs attention. All MCP header values, including credential templates, are redacted from diagnostic output. Available in preview builds.",
 		Examples: []string{
 			"Example - Check a harness:\n  agr harness status hns-a1b2c3d4 -o text",
 			"Example - Read the suggested next command:\n  agr harness status hns-a1b2c3d4 -o json --jq '.Data.Next'",
@@ -63,7 +63,7 @@ func run(ctx context.Context, client harnesscli.Client, harnessID string) (*comm
 	}
 	next := nextStep(harness, live, latest, draftChanges)
 	data := map[string]any{
-		"Harness":        harness,
+		"Harness":        harnesscli.RedactHarnessForDiagnostics(harness),
 		"LiveRevision":   nullable(live),
 		"LatestRevision": nullable(latest),
 		"DraftChanged":   len(draftChanges) > 0,
@@ -77,7 +77,7 @@ func nullable(value apivalue.Object) any {
 	if value == nil {
 		return nil
 	}
-	return value
+	return harnesscli.RedactHarnessForDiagnostics(value)
 }
 
 func nextStep(harness, live, latest apivalue.Object, draftChanges []harnesscli.Change) string {

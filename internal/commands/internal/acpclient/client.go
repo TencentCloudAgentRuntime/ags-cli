@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 	"time"
 
@@ -50,11 +51,17 @@ func Connect(ctx context.Context, endpoint Endpoint, handler Handler) (*Session,
 	clientToBridgeR, clientToBridgeW := io.Pipe()
 	bridgeToClientR, bridgeToClientW := io.Pipe()
 	bridge := NewBridge(endpoint, bridgeToClientW)
-	runCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+	runCtx, cancel := context.WithCancel(ctx)
 	session := &Session{Bridge: bridge, cancel: cancel, done: make(chan error, 1), closers: []io.Closer{clientToBridgeW, bridgeToClientW}}
+	// SDK writes (including its automatic cancellation) are synchronous and
+	// cannot observe ctx while blocked in io.Pipe.Write. Close both directions
+	// at the deadline as well as cancelling the in-flight HTTP request.
+	stopClosingPipes := context.AfterFunc(runCtx, session.closePipes)
 	go func() {
+		defer stopClosingPipes()
 		err := bridge.Run(runCtx, clientToBridgeR)
 		_ = bridgeToClientW.CloseWithError(errOrEOF(err))
+		_ = clientToBridgeR.CloseWithError(errOrEOF(err))
 		session.done <- err
 	}()
 	session.Conn = acp.NewClientSideConnection(sdkClient{handler}, clientToBridgeW, bridgeToClientR)
@@ -110,12 +117,34 @@ func Classify(err error, hint string) error {
 	return output.NewCLIError(&output.Failure{Code: "ACP_UNREACHABLE", Kind: output.KindNetwork, Message: err.Error(), Hint: hint, Retryable: true}).WithCause(err)
 }
 
-// Close stops the bridge and releases the remote connection.
-func (s *Session) Close() {
+// Cancel bypasses the SDK pipe: a stalled prompt POST must not block the
+// cancellation notification. The HTTP request is bounded by the caller's ctx.
+func (s *Session) Cancel(ctx context.Context, sessionID string) error {
+	message, _ := json.Marshal(map[string]any{
+		"jsonrpc": "2.0", "method": "session/cancel",
+		"params": acp.CancelNotification{SessionId: acp.SessionId(sessionID)},
+	})
+	response, err := s.Bridge.do(ctx, http.MethodPost, sessionID, message, false)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = response.Body.Close() }()
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return httpError("session/cancel", response)
+	}
+	return nil
+}
+
+func (s *Session) closePipes() {
 	for _, closer := range s.closers {
 		_ = closer.Close()
 	}
+}
+
+// Close stops the bridge and releases the remote connection.
+func (s *Session) Close() {
 	s.cancel()
+	s.closePipes()
 	err := <-s.done
 	s.done <- err
 }

@@ -37,7 +37,7 @@ func SpecFlags(update bool) []command.FlagSpec {
 		StringFlag("default-model", "Default model as <model-provider-id>:<model-id>; must be one of the selected models. Optional when exactly one model is selected."),
 		StringArrayFlag("skill", "Skill from Agent Registry as <registry-id>/<record-id>/<version-id>; repeat for more."+replace+clearHint, "--skill MARKETPLACE/rec-0123abcd/rv-0123abcd"),
 		StringArrayFlag("plugin", "Plugin from Agent Registry as <registry-id>/<record-id>/<version-id>; repeat for more."+replace+clearHint),
-		StringFlag("session-space-id", "Session space that persists native session history (pi and dsh only)."+map[bool]string{true: " Pass '' to remove it.", false: ""}[update]),
+		StringFlag("session-space-id", "Session space that persists native session history (pi and dsh only). Sessions of a Harness share the Harness ID as UserId; there is no per-end-user isolation."+map[bool]string{true: " Pass '' to remove it.", false: ""}[update]),
 		StringArrayFlag("tags", "Custom tag as key=value; repeat for more."+replace+map[bool]string{true: " Pass '' once to clear custom tags.", false: ""}[update]),
 	}
 	return append(flags, MCPFlags(update)...)

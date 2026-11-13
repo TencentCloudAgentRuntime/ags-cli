@@ -4,6 +4,7 @@ package harnesscli
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -92,5 +93,94 @@ func TestFormatChange(t *testing.T) {
 		if got := FormatChange(tc.change); got != tc.want {
 			t.Errorf("got %q, want %q", got, tc.want)
 		}
+	}
+}
+
+func TestMCPHeaderChangesAreRedactedWithoutLosingDifferences(t *testing.T) {
+	makeSpec := func(value string) apivalue.Object {
+		return apivalue.Object{"MCPServers": []any{map[string]any{
+			"Name": "docs", "Headers": []any{map[string]any{"Name": "X-Future-Header", "Value": value}},
+		}}}
+	}
+	before, after := makeSpec("previous-secret"), makeSpec("rotated-secret")
+	empty := apivalue.Object{}
+	withOther := makeSpec("other-secret")
+	withOther["MCPServers"].([]any)[0].(map[string]any)["Name"] = "other"
+	withoutHeaders := makeSpec("")
+	delete(withoutHeaders["MCPServers"].([]any)[0].(map[string]any), "Headers")
+	for _, tc := range []struct {
+		name     string
+		from, to apivalue.Object
+	}{
+		{"add all", empty, after},
+		{"remove all", before, empty},
+		{"add one", withOther, after},
+		{"add headers", withoutHeaders, after},
+		{"remove headers", before, withoutHeaders},
+		{"replace value", before, after},
+		{"mask template", empty, makeSpec(credentialPlaceholder)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			oldFrom, _ := json.Marshal(tc.from)
+			oldTo, _ := json.Marshal(tc.to)
+			changes := DiffSpecs(tc.from, tc.to, false)
+			if len(changes) == 0 {
+				t.Fatal("a real configuration change was lost")
+			}
+			raw, err := json.Marshal(changes)
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := ""
+			for _, change := range changes {
+				text += FormatChange(change)
+			}
+			for _, secret := range []string{"previous-secret", "rotated-secret", "other-secret", credentialPlaceholder} {
+				if strings.Contains(string(raw), secret) || strings.Contains(text, secret) {
+					t.Error("header value appeared in diagnostic output")
+				}
+			}
+			if !strings.Contains(string(raw), "X-Future-Header") || !strings.Contains(string(raw), "[REDACTED]") {
+				t.Error("header names or redaction marker missing")
+			}
+			newFrom, _ := json.Marshal(tc.from)
+			newTo, _ := json.Marshal(tc.to)
+			if string(oldFrom) != string(newFrom) || string(oldTo) != string(newTo) {
+				t.Error("diagnostics mutated the source configuration")
+			}
+		})
+	}
+	if changes := DiffSpecs(before, before, false); len(changes) != 0 {
+		t.Error("identical secret values produced a change")
+	}
+}
+
+func TestHarnessDiagnosticRedactionPreservesSourceAndMetadata(t *testing.T) {
+	resource := apivalue.Object{
+		"HarnessId": "hns-test", "FutureField": "retained",
+		"Spec": apivalue.Object{
+			"SystemPrompt": "retained prompt", "FutureSpecField": json.Number("9007199254740993"),
+			"MCPServers": []any{apivalue.Object{
+				"Name": "docs", "Headers": []any{apivalue.Object{"Name": "X-Unlisted", "Value": "stored-secret"}},
+			}},
+		},
+	}
+	before, _ := json.Marshal(resource)
+	redacted := RedactHarnessForDiagnostics(resource)
+	raw, err := json.Marshal(redacted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"hns-test", "retained", "retained prompt", "9007199254740993", "X-Unlisted", "[REDACTED]"} {
+		if !strings.Contains(string(raw), want) {
+			t.Errorf("diagnostic output lost %q", want)
+		}
+	}
+	if strings.Contains(string(raw), "stored-secret") {
+		t.Error("diagnostic output exposed a header value")
+	}
+	after, _ := json.Marshal(resource)
+	if string(before) != string(after) {
+		t.Error("diagnostics mutated the source resource")
 	}
 }

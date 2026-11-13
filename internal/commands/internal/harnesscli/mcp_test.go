@@ -4,10 +4,41 @@ package harnesscli
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 )
+
+func TestMCPHeaderWarnings(t *testing.T) {
+	for _, tc := range []struct {
+		name, value string
+		warn        bool
+	}{
+		{"Authorization", "Bearer unit-test-secret", true},
+		{"X-Api-Key", "unit-test-secret", true},
+		{"x-ToKeN", "unit-test-secret", true},
+		{"X-SECRET", "unit-test-secret", true},
+		{"X-Team", "public", false},
+		{"Authorization", "Bearer ${credential}", false},
+		{"X-Key", "prefix-${credential}-suffix", false},
+		{"X-Key", "", false},
+		{"X-Key", "  ", false},
+	} {
+		t.Run(tc.name+"/"+tc.value, func(t *testing.T) {
+			request := map[string]any{"MCPServers": []any{map[string]any{
+				"Name": "docs", "Headers": []any{map[string]any{"Name": tc.name, "Value": tc.value}},
+			}}}
+			warnings := mcpHeaderWarnings(request)
+			if (len(warnings) == 1) != tc.warn {
+				t.Fatalf("warnings=%v, want warning=%v", warnings, tc.warn)
+			}
+			if tc.warn && (!strings.Contains(warnings[0], tc.name) || strings.Contains(warnings[0], tc.value)) {
+				t.Error("warning lost the header name or disclosed its value")
+			}
+		})
+	}
+}
 
 func mcpRequest(values map[string][]string) command.Request {
 	flags := map[string]command.FlagValue{}

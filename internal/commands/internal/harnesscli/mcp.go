@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
@@ -16,6 +17,24 @@ import (
 var MCPShortcuts = []string{"mcp", "mcp-header", "mcp-credential"}
 
 const credentialPlaceholder = "${credential}"
+
+// mcpHeaderWarnings inspects the assembled request so shortcuts, JSON, files and
+// stdin use the same advisory check. Header values are never put in warnings.
+func mcpHeaderWarnings(request map[string]any) []string {
+	var warnings []string
+	for _, server := range (apivalue.Object(request)).Objects("MCPServers") {
+		for _, header := range server.Objects("Headers") {
+			name, value := header.String("Name"), header.String("Value")
+			lower := strings.ToLower(name)
+			sensitive := strings.Contains(lower, "authorization") || strings.Contains(lower, "key") ||
+				strings.Contains(lower, "token") || strings.Contains(lower, "secret")
+			if sensitive && strings.TrimSpace(value) != "" && !strings.Contains(value, credentialPlaceholder) {
+				warnings = append(warnings, fmt.Sprintf("MCP header %q for server %q uses a plaintext value stored in Harness configuration; prefer --mcp-credential with ${credential} where possible.", name, server.String("Name")))
+			}
+		}
+	}
+	return warnings
+}
 
 // pi and dsh reject other characters inside the instance, long after save;
 // dsh also caps names at 32 characters.
