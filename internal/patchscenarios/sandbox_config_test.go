@@ -9,7 +9,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"math/big"
 	"net"
@@ -664,6 +666,96 @@ func TestSandboxKeepaliveCandidate(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// sandboxCapturedStderr runs fn with os.Stderr redirected and returns what it
+// wrote, so a test can assert on the diagnostics the live suite log carries.
+func sandboxCapturedStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	previous := os.Stderr
+	os.Stderr = writer
+	defer func() { os.Stderr = previous }()
+	fn()
+	os.Stderr = previous
+	if closeErr := writer.Close(); closeErr != nil {
+		t.Fatalf("close writer: %v", closeErr)
+	}
+	captured, readErr := io.ReadAll(reader)
+	if readErr != nil {
+		t.Fatalf("read captured stderr: %v", readErr)
+	}
+	return string(captured)
+}
+
+// TestSandboxScenarioReportsCause keeps the suite log diagnosable: patchtest only
+// reports "scenario X did not pass", so the wrapper has to name the cause.
+func TestSandboxScenarioReportsCause(t *testing.T) {
+	failure := errors.New("tool sdt-1 reached FAILED instead of ACTIVE")
+	var returned error
+	logged := sandboxCapturedStderr(t, func() {
+		returned = sandboxScenario("sandbox.keepalive", func(*patchtest.Session) error {
+			return failure
+		})(nil)
+	})
+	if !errors.Is(returned, failure) {
+		t.Fatalf("wrapper returned %v, want the scenario error", returned)
+	}
+	if !strings.Contains(logged, "sandbox.keepalive returned: tool sdt-1 reached FAILED instead of ACTIVE") {
+		t.Fatalf("log %q does not name the scenario error", logged)
+	}
+
+	var panicked error
+	logged = sandboxCapturedStderr(t, func() {
+		panicked = sandboxScenario("sandbox.keepalive", func(*patchtest.Session) error {
+			panic("nil failure object")
+		})(nil)
+	})
+	if panicked == nil {
+		t.Fatal("wrapper swallowed the panic")
+	}
+	if !strings.Contains(logged, "sandbox.keepalive panicked: nil failure object") {
+		t.Fatalf("log %q does not name the panic", logged)
+	}
+
+	logged = sandboxCapturedStderr(t, func() {
+		if err := sandboxScenario("sandbox.keepalive", func(*patchtest.Session) error {
+			return nil
+		})(nil); err != nil {
+			t.Fatalf("passing scenario returned %v", err)
+		}
+	})
+	if logged != "" {
+		t.Fatalf("passing scenario logged %q", logged)
+	}
+}
+
+// TestSandboxFailureDetailToleratesAbsentFailure covers the panic that hid the
+// first live failure: a successful response carries no failure object.
+func TestSandboxFailureDetailToleratesAbsentFailure(t *testing.T) {
+	if got := sandboxFailureDetail(sandboxEnvelope{}, "ResourceId"); got != "" {
+		t.Fatalf("sandboxFailureDetail = %q, want empty", got)
+	}
+}
+
+// TestSandboxLogFixtureNamesEveryMissingVariable keeps the fixture gate
+// actionable: the log must name each variable the environment has to provide.
+func TestSandboxLogFixtureNamesEveryMissingVariable(t *testing.T) {
+	t.Setenv("AGR_TEST_CLS_TOPIC_ID", "")
+	t.Setenv("AGR_TEST_ROLE_ARN", "")
+	logged := sandboxCapturedStderr(t, func() {
+		if _, err := sandboxLogFixtureFromEnv(); err == nil {
+			t.Fatal("missing fixtures did not fail the scenario")
+		}
+	})
+	for _, name := range []string{"AGR_TEST_CLS_TOPIC_ID", "AGR_TEST_ROLE_ARN"} {
+		if !strings.Contains(logged, name) {
+			t.Fatalf("log %q does not name %s", logged, name)
+		}
 	}
 }
 

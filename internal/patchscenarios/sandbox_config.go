@@ -69,6 +69,25 @@ func sandboxRunExpected(s *patchtest.Session, ctx context.Context, args ...strin
 	return volumeCLI(s, ctx, args...)
 }
 
+// sandboxScenario wraps a scenario so a returned error or a recovered panic is
+// written to the suite log. patchtest reports only "scenario X did not pass", so
+// without this the cause of a failure never reaches the run log.
+func sandboxScenario(id string, run func(*patchtest.Session) error) func(*patchtest.Session) error {
+	return func(s *patchtest.Session) (err error) {
+		defer func() {
+			if value := recover(); value != nil {
+				sandboxDiagnostic("%s panicked: %v", id, value)
+				err = fmt.Errorf("scenario panicked")
+			}
+		}()
+		if runErr := run(s); runErr != nil {
+			sandboxDiagnostic("%s returned: %v", id, runErr)
+			return runErr
+		}
+		return nil
+	}
+}
+
 func sandboxRun(s *patchtest.Session, ctx context.Context, args ...string) (sandboxEnvelope, error) {
 	envelope, err := sandboxRunExpected(s, ctx, args...)
 	if err != nil {
@@ -79,6 +98,15 @@ func sandboxRun(s *patchtest.Session, ctx context.Context, args ...string) (sand
 
 // sandboxDiagnoseKeepalive reports the observed configuration members in a log
 // line so a failing live assertion says which member diverged.
+// sandboxFailureDetail reads a failure detail without dereferencing an absent
+// failure object, which a successful response legitimately omits.
+func sandboxFailureDetail(envelope sandboxEnvelope, key string) string {
+	if envelope.Failure == nil {
+		return ""
+	}
+	return volumeString(envelope.Failure.Details, key)
+}
+
 func sandboxDiagnoseKeepalive(label string, object map[string]any) {
 	mode, timeout, present := sandboxKeepaliveMembers(object)
 	pause, pauseSet := sandboxBool(object, "AutoPause")
@@ -306,7 +334,7 @@ func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, e
 	envelope, err := sandboxRun(s, ctx, append(args, extra...)...)
 	toolID := sandboxString(envelope.Data, "ToolId")
 	if toolID == "" {
-		toolID = volumeString(envelope.Failure.Details, "ResourceId")
+		toolID = sandboxFailureDetail(envelope, "ResourceId")
 	}
 	if toolID != "" {
 		sandboxOwnTool(s, toolID)
@@ -334,7 +362,7 @@ func sandboxCreateInstance(s *patchtest.Session, ctx context.Context, toolID str
 	instance := sandboxObject(envelope.Data["Instance"])
 	instanceID := sandboxString(instance, "InstanceId")
 	if instanceID == "" {
-		instanceID = volumeString(envelope.Failure.Details, "ResourceId")
+		instanceID = sandboxFailureDetail(envelope, "ResourceId")
 	}
 	if instanceID != "" {
 		sandboxOwnInstance(s, instanceID)
@@ -621,7 +649,7 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	}
 	forkID := sandboxString(forkEnvelope.Data, "ToolId")
 	if forkID == "" {
-		forkID = volumeString(forkEnvelope.Failure.Details, "ResourceId")
+		forkID = sandboxFailureDetail(forkEnvelope, "ResourceId")
 	}
 	if forkID != "" {
 		sandboxOwnTool(s, forkID)
@@ -644,7 +672,7 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	}
 	overrideForkID := sandboxString(overrideForkEnvelope.Data, "ToolId")
 	if overrideForkID == "" {
-		overrideForkID = volumeString(overrideForkEnvelope.Failure.Details, "ResourceId")
+		overrideForkID = sandboxFailureDetail(overrideForkEnvelope, "ResourceId")
 	}
 	if overrideForkID != "" {
 		sandboxOwnTool(s, overrideForkID)
@@ -799,14 +827,19 @@ func sandboxLogFixtureFromEnv() (sandboxLogFixture, error) {
 		topicID: strings.TrimSpace(os.Getenv("AGR_TEST_CLS_TOPIC_ID")),
 		roleArn: strings.TrimSpace(os.Getenv("AGR_TEST_ROLE_ARN")),
 	}
-	for name, value := range map[string]string{
-		"AGR_TEST_CLS_TOPIC_ID": fixture.topicID,
-		"AGR_TEST_ROLE_ARN":     fixture.roleArn,
-	} {
-		if value == "" {
-			sandboxDiagnostic("log fixture: %s is not configured", name)
-			return sandboxLogFixture{}, fmt.Errorf("%s must name an existing disposable CLS log fixture", name)
+	variables := []struct{ name, value string }{
+		{"AGR_TEST_CLS_TOPIC_ID", fixture.topicID},
+		{"AGR_TEST_ROLE_ARN", fixture.roleArn},
+	}
+	missing := make([]string, 0, len(variables))
+	for _, variable := range variables {
+		if variable.value == "" {
+			missing = append(missing, variable.name)
 		}
+	}
+	if len(missing) > 0 {
+		sandboxDiagnostic("log fixture: %s is not configured", strings.Join(missing, ", "))
+		return sandboxLogFixture{}, fmt.Errorf("%s must name an existing disposable CLS log fixture", strings.Join(missing, ", "))
 	}
 	return fixture, nil
 }
@@ -933,7 +966,7 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 			"--log-configuration", logConfiguration)
 		toolID := sandboxString(envelope.Data, "ToolId")
 		if toolID == "" {
-			toolID = volumeString(envelope.Failure.Details, "ResourceId")
+			toolID = sandboxFailureDetail(envelope, "ResourceId")
 		}
 		if toolID != "" {
 			sandboxOwnTool(s, toolID)
@@ -1012,7 +1045,7 @@ func sandboxForkTool(s *patchtest.Session, ctx context.Context, toolID, name str
 	envelope, err := sandboxRun(s, ctx, args...)
 	forkID := sandboxString(envelope.Data, "ToolId")
 	if forkID == "" {
-		forkID = volumeString(envelope.Failure.Details, "ResourceId")
+		forkID = sandboxFailureDetail(envelope, "ResourceId")
 	}
 	if forkID != "" {
 		sandboxOwnTool(s, forkID)
