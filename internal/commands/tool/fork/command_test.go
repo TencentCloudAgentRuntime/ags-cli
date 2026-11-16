@@ -20,7 +20,7 @@ import (
 )
 
 type fakeControlPlane struct {
-	sourceTool *ags.SandboxTool
+	sourceTool any
 	newStatus  string
 	getErr     error
 	callErr    error
@@ -117,7 +117,7 @@ func TestModuleWaitReportsForkedToolIsolatedAsUnavailable(t *testing.T) {
 }
 
 func TestModuleCopiesCreateCapableFields(t *testing.T) {
-	source := sourceTool("sdt-source")
+	source := previewSourceTool("sdt-source")
 	cp := &fakeControlPlane{sourceTool: source}
 	runFork(t, cp, command.Request{
 		Args: []string{"sdt-source"},
@@ -257,8 +257,9 @@ func TestModuleAppliesExplicitOverrides(t *testing.T) {
 }
 
 func TestModuleKeepsSourcePersistentWhenFlagOmitted(t *testing.T) {
-	cp := &fakeControlPlane{sourceTool: sourceTool("sdt-source")}
-	*cp.sourceTool.Persistent = true
+	typedSource := sourceTool("sdt-source")
+	cp := &fakeControlPlane{sourceTool: typedSource}
+	*typedSource.Persistent = true
 	runFork(t, cp, command.Request{
 		Args: []string{"sdt-source"},
 		Flags: map[string]command.FlagValue{
@@ -391,6 +392,26 @@ func runForkResult(t *testing.T, cp *fakeControlPlane, req command.Request) (*co
 		t.Fatalf("Build returned error: %v", err)
 	}
 	return runtime.Handler.Run(context.Background(), req)
+}
+
+// previewSourceTool returns the same source as sourceTool plus the preview-only
+// configuration members, so the derived source-copy policy test covers them in
+// the preview build without changing the typed stable fixture.
+func previewSourceTool(id string) map[string]any {
+	tool := sourceTool(id)
+	value, err := apivalue.Decode(tool)
+	if err != nil {
+		panic(err)
+	}
+	value["KeepaliveConfiguration"] = map[string]any{"KeepaliveMode": "MIXED", "KeepaliveTimeout": "600s"}
+	value["AutoPause"] = false
+	value["AutoResume"] = true
+	// Object() decodes a copy, so write the member back to the source map.
+	if logConfiguration, err := apivalue.Decode(value["LogConfiguration"]); err == nil {
+		logConfiguration["ContentFormat"] = "auto"
+		value["LogConfiguration"] = map[string]any(logConfiguration)
+	}
+	return map[string]any(value)
 }
 
 func sourceTool(id string) *ags.SandboxTool {

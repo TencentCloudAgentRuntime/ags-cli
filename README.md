@@ -233,6 +233,63 @@ The JSON output of these commands includes
 `Data.ExecutionContext.TemporarySandboxInstance` and
 `Data.ExecutionContext.Cleanup` so scripts can inspect the workflow.
 
+## Sandbox keepalive and log format (preview)
+
+These flags exist only in the preview build (`-tags=preview`). The stable
+channel neither sends nor documents them.
+
+A tool carries the default keepalive configuration; an instance overrides it
+per member. Unset members inherit from the instance value, then the tool's
+current value, then the platform default (`REQUEST` / `10m`). The CLI applies no
+default of its own: an omitted flag sends nothing, an explicit `{}` sends an
+empty override, and an explicit `--auto-pause=false` sends `false` rather than
+being dropped as a zero value.
+
+```bash
+# Tool defaults: renew while requests are served, for 600 seconds.
+agr tool create -n my-tool -t code-interpreter \
+  --network-configuration '{"NetworkMode":"SANDBOX"}' \
+  --keepalive-configuration '{"KeepaliveMode":"REQUEST","KeepaliveTimeout":"600s"}' \
+  --auto-pause --auto-resume -o text
+
+# Instance override: only the timeout, plus an explicit false.
+agr instance create --tool-id sdt-xxxx --timeout 30m \
+  --keepalive-configuration '{"KeepaliveTimeout":"5m"}' --auto-pause=false -o json
+
+# Change the tool defaults later; instances that did not override follow them.
+agr tool update sdt-xxxx --keepalive-configuration '{"KeepaliveMode":"MIXED","KeepaliveTimeout":"900s"}'
+agr instance update ins-xxxx --auto-resume=false -o json
+
+# Read back the stored values (instance > tool > platform default).
+agr tool get sdt-xxxx -o json
+agr instance list --tool-ids sdt-xxxx -o text
+```
+
+`KeepaliveTimeout` is the keepalive renewal window (300s to 1800s, integer
+seconds with a unit, echoed with the spelling you sent). It is unrelated to
+`--default-timeout` / `--timeout`, which bound how long a sandbox may live.
+Mode and duration are validated by the service, which also rejects values
+outside the enum or range.
+
+`tool create --log-configuration` accepts a `ContentFormat` member next to
+`CLSConfig`:
+
+```bash
+agr tool create -n logs-tool -t code-interpreter \
+  --network-configuration '{"NetworkMode":"SANDBOX"}' \
+  --role-arn '<role-arn>' \
+  --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
+```
+
+`raw` keeps the original log line; `auto` extracts the first JSON object level
+or a complete logfmt line and falls back to the whole entry when it cannot
+extract it fully. Values are case-insensitive and stored lower case; omitting
+the member or sending an empty string keeps `raw`, and `auto` requires a valid
+`CLSConfig.TopicId`. Log body processing happens on the server; the CLI does not
+parse logs. `tool update` does not accept `--log-configuration`; create a new
+tool or fork one instead. `tool fork` copies the configuration and accepts the
+same three override flags.
+
 ## Look up known instances
 
 Use `instance lookup` for 1 to 100 known instance IDs in the current region:

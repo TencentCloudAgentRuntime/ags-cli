@@ -37,6 +37,44 @@ GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
 
+## Sandbox keepalive and log format (preview)
+
+The preview-only `sandbox.keepalive` and `sandbox.log-format` scenarios run as
+part of this suite through the registered patch scenarios:
+
+```sh
+GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Sandbox keepalive and log format'
+```
+
+Both specs derive their assertion plan from `api/ags/v20250920/e2e-coverage.yaml`
+and require a `pass` result with a passing cleanup and at least one real CLI
+call; a skipped or empty plan is not acceptance.
+
+- `sandbox.keepalive` creates one disposable code-interpreter tool and several
+  `30m` instances in `ap-guangzhou`, checks tool defaults, per-member instance
+  inheritance, explicit `false`, `{}` overrides, mode-only and timeout-only
+  overrides, the `300s`/`1800s` boundaries, `tool fork` copy/override, and reads
+  the stored values back through `tool get/list`, `instance get/list` and
+  `api call DescribeSandboxInstances`. Service-side rejections are probed with
+  `api call` against a disposable instance; unknown top-level members are
+  rejected locally and are not counted as backend evidence.
+- `sandbox.log-format` requires an existing CLS topic and a role usable for it,
+  supplied as the non-sensitive fixtures `AGR_TEST_CLS_TOPIC_ID` and
+  `AGR_TEST_ROLE_ARN`. It creates disposable tools to check omitted, empty,
+  `raw`/`RAW` and `auto`/`AuTo` values through `tool create`, `tool get/list`
+  and `tool fork`, plus the two structured rejections (no topic with `auto`, an
+  unknown format). Missing or unusable fixtures fail the scenario instead of
+  skipping it. The suite never creates CLS or CAM resources, never deletes the
+  fixture topic or role, and does not read either value into metadata.
+
+Cleanup deletes every instance and tool created by the run and then queries them
+independently until they are gone or stopped; `Cleanup=pass` reflects that
+verification, not the exit code of `delete`. The scenarios prove configuration
+persistence, normalization and cleanup only. They do not prove data-plane
+keepalive renewal, the server-side log extraction engine, or actual log
+delivery, and those claims stay unverified until an API owner accepts the
+semantics described in `api/ags/v20250920/CONTRACT-NOTES.md`.
+
 ## Dedicated operational event acceptance
 
 The `Operational event command` group exercises actual CLI subprocesses

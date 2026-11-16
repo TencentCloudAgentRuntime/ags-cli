@@ -1198,5 +1198,299 @@
       "output": "DeleteVolumeTemplateResponse",
       "status": "online"
     }
+  },
+  {
+    "op": "add",
+    "path": "/objects/KeepaliveConfiguration",
+    "value": {
+      "type": "object",
+      "usage": "both",
+      "document": "沙箱保活配置。成员按实例设置、工具当前值、平台默认值的顺序继承；整个对象可以缺省。",
+      "members": [
+        {
+          "disabled": false,
+          "document": "保活模式：NONE 不保活；REQUEST 按请求续期；CONNECTION 按连接续期；MIXED 请求与连接混合。",
+          "example": "REQUEST",
+          "member": "string",
+          "name": "KeepaliveMode",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "保活时长，必须带单位且为整秒，取值 300-1800 秒，例如 600s、5m、30m。",
+          "example": "600s",
+          "member": "string",
+          "name": "KeepaliveTimeout",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        }
+      ]
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateSandboxToolRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "沙箱保活配置。未传入时不设置，传入空对象表示不做覆盖，成员按来源继承。",
+      "example": "无",
+      "member": "KeepaliveConfiguration",
+      "name": "KeepaliveConfiguration",
+      "required": false,
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateSandboxToolRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoPause",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateSandboxToolRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoResume",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/UpdateSandboxToolRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "沙箱保活配置。未传入时不设置，传入空对象表示不做覆盖，成员按来源继承。",
+      "example": "无",
+      "member": "KeepaliveConfiguration",
+      "name": "KeepaliveConfiguration",
+      "required": false,
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/UpdateSandboxToolRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoPause",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/UpdateSandboxToolRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoResume",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/StartSandboxInstanceRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "沙箱保活配置。未传入时不设置，传入空对象表示不做覆盖，成员按来源继承。",
+      "example": "无",
+      "member": "KeepaliveConfiguration",
+      "name": "KeepaliveConfiguration",
+      "required": false,
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/StartSandboxInstanceRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoPause",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/StartSandboxInstanceRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoResume",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/UpdateSandboxInstanceRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "沙箱保活配置。未传入时不设置，传入空对象表示不做覆盖，成员按来源继承。",
+      "example": "无",
+      "member": "KeepaliveConfiguration",
+      "name": "KeepaliveConfiguration",
+      "required": false,
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/UpdateSandboxInstanceRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoPause",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/UpdateSandboxInstanceRequest/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoResume",
+      "required": false,
+      "type": "bool"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SandboxTool/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实际生效的沙箱保活配置，整体可能缺省。",
+      "example": "无",
+      "member": "KeepaliveConfiguration",
+      "name": "KeepaliveConfiguration",
+      "required": false,
+      "type": "object",
+      "output_required": false,
+      "value_allowed_null": false
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SandboxTool/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例空闲时是否自动暂停。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoPause",
+      "required": false,
+      "type": "bool",
+      "output_required": false,
+      "value_allowed_null": false
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SandboxTool/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例被访问时是否自动恢复。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoResume",
+      "required": false,
+      "type": "bool",
+      "output_required": false,
+      "value_allowed_null": false
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SandboxInstance/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实际生效的沙箱保活配置，整体可能缺省。",
+      "example": "无",
+      "member": "KeepaliveConfiguration",
+      "name": "KeepaliveConfiguration",
+      "required": false,
+      "type": "object",
+      "output_required": false,
+      "value_allowed_null": false
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SandboxInstance/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例空闲时是否自动暂停。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoPause",
+      "required": false,
+      "type": "bool",
+      "output_required": false,
+      "value_allowed_null": false
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SandboxInstance/members/-",
+    "value": {
+      "disabled": false,
+      "document": "实例被访问时是否自动恢复。",
+      "example": "false",
+      "member": "bool",
+      "name": "AutoResume",
+      "required": false,
+      "type": "bool",
+      "output_required": false,
+      "value_allowed_null": false
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/LogConfiguration/members/-",
+    "value": {
+      "disabled": false,
+      "document": "日志内容格式：raw 保留原文；auto 在可提取时解析 JSON 对象首层或完整 logfmt，无法完整提取时整条回退原文。取值大小写不敏感，服务端归一化为小写；省略或空值由服务端按 raw 处理，auto 需要有效的 CLSConfig.TopicId。",
+      "example": "raw",
+      "member": "string",
+      "name": "ContentFormat",
+      "required": false,
+      "type": "string",
+      "output_required": false,
+      "value_allowed_null": false
+    }
   }
 ]

@@ -11,6 +11,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/sandboxconfig"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -126,6 +127,11 @@ func renderToolDetails(w io.Writer, value any) {
 	}
 	if mounts := formatStorageMountsDetail(tool.StorageMounts); mounts != "" {
 		kvs = append(kvs, keyValue{key: "StorageMounts", value: mounts})
+	}
+	if raw, err := apivalue.Decode(value); err == nil {
+		for _, field := range sandboxconfig.Details(raw, true) {
+			kvs = append(kvs, keyValue{key: field.Name, value: field.Value})
+		}
 	}
 	printKV(w, kvs)
 }

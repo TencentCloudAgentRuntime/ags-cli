@@ -17,7 +17,7 @@ import (
 )
 
 type fakeControlPlane struct {
-	sourceTool        *ags.SandboxTool
+	sourceTool        any
 	debugTool         *ags.SandboxTool
 	instance          *ags.SandboxInstance
 	getIDs            []string

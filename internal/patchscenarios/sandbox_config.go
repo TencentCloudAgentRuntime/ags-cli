@@ -1,0 +1,902 @@
+package patchscenarios
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
+)
+
+var sandboxKeepaliveAssertions = []string{
+	"keepalive.tool.create",
+	"keepalive.tool.update",
+	"keepalive.instance.create",
+	"keepalive.instance.update",
+	"keepalive.inheritance",
+	"keepalive.readback",
+	"keepalive.boundaries",
+	"keepalive.fork",
+}
+
+var sandboxLogAssertions = []string{
+	"log.raw-default",
+	"log.auto",
+	"log.normalization",
+	"log.invalid",
+	"log.readback",
+	"log.fork",
+}
+
+const (
+	sandboxNetworkConfiguration = `{"NetworkMode":"SANDBOX"}`
+	sandboxToolDefaultTimeout   = "30m"
+	sandboxInstanceTimeout      = "30m"
+)
+
+// The waits are variables so the offline fixture test can shorten them; the
+// strict patch runner keeps the production bounds.
+var (
+	// sandboxRunningDeadline bounds the single readiness wait. Configuration
+	// readback never waits for the data plane.
+	sandboxRunningDeadline = 8 * time.Minute
+	sandboxGoneDeadline    = 90 * time.Second
+	sandboxPollInterval    = 3 * time.Second
+)
+
+// The sandbox scenarios reuse the CLI envelope and list decoding proven by the
+// volume scenarios; only the domain steps below are new.
+type sandboxEnvelope = volumeEnvelope
+
+func sandboxRun(s *patchtest.Session, ctx context.Context, args ...string) (sandboxEnvelope, error) {
+	return volumeCLI(s, ctx, args...)
+}
+
+func sandboxObject(value any) map[string]any { return volumeObject(value) }
+
+func sandboxString(object map[string]any, key string) string { return volumeString(object, key) }
+
+func sandboxNested(object map[string]any, path ...string) map[string]any {
+	return volumeNested(object, path...)
+}
+
+func sandboxBool(object map[string]any, key string) (bool, bool) {
+	value, ok := object[key].(bool)
+	return value, ok
+}
+
+func sandboxUniqueName(prefix string) string {
+	return fmt.Sprintf("agr-%s-%d", prefix, time.Now().UnixNano())
+}
+
+// sandboxKeepaliveMatches compares a readback with the effective members. The
+// timeout is compared verbatim: the service echoes the accepted source spelling
+// (600s, 5m, 30m) instead of a client-side normalization.
+func sandboxKeepaliveMatches(object map[string]any, mode, timeout string, autoPause, autoResume bool) bool {
+	configuration := sandboxNested(object, "KeepaliveConfiguration")
+	pause, pauseSet := sandboxBool(object, "AutoPause")
+	resume, resumeSet := sandboxBool(object, "AutoResume")
+	return sandboxString(configuration, "KeepaliveMode") == mode &&
+		sandboxString(configuration, "KeepaliveTimeout") == timeout &&
+		pauseSet && resumeSet && pause == autoPause && resume == autoResume
+}
+
+// sandboxKeepaliveMembersMatch is sandboxKeepaliveMatches with an optional
+// member: an empty mode means "the service echoed no mode".
+func sandboxKeepaliveMembersMatch(object map[string]any, mode, timeout string, autoPause, autoResume bool) bool {
+	if mode != "" && !sandboxKeepaliveMatches(object, mode, timeout, autoPause, autoResume) {
+		return false
+	}
+	configuration := sandboxNested(object, "KeepaliveConfiguration")
+	pause, pauseSet := sandboxBool(object, "AutoPause")
+	resume, resumeSet := sandboxBool(object, "AutoResume")
+	return sandboxString(configuration, "KeepaliveTimeout") == timeout &&
+		pauseSet && resumeSet && pause == autoPause && resume == autoResume
+}
+
+// sandboxKeepaliveAbsent accepts a missing or null object: the service must not
+// fabricate the platform default when no source configured keepalive.
+func sandboxKeepaliveAbsent(object map[string]any) bool {
+	value, present := object["KeepaliveConfiguration"]
+	return !present || value == nil
+}
+
+// sandboxKeepaliveMembers reports the resolved keepalive members and whether the
+// object was returned at all.
+func sandboxKeepaliveMembers(object map[string]any) (mode, timeout string, present bool) {
+	value, ok := object["KeepaliveConfiguration"]
+	if !ok || value == nil {
+		return "", "", false
+	}
+	configuration := sandboxObject(value)
+	return sandboxString(configuration, "KeepaliveMode"), sandboxString(configuration, "KeepaliveTimeout"), true
+}
+
+// sandboxBoolAbsent reports a member the service did not send. The contract keeps
+// unsent members unsent, so a default inferred by the client would be a lie.
+func sandboxBoolAbsent(object map[string]any, key string) bool {
+	_, present := object[key]
+	return !present
+}
+
+// sandboxOwnTool registers cleanup for a tool immediately after its ID is known,
+// including IDs returned on a non-success envelope.
+func sandboxOwnTool(s *patchtest.Session, toolID string) {
+	s.Cleanup(func(ctx context.Context) error {
+		if _, err := sandboxRun(s, ctx, "tool", "delete", toolID); err != nil {
+			return err
+		}
+		return sandboxToolGone(s, ctx, toolID)
+	})
+}
+
+func sandboxOwnInstance(s *patchtest.Session, instanceID string) {
+	s.Cleanup(func(ctx context.Context) error {
+		if _, err := sandboxRun(s, ctx, "instance", "delete", instanceID); err != nil {
+			return err
+		}
+		return sandboxInstanceGone(s, ctx, instanceID)
+	})
+}
+
+// sandboxList decodes the list contract shared by tool and instance list: the
+// rows live under Items and the total under Pagination.Total.
+func sandboxList(envelope sandboxEnvelope) ([]any, int64, error) {
+	rows, ok := envelope.Data["Items"].([]any)
+	if !ok {
+		return nil, 0, errors.New("list response is missing Items")
+	}
+	count, ok := sandboxObject(envelope.Data["Pagination"])["Total"].(json.Number)
+	if !ok {
+		return nil, 0, errors.New("list response is missing Pagination.Total")
+	}
+	total, err := count.Int64()
+	if err != nil {
+		return nil, 0, err
+	}
+	return rows, total, nil
+}
+
+func sandboxToolGone(s *patchtest.Session, ctx context.Context, toolID string) error {
+	deadline := time.Now().Add(sandboxGoneDeadline)
+	for {
+		envelope, err := sandboxRun(s, ctx, "tool", "list", "--tool-ids", toolID)
+		if err == nil {
+			rows, total, listErr := sandboxList(envelope)
+			if listErr == nil && total == 0 && len(rows) == 0 {
+				return nil
+			}
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("tool %s is still listed after deletion", toolID)
+		}
+		if err := sandboxSleep(ctx); err != nil {
+			return err
+		}
+	}
+}
+
+// sandboxInstanceGone accepts the contract's terminal outcomes: the instance is
+// absent from the list or reports a stopped terminal status.
+func sandboxInstanceGone(s *patchtest.Session, ctx context.Context, instanceID string) error {
+	deadline := time.Now().Add(sandboxGoneDeadline)
+	for {
+		envelope, err := sandboxRun(s, ctx, "instance", "list", "--instance-ids", instanceID)
+		if err == nil {
+			rows, _, listErr := sandboxList(envelope)
+			if listErr == nil {
+				if len(rows) == 0 {
+					return nil
+				}
+				switch sandboxString(sandboxObject(rows[0]), "Status") {
+				case "STOPPED", "TERMINATED":
+					return nil
+				}
+			}
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("instance %s is neither absent nor stopped after deletion", instanceID)
+		}
+		if err := sandboxSleep(ctx); err != nil {
+			return err
+		}
+	}
+}
+
+func sandboxSleep(ctx context.Context) error {
+	timer := time.NewTimer(sandboxPollInterval)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+// sandboxWaitRunning proves the instance reached the lifecycle state the
+// configuration readback was taken against. It only reads.
+func sandboxWaitRunning(s *patchtest.Session, ctx context.Context, instanceID string) error {
+	deadline := time.Now().Add(sandboxRunningDeadline)
+	for {
+		envelope, err := sandboxRun(s, ctx, "instance", "get", instanceID)
+		if err != nil {
+			return err
+		}
+		switch status := sandboxString(envelope.Data, "Status"); status {
+		case "RUNNING":
+			return nil
+		case "STOPPED", "TERMINATED", "FAILED":
+			return fmt.Errorf("instance %s reached %s instead of RUNNING", instanceID, status)
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("instance %s did not reach RUNNING before the deadline", instanceID)
+		}
+		if err := sandboxSleep(ctx); err != nil {
+			return err
+		}
+	}
+}
+
+func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, extra ...string) (string, error) {
+	args := []string{"tool", "create", "-n", name, "-t", "code-interpreter",
+		"--network-configuration", sandboxNetworkConfiguration,
+		"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout}
+	envelope, err := sandboxRun(s, ctx, append(args, extra...)...)
+	toolID := sandboxString(envelope.Data, "ToolId")
+	if toolID == "" {
+		toolID = volumeString(envelope.Failure.Details, "ResourceId")
+	}
+	if toolID != "" {
+		sandboxOwnTool(s, toolID)
+	}
+	if err != nil {
+		return toolID, err
+	}
+	if toolID == "" {
+		return "", errors.New("tool create returned no ToolId")
+	}
+	return toolID, nil
+}
+
+func sandboxGetTool(s *patchtest.Session, ctx context.Context, toolID string) (map[string]any, error) {
+	envelope, err := sandboxRun(s, ctx, "tool", "get", toolID)
+	if err != nil {
+		return nil, err
+	}
+	return envelope.Data, nil
+}
+
+func sandboxCreateInstance(s *patchtest.Session, ctx context.Context, toolID string, extra ...string) (string, map[string]any, error) {
+	args := []string{"instance", "create", "--tool-id", toolID, "--timeout", sandboxInstanceTimeout}
+	envelope, err := sandboxRun(s, ctx, append(args, extra...)...)
+	instance := sandboxObject(envelope.Data["Instance"])
+	instanceID := sandboxString(instance, "InstanceId")
+	if instanceID == "" {
+		instanceID = volumeString(envelope.Failure.Details, "ResourceId")
+	}
+	if instanceID != "" {
+		sandboxOwnInstance(s, instanceID)
+	}
+	if err != nil {
+		return instanceID, nil, err
+	}
+	if instanceID == "" {
+		return "", nil, errors.New("instance create returned no InstanceId")
+	}
+	return instanceID, instance, nil
+}
+
+func sandboxGetInstance(s *patchtest.Session, ctx context.Context, instanceID string) (map[string]any, error) {
+	envelope, err := sandboxRun(s, ctx, "instance", "get", instanceID)
+	if err != nil {
+		return nil, err
+	}
+	return envelope.Data, nil
+}
+
+// sandboxRawCall reaches the service through the candidate's raw pass-through so
+// service-side validation is exercised without widening the CLI contract.
+func sandboxRawCall(s *patchtest.Session, ctx context.Context, action string, request map[string]any) (sandboxEnvelope, error) {
+	payload, err := json.Marshal(request)
+	if err != nil {
+		return sandboxEnvelope{}, err
+	}
+	return sandboxRun(s, ctx, "api", "call", action, "--request", string(payload))
+}
+
+func sandboxRawResponseData(envelope sandboxEnvelope) (map[string]any, bool) {
+	data := sandboxObject(envelope.Data["Response"])
+	for data["Response"] != nil {
+		data = sandboxObject(data["Response"])
+	}
+	if len(data) == 0 {
+		return nil, false
+	}
+	return data, true
+}
+
+func sandboxToolRows(s *patchtest.Session, ctx context.Context, toolIDs ...string) ([]any, int64, error) {
+	args := []string{"tool", "list"}
+	for _, id := range toolIDs {
+		args = append(args, "--tool-ids", id)
+	}
+	envelope, err := sandboxRun(s, ctx, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	return sandboxList(envelope)
+}
+
+func sandboxToolRow(rows []any, toolID string) map[string]any {
+	for _, row := range rows {
+		if tool := sandboxObject(row); sandboxString(tool, "ToolId") == toolID {
+			return tool
+		}
+	}
+	return nil
+}
+
+func sandboxInstanceRows(s *patchtest.Session, ctx context.Context, instanceID string) ([]any, error) {
+	envelope, err := sandboxRun(s, ctx, "instance", "list", "--instance-ids", instanceID)
+	if err != nil {
+		return nil, err
+	}
+	rows, _, err := sandboxList(envelope)
+	return rows, err
+}
+
+func sandboxInstanceRow(rows []any, instanceID string) map[string]any {
+	return volumeRow(rows, "InstanceId", instanceID)
+}
+
+// sandboxEqualKeepalive compares only the keepalive object of two readbacks.
+func sandboxEqualKeepalive(left, right map[string]any) bool {
+	leftConfiguration := sandboxNested(left, "KeepaliveConfiguration")
+	rightConfiguration := sandboxNested(right, "KeepaliveConfiguration")
+	keys := make([]string, 0, len(leftConfiguration))
+	for key := range leftConfiguration {
+		keys = append(keys, key)
+	}
+	if len(keys) != len(rightConfiguration) {
+		return false
+	}
+	slices.Sort(keys)
+	for _, key := range keys {
+		if leftConfiguration[key] != rightConfiguration[key] {
+			return false
+		}
+	}
+	return true
+}
+
+func runSandboxKeepalive(s *patchtest.Session) error {
+	ctx := s.Context
+	toolName := sandboxUniqueName("keepalive")
+	toolID, err := sandboxCreateTool(s, ctx, toolName,
+		"--keepalive-configuration", `{"KeepaliveMode":"REQUEST","KeepaliveTimeout":"600s"}`,
+		"--auto-pause", "--auto-resume")
+	if err != nil {
+		return err
+	}
+	created, err := sandboxGetTool(s, ctx, toolID)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("keepalive.tool.create", sandboxString(created, "ToolName") == toolName &&
+		sandboxKeepaliveMatches(created, "REQUEST", "600s", true, true)); err != nil {
+		return err
+	}
+
+	inheritedID, inherited, err := sandboxCreateInstance(s, ctx, toolID)
+	if err != nil {
+		return err
+	}
+	// an empty override means no override; the tool value keeps applying
+	emptyID, empty, err := sandboxCreateInstance(s, ctx, toolID, "--keepalive-configuration", "{}")
+	if err != nil {
+		return err
+	}
+	modeOnlyID, modeOnly, err := sandboxCreateInstance(s, ctx, toolID,
+		"--keepalive-configuration", `{"KeepaliveMode":"NONE"}`)
+	if err != nil {
+		return err
+	}
+	timeoutOnlyID, timeoutOnly, err := sandboxCreateInstance(s, ctx, toolID,
+		"--keepalive-configuration", `{"KeepaliveTimeout":"5m"}`)
+	if err != nil {
+		return err
+	}
+	overrideID, override, err := sandboxCreateInstance(s, ctx, toolID,
+		"--keepalive-configuration", `{"KeepaliveMode":"CONNECTION","KeepaliveTimeout":"30m"}`)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("keepalive.instance.create",
+		sandboxKeepaliveMatches(inherited, "REQUEST", "600s", true, true) &&
+			sandboxKeepaliveMatches(empty, "REQUEST", "600s", true, true) &&
+			sandboxKeepaliveMatches(override, "CONNECTION", "30m", true, true) &&
+			sandboxString(inherited, "InstanceId") == inheritedID &&
+			sandboxString(override, "InstanceId") == overrideID); err != nil {
+		return err
+	}
+	// Before the tool update every omitted member follows the tool value.
+	if err := s.Assert("keepalive.inheritance",
+		sandboxKeepaliveMatches(modeOnly, "NONE", "600s", true, true) &&
+			sandboxKeepaliveMatches(timeoutOnly, "REQUEST", "5m", true, true)); err != nil {
+		return err
+	}
+	if err := sandboxWaitRunning(s, ctx, inheritedID); err != nil {
+		return err
+	}
+
+	if _, err := sandboxRun(s, ctx, "tool", "update", toolID,
+		"--keepalive-configuration", `{"KeepaliveMode":"MIXED","KeepaliveTimeout":"900s"}`); err != nil {
+		return err
+	}
+	updated, err := sandboxGetTool(s, ctx, toolID)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("keepalive.tool.update", sandboxKeepaliveMatches(updated, "MIXED", "900s", true, true)); err != nil {
+		return err
+	}
+	// Every omitted member follows the new tool value; explicit members keep the
+	// instance value and the accepted spelling stays verbatim.
+	followed := true
+	for _, expected := range []struct {
+		id, mode, timeout string
+	}{
+		{inheritedID, "MIXED", "900s"},
+		{emptyID, "MIXED", "900s"},
+		{modeOnlyID, "NONE", "900s"},
+		{timeoutOnlyID, "MIXED", "5m"},
+		{overrideID, "CONNECTION", "30m"},
+	} {
+		instance, err := sandboxGetInstance(s, ctx, expected.id)
+		if err != nil {
+			return err
+		}
+		if !sandboxKeepaliveMatches(instance, expected.mode, expected.timeout, true, true) {
+			followed = false
+		}
+	}
+	if err := s.Assert("keepalive.inheritance", followed); err != nil {
+		return err
+	}
+
+	// Instance update sets keepalive and must carry explicit false booleans.
+	if _, err := sandboxRun(s, ctx, "instance", "update", modeOnlyID,
+		"--keepalive-configuration", `{"KeepaliveMode":"CONNECTION"}`,
+		"--auto-pause=false", "--auto-resume=false"); err != nil {
+		return err
+	}
+	modeOnly, err = sandboxGetInstance(s, ctx, modeOnlyID)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("keepalive.instance.update",
+		sandboxKeepaliveMatches(modeOnly, "CONNECTION", "900s", false, false)); err != nil {
+		return err
+	}
+
+	// Boundaries: the accepted minimum and maximum are echoed verbatim.
+	if _, err := sandboxRun(s, ctx, "instance", "update", timeoutOnlyID,
+		"--keepalive-configuration", `{"KeepaliveMode":"MIXED","KeepaliveTimeout":"300s"}`,
+		"--auto-pause", "--auto-resume"); err != nil {
+		return err
+	}
+	timeoutOnly, err = sandboxGetInstance(s, ctx, timeoutOnlyID)
+	if err != nil {
+		return err
+	}
+	minimumAccepted := sandboxKeepaliveMatches(timeoutOnly, "MIXED", "300s", true, true)
+	if _, err := sandboxRun(s, ctx, "instance", "update", timeoutOnlyID,
+		"--keepalive-configuration", `{"KeepaliveTimeout":"1800s"}`); err != nil {
+		return err
+	}
+	timeoutOnly, err = sandboxGetInstance(s, ctx, timeoutOnlyID)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("keepalive.boundaries", minimumAccepted &&
+		sandboxKeepaliveMatches(timeoutOnly, "MIXED", "1800s", true, true)); err != nil {
+		return err
+	}
+
+	// A tool without keepalive and with AutoPause=false yields no object, while
+	// an instance that enables AutoPause gets the documented platform default.
+	bareID, err := sandboxCreateTool(s, ctx, sandboxUniqueName("keepalive-bare"), "--auto-pause=false")
+	if err != nil {
+		return err
+	}
+	bare, err := sandboxGetTool(s, ctx, bareID)
+	if err != nil {
+		return err
+	}
+	bareInstanceID, bareInstance, err := sandboxCreateInstance(s, ctx, bareID)
+	if err != nil {
+		return err
+	}
+	barePause, barePauseSet := sandboxBool(bare, "AutoPause")
+	instancePause, instancePauseSet := sandboxBool(bareInstance, "AutoPause")
+	if err := s.Assert("keepalive.inheritance",
+		sandboxKeepaliveAbsent(bare) && barePauseSet && !barePause && sandboxBoolAbsent(bare, "AutoResume") &&
+			sandboxKeepaliveAbsent(bareInstance) && instancePauseSet && !instancePause &&
+			sandboxBoolAbsent(bareInstance, "AutoResume")); err != nil {
+		return err
+	}
+	defaultID, defaultInstance, err := sandboxCreateInstance(s, ctx, bareID, "--auto-pause=true")
+	if err != nil {
+		return err
+	}
+	// AutoResume was never configured, so the documented platform default
+	// REQUEST/10m is the only keepalive source here.
+	defaultPause, defaultPauseSet := sandboxBool(defaultInstance, "AutoPause")
+	mode, timeout, present := sandboxKeepaliveMembers(defaultInstance)
+	if err := s.Assert("keepalive.inheritance",
+		sandboxString(defaultInstance, "InstanceId") == defaultID &&
+			present && mode == "REQUEST" && timeout == "10m" &&
+			defaultPauseSet && defaultPause && sandboxBoolAbsent(defaultInstance, "AutoResume")); err != nil {
+		return err
+	}
+	defaultReadback, err := sandboxGetInstance(s, ctx, defaultID)
+	if err != nil {
+		return err
+	}
+	readbackMode, readbackTimeout, readbackPresent := sandboxKeepaliveMembers(defaultReadback)
+	if err := s.Assert("keepalive.inheritance",
+		readbackPresent && readbackMode == "REQUEST" && readbackTimeout == "10m"); err != nil {
+		return err
+	}
+	if _, err := sandboxGetInstance(s, ctx, bareInstanceID); err != nil {
+		return err
+	}
+
+	// Fork copies the tool configuration and honours explicit overrides.
+	forkEnvelope, err := sandboxRun(s, ctx, "tool", "fork", toolID, "-n", sandboxUniqueName("keepalive-fork"))
+	if err != nil {
+		return err
+	}
+	forkID := sandboxString(forkEnvelope.Data, "ToolId")
+	if forkID == "" {
+		forkID = volumeString(forkEnvelope.Failure.Details, "ResourceId")
+	}
+	if forkID != "" {
+		sandboxOwnTool(s, forkID)
+	}
+	if forkID == "" {
+		return errors.New("tool fork returned no ToolId")
+	}
+	forked, err := sandboxGetTool(s, ctx, forkID)
+	if err != nil {
+		return err
+	}
+	overrideForkEnvelope, err := sandboxRun(s, ctx, "tool", "fork", toolID,
+		"-n", sandboxUniqueName("keepalive-fork-override"),
+		"--keepalive-configuration", `{"KeepaliveTimeout":"1800s"}`, "--auto-pause=false")
+	if err != nil {
+		return err
+	}
+	overrideForkID := sandboxString(overrideForkEnvelope.Data, "ToolId")
+	if overrideForkID == "" {
+		overrideForkID = volumeString(overrideForkEnvelope.Failure.Details, "ResourceId")
+	}
+	if overrideForkID != "" {
+		sandboxOwnTool(s, overrideForkID)
+	}
+	if overrideForkID == "" {
+		return errors.New("tool fork with overrides returned no ToolId")
+	}
+	overrideForked, err := sandboxGetTool(s, ctx, overrideForkID)
+	if err != nil {
+		return err
+	}
+	// The override fork sends only a timeout, so the service echoes only that
+	// member: the mode of the source tool is an inheritance input, not a
+	// synthesized member of the forked tool.
+	if err := s.Assert("keepalive.fork",
+		sandboxKeepaliveMatches(forked, "MIXED", "900s", true, true) &&
+			sandboxKeepaliveMembersMatch(overrideForked, "", "1800s", false, true)); err != nil {
+		return err
+	}
+
+	// JSON readback through get/list and the raw query actions, plus text columns.
+	rows, total, err := sandboxToolRows(s, ctx, toolID)
+	if err != nil {
+		return err
+	}
+	listed := sandboxToolRow(rows, toolID)
+	rawEnvelope, rawErr := sandboxRawCall(s, ctx, "DescribeSandboxInstances", map[string]any{
+		"InstanceIds": []string{inheritedID},
+	})
+	rawResponse, rawOK := sandboxRawResponseData(rawEnvelope)
+	rawRows, _ := rawResponse["InstanceSet"].([]any)
+	rawRow := sandboxInstanceRow(rawRows, inheritedID)
+	instanceRows, err := sandboxInstanceRows(s, ctx, inheritedID)
+	if err != nil {
+		return err
+	}
+	listedInstance := sandboxInstanceRow(instanceRows, inheritedID)
+	toolText, err := s.CLI(ctx, "tool", "get", toolID)
+	if err != nil {
+		return err
+	}
+	instanceText, err := s.CLI(ctx, "instance", "get", inheritedID)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("keepalive.readback",
+		rawErr == nil && rawOK && total >= 1 && listed != nil &&
+			sandboxKeepaliveMatches(listed, "MIXED", "900s", true, true) &&
+			rawRow != nil && sandboxKeepaliveMatches(rawRow, "MIXED", "900s", true, true) &&
+			listedInstance != nil && sandboxKeepaliveMatches(listedInstance, "MIXED", "900s", true, true) &&
+			strings.Contains(string(toolText), "KeepaliveMode") && strings.Contains(string(toolText), "900s") &&
+			strings.Contains(string(instanceText), "KeepaliveMode") && strings.Contains(string(instanceText), "MIXED")); err != nil {
+		return err
+	}
+
+	// Service-side rejection of invalid values must leave the stored
+	// configuration untouched.
+	beforeInvalid, err := sandboxGetInstance(s, ctx, overrideID)
+	if err != nil {
+		return err
+	}
+	unchanged := true
+	// An explicit null member is a no-op rather than a value the service has to
+	// reject, so it only has to leave the stored configuration alone.
+	noOps := []map[string]any{
+		{"KeepaliveConfiguration": nil},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveMode": nil}},
+	}
+	rejected := []map[string]any{
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": ""}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveMode": "INVALID"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": 600}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "600"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "-600s"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "600.5s"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "299s"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "1801s"}},
+	}
+	type invalidRequest struct {
+		members    map[string]any
+		mustReject bool
+	}
+	requests := make([]invalidRequest, 0, len(noOps)+len(rejected))
+	for _, members := range noOps {
+		requests = append(requests, invalidRequest{members: members})
+	}
+	for _, members := range rejected {
+		requests = append(requests, invalidRequest{members: members, mustReject: true})
+	}
+	for _, request := range requests {
+		payload := map[string]any{"InstanceId": overrideID}
+		for name, value := range request.members {
+			payload[name] = value
+		}
+		envelope, callErr := sandboxRawCall(s, ctx, "UpdateSandboxInstance", payload)
+		afterInvalid, readErr := sandboxGetInstance(s, ctx, overrideID)
+		if readErr != nil {
+			return readErr
+		}
+		sandboxRejected := callErr != nil && envelope.Failure != nil
+		if !sandboxEqualKeepalive(beforeInvalid, afterInvalid) {
+			unchanged = false
+		}
+		if request.mustReject && !sandboxRejected {
+			unchanged = false
+		}
+	}
+	// Local structured rejection of unknown top-level members proves the CLI
+	// contract; it is not backend evidence.
+	local := true
+	for _, member := range []string{"KeepaliveMode", "MaxKeepaliveDuration"} {
+		payload, marshalErr := json.Marshal(map[string]any{"InstanceId": overrideID, member: "REQUEST"})
+		if marshalErr != nil {
+			return marshalErr
+		}
+		envelope, callErr := sandboxRun(s, ctx, "instance", "update", overrideID, "--request", string(payload))
+		if callErr == nil || envelope.Failure == nil || envelope.Failure.Kind != "usage" {
+			local = false
+		}
+	}
+	return s.Assert("keepalive.boundaries", unchanged && local)
+}
+
+// sandboxLogFixture carries the reviewed CLS topic and its role. Neither is
+// created, configured or reported by this scenario.
+type sandboxLogFixture struct {
+	topicID, roleArn string
+}
+
+func sandboxLogFixtureFromEnv() (sandboxLogFixture, error) {
+	fixture := sandboxLogFixture{
+		topicID: strings.TrimSpace(os.Getenv("AGR_TEST_CLS_TOPIC_ID")),
+		roleArn: strings.TrimSpace(os.Getenv("AGR_TEST_ROLE_ARN")),
+	}
+	for name, value := range map[string]string{
+		"AGR_TEST_CLS_TOPIC_ID": fixture.topicID,
+		"AGR_TEST_ROLE_ARN":     fixture.roleArn,
+	} {
+		if value == "" {
+			return sandboxLogFixture{}, fmt.Errorf("%s must name an existing disposable CLS log fixture", name)
+		}
+	}
+	return fixture, nil
+}
+
+func sandboxLogConfigurationJSON(fixture sandboxLogFixture, contentFormat string, includeFormat bool) string {
+	configuration := map[string]any{"CLSConfig": map[string]any{"TopicId": fixture.topicID}}
+	if includeFormat {
+		configuration["ContentFormat"] = contentFormat
+	}
+	payload, err := json.Marshal(configuration)
+	if err != nil {
+		// The fixture only holds strings, so marshaling cannot fail.
+		panic(err)
+	}
+	return string(payload)
+}
+
+func sandboxLogFormat(object map[string]any) string {
+	return sandboxString(sandboxNested(object, "LogConfiguration"), "ContentFormat")
+}
+
+func sandboxToolLogTopic(object map[string]any) string {
+	return sandboxString(sandboxNested(object, "LogConfiguration", "CLSConfig"), "TopicId")
+}
+
+func runSandboxLogFormat(s *patchtest.Session) error {
+	fixture, err := sandboxLogFixtureFromEnv()
+	if err != nil {
+		return err
+	}
+	ctx := s.Context
+
+	createLogged := func(name, logConfiguration string) (map[string]any, error) {
+		toolID, err := sandboxCreateTool(s, ctx, name,
+			"--role-arn", fixture.roleArn, "--log-configuration", logConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		return sandboxGetTool(s, ctx, toolID)
+	}
+
+	autoTool, err := createLogged(sandboxUniqueName("log-auto"),
+		sandboxLogConfigurationJSON(fixture, "auto", true))
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("log.auto",
+		sandboxLogFormat(autoTool) == "auto" && sandboxToolLogTopic(autoTool) == fixture.topicID); err != nil {
+		return err
+	}
+	autoID := sandboxString(autoTool, "ToolId")
+
+	// Omitting ContentFormat keeps the server-side raw default.
+	omitted, err := createLogged(sandboxUniqueName("log-default"),
+		sandboxLogConfigurationJSON(fixture, "", false))
+	if err != nil {
+		return err
+	}
+	// An explicit empty string is normalized to raw as well.
+	emptyFormat, err := createLogged(sandboxUniqueName("log-empty"),
+		sandboxLogConfigurationJSON(fixture, "", true))
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("log.raw-default",
+		sandboxLogFormat(omitted) == "raw" && sandboxToolLogTopic(omitted) == fixture.topicID &&
+			sandboxLogFormat(emptyFormat) == "raw" && sandboxToolLogTopic(emptyFormat) == fixture.topicID); err != nil {
+		return err
+	}
+
+	for _, tc := range []struct{ sent, want string }{
+		{"RAW", "raw"},
+		{"AuTo", "auto"},
+	} {
+		tool, err := createLogged(sandboxUniqueName("log-normalize"),
+			sandboxLogConfigurationJSON(fixture, tc.sent, true))
+		if err != nil {
+			return err
+		}
+		if err := s.Assert("log.normalization", sandboxLogFormat(tool) == tc.want); err != nil {
+			return err
+		}
+	}
+
+	// Invalid combinations must be rejected by the service before creation.
+	invalid := true
+	for _, logConfiguration := range []string{
+		`{"ContentFormat":"auto"}`,
+		fmt.Sprintf(`{"CLSConfig":{"TopicId":%q},"ContentFormat":"json"}`, fixture.topicID),
+	} {
+		envelope, callErr := sandboxRun(s, ctx, "tool", "create",
+			"-n", sandboxUniqueName("log-invalid"), "-t", "code-interpreter",
+			"--network-configuration", sandboxNetworkConfiguration,
+			"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout,
+			"--role-arn", fixture.roleArn,
+			"--log-configuration", logConfiguration)
+		toolID := sandboxString(envelope.Data, "ToolId")
+		if toolID == "" {
+			toolID = volumeString(envelope.Failure.Details, "ResourceId")
+		}
+		if toolID != "" {
+			sandboxOwnTool(s, toolID)
+		}
+		if callErr == nil || envelope.Failure == nil ||
+			!strings.Contains(strings.ToLower(envelope.Failure.Code), "invalid") {
+			invalid = false
+		}
+	}
+	if err := s.Assert("log.invalid", invalid); err != nil {
+		return err
+	}
+
+	// Fork copies ContentFormat and honours an explicit replacement.
+	copied, err := sandboxForkTool(s, ctx, autoID, sandboxUniqueName("log-fork"))
+	if err != nil {
+		return err
+	}
+	replaced, err := sandboxForkTool(s, ctx, autoID, sandboxUniqueName("log-fork-raw"),
+		"--log-configuration", sandboxLogConfigurationJSON(fixture, "raw", true))
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("log.fork",
+		sandboxLogFormat(copied) == "auto" && sandboxLogFormat(replaced) == "raw"); err != nil {
+		return err
+	}
+
+	// Readback through get/list, the raw list action and the text columns.
+	rows, total, err := sandboxToolRows(s, ctx, autoID)
+	if err != nil {
+		return err
+	}
+	listed := sandboxToolRow(rows, autoID)
+	rawEnvelope, rawErr := sandboxRawCall(s, ctx, "DescribeSandboxToolList", map[string]any{
+		"ToolIds": []string{autoID},
+	})
+	rawResponse, rawOK := sandboxRawResponseData(rawEnvelope)
+	rawRows, _ := rawResponse["SandboxToolSet"].([]any)
+	rawRow := map[string]any(nil)
+	if len(rawRows) > 0 {
+		rawRow = sandboxObject(rawRows[0])
+	}
+	text, err := s.CLI(ctx, "tool", "get", autoID)
+	if err != nil {
+		return err
+	}
+	return s.Assert("log.readback",
+		rawErr == nil && rawOK && total >= 1 && listed != nil &&
+			sandboxLogFormat(listed) == "auto" &&
+			rawRow != nil && sandboxLogFormat(rawRow) == "auto" &&
+			strings.Contains(string(text), "LogConfiguration.ContentFormat") && strings.Contains(string(text), "auto"))
+}
+
+// sandboxForkTool forks a tool, registers cleanup for the copy as soon as its ID
+// is known, and returns the copy's readback.
+func sandboxForkTool(s *patchtest.Session, ctx context.Context, toolID, name string, extra ...string) (map[string]any, error) {
+	args := append([]string{"tool", "fork", toolID, "-n", name}, extra...)
+	envelope, err := sandboxRun(s, ctx, args...)
+	forkID := sandboxString(envelope.Data, "ToolId")
+	if forkID == "" {
+		forkID = volumeString(envelope.Failure.Details, "ResourceId")
+	}
+	if forkID != "" {
+		sandboxOwnTool(s, forkID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if forkID == "" {
+		return nil, errors.New("tool fork returned no ToolId")
+	}
+	return sandboxGetTool(s, ctx, forkID)
+}
