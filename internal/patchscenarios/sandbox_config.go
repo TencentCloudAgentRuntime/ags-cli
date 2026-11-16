@@ -46,15 +46,45 @@ var (
 	// readback never waits for the data plane.
 	sandboxRunningDeadline = 8 * time.Minute
 	sandboxGoneDeadline    = 90 * time.Second
-	sandboxPollInterval    = 3 * time.Second
+	// Tool creation and forking are asynchronous: the members are readable only
+	// after the copy is ACTIVE. The wait only reads.
+	sandboxToolActiveDeadline = 5 * time.Minute
+	sandboxPollInterval       = 3 * time.Second
 )
 
 // The sandbox scenarios reuse the CLI envelope and list decoding proven by the
 // volume scenarios; only the domain steps below are new.
 type sandboxEnvelope = volumeEnvelope
 
-func sandboxRun(s *patchtest.Session, ctx context.Context, args ...string) (sandboxEnvelope, error) {
+// sandboxDiagnostic writes one redacted line to the suite log. Live runs persist
+// it next to the report, so a failing assertion can be classified from the run
+// directory without exposing credentials or container payloads.
+func sandboxDiagnostic(format string, args ...any) {
+	fmt.Fprintf(os.Stderr, "sandbox-diagnostic: "+format+"\n", args...)
+}
+
+// sandboxRunExpected runs a command whose failure is itself the assertion, so it
+// stays out of the suite log.
+func sandboxRunExpected(s *patchtest.Session, ctx context.Context, args ...string) (sandboxEnvelope, error) {
 	return volumeCLI(s, ctx, args...)
+}
+
+func sandboxRun(s *patchtest.Session, ctx context.Context, args ...string) (sandboxEnvelope, error) {
+	envelope, err := sandboxRunExpected(s, ctx, args...)
+	if err != nil {
+		sandboxDiagnostic("cli %s: %v", strings.Join(args, " "), err)
+	}
+	return envelope, err
+}
+
+// sandboxDiagnoseKeepalive reports the observed configuration members in a log
+// line so a failing live assertion says which member diverged.
+func sandboxDiagnoseKeepalive(label string, object map[string]any) {
+	mode, timeout, present := sandboxKeepaliveMembers(object)
+	pause, pauseSet := sandboxBool(object, "AutoPause")
+	resume, resumeSet := sandboxBool(object, "AutoResume")
+	sandboxDiagnostic("%s: present=%v mode=%q timeout=%q autoPause=%v(set=%v) autoResume=%v(set=%v) status=%q",
+		label, present, mode, timeout, pause, pauseSet, resume, resumeSet, sandboxString(object, "Status"))
 }
 
 func sandboxObject(value any) map[string]any { return volumeObject(value) }
@@ -243,6 +273,32 @@ func sandboxWaitRunning(s *patchtest.Session, ctx context.Context, instanceID st
 	}
 }
 
+// sandboxWaitToolActive proves an asynchronous tool create or fork became
+// readable before the configuration is read back. It only reads.
+func sandboxWaitToolActive(s *patchtest.Session, ctx context.Context, toolID string) error {
+	deadline := time.Now().Add(sandboxToolActiveDeadline)
+	for {
+		rows, total, err := sandboxToolRows(s, ctx, toolID)
+		if err == nil && total >= 1 {
+			if row := sandboxToolRow(rows, toolID); row != nil {
+				switch status := sandboxString(row, "Status"); status {
+				case "ACTIVE":
+					return nil
+				case "FAILED", "DELETED":
+					return fmt.Errorf("tool %s reached %s instead of ACTIVE", toolID, status)
+				}
+			}
+		}
+		if time.Now().After(deadline) {
+			sandboxDiagnostic("tool %s did not become ACTIVE before the deadline", toolID)
+			return fmt.Errorf("tool %s did not reach ACTIVE before the deadline", toolID)
+		}
+		if err := sandboxSleep(ctx); err != nil {
+			return err
+		}
+	}
+}
+
 func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, extra ...string) (string, error) {
 	args := []string{"tool", "create", "-n", name, "-t", "code-interpreter",
 		"--network-configuration", sandboxNetworkConfiguration,
@@ -261,7 +317,7 @@ func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, e
 	if toolID == "" {
 		return "", errors.New("tool create returned no ToolId")
 	}
-	return toolID, nil
+	return toolID, sandboxWaitToolActive(s, ctx, toolID)
 }
 
 func sandboxGetTool(s *patchtest.Session, ctx context.Context, toolID string) (map[string]any, error) {
@@ -307,7 +363,7 @@ func sandboxRawCall(s *patchtest.Session, ctx context.Context, action string, re
 	if err != nil {
 		return sandboxEnvelope{}, err
 	}
-	return sandboxRun(s, ctx, "api", "call", action, "--request", string(payload))
+	return sandboxRunExpected(s, ctx, "api", "call", action, "--request", string(payload))
 }
 
 func sandboxRawResponseData(envelope sandboxEnvelope) (map[string]any, bool) {
@@ -573,6 +629,9 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if forkID == "" {
 		return errors.New("tool fork returned no ToolId")
 	}
+	if err := sandboxWaitToolActive(s, ctx, forkID); err != nil {
+		return err
+	}
 	forked, err := sandboxGetTool(s, ctx, forkID)
 	if err != nil {
 		return err
@@ -593,6 +652,9 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if overrideForkID == "" {
 		return errors.New("tool fork with overrides returned no ToolId")
 	}
+	if err := sandboxWaitToolActive(s, ctx, overrideForkID); err != nil {
+		return err
+	}
 	overrideForked, err := sandboxGetTool(s, ctx, overrideForkID)
 	if err != nil {
 		return err
@@ -600,9 +662,13 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	// The override fork sends only a timeout, so the service echoes only that
 	// member: the mode of the source tool is an inheritance input, not a
 	// synthesized member of the forked tool.
-	if err := s.Assert("keepalive.fork",
-		sandboxKeepaliveMatches(forked, "MIXED", "900s", true, true) &&
-			sandboxKeepaliveMembersMatch(overrideForked, "", "1800s", false, true)); err != nil {
+	forkCopied := sandboxKeepaliveMatches(forked, "MIXED", "900s", true, true)
+	forkOverridden := sandboxKeepaliveMembersMatch(overrideForked, "", "1800s", false, true)
+	if !forkCopied || !forkOverridden {
+		sandboxDiagnoseKeepalive("fork copy", forked)
+		sandboxDiagnoseKeepalive("fork override", overrideForked)
+	}
+	if err := s.Assert("keepalive.fork", forkCopied && forkOverridden); err != nil {
 		return err
 	}
 
@@ -631,13 +697,24 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	if err := s.Assert("keepalive.readback",
-		rawErr == nil && rawOK && total >= 1 && listed != nil &&
-			sandboxKeepaliveMatches(listed, "MIXED", "900s", true, true) &&
-			rawRow != nil && sandboxKeepaliveMatches(rawRow, "MIXED", "900s", true, true) &&
-			listedInstance != nil && sandboxKeepaliveMatches(listedInstance, "MIXED", "900s", true, true) &&
-			strings.Contains(string(toolText), "KeepaliveMode") && strings.Contains(string(toolText), "900s") &&
-			strings.Contains(string(instanceText), "KeepaliveMode") && strings.Contains(string(instanceText), "MIXED")); err != nil {
+	readback := rawErr == nil && rawOK && total >= 1 && listed != nil &&
+		sandboxKeepaliveMatches(listed, "MIXED", "900s", true, true) &&
+		rawRow != nil && sandboxKeepaliveMatches(rawRow, "MIXED", "900s", true, true) &&
+		listedInstance != nil && sandboxKeepaliveMatches(listedInstance, "MIXED", "900s", true, true) &&
+		strings.Contains(string(toolText), "KeepaliveMode") && strings.Contains(string(toolText), "900s") &&
+		strings.Contains(string(instanceText), "KeepaliveMode") && strings.Contains(string(instanceText), "MIXED")
+	if !readback {
+		sandboxDiagnostic("readback: rawErr=%v rawOK=%v total=%d listed=%v rawRow=%v listedInstance=%v toolTextMode=%v toolTextTimeout=%v instanceTextMode=%v instanceTextValue=%v",
+			rawErr, rawOK, total, listed != nil, rawRow != nil, listedInstance != nil,
+			strings.Contains(string(toolText), "KeepaliveMode"), strings.Contains(string(toolText), "900s"),
+			strings.Contains(string(instanceText), "KeepaliveMode"), strings.Contains(string(instanceText), "MIXED"))
+		sandboxDiagnoseKeepalive("readback tool list row", listed)
+		sandboxDiagnoseKeepalive("readback raw instance row", rawRow)
+		sandboxDiagnoseKeepalive("readback instance list row", listedInstance)
+		sandboxDiagnostic("tool get text (%d bytes): %s", len(toolText), sandboxTextExcerpt(toolText))
+		sandboxDiagnostic("instance get text (%d bytes): %s", len(instanceText), sandboxTextExcerpt(instanceText))
+	}
+	if err := s.Assert("keepalive.readback", readback); err != nil {
 		return err
 	}
 
@@ -690,6 +767,7 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 			unchanged = false
 		}
 		if request.mustReject && !sandboxRejected {
+			sandboxDiagnostic("service accepted invalid keepalive request %v", request.members)
 			unchanged = false
 		}
 	}
@@ -701,8 +779,9 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 		if marshalErr != nil {
 			return marshalErr
 		}
-		envelope, callErr := sandboxRun(s, ctx, "instance", "update", overrideID, "--request", string(payload))
+		envelope, callErr := sandboxRunExpected(s, ctx, "instance", "update", overrideID, "--request", string(payload))
 		if callErr == nil || envelope.Failure == nil || envelope.Failure.Kind != "usage" {
+			sandboxDiagnostic("local rejection missing for top-level member %s", member)
 			local = false
 		}
 	}
@@ -725,6 +804,7 @@ func sandboxLogFixtureFromEnv() (sandboxLogFixture, error) {
 		"AGR_TEST_ROLE_ARN":     fixture.roleArn,
 	} {
 		if value == "" {
+			sandboxDiagnostic("log fixture: %s is not configured", name)
 			return sandboxLogFixture{}, fmt.Errorf("%s must name an existing disposable CLS log fixture", name)
 		}
 	}
@@ -748,8 +828,24 @@ func sandboxLogFormat(object map[string]any) string {
 	return sandboxString(sandboxNested(object, "LogConfiguration"), "ContentFormat")
 }
 
+// sandboxTextExcerpt keeps a bounded single-line view of CLI text output for the
+// suite log so a failing display assertion shows what was rendered.
+func sandboxTextExcerpt(text []byte) string {
+	const limit = 800
+	value := strings.Join(strings.Fields(string(text)), " ")
+	if len(value) > limit {
+		value = value[:limit] + "..."
+	}
+	return value
+}
+
 func sandboxToolLogTopic(object map[string]any) string {
 	return sandboxString(sandboxNested(object, "LogConfiguration", "CLSConfig"), "TopicId")
+}
+
+func sandboxDiagnoseLog(label string, object map[string]any) {
+	sandboxDiagnostic("%s: contentFormat=%q topic=%q status=%q",
+		label, sandboxLogFormat(object), sandboxToolLogTopic(object), sandboxString(object, "Status"))
 }
 
 func runSandboxLogFormat(s *patchtest.Session) error {
@@ -773,6 +869,9 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
+	if sandboxLogFormat(autoTool) != "auto" || sandboxToolLogTopic(autoTool) != fixture.topicID {
+		sandboxDiagnoseLog("log auto tool", autoTool)
+	}
 	if err := s.Assert("log.auto",
 		sandboxLogFormat(autoTool) == "auto" && sandboxToolLogTopic(autoTool) == fixture.topicID); err != nil {
 		return err
@@ -791,6 +890,11 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
+	if sandboxLogFormat(omitted) != "raw" || sandboxToolLogTopic(omitted) != fixture.topicID ||
+		sandboxLogFormat(emptyFormat) != "raw" || sandboxToolLogTopic(emptyFormat) != fixture.topicID {
+		sandboxDiagnoseLog("log omitted format", omitted)
+		sandboxDiagnoseLog("log empty format", emptyFormat)
+	}
 	if err := s.Assert("log.raw-default",
 		sandboxLogFormat(omitted) == "raw" && sandboxToolLogTopic(omitted) == fixture.topicID &&
 			sandboxLogFormat(emptyFormat) == "raw" && sandboxToolLogTopic(emptyFormat) == fixture.topicID); err != nil {
@@ -806,6 +910,10 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 		if err != nil {
 			return err
 		}
+		if sandboxLogFormat(tool) != tc.want {
+			sandboxDiagnostic("log normalization %q: want %q", tc.sent, tc.want)
+			sandboxDiagnoseLog("log normalization tool", tool)
+		}
 		if err := s.Assert("log.normalization", sandboxLogFormat(tool) == tc.want); err != nil {
 			return err
 		}
@@ -817,7 +925,7 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 		`{"ContentFormat":"auto"}`,
 		fmt.Sprintf(`{"CLSConfig":{"TopicId":%q},"ContentFormat":"json"}`, fixture.topicID),
 	} {
-		envelope, callErr := sandboxRun(s, ctx, "tool", "create",
+		envelope, callErr := sandboxRunExpected(s, ctx, "tool", "create",
 			"-n", sandboxUniqueName("log-invalid"), "-t", "code-interpreter",
 			"--network-configuration", sandboxNetworkConfiguration,
 			"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout,
@@ -832,6 +940,11 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 		}
 		if callErr == nil || envelope.Failure == nil ||
 			!strings.Contains(strings.ToLower(envelope.Failure.Code), "invalid") {
+			if envelope.Failure != nil {
+				sandboxDiagnostic("log invalid %s: code=%s message=%s", logConfiguration, envelope.Failure.Code, envelope.Failure.Message)
+			} else {
+				sandboxDiagnostic("log invalid %s: accepted", logConfiguration)
+			}
 			invalid = false
 		}
 	}
@@ -848,6 +961,10 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 		"--log-configuration", sandboxLogConfigurationJSON(fixture, "raw", true))
 	if err != nil {
 		return err
+	}
+	if sandboxLogFormat(copied) != "auto" || sandboxLogFormat(replaced) != "raw" {
+		sandboxDiagnoseLog("log fork copy", copied)
+		sandboxDiagnoseLog("log fork replaced", replaced)
 	}
 	if err := s.Assert("log.fork",
 		sandboxLogFormat(copied) == "auto" && sandboxLogFormat(replaced) == "raw"); err != nil {
@@ -873,11 +990,19 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	return s.Assert("log.readback",
-		rawErr == nil && rawOK && total >= 1 && listed != nil &&
-			sandboxLogFormat(listed) == "auto" &&
-			rawRow != nil && sandboxLogFormat(rawRow) == "auto" &&
-			strings.Contains(string(text), "LogConfiguration.ContentFormat") && strings.Contains(string(text), "auto"))
+	readback := rawErr == nil && rawOK && total >= 1 && listed != nil &&
+		sandboxLogFormat(listed) == "auto" &&
+		rawRow != nil && sandboxLogFormat(rawRow) == "auto" &&
+		strings.Contains(string(text), "LogConfiguration.ContentFormat") && strings.Contains(string(text), "auto")
+	if !readback {
+		sandboxDiagnostic("log readback: rawErr=%v rawOK=%v total=%d listed=%v rawRow=%v textFormat=%v textValue=%v",
+			rawErr, rawOK, total, listed != nil, rawRow != nil,
+			strings.Contains(string(text), "LogConfiguration.ContentFormat"), strings.Contains(string(text), "auto"))
+		sandboxDiagnoseLog("log readback list row", listed)
+		sandboxDiagnoseLog("log readback raw row", rawRow)
+		sandboxDiagnostic("tool get text (%d bytes): %s", len(text), sandboxTextExcerpt(text))
+	}
+	return s.Assert("log.readback", readback)
 }
 
 // sandboxForkTool forks a tool, registers cleanup for the copy as soon as its ID
@@ -897,6 +1022,9 @@ func sandboxForkTool(s *patchtest.Session, ctx context.Context, toolID, name str
 	}
 	if forkID == "" {
 		return nil, errors.New("tool fork returned no ToolId")
+	}
+	if err := sandboxWaitToolActive(s, ctx, forkID); err != nil {
+		return nil, err
 	}
 	return sandboxGetTool(s, ctx, forkID)
 }

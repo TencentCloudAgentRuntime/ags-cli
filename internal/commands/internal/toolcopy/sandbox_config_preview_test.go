@@ -15,7 +15,7 @@ func TestRequestCopiesSandboxConfiguration(t *testing.T) {
 			"KeepaliveMode":    "REQUEST",
 			"KeepaliveTimeout": "600s",
 		},
-		"AutoPause": false,
+		"AutoPause":  false,
 		"AutoResume": true,
 		"LogConfiguration": map[string]any{
 			"CLSConfig":     map[string]any{"TopicId": "topic-123"},

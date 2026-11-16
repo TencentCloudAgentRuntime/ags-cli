@@ -9,10 +9,10 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
-	"math/big"
-	"net"
 	"fmt"
 	"maps"
+	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -160,6 +160,10 @@ type sandboxFixture struct {
 	sequence  int
 	tools     map[string]map[string]any
 	instances map[string]*sandboxFixtureInstance
+	// deferred holds the configuration members of a tool the service has not
+	// published yet; pending counts the observations left before publication.
+	deferred map[string]map[string]any
+	pending  map[string]int
 }
 
 func newSandboxFixture(t *testing.T, fault string) *sandboxFixture {
@@ -168,7 +172,45 @@ func newSandboxFixture(t *testing.T, fault string) *sandboxFixture {
 		fault:     fault,
 		tools:     map[string]map[string]any{},
 		instances: map[string]*sandboxFixtureInstance{},
+		deferred:  map[string]map[string]any{},
+		pending:   map[string]int{},
 	}
+}
+
+// holdToolPending models the real asynchronous create/fork: the tool exists
+// before its configuration is published.
+func (f *sandboxFixture) holdToolPending(id string) {
+	if f.fault != "pending-tool-config" {
+		return
+	}
+	stored := f.tools[id]
+	held := map[string]any{}
+	for _, key := range []string{"KeepaliveConfiguration", "AutoPause", "AutoResume", "LogConfiguration"} {
+		if value, ok := stored[key]; ok {
+			held[key] = value
+			delete(stored, key)
+		}
+	}
+	stored["Status"] = "CREATING"
+	f.deferred[id] = held
+	f.pending[id] = 2
+}
+
+// observeTool publishes a deferred tool after the configured number of reads.
+func (f *sandboxFixture) observeTool(id string) {
+	if f.pending[id] == 0 {
+		return
+	}
+	f.pending[id]--
+	if f.pending[id] > 0 {
+		return
+	}
+	for key, value := range f.deferred[id] {
+		f.tools[id][key] = value
+	}
+	f.tools[id]["Status"] = "ACTIVE"
+	delete(f.deferred, id)
+	delete(f.pending, id)
 }
 
 func (f *sandboxFixture) nextID(prefix string) string {
@@ -207,6 +249,7 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		f.tools[id] = stored
+		f.holdToolPending(id)
 		response["ToolId"] = id
 	case "DescribeSandboxToolList":
 		var set []any
@@ -215,6 +258,7 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if f.fault != "drop-tool-list-filter" && len(ids) > 0 && !slices.Contains(ids, id) {
 				continue
 			}
+			f.observeTool(id)
 			set = append(set, f.tools[id])
 		}
 		response["SandboxToolSet"], response["TotalCount"] = set, len(set)
@@ -623,6 +667,30 @@ func TestSandboxKeepaliveCandidate(t *testing.T) {
 	}
 }
 
+// TestSandboxKeepaliveWaitsForDeferredToolConfiguration reproduces the live
+// failure the readiness wait fixes: create and fork return before the service
+// publishes the copied configuration, so an immediate readback has no members.
+func TestSandboxKeepaliveWaitsForDeferredToolConfiguration(t *testing.T) {
+	binary := sandboxBuildCandidate(t)
+	sandboxShortenWaits(t)
+	fixture := newSandboxFixture(t, "pending-tool-config")
+	server, caFile := sandboxTLSServer(t, fixture)
+	defer server.Close()
+	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+		{Scenario: "sandbox.keepalive", Assertions: sandboxKeepaliveAssertions},
+	}}
+	results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+	if err != nil {
+		t.Fatalf("readiness wait did not absorb the deferred publish: %v results=%+v", err, results)
+	}
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if len(fixture.tools) != 0 || len(fixture.deferred) != 0 || len(fixture.pending) != 0 {
+		t.Fatalf("tools=%d deferred=%d pending=%d, want every tool published and deleted",
+			len(fixture.tools), len(fixture.deferred), len(fixture.pending))
+	}
+}
+
 func TestSandboxLogFormatCandidate(t *testing.T) {
 	binary := sandboxBuildCandidate(t)
 	sandboxShortenWaits(t)
@@ -677,9 +745,9 @@ func TestSandboxLogFormatCandidate(t *testing.T) {
 // fault fail in seconds instead of the production deadline.
 func sandboxShortenWaits(t *testing.T) {
 	t.Helper()
-	previousGone, previousPoll := sandboxGoneDeadline, sandboxPollInterval
-	sandboxGoneDeadline, sandboxPollInterval = 2*time.Second, 10*time.Millisecond
+	previousGone, previousActive, previousPoll := sandboxGoneDeadline, sandboxToolActiveDeadline, sandboxPollInterval
+	sandboxGoneDeadline, sandboxToolActiveDeadline, sandboxPollInterval = 2*time.Second, 2*time.Second, 10*time.Millisecond
 	t.Cleanup(func() {
-		sandboxGoneDeadline, sandboxPollInterval = previousGone, previousPoll
+		sandboxGoneDeadline, sandboxToolActiveDeadline, sandboxPollInterval = previousGone, previousActive, previousPoll
 	})
 }

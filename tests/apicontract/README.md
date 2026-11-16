@@ -67,6 +67,11 @@ call; a skipped or empty plan is not acceptance.
   skipping it. The suite never creates CLS or CAM resources, never deletes the
   fixture topic or role, and does not read either value into metadata.
 
+Both scenarios wait (read-only, with a deadline) for a created or forked tool to
+report `ACTIVE` before reading the copied configuration back: create and fork are
+asynchronous, so an immediate readback observes a tool that has not published its
+members yet. A failure of that wait is reported with the observed status.
+
 Cleanup deletes every instance and tool created by the run and then queries them
 independently until they are gone or stopped; `Cleanup=pass` reflects that
 verification, not the exit code of `delete`. The scenarios prove configuration
