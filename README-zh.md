@@ -241,7 +241,7 @@ agr instance update ins-xxxx --auto-resume=false -o json
 
 # 读回已保存的值（实例 > Tool > 平台默认）。
 agr tool get sdt-xxxx -o json
-agr instance list --tool-ids sdt-xxxx -o text
+agr instance list --tool-id sdt-xxxx -o text
 ```
 
 `KeepaliveTimeout` 是保活续期窗口（300～1800 秒，带单位的整秒时长，服务端按你发送的

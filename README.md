@@ -262,7 +262,7 @@ agr instance update ins-xxxx --auto-resume=false -o json
 
 # Read back the stored values (instance > tool > platform default).
 agr tool get sdt-xxxx -o json
-agr instance list --tool-ids sdt-xxxx -o text
+agr instance list --tool-id sdt-xxxx -o text
 ```
 
 `KeepaliveTimeout` is the keepalive renewal window (300s to 1800s, integer

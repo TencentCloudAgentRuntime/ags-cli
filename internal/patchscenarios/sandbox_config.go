@@ -44,9 +44,12 @@ const (
 	// The service accepts LogConfiguration.CLSConfig only on custom tools, and
 	// a custom tool needs a custom configuration that names its start command:
 	// omitting Command is rejected with "CustomConfiguration.Command is
-	// required". The command must start the sandbox agent, otherwise provisioning
-	// stops at FAILED with "FailedOperation.DependencyUnavailable: Internal
-	// server error" (both observed live on 2026-11-17). This is the shape of the
+	// required" (observed live on 2026-11-17). A configuration the service
+	// accepts can still stop at FAILED with "FailedOperation.DependencyUnavailable:
+	// Internal server error" and no more specific cause, so the scenario pins the
+	// whole configuration observed to reach ACTIVE instead of attributing the stop
+	// to one member; the attempts that hit it also differed in image, registry
+	// type, resources, ports and probe. That configuration has the shape of the
 	// custom tools already running in this account: a public CCR image, started
 	// through a shell that runs the agent binary, with the agent's health
 	// endpoint declared as the probe and as a port.

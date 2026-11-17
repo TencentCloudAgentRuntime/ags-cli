@@ -78,8 +78,10 @@ the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
   custom tools already running in this account - a public CCR image, a shell
   command that starts the sandbox agent, and the agent's `/health` endpoint
   declared both as the probe and as a port. `Command` is a required member the
-  service answers `MissingParameter` without, and a start command that leaves the
-  agent down makes the tool stop at `FAILED` with an internal dependency error.
+  service answers `MissingParameter` without. A configuration the service accepts
+  can still stop at `FAILED` with `FailedOperation.DependencyUnavailable` and no
+  more specific cause, so this scenario pins the whole configuration observed to
+  reach `ACTIVE` rather than attributing the stop to one member.
   The keepalive scenario stays on `SANDBOX` with
   `code-interpreter`. The rejection probes keep the same tool type and egress
   network so neither a type nor a network precondition can stand in for the
