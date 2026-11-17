@@ -250,6 +250,11 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			response["Error"] = failure
 			break
 		}
+		if failure := sandboxValidateCustomConfiguration(req); failure != nil {
+			delete(f.tools, id)
+			response["Error"] = failure
+			break
+		}
 		f.tools[id] = stored
 		if f.fault == "fail-tool-provision" {
 			// The service can accept a create and then fail provisioning, for
@@ -788,6 +793,20 @@ func TestSandboxFixtureRejectsCLSOnSandboxNetwork(t *testing.T) {
 // The log scenario must create custom tools: the service rejects a CLS topic on
 // the built-in types, so a scenario that still sent -t code-interpreter would
 // fail live for a reason the offline fixture now reproduces.
+// sandboxValidateCustomConfiguration mirrors the live rule that a custom tool
+// must name its start command: without it the service answers MissingParameter
+// instead of creating the tool.
+func sandboxValidateCustomConfiguration(req map[string]any) map[string]any {
+	custom := sandboxObject(req["CustomConfiguration"])
+	if custom == nil {
+		return nil
+	}
+	if command, _ := custom["Command"].([]any); len(command) == 0 {
+		return map[string]any{"Code": "MissingParameter", "Message": "usage: CustomConfiguration.Command is required"}
+	}
+	return nil
+}
+
 func TestSandboxFixtureRejectsCLSOnBuiltinToolType(t *testing.T) {
 	fixture := newSandboxFixture(t, "")
 	tool := map[string]any{}
@@ -823,13 +842,15 @@ func TestSandboxCustomConfigurationIsToolReady(t *testing.T) {
 			t.Fatalf("custom configuration is missing %s: %v", name, configuration)
 		}
 	}
-	// The live service failed provisioning with an internal dependency error
-	// while the start command was overridden, so the sandbox must run the
-	// system image's own entrypoint instead of a command the scenario invents.
-	for _, name := range []string{"Command", "Args"} {
-		if _, ok := configuration[name]; ok {
-			t.Fatalf("custom configuration overrides %s: %v", name, configuration)
-		}
+	// Two live rejections fix the shape: omitting Command is a MissingParameter
+	// error, and a command that does not start the sandbox agent leaves the tool
+	// FAILED. Run the agent binary the reviewed image carries, with no args.
+	command, _ := configuration["Command"].([]any)
+	if len(command) != 1 || command[0] != "/usr/bin/envd" {
+		t.Fatalf("custom configuration must start the sandbox agent, got %v", configuration["Command"])
+	}
+	if args, ok := configuration["Args"].([]any); !ok || len(args) != 0 {
+		t.Fatalf("custom configuration must not pass args to the agent, got %v", configuration["Args"])
 	}
 }
 
@@ -1048,4 +1069,23 @@ func sandboxShortenWaits(t *testing.T) {
 	t.Cleanup(func() {
 		sandboxGoneDeadline, sandboxToolActiveDeadline, sandboxPollInterval = previousGone, previousActive, previousPoll
 	})
+}
+
+// TestSandboxFixtureRequiresCustomStartCommand keeps the fixture honest about
+// the second live rejection: a custom tool without CustomConfiguration.Command
+// is answered with MissingParameter, so the scenario cannot silently drop the
+// member that makes the sandbox agent start.
+func TestSandboxFixtureRequiresCustomStartCommand(t *testing.T) {
+	request := map[string]any{
+		"ToolType":            "custom",
+		"CustomConfiguration": map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14"},
+	}
+	failure := sandboxValidateCustomConfiguration(request)
+	if failure == nil || failure["Code"] != "MissingParameter" {
+		t.Fatalf("a custom tool without a start command was accepted: %v", failure)
+	}
+	request["CustomConfiguration"] = map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14", "Command": []any{"/usr/bin/envd"}}
+	if failure := sandboxValidateCustomConfiguration(request); failure != nil {
+		t.Fatalf("a custom tool with the agent command was rejected: %v", failure)
+	}
 }

@@ -253,14 +253,17 @@ agr instance list --tool-ids sdt-xxxx -o text
 ```bash
 agr tool create -n logs-tool -t custom \
   --network-configuration '{"NetworkMode":"PUBLIC"}' \
-  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal"}' \
+  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal","Command":["<entrypoint>"]}' \
   --role-arn '<role-arn>' \
   --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
 ```
 
 CLS 日志目前只接受 `custom` 类型：在内置类型（`code-interpreter`、`browser` 等）上传
 `CLSConfig` 会被服务端以 `InvalidParameter` 拒绝（“LogConfiguration with CLSConfig is
-only supported for custom sandbox type for now”），因此还需要提供自定义配置。
+only supported for custom sandbox type for now”），因此还需要提供自定义配置。该自定义
+配置必须给出启动命令：省略 `Command` 会被服务端以 `MissingParameter`
+（“CustomConfiguration.Command is required”）拒绝；而启动命令如果没有拉起沙箱 agent，
+工具会停在 `FAILED`。
 
 CLS 主题需要带公网出向的网络模式：日志 sidecar 在该网络下无法访问 CLS，服务端会以
 `InvalidParameterValue.CLSConfig` 拒绝 `SANDBOX` 加 `CLSConfig` 的组合。要投递日志的

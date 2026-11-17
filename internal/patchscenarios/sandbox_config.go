@@ -42,13 +42,15 @@ const (
 	sandboxToolDefaultTimeout      = "30m"
 	sandboxInstanceTimeout         = "30m"
 	// The service accepts LogConfiguration.CLSConfig only on custom tools, and
-	// a custom tool needs a custom configuration. This one is the reviewed
-	// system image, run through its own entrypoint: the image already knows how
-	// to start the sandbox agent, and overriding Command kept the agent from
-	// starting, which the service reported as
-	// "FailedOperation.DependencyUnavailable: Internal server error" on a live
-	// run. No user image is pulled.
-	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"system","Resources":{"CPU":"1","Memory":"2Gi"},"Probe":{"ReadyTimeoutMs":30000,"ProbeTimeoutMs":5000,"ProbePeriodMs":10000,"SuccessThreshold":1,"FailureThreshold":3}}`
+	// a custom tool needs a custom configuration that names its start command:
+	// omitting Command is rejected with "CustomConfiguration.Command is
+	// required". The command must start the sandbox agent, otherwise provisioning
+	// stops at FAILED with "FailedOperation.DependencyUnavailable: Internal
+	// server error" (both observed live on 2026-11-17). /usr/bin/envd is where
+	// this reviewed system image carries that agent, the same binary the CLI's
+	// own ready-shaped custom tool runs as /envd; no user image is pulled and
+	// Args stay empty, as in that tool.
+	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"system","Command":["/usr/bin/envd"],"Args":[],"Resources":{"CPU":"1","Memory":"2Gi"},"Probe":{"ReadyTimeoutMs":30000,"ProbeTimeoutMs":5000,"ProbePeriodMs":10000,"SuccessThreshold":1,"FailureThreshold":3}}`
 )
 
 // sandboxToolSpec declares the tool a scenario creates. The tool type is a

@@ -277,7 +277,7 @@ outside the enum or range.
 ```bash
 agr tool create -n logs-tool -t custom \
   --network-configuration '{"NetworkMode":"PUBLIC"}' \
-  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal"}' \
+  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal","Command":["<entrypoint>"]}' \
   --role-arn '<role-arn>' \
   --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
 ```
@@ -285,7 +285,10 @@ agr tool create -n logs-tool -t custom \
 CLS logging is currently accepted only on `custom` tools: the service rejects a
 `CLSConfig` on the built-in types (`code-interpreter`, `browser`, ...) with
 `InvalidParameter` and "LogConfiguration with CLSConfig is only supported for
-custom sandbox type for now", so a custom configuration is required too.
+custom sandbox type for now", so a custom configuration is required too. That
+custom configuration must name its start command: the service answers
+`MissingParameter` and "CustomConfiguration.Command is required" without it, and
+a command that does not start the sandbox agent leaves the tool at `FAILED`.
 
 A CLS topic needs a network mode with outbound access: the service rejects
 `CLSConfig` on `SANDBOX` because the log sidecar cannot reach CLS from that
