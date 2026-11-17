@@ -40,7 +40,7 @@ var sandboxKeepaliveFaults = []string{
 	"drop-instance-create-config", "drop-instance-update-config",
 	"drop-auto-flags", "ignore-false", "normalize-timeout",
 	"freeze-inheritance", "fabricate-default", "accept-invalid",
-	"retain-instance", "retain-tool",
+	"retain-instance", "retain-tool", "invalid-request-internal",
 }
 
 var sandboxLogFaults = []string{
@@ -347,6 +347,17 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			fail("ResourceNotFound.InstanceNotExist", "missing fixture instance")
 			break
+		}
+		if f.fault == "invalid-request-internal" {
+			// A parameter-level rejection that surfaces as an internal error is not
+			// evidence of validation: the scenario must fail instead of counting
+			// any failure as a rejected value.
+			if value, present := req["KeepaliveConfiguration"]; present {
+				if _, failure := f.validatedKeepalive(value, present); failure != nil {
+					fail("InternalError.Unknown", "Internal server error")
+					break
+				}
+			}
 		}
 		if f.fault != "drop-instance-update-config" {
 			if failure := f.applyInstanceConfiguration(instance, req, true); failure != nil {
@@ -695,6 +706,49 @@ func TestRegistryAssertionsAreBoundInManifest(t *testing.T) {
 	}
 }
 
+// TestBehaviorProseIsBoundToAssertions keeps behavior-bearing prose out of the
+// review-only escape hatch. For the members this patch adds, a document
+// obligation must name a scenario and assertions: "the behavior is covered by
+// the referenced scenario" is true only when a scenario actually references it.
+func TestBehaviorProseIsBoundToAssertions(t *testing.T) {
+	plan, err := patchcoverage.Load("../..", Registry.Coverage(), true)
+	if err != nil {
+		t.Fatalf("load coverage plan: %v", err)
+	}
+	bound := map[string]patchcoverage.Binding{}
+	for _, binding := range plan.Bindings {
+		bound[binding.Entry] = binding
+	}
+	checked := 0
+	for _, entry := range plan.Entries {
+		if !strings.HasSuffix(entry.ID, "/document") {
+			continue
+		}
+		if !sandboxBehaviorMember(entry.ID) {
+			continue
+		}
+		checked++
+		binding, ok := bound[entry.ID]
+		if !ok || binding.Scenario == "" || len(binding.Assertions) == 0 {
+			t.Errorf("%s describes behavior but is bound only for review", entry.ID)
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no behavior prose was checked, so this guard proves nothing")
+	}
+}
+
+// sandboxBehaviorMember reports whether an obligation belongs to a member whose
+// prose states behavior this patch has to observe.
+func sandboxBehaviorMember(id string) bool {
+	for _, member := range []string{"KeepaliveConfiguration", "AutoPause", "AutoResume", "ContentFormat"} {
+		if strings.Contains(id, member) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestSandboxKeepaliveCandidate(t *testing.T) {
 	binary := sandboxBuildCandidate(t)
 	sandboxShortenWaits(t)
@@ -842,10 +896,12 @@ func TestSandboxCustomConfigurationIsToolReady(t *testing.T) {
 			t.Fatalf("custom configuration is missing %s: %v", name, configuration)
 		}
 	}
-	// Two live rejections fix the shape: omitting Command is a MissingParameter
-	// error, and a command that does not start the sandbox agent leaves the tool
-	// FAILED. Start the agent through a shell, and declare its health endpoint as
-	// the probe and as a port, like the custom tools already running here.
+	// Two live observations fix the shape: omitting Command is a MissingParameter
+	// error, and a custom configuration the service accepts was observed to end at
+	// FAILED with FailedOperation.DependencyUnavailable, naming no further cause.
+	// The scenario therefore pins the whole known-working shape - the agent
+	// started through a shell, its health endpoint declared as the probe and as a
+	// port - like the custom tools already running here.
 	command, _ := configuration["Command"].([]any)
 	if len(command) != 3 || command[0] != "/bin/bash" || command[1] != "-c" || command[2] != "/usr/bin/envd" {
 		t.Fatalf("custom configuration must start the sandbox agent, got %v", configuration["Command"])
@@ -1101,5 +1157,151 @@ func TestSandboxFixtureRequiresCustomStartCommand(t *testing.T) {
 	request["CustomConfiguration"] = map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.6.13", "Command": []any{"/usr/bin/envd"}}
 	if failure := sandboxValidateCustomConfiguration(request); failure != nil {
 		t.Fatalf("a custom tool with the agent command was rejected: %v", failure)
+	}
+}
+
+// TestSandboxKeepaliveInvalidRequestsAreAllRejected pins the invalid-value matrix
+// itself: an explicit null object or null member must be asserted as rejected,
+// not treated as a no-op, and every entry must be a value the contract rejects.
+func TestSandboxKeepaliveInvalidRequestsAreAllRejected(t *testing.T) {
+	fixture := newSandboxFixture(t, "")
+	nullShapes := 0
+	for _, request := range sandboxKeepaliveInvalidRequests() {
+		value, present := request["KeepaliveConfiguration"]
+		if len(request) != 1 || !present {
+			t.Fatalf("invalid request %v must carry exactly KeepaliveConfiguration", request)
+		}
+		if _, failure := fixture.validatedKeepalive(value, present); failure == nil {
+			t.Fatalf("invalid request %v is accepted by the contract", request)
+		}
+		if value == nil {
+			nullShapes++
+			continue
+		}
+		members, _ := value.(map[string]any)
+		for _, member := range members {
+			if member == nil {
+				nullShapes++
+			}
+		}
+	}
+	if nullShapes != 3 {
+		t.Fatalf("null shapes = %d, want the null object and both null members", nullShapes)
+	}
+}
+
+// TestSandboxForkFailureStillCleansUpTheReturnedTool drives both keepalive fork
+// call sites against a fake CLI that fails with a resource ID. A fork that
+// creates a tool and then fails must still delete it and confirm the deletion,
+// so the scenario cannot leave a copy behind when it reports the failure.
+func TestSandboxForkFailureStillCleansUpTheReturnedTool(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		extra []string
+	}{
+		{name: "copy fork"},
+		{name: "override fork", extra: []string{"--keepalive-configuration", `{"KeepaliveTimeout":"1800s"}`, "--auto-pause=false"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			logPath := filepath.Join(t.TempDir(), "calls.log")
+			binary := filepath.Join(t.TempDir(), "fake-agr")
+			script := `#!/bin/sh
+printf '%s\n' "$*" >> "$CALL_LOG"
+case "$*" in
+  "tool fork "*)
+    printf '%s\n' '{"Status":"failed","Failure":{"Code":"WAIT_TIMEOUT","Kind":"timeout","Message":"tool did not become ACTIVE","Details":{"ResourceId":"tool-fork-leaked"}}}'
+    exit 1
+    ;;
+  "tool delete "*)
+    : > "$CALL_LOG.deleted"
+    printf '%s\n' '{"Status":"succeeded","Data":{"ToolId":"tool-fork-leaked"}}'
+    ;;
+  "tool list "*)
+    if [ -f "$CALL_LOG.deleted" ]; then
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[],"Pagination":{"Total":0}}}'
+    else
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[{"ToolId":"tool-fork-leaked","Status":"CREATING"}],"Pagination":{"Total":1}}}'
+    fi
+    ;;
+  *)
+    printf '%s\n' '{"Status":"failed","Failure":{"Code":"UnexpectedCall","Kind":"internal","Message":"unexpected fake CLI call"}}'
+    exit 1
+    ;;
+esac
+`
+			if err := os.WriteFile(binary, []byte(script), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			registry := patchtest.Registry{
+				"fork-failure-cleanup": {
+					Assertions: []string{"fork.failed"},
+					Run: sandboxScenario("fork-failure-cleanup", func(s *patchtest.Session) error {
+						_, err := sandboxForkTool(s, s.Context, "tool-source", "copy", tc.extra...)
+						return s.Assert("fork.failed", err != nil)
+					}),
+				},
+			}
+			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+				{Scenario: "fork-failure-cleanup", Assertions: []string{"fork.failed"}},
+			}}
+			results, err := patchtest.Run(t.Context(), plan, registry, binary, []string{"CALL_LOG=" + logPath})
+			if err != nil {
+				t.Fatalf("the failing fork must still be a reported run: %v; results=%+v", err, results)
+			}
+			if len(results) != 1 || results[0].Status != "pass" || results[0].Cleanup != "pass" {
+				t.Fatalf("results = %+v, want one passing scenario with a passing cleanup", results)
+			}
+			log, logErr := os.ReadFile(logPath)
+			if logErr != nil {
+				t.Fatal(logErr)
+			}
+			if !strings.Contains(string(log), "tool fork tool-source -n copy "+strings.Join(tc.extra, " ")) {
+				t.Fatalf("the scenario did not fork the source tool as declared:\n%s", log)
+			}
+			if !strings.Contains(string(log), "tool delete tool-fork-leaked") {
+				t.Fatalf("the tool returned with the failure was not deleted:\n%s", log)
+			}
+			if !strings.Contains(string(log), "tool list --tool-ids tool-fork-leaked") {
+				t.Fatalf("the deletion was not confirmed with an independent query:\n%s", log)
+			}
+		})
+	}
+}
+
+// sandboxTestFailure builds the failure object a CLI envelope carries.
+func sandboxTestFailure(code, message string) *struct {
+	Code, Kind, Message string
+	Details             map[string]any
+} {
+	return &struct {
+		Code, Kind, Message string
+		Details             map[string]any
+	}{Code: code, Message: message}
+}
+
+// TestSandboxParameterRejectionIgnoresServerFailures keeps "the call failed" from
+// standing in for "the service rejected the value": only a parameter-validation
+// answer is evidence, an internal or credential failure is not.
+func TestSandboxParameterRejectionIgnoresServerFailures(t *testing.T) {
+	for _, tc := range []struct {
+		name, code string
+		want       bool
+	}{
+		{"value rejection", "InvalidParameterValue.CLSConfig", true},
+		{"range rejection", "InvalidParameter", true},
+		{"missing member", "MissingParameter", true},
+		{"internal error", "InternalError.Unknown", false},
+		{"credential failure", "AuthFailure.SignatureFailure", false},
+	} {
+		envelope := sandboxEnvelope{Status: "failed", Failure: sandboxTestFailure(tc.code, "message")}
+		if got := sandboxParameterRejection(errors.New("call failed"), envelope); got != tc.want {
+			t.Errorf("%s: %s counted as a parameter rejection=%v, want %v", tc.name, tc.code, got, tc.want)
+		}
+	}
+	if sandboxParameterRejection(nil, sandboxEnvelope{Status: "succeeded"}) {
+		t.Error("a successful call counted as a rejection")
+	}
+	if sandboxParameterRejection(errors.New("transport failure"), sandboxEnvelope{}) {
+		t.Error("a failure without a failure envelope counted as a rejection")
 	}
 }

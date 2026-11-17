@@ -2811,9 +2811,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback]
   - entry: /objects/CreateSandboxToolRequest/members/AutoPause/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
   - entry: /objects/CreateSandboxToolRequest/members/AutoPause/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create]
   - entry: /objects/CreateSandboxToolRequest/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
@@ -2833,9 +2835,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback]
   - entry: /objects/CreateSandboxToolRequest/members/AutoResume/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
   - entry: /objects/CreateSandboxToolRequest/members/AutoResume/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create]
   - entry: /objects/CreateSandboxToolRequest/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
@@ -2855,9 +2859,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback]
   - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
   - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
@@ -2874,7 +2879,8 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/members/@exists
     scenario: sandbox.keepalive
     assertions: [keepalive.inheritance, keepalive.boundaries]
@@ -2885,9 +2891,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "示例值 REQUEST 只是取值样例，不单独构成行为约束；枚举语义由同成员的 document 条目绑定 keepalive.inheritance 与 keepalive.boundaries。"
   - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/member
     scenario: sandbox.keepalive
     assertions: [keepalive.inheritance, keepalive.boundaries]
@@ -2913,9 +2920,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/member
     scenario: sandbox.keepalive
     assertions: [keepalive.inheritance, keepalive.boundaries]
@@ -2947,9 +2956,11 @@ coverage:
     scenario: sandbox.log-format
     assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
   - entry: /objects/LogConfiguration/members/ContentFormat/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
   - entry: /objects/LogConfiguration/members/ContentFormat/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.normalization]
   - entry: /objects/LogConfiguration/members/ContentFormat/member
     scenario: sandbox.log-format
     assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback, log.fork]
@@ -2975,9 +2986,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
   - entry: /objects/SandboxInstance/members/AutoPause/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/SandboxInstance/members/AutoPause/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/SandboxInstance/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
@@ -3003,9 +3016,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
   - entry: /objects/SandboxInstance/members/AutoResume/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/SandboxInstance/members/AutoResume/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/SandboxInstance/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
@@ -3031,9 +3046,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
   - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
   - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
@@ -3059,9 +3075,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
   - entry: /objects/SandboxTool/members/AutoPause/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
   - entry: /objects/SandboxTool/members/AutoPause/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
   - entry: /objects/SandboxTool/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
@@ -3087,9 +3105,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
   - entry: /objects/SandboxTool/members/AutoResume/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
   - entry: /objects/SandboxTool/members/AutoResume/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
   - entry: /objects/SandboxTool/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
@@ -3115,9 +3135,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
   - entry: /objects/SandboxTool/members/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
   - entry: /objects/SandboxTool/members/KeepaliveConfiguration/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
   - entry: /objects/SandboxTool/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
@@ -3143,9 +3164,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
@@ -3165,9 +3188,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
@@ -3187,9 +3212,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.inheritance]
   - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
   - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
@@ -3209,9 +3235,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.update, keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.update, keepalive.readback]
@@ -3231,9 +3259,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.update, keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.update, keepalive.readback]
@@ -3253,9 +3283,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.update, keepalive.readback]
   - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.inheritance]
   - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
   - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.update, keepalive.readback]
@@ -3275,9 +3306,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]
@@ -3297,9 +3330,11 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]
@@ -3319,9 +3354,10 @@ coverage:
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]
   - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/document
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
   - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/example
-    review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
   - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]

@@ -287,8 +287,11 @@ CLS logging is currently accepted only on `custom` tools: the service rejects a
 `InvalidParameter` and "LogConfiguration with CLSConfig is only supported for
 custom sandbox type for now", so a custom configuration is required too. That
 custom configuration must name its start command: the service answers
-`MissingParameter` and "CustomConfiguration.Command is required" without it, and
-a command that does not start the sandbox agent leaves the tool at `FAILED`.
+`MissingParameter` and "CustomConfiguration.Command is required" without it. A
+custom configuration the service accepts can still end at `FAILED` with
+`FailedOperation.DependencyUnavailable`; use the shape of the custom tools that
+already run in your account - a `Command` that starts the sandbox agent, with
+that agent's `/health` endpoint declared as the probe and as a port.
 
 A CLS topic needs a network mode with outbound access: the service rejects
 `CLSConfig` on `SANDBOX` because the log sidecar cannot reach CLS from that

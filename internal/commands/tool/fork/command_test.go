@@ -2,7 +2,9 @@ package fork
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"reflect"
 	"slices"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
@@ -136,10 +139,23 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 	if !ok {
 		t.Fatalf("tool.fork descriptor API = %T, want apicli.APIDescriptor", module.Descriptor.API)
 	}
-	expectedInherited := baseCreateRequestFromTool(source)
-	descriptorFields := map[string]bool{}
+	contractFields := forkCreateContractFields(t)
+	fixtureFields := map[string]bool{}
+	decoded, err := apivalue.Decode(source)
+	if err != nil {
+		t.Fatalf("decode source fixture: %v", err)
+	}
+	for name := range decoded {
+		fixtureFields[name] = true
+	}
+	inherited := forkInheritedCreateRequest()
+	if problems := forkCopyPolicyProblems(contractFields, fixtureFields, inherited,
+		forkReplacementFields, forkOverrideOnlyFields); len(problems) != 0 {
+		t.Fatalf("source-copy policy problems: %v", problems)
+	}
+	var descriptorFields []string
 	for _, field := range api.Fields {
-		descriptorFields[field.Name] = true
+		descriptorFields = append(descriptorFields, field.Name)
 		if _, replaced := forkReplacementFields[field.Name]; replaced {
 			continue
 		}
@@ -151,38 +167,28 @@ func TestModuleCopiesCreateCapableFields(t *testing.T) {
 				t.Fatalf("inherited descriptor field %s uses SendDefault and can bypass source-copy coverage", field.Name)
 			}
 		}
-		want, copied := expectedInherited[field.Name]
-		if !copied {
+		want, covered := inherited[field.Name]
+		if !covered {
 			t.Fatalf("source-copy policy missing inherited descriptor field %s", field.Name)
 		}
 		got, ok := cp.request[field.Name]
 		if !ok {
 			t.Fatalf("request missing copied descriptor field %s: %#v", field.Name, cp.request)
 		}
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("copied descriptor field %s = %#v, want source-derived %#v", field.Name, got, want)
+		if !reflect.DeepEqual(forkNormalize(t, got), forkNormalize(t, want)) {
+			t.Errorf("copied descriptor field %s = %#v, want the fixture value %#v", field.Name, got, want)
 		}
 	}
-	checkPolicy := func(fieldName, reason string) {
-		t.Helper()
-		if strings.TrimSpace(reason) == "" {
-			t.Errorf("non-inherited descriptor field %s must include a reason", fieldName)
-		}
-		if !descriptorFields[fieldName] {
-			t.Errorf("non-inherited field %s is not present in the fork API descriptor", fieldName)
-		}
+	slices.Sort(descriptorFields)
+	if !slices.Equal(descriptorFields, contractFields) {
+		t.Fatalf("fork descriptor fields = %v, want the create contract members %v", descriptorFields, contractFields)
 	}
 	for _, fieldName := range slices.Sorted(maps.Keys(forkReplacementFields)) {
-		checkPolicy(fieldName, forkReplacementFields[fieldName])
-		if _, duplicate := forkOverrideOnlyFields[fieldName]; duplicate {
-			t.Errorf("field %s cannot be both replacement and override-only", fieldName)
-		}
 		if _, ok := cp.request[fieldName]; !ok {
 			t.Errorf("replacement field %s is missing from the create request", fieldName)
 		}
 	}
 	for _, fieldName := range slices.Sorted(maps.Keys(forkOverrideOnlyFields)) {
-		checkPolicy(fieldName, forkOverrideOnlyFields[fieldName])
 		if _, ok := cp.request[fieldName]; ok {
 			t.Errorf("override-only field %s was sent without an explicit override", fieldName)
 		}
@@ -519,5 +525,182 @@ func TestEmptyStringOverridesFollowCurrentParser(t *testing.T) {
 	}}, fields)
 	if !reflect.DeepEqual(overrides, map[string]any{"NewString": ""}) {
 		t.Fatalf("stale empty string overrides: %#v", overrides)
+	}
+}
+
+// forkCreateContractFields returns the create-contract members the fork
+// descriptor must cover. The contract, not the production copy policy, defines
+// the full set.
+func forkCreateContractFields(t *testing.T) []string {
+	t.Helper()
+	catalog, err := apimeta.Get()
+	if err != nil {
+		t.Fatalf("load API metadata: %v", err)
+	}
+	object := catalog.Spec.Object("CreateSandboxToolRequest")
+	if object == nil {
+		t.Fatal("the contract has no CreateSandboxToolRequest")
+	}
+	var fields []string
+	for _, member := range object.Members {
+		if member.Disabled {
+			continue
+		}
+		fields = append(fields, member.Name)
+	}
+	slices.Sort(fields)
+	return fields
+}
+
+// forkInheritedCreateRequest is this test's own expectation of what a fork
+// copies from previewSourceTool. Every value is written here from the fixture
+// and the create contract; the production copy policy is deliberately not an
+// input, so a field the policy stops copying or starts rewriting fails loudly.
+func forkInheritedCreateRequest() map[string]any {
+	inherited := map[string]any{
+		"ToolType":              "code-interpreter",
+		"Description":           "source description",
+		"Persistent":            true,
+		"DefaultTimeout":        "300s",
+		"NetworkConfiguration":  map[string]any{"NetworkMode": "SANDBOX"},
+		"Tags":                  []any{map[string]any{"Key": "env", "Value": "unit"}},
+		"RoleArn":               "qcs::cam::uin/100000:roleName/source-role",
+		"StorageMounts":         []any{map[string]any{"Name": "data", "MountPath": "/data", "ReadOnly": true}},
+		"CustomConfiguration":   map[string]any{"Image": "repo/app:latest", "ImageRegistryType": "enterprise", "Command": []any{"serve"}},
+		"ComputerConfiguration": map[string]any{"WAAConfiguration": map[string]any{"ImageId": "img-source"}, "OSWorldConfiguration": map[string]any{"Version": "osworld2"}},
+		"LogConfiguration":      map[string]any{"LogSources": map[string]any{"Files": []any{"/logs/app.log"}}},
+	}
+	// The preview contract adds the keepalive members and ContentFormat; the
+	// stable contract has neither, so an expectation for them would be stale.
+	if apimeta.BuildChannel == apimeta.Preview {
+		inherited["LogConfiguration"] = map[string]any{
+			"LogSources":    map[string]any{"Files": []any{"/logs/app.log"}},
+			"ContentFormat": "auto",
+		}
+		inherited["KeepaliveConfiguration"] = map[string]any{"KeepaliveMode": "MIXED", "KeepaliveTimeout": "600s"}
+		inherited["AutoPause"] = false
+		inherited["AutoResume"] = true
+	}
+	return inherited
+}
+
+// forkDerivedFrom names the source member a create field is computed from when
+// the two names differ, so the presence check follows the real source.
+var forkDerivedFrom = map[string]string{
+	"DefaultTimeout": "DefaultTimeoutSeconds",
+}
+
+// forkCopyPolicyProblems reports every way the source-copy policy can drift from
+// the create contract: a contract field with no policy, a second declaration of
+// one field, a stale exception for a field the contract no longer has, an
+// inherited value the source fixture never provides, or an exception without a
+// reason.
+func forkCopyPolicyProblems(
+	contractFields []string,
+	fixtureFields map[string]bool,
+	inherited map[string]any,
+	replacement, overrideOnly map[string]string,
+) []string {
+	var problems []string
+	declared := map[string]int{}
+	for name := range inherited {
+		declared[name]++
+	}
+	for name := range replacement {
+		declared[name]++
+		if strings.TrimSpace(replacement[name]) == "" {
+			problems = append(problems, "replacement field "+name+" has no reason")
+		}
+	}
+	for name := range overrideOnly {
+		declared[name]++
+		if strings.TrimSpace(overrideOnly[name]) == "" {
+			problems = append(problems, "override-only field "+name+" has no reason")
+		}
+	}
+	contract := map[string]bool{}
+	for _, name := range contractFields {
+		contract[name] = true
+		switch declared[name] {
+		case 0:
+			problems = append(problems, "field "+name+" is missing from the source-copy policy")
+		case 1:
+		default:
+			problems = append(problems, fmt.Sprintf("field %s is declared %d times across the inherited, replacement and override-only sets", name, declared[name]))
+		}
+	}
+	for _, name := range slices.Sorted(maps.Keys(declared)) {
+		if !contract[name] {
+			problems = append(problems, "field "+name+" is not a create-contract member, so its policy is stale")
+		}
+	}
+	for _, name := range slices.Sorted(maps.Keys(inherited)) {
+		source := name
+		if derived, ok := forkDerivedFrom[name]; ok {
+			source = derived
+		}
+		if !fixtureFields[source] {
+			problems = append(problems, "field "+name+" has no value in the source fixture")
+		}
+	}
+	return problems
+}
+
+// forkNormalize round-trips a value through JSON so two Go representations of
+// the same wire value compare equal.
+func forkNormalize(t *testing.T, value any) any {
+	t.Helper()
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("encode %#v: %v", value, err)
+	}
+	var decoded any
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("decode %#v: %v", value, err)
+	}
+	return decoded
+}
+
+// TestForkCopyPolicyRejectsDrift keeps the coverage guard honest: each input the
+// test must not silently accept is reported as a problem.
+func TestForkCopyPolicyRejectsDrift(t *testing.T) {
+	contract := []string{"ToolName", "ToolType"}
+	fixture := map[string]bool{"ToolName": true, "ToolType": true}
+	inherited := func() map[string]any { return map[string]any{"ToolType": "code-interpreter"} }
+	replacement := func() map[string]string {
+		return map[string]string{"ToolName": "a fork must use the new name supplied by --tool-name"}
+	}
+	base := func() []string {
+		return forkCopyPolicyProblems(contract, fixture, inherited(), replacement(), nil)
+	}
+	if problems := base(); len(problems) != 0 {
+		t.Fatalf("a consistent policy reported problems: %v", problems)
+	}
+	// A contract field with no policy at all.
+	if problems := forkCopyPolicyProblems([]string{"ToolName", "ToolType", "Tags"}, fixture, inherited(), replacement(), nil); len(problems) == 0 {
+		t.Fatal("a contract field without any policy passed")
+	}
+	// An inherited value the source fixture never provides.
+	withoutFixture := map[string]bool{"ToolName": true}
+	if problems := forkCopyPolicyProblems(contract, withoutFixture, inherited(), replacement(), nil); len(problems) == 0 {
+		t.Fatal("an inherited field without a fixture value passed")
+	}
+	// A stale exception for a field the contract dropped.
+	stale := replacement()
+	stale["ClientToken"] = "an idempotency token must be newly supplied"
+	if problems := forkCopyPolicyProblems(contract, fixture, inherited(), stale, nil); len(problems) == 0 {
+		t.Fatal("an exception for a field outside the contract passed")
+	}
+	// The same field declared as both replacement and override-only.
+	overlap := forkCopyPolicyProblems(contract, fixture, inherited(), replacement(),
+		map[string]string{"ToolName": "override-only wins over the copied name"})
+	if len(overlap) == 0 {
+		t.Fatal("a field declared twice passed")
+	}
+	// An exception with no reason.
+	reasonless := replacement()
+	reasonless["ToolName"] = " "
+	if problems := forkCopyPolicyProblems(contract, fixture, inherited(), reasonless, nil); len(problems) == 0 {
+		t.Fatal("an exception without a reason passed")
 	}
 }

@@ -262,8 +262,9 @@ CLS 日志目前只接受 `custom` 类型：在内置类型（`code-interpreter`
 `CLSConfig` 会被服务端以 `InvalidParameter` 拒绝（“LogConfiguration with CLSConfig is
 only supported for custom sandbox type for now”），因此还需要提供自定义配置。该自定义
 配置必须给出启动命令：省略 `Command` 会被服务端以 `MissingParameter`
-（“CustomConfiguration.Command is required”）拒绝；而启动命令如果没有拉起沙箱 agent，
-工具会停在 `FAILED`。
+（“CustomConfiguration.Command is required”）拒绝。服务端接受的配置也可能停在 `FAILED`
+（`FailedOperation.DependencyUnavailable`）；请按账号里已经在运行的 custom 工具的形状来
+写：`Command` 拉起沙箱 agent，并把该 agent 的 `/health` 同时声明为探针和端口。
 
 CLS 主题需要带公网出向的网络模式：日志 sidecar 在该网络下无法访问 CLS，服务端会以
 `InvalidParameterValue.CLSConfig` 拒绝 `SANDBOX` 加 `CLSConfig` 的组合。要投递日志的

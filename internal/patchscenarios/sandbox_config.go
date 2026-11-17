@@ -140,6 +140,48 @@ func sandboxFailureDetail(envelope sandboxEnvelope, key string) string {
 	return volumeString(envelope.Failure.Details, key)
 }
 
+// sandboxFailureSummary renders a failure for a diagnostic line without leaking
+// a raw response body.
+func sandboxFailureSummary(envelope sandboxEnvelope) string {
+	if envelope.Failure == nil {
+		return "accepted with no failure"
+	}
+	return fmt.Sprintf("code=%s message=%s", envelope.Failure.Code, envelope.Failure.Message)
+}
+
+// sandboxParameterRejection reports whether the call failed with the service's
+// parameter-validation answer, which is either a value rejection or a missing
+// member. An internal error, an expired credential or a transport failure is not
+// evidence that the service validated the value, so it must never satisfy a
+// rejection assertion.
+func sandboxParameterRejection(callErr error, envelope sandboxEnvelope) bool {
+	if callErr == nil || envelope.Failure == nil {
+		return false
+	}
+	code := envelope.Failure.Code
+	return strings.HasPrefix(code, "InvalidParameter") || strings.HasPrefix(code, "MissingParameter")
+}
+
+// sandboxKeepaliveInvalidRequests lists the keepalive requests the contract
+// rejects. An explicit null object or null member is a rejected value, not a
+// no-op, exactly like an out-of-range timeout; the scenario asserts that the
+// service answers each of them with a parameter error.
+func sandboxKeepaliveInvalidRequests() []map[string]any {
+	return []map[string]any{
+		{"KeepaliveConfiguration": nil},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveMode": nil}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": nil}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": ""}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveMode": "INVALID"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": 600}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "600"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "-600s"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "600.5s"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "299s"}},
+		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "1801s"}},
+	}
+}
+
 func sandboxDiagnoseKeepalive(label string, object map[string]any) {
 	mode, timeout, present := sandboxKeepaliveMembers(object)
 	pause, pauseSet := sandboxBool(object, "AutoPause")
@@ -781,48 +823,15 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 		return err
 	}
 
-	// Fork copies the tool configuration and honours explicit overrides.
-	forkEnvelope, err := sandboxRun(s, ctx, "tool", "fork", toolID, "-n", sandboxUniqueName("keepalive-fork"))
+	// Fork copies the tool configuration and honours explicit overrides. The
+	// helper records the returned id before it propagates a failure, so a fork
+	// that fails after creating a tool is still cleaned up.
+	forked, err := sandboxForkTool(s, ctx, toolID, sandboxUniqueName("keepalive-fork"))
 	if err != nil {
 		return err
 	}
-	forkID := sandboxString(forkEnvelope.Data, "ToolId")
-	if forkID == "" {
-		forkID = sandboxFailureDetail(forkEnvelope, "ResourceId")
-	}
-	if forkID != "" {
-		sandboxOwnTool(s, forkID)
-	}
-	if forkID == "" {
-		return errors.New("tool fork returned no ToolId")
-	}
-	if err := sandboxWaitToolActive(s, ctx, forkID); err != nil {
-		return err
-	}
-	forked, err := sandboxGetTool(s, ctx, forkID)
-	if err != nil {
-		return err
-	}
-	overrideForkEnvelope, err := sandboxRun(s, ctx, "tool", "fork", toolID,
-		"-n", sandboxUniqueName("keepalive-fork-override"),
+	overrideForked, err := sandboxForkTool(s, ctx, toolID, sandboxUniqueName("keepalive-fork-override"),
 		"--keepalive-configuration", `{"KeepaliveTimeout":"1800s"}`, "--auto-pause=false")
-	if err != nil {
-		return err
-	}
-	overrideForkID := sandboxString(overrideForkEnvelope.Data, "ToolId")
-	if overrideForkID == "" {
-		overrideForkID = sandboxFailureDetail(overrideForkEnvelope, "ResourceId")
-	}
-	if overrideForkID != "" {
-		sandboxOwnTool(s, overrideForkID)
-	}
-	if overrideForkID == "" {
-		return errors.New("tool fork with overrides returned no ToolId")
-	}
-	if err := sandboxWaitToolActive(s, ctx, overrideForkID); err != nil {
-		return err
-	}
-	overrideForked, err := sandboxGetTool(s, ctx, overrideForkID)
 	if err != nil {
 		return err
 	}
@@ -886,42 +895,17 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	}
 
 	// Service-side rejection of invalid values must leave the stored
-	// configuration untouched.
+	// configuration untouched. Every request here is invalid per the contract:
+	// an explicit null is a rejected value, not a no-op, and only the service's
+	// parameter-validation answer counts as a rejection.
 	beforeInvalid, err := sandboxGetInstance(s, ctx, overrideID)
 	if err != nil {
 		return err
 	}
 	unchanged := true
-	// An explicit null member is a no-op rather than a value the service has to
-	// reject, so it only has to leave the stored configuration alone.
-	noOps := []map[string]any{
-		{"KeepaliveConfiguration": nil},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveMode": nil}},
-	}
-	rejected := []map[string]any{
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": ""}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveMode": "INVALID"}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": 600}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "600"}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "-600s"}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "600.5s"}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "299s"}},
-		{"KeepaliveConfiguration": map[string]any{"KeepaliveTimeout": "1801s"}},
-	}
-	type invalidRequest struct {
-		members    map[string]any
-		mustReject bool
-	}
-	requests := make([]invalidRequest, 0, len(noOps)+len(rejected))
-	for _, members := range noOps {
-		requests = append(requests, invalidRequest{members: members})
-	}
-	for _, members := range rejected {
-		requests = append(requests, invalidRequest{members: members, mustReject: true})
-	}
-	for _, request := range requests {
+	for _, members := range sandboxKeepaliveInvalidRequests() {
 		payload := map[string]any{"InstanceId": overrideID}
-		for name, value := range request.members {
+		for name, value := range members {
 			payload[name] = value
 		}
 		envelope, callErr := sandboxRawCall(s, ctx, "UpdateSandboxInstance", payload)
@@ -929,12 +913,11 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 		if readErr != nil {
 			return readErr
 		}
-		sandboxRejected := callErr != nil && envelope.Failure != nil
 		if !sandboxEqualKeepalive(beforeInvalid, afterInvalid) {
 			unchanged = false
 		}
-		if request.mustReject && !sandboxRejected {
-			sandboxDiagnostic("service accepted invalid keepalive request %v", request.members)
+		if !sandboxParameterRejection(callErr, envelope) {
+			sandboxDiagnostic("service did not reject invalid keepalive request %v: %s", members, sandboxFailureSummary(envelope))
 			unchanged = false
 		}
 	}
@@ -1111,13 +1094,8 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 		if toolID != "" {
 			sandboxOwnTool(s, toolID)
 		}
-		if callErr == nil || envelope.Failure == nil ||
-			!strings.Contains(strings.ToLower(envelope.Failure.Code), "invalid") {
-			if envelope.Failure != nil {
-				sandboxDiagnostic("log invalid %s: code=%s message=%s", logConfiguration, envelope.Failure.Code, envelope.Failure.Message)
-			} else {
-				sandboxDiagnostic("log invalid %s: accepted", logConfiguration)
-			}
+		if !sandboxParameterRejection(callErr, envelope) {
+			sandboxDiagnostic("log invalid %s: %s", logConfiguration, sandboxFailureSummary(envelope))
 			invalid = false
 		}
 	}

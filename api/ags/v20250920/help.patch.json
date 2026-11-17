@@ -623,7 +623,7 @@
             "MIXED: renew on requests and connections"
           ],
           "examples": [
-            "agr instance update ins-xxxx --auto-resume=false -o text"
+            "agr instance update ins-xxxx --keepalive-configuration '{\"KeepaliveTimeout\":\"1800s\"}' --auto-resume=false -o text"
           ]
         }
       }

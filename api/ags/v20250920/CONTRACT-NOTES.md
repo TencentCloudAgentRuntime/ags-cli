@@ -45,15 +45,20 @@ The preview overlay adds `KeepaliveConfiguration` (`KeepaliveMode`,
   "LogConfiguration.CLSConfig.TopicId is required when ContentFormat is auto".
 - Observed on the live service (ap-guangzhou, 2026-11-17): a `custom` tool must
   name its start command. Omitting `CustomConfiguration.Command` is rejected with
-  `MissingParameter` and "usage: CustomConfiguration.Command is required". A
-  command that does not start the sandbox agent, for example replacing it with a
-  sleep loop, is accepted by `CreateSandboxTool` and then stops at
-  `Status: FAILED` within seconds with `StatusReason`
-  "FailedOperation.DependencyUnavailable: Internal server error", because
-  provisioning never sees the agent. A custom tool that must reach `ACTIVE`
-  therefore starts the agent and declares its health endpoint as the probe; the
-  custom tools already running in the account are shaped that way. Both rules
-  are service-side preconditions and the CLI validates neither.
+  `MissingParameter` and "usage: CustomConfiguration.Command is required".
+- Recorded outcome, not a documented rule: a `custom` tool whose
+  `CustomConfiguration` the service accepts can still stop at `Status: FAILED`
+  within seconds with `StatusReason` "FailedOperation.DependencyUnavailable:
+  Internal server error". The service names no more specific cause, and the
+  attempts that hit it differed in image, registry type, resources, ports and
+  probe as well as in command, so this document records the outcome only and
+  attributes no cause to it. What is reproducible: the configuration this
+  repository's live log scenario uses - a public image, an image registry type
+  that the public schema lists and the account's own custom tools use, a
+  `Command` that starts the sandbox agent, and the agent's `/health` endpoint
+  declared both as the probe and as a port - does reach `ACTIVE`, and has the
+  same shape as the custom tools already running in the account. Every
+  precondition on this path is service-side; the CLI validates none of them.
 
 ## Review status
 
@@ -73,10 +78,19 @@ never reported as backend evidence.
 
 ## Exit condition
 
-Delete the corresponding `api.patch.json` additions (keepalive members,
-`/objects/KeepaliveConfiguration`, `LogConfiguration.ContentFormat`), remove the
-`e2e-coverage.yaml` bindings and the two `sandbox.*` scenarios, then regenerate
-both channels with `go run ./cmd/internal/cobragen` once the official AGS
-contract or SDK carries these members. Re-check the affected commands, channels
-and README sections at that point; the preview-only flags become stable behavior
-and the `preview` labels must be removed.
+The authority for these commands is the effective API contract, so the patch may
+only be retired once the official base contract itself carries these members: the
+`api.json` this repository builds from has `KeepaliveConfiguration`,
+`AutoPause`, `AutoResume` and `LogConfiguration.ContentFormat` as contract
+members, and the generated metadata snapshots reflect them. A vendored SDK that
+happens to contain the fields is not sufficient: the SDK is a generated client
+for the same contract and can lead or lag it, so SDK compatibility is checked
+separately and never decides whether a patch entry is still needed.
+
+When the base contract has absorbed them, delete the corresponding
+`api.patch.json` additions (keepalive members, `/objects/KeepaliveConfiguration`,
+`LogConfiguration.ContentFormat`), keep the `e2e-coverage.yaml` bindings and the
+two `sandbox.*` scenarios as regression evidence for the absorbed behavior, then
+regenerate both channels with `go run ./cmd/internal/cobragen` and re-check the
+affected commands, channels and README sections. The preview-only flags become
+stable behavior at that point and the `preview` labels must be removed.
