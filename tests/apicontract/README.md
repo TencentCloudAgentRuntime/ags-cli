@@ -48,7 +48,11 @@ GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -coun
 
 Both specs derive their assertion plan from `api/ags/v20250920/e2e-coverage.yaml`
 and require a `pass` result with a passing cleanup and at least one real CLI
-call; a skipped or empty plan is not acceptance.
+call; a skipped or empty plan is not acceptance. The executed assertion set must
+equal the bound set exactly, so every assertion a scenario registers has to be
+bound to at least one manifest entry: an unbound one fails the spec even when
+the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
+`internal/patchscenarios` enforces that offline for both scenarios.
 
 - `sandbox.keepalive` creates one disposable code-interpreter tool and several
   `30m` instances in `ap-guangzhou`, checks tool defaults, per-member instance

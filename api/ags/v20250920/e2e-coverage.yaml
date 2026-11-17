@@ -2816,7 +2816,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/CreateSandboxToolRequest/members/AutoPause/member
     scenario: sandbox.keepalive
-    assertions: [keepalive.tool.create, keepalive.readback]
+    assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
   - entry: /objects/CreateSandboxToolRequest/members/AutoPause/name
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback]
@@ -2838,7 +2838,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/CreateSandboxToolRequest/members/AutoResume/member
     scenario: sandbox.keepalive
-    assertions: [keepalive.tool.create, keepalive.readback]
+    assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
   - entry: /objects/CreateSandboxToolRequest/members/AutoResume/name
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback]
@@ -2860,7 +2860,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
-    assertions: [keepalive.tool.create, keepalive.readback]
+    assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
   - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/name
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.create, keepalive.readback]
@@ -2952,7 +2952,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/LogConfiguration/members/ContentFormat/member
     scenario: sandbox.log-format
-    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback, log.fork]
   - entry: /objects/LogConfiguration/members/ContentFormat/name
     scenario: sandbox.log-format
     assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
@@ -3064,7 +3064,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/SandboxTool/members/AutoPause/member
     scenario: sandbox.keepalive
-    assertions: [keepalive.readback, keepalive.inheritance]
+    assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
   - entry: /objects/SandboxTool/members/AutoPause/name
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
@@ -3092,7 +3092,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/SandboxTool/members/AutoResume/member
     scenario: sandbox.keepalive
-    assertions: [keepalive.readback, keepalive.inheritance]
+    assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
   - entry: /objects/SandboxTool/members/AutoResume/name
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]
@@ -3120,7 +3120,7 @@ coverage:
     review: "新增成员的文档随契约补丁审阅；行为断言由其引用场景覆盖。"
   - entry: /objects/SandboxTool/members/KeepaliveConfiguration/member
     scenario: sandbox.keepalive
-    assertions: [keepalive.readback, keepalive.inheritance]
+    assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
   - entry: /objects/SandboxTool/members/KeepaliveConfiguration/name
     scenario: sandbox.keepalive
     assertions: [keepalive.readback, keepalive.inheritance]

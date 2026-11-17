@@ -641,6 +641,41 @@ func (f *sandboxFixture) instanceObject(instance *sandboxFixtureInstance, create
 	return object
 }
 
+// TestRegistryAssertionsAreBoundInManifest guards the live suite contract: the
+// live specs require the executed assertion set to equal the set the coverage
+// manifest binds to the scenario. A registered assertion that no binding names
+// therefore fails a live run even when the backend behaved correctly, so the
+// mismatch has to fail offline instead. Only the scenarios this patch binds are
+// checked; other scenarios in the shared registry belong to other manifests.
+func TestRegistryAssertionsAreBoundInManifest(t *testing.T) {
+	plan, err := patchcoverage.Load("../..", Registry.Coverage(), true)
+	if err != nil {
+		t.Fatalf("load coverage plan: %v", err)
+	}
+	bound := map[string]map[string]bool{}
+	for _, binding := range plan.Bindings {
+		if bound[binding.Scenario] == nil {
+			bound[binding.Scenario] = map[string]bool{}
+		}
+		for _, assertion := range binding.Assertions {
+			bound[binding.Scenario][assertion] = true
+		}
+	}
+	for _, want := range []struct {
+		scenario   string
+		assertions []string
+	}{
+		{"sandbox.keepalive", sandboxKeepaliveAssertions},
+		{"sandbox.log-format", sandboxLogAssertions},
+	} {
+		for _, assertion := range want.assertions {
+			if !bound[want.scenario][assertion] {
+				t.Errorf("assertion %s/%s is not bound in e2e-coverage.yaml", want.scenario, assertion)
+			}
+		}
+	}
+}
+
 func TestSandboxKeepaliveCandidate(t *testing.T) {
 	binary := sandboxBuildCandidate(t)
 	sandboxShortenWaits(t)
