@@ -350,18 +350,68 @@ func sandboxWaitToolActive(s *patchtest.Session, ctx context.Context, toolID str
 				case "ACTIVE":
 					return nil
 				case "FAILED", "DELETED":
-					return fmt.Errorf("tool %s reached %s instead of ACTIVE", toolID, status)
+					reason := sandboxToolStatusReason(row)
+					sandboxDiagnoseTool(fmt.Sprintf("tool %s reached %s", toolID, status), row)
+					return fmt.Errorf("tool %s reached %s instead of ACTIVE: reason=%s", toolID, status, reason)
 				}
 			}
 		}
 		if time.Now().After(deadline) {
 			sandboxDiagnostic("tool %s did not become ACTIVE before the deadline", toolID)
+			if rows, total, err := sandboxToolRows(s, ctx, toolID); err == nil && total >= 1 {
+				if row := sandboxToolRow(rows, toolID); row != nil {
+					sandboxDiagnoseTool(fmt.Sprintf("tool %s still not ACTIVE at the deadline", toolID), row)
+				}
+			}
 			return fmt.Errorf("tool %s did not reach ACTIVE before the deadline", toolID)
 		}
 		if err := sandboxSleep(ctx); err != nil {
 			return err
 		}
 	}
+}
+
+// sandboxToolStatusReason renders the service's own explanation for a tool that
+// did not become ACTIVE. The reason field is the only place the service states
+// why provisioning stopped, so its absence is reported rather than guessed.
+func sandboxToolStatusReason(row map[string]any) string {
+	if reason := strings.TrimSpace(sandboxString(row, "StatusReason")); reason != "" {
+		return reason
+	}
+	return "the service returned no StatusReason"
+}
+
+// sandboxDiagnoseTool reports why a tool did not become ACTIVE together with the
+// preconditions the scenario chose, so a rejection can be attributed to the tool
+// type, the network, the image or the log sidecar instead of costing another
+// live round. It prints no credential, topic id or request payload.
+func sandboxDiagnoseTool(label string, row map[string]any) {
+	custom := sandboxObject(row["CustomConfiguration"])
+	log := sandboxObject(row["LogConfiguration"])
+	sandboxDiagnostic(`%s: Status=%q reason=%q ToolType=%q networkMode=%q logContentFormat=%q logCLSConfigPresent=%v image=%q command=%q args=%q`,
+		label,
+		sandboxString(row, "Status"),
+		sandboxToolStatusReason(row),
+		sandboxString(row, "ToolType"),
+		sandboxString(sandboxObject(row["NetworkConfiguration"]), "NetworkMode"),
+		sandboxString(log, "ContentFormat"),
+		sandboxObject(log["CLSConfig"]) != nil,
+		sandboxString(custom, "Image"),
+		sandboxJoinedList(custom["Command"]),
+		sandboxJoinedList(custom["Args"]))
+}
+
+// sandboxJoinedList renders a string list from a response member for a log line.
+func sandboxJoinedList(value any) string {
+	items, ok := value.([]any)
+	if !ok {
+		return ""
+	}
+	parts := make([]string, 0, len(items))
+	for _, item := range items {
+		parts = append(parts, fmt.Sprintf("%v", item))
+	}
+	return strings.Join(parts, " ")
 }
 
 func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, tool sandboxToolSpec, extra ...string) (string, error) {

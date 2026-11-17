@@ -46,7 +46,7 @@ var sandboxKeepaliveFaults = []string{
 var sandboxLogFaults = []string{
 	"",
 	"ignore-log-format", "drop-raw-default", "log-case", "accept-invalid-log",
-	"retain-tool",
+	"retain-tool", "fail-tool-provision",
 }
 
 const (
@@ -251,6 +251,12 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		f.tools[id] = stored
+		if f.fault == "fail-tool-provision" {
+			// The service can accept a create and then fail provisioning, for
+			// example when it cannot assume the role that delivers the logs.
+			stored["Status"] = "FAILED"
+			stored["StatusReason"] = "fixture: assume the log delivery role failed"
+		}
 		f.holdToolPending(id)
 		response["ToolId"] = id
 	case "DescribeSandboxToolList":
@@ -980,6 +986,48 @@ func TestSandboxLogFormatCandidate(t *testing.T) {
 				t.Fatalf("scenario contacted the service without %s: %d calls", missing, fixture.calls)
 			}
 		})
+	}
+}
+
+// TestSandboxFailedToolDiagnosticNamesTheReason keeps the live diagnostic
+// honest: a tool that stops at FAILED must report the service's StatusReason and
+// the preconditions the scenario chose, because the report itself carries no raw
+// response and "reached FAILED" alone cannot be triaged.
+func TestSandboxFailedToolDiagnosticNamesTheReason(t *testing.T) {
+	binary := sandboxBuildCandidate(t)
+	sandboxShortenWaits(t)
+	sandboxLogEnv(t)
+	fixture := newSandboxFixture(t, "fail-tool-provision")
+	server, caFile := sandboxTLSServer(t, fixture)
+	defer server.Close()
+	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+		{Scenario: "sandbox.log-format", Assertions: sandboxLogAssertions},
+	}}
+	var (
+		results []patchtest.Result
+		runErr  error
+	)
+	logged := sandboxCapturedStderr(t, func() {
+		results, runErr = patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+	})
+	if runErr == nil {
+		t.Fatalf("a tool that failed provisioning produced a passing run: %+v", results)
+	}
+	for _, want := range []string{
+		`reached FAILED`,
+		`reason="fixture: assume the log delivery role failed"`,
+		`ToolType="custom"`,
+		`logContentFormat=`,
+		`image="ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14"`,
+	} {
+		if !strings.Contains(logged, want) {
+			t.Fatalf("diagnostic log %q does not carry %q", logged, want)
+		}
+	}
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if len(fixture.tools) != 0 {
+		t.Fatalf("owned tools leaked after the failed wait: %d", len(fixture.tools))
 	}
 }
 

@@ -85,7 +85,11 @@ the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
 Both scenarios wait (read-only, with a deadline) for a created or forked tool to
 report `ACTIVE` before reading the copied configuration back: create and fork are
 asynchronous, so an immediate readback observes a tool that has not published its
-members yet. A failure of that wait is reported with the observed status.
+members yet. A failure of that wait reports the observed status together with the
+service's `StatusReason` and the preconditions the scenario chose (tool type,
+network mode, log `ContentFormat`, image and command), because the report itself
+carries no raw response: a tool that stops at `FAILED` is then triaged from the
+run log instead of costing another live round.
 
 Cleanup deletes every instance and tool created by the run and then queries them
 independently until they are gone or stopped; `Cleanup=pass` reflects that
