@@ -27,6 +27,14 @@ The preview overlay adds `KeepaliveConfiguration` (`KeepaliveMode`,
   keeps the spelling the caller sent (for example `600s`, `5m`, `30m`).
   `ContentFormat` is neither defaulted to `raw` nor case-normalized locally.
 
+- Observed on the live service (ap-guangzhou, 2026-11-17):
+  `CreateSandboxTool` rejects `LogConfiguration.CLSConfig` when
+  `NetworkConfiguration.NetworkMode` is `SANDBOX` with
+  `InvalidParameterValue.CLSConfig` and the message "LogConfiguration.CLSConfig
+  cannot be used when NetworkMode is SANDBOX (sidecar requires network access to
+  push logs to CLS)". A CLS topic therefore needs a network mode with egress; the
+  CLI sends the user's choice unchanged and adds no validation of its own.
+
 ## Review status
 
 Not yet accepted by an AGS API owner. The inheritance order (instance member >

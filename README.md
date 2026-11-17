@@ -276,10 +276,15 @@ outside the enum or range.
 
 ```bash
 agr tool create -n logs-tool -t code-interpreter \
-  --network-configuration '{"NetworkMode":"SANDBOX"}' \
+  --network-configuration '{"NetworkMode":"PUBLIC"}' \
   --role-arn '<role-arn>' \
   --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
 ```
+
+A CLS topic needs a network mode with outbound access: the service rejects
+`CLSConfig` on `SANDBOX` because the log sidecar cannot reach CLS from that
+network. Use `PUBLIC` (or another mode with egress) for tools that ship logs,
+and keep `SANDBOX` for tools that only need the sandbox network.
 
 `raw` keeps the original log line; `auto` extracts the first JSON object level
 or a complete logfmt line and falls back to the whole entry when it cannot

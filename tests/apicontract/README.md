@@ -64,7 +64,12 @@ call; a skipped or empty plan is not acceptance.
   `raw`/`RAW` and `auto`/`AuTo` values through `tool create`, `tool get/list`
   and `tool fork`, plus the two structured rejections (no topic with `auto`, an
   unknown format). Missing or unusable fixtures fail the scenario instead of
-  skipping it. The suite never creates CLS or CAM resources, never deletes the
+  skipping it. Every tool in this scenario uses a network mode with egress
+  (`PUBLIC`), because the service rejects `LogConfiguration.CLSConfig` on
+  `SANDBOX` with `InvalidParameterValue.CLSConfig`: the log sidecar cannot push
+  to CLS from the sandbox network. The keepalive scenario stays on `SANDBOX`.
+  The rejection probes use the same egress network so a network precondition can
+  never stand in for the `ContentFormat` validation under test. The suite never creates CLS or CAM resources, never deletes the
   fixture topic or role, and does not read either value into metadata.
 
 Both scenarios wait (read-only, with a deadline) for a created or forked tool to

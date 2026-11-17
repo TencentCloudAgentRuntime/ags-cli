@@ -34,9 +34,13 @@ var sandboxLogAssertions = []string{
 }
 
 const (
-	sandboxNetworkConfiguration = `{"NetworkMode":"SANDBOX"}`
-	sandboxToolDefaultTimeout   = "30m"
-	sandboxInstanceTimeout      = "30m"
+	// The keepalive scenario keeps the sandbox network. The service rejects
+	// CLSConfig on it ("sidecar requires network access to push logs to CLS"),
+	// so every tool that carries a CLS topic uses a network mode with egress.
+	sandboxNetworkConfiguration    = `{"NetworkMode":"SANDBOX"}`
+	sandboxLogNetworkConfiguration = `{"NetworkMode":"PUBLIC"}`
+	sandboxToolDefaultTimeout      = "30m"
+	sandboxInstanceTimeout         = "30m"
 )
 
 // The waits are variables so the offline fixture test can shorten them; the
@@ -175,11 +179,20 @@ func sandboxKeepaliveMembers(object map[string]any) (mode, timeout string, prese
 	return sandboxString(configuration, "KeepaliveMode"), sandboxString(configuration, "KeepaliveTimeout"), true
 }
 
-// sandboxBoolAbsent reports a member the service did not send. The contract keeps
-// unsent members unsent, so a default inferred by the client would be a lie.
-func sandboxBoolAbsent(object map[string]any, key string) bool {
-	_, present := object[key]
-	return !present
+// sandboxBoolPair renders a bool member for a diagnostic line as "value/present".
+func sandboxBoolPair(object map[string]any, key string) string {
+	value, present := sandboxBool(object, key)
+	return fmt.Sprintf("%v/%v", value, present)
+}
+
+// sandboxBoolOff reports a bool the service did not enable. #172 only promises
+// that an omitted request member does not overwrite the stored value; it does not
+// promise the response drops the member, so an echoed false and an absent member
+// are both acceptable here. That an omitted member is not sent at all is proven
+// on the request side by the control-plane and command tests.
+func sandboxBoolOff(object map[string]any, key string) bool {
+	value, present := sandboxBool(object, key)
+	return !present || !value
 }
 
 // sandboxOwnTool registers cleanup for a tool immediately after its ID is known,
@@ -327,9 +340,9 @@ func sandboxWaitToolActive(s *patchtest.Session, ctx context.Context, toolID str
 	}
 }
 
-func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, extra ...string) (string, error) {
+func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name, networkConfiguration string, extra ...string) (string, error) {
 	args := []string{"tool", "create", "-n", name, "-t", "code-interpreter",
-		"--network-configuration", sandboxNetworkConfiguration,
+		"--network-configuration", networkConfiguration,
 		"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout}
 	envelope, err := sandboxRun(s, ctx, append(args, extra...)...)
 	toolID := sandboxString(envelope.Data, "ToolId")
@@ -462,7 +475,7 @@ func sandboxEqualKeepalive(left, right map[string]any) bool {
 func runSandboxKeepalive(s *patchtest.Session) error {
 	ctx := s.Context
 	toolName := sandboxUniqueName("keepalive")
-	toolID, err := sandboxCreateTool(s, ctx, toolName,
+	toolID, err := sandboxCreateTool(s, ctx, toolName, sandboxNetworkConfiguration,
 		"--keepalive-configuration", `{"KeepaliveMode":"REQUEST","KeepaliveTimeout":"600s"}`,
 		"--auto-pause", "--auto-resume")
 	if err != nil {
@@ -472,8 +485,13 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	if err := s.Assert("keepalive.tool.create", sandboxString(created, "ToolName") == toolName &&
-		sandboxKeepaliveMatches(created, "REQUEST", "600s", true, true)); err != nil {
+	createdStep := sandboxString(created, "ToolName") == toolName &&
+		sandboxKeepaliveMatches(created, "REQUEST", "600s", true, true)
+	if !createdStep {
+		sandboxDiagnostic("tool create step: nameMatches=%v", sandboxString(created, "ToolName") == toolName)
+		sandboxDiagnoseKeepalive("created tool", created)
+	}
+	if err := s.Assert("keepalive.tool.create", createdStep); err != nil {
 		return err
 	}
 
@@ -501,18 +519,27 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	if err := s.Assert("keepalive.instance.create",
-		sandboxKeepaliveMatches(inherited, "REQUEST", "600s", true, true) &&
-			sandboxKeepaliveMatches(empty, "REQUEST", "600s", true, true) &&
-			sandboxKeepaliveMatches(override, "CONNECTION", "30m", true, true) &&
-			sandboxString(inherited, "InstanceId") == inheritedID &&
-			sandboxString(override, "InstanceId") == overrideID); err != nil {
+	createStep := sandboxKeepaliveMatches(inherited, "REQUEST", "600s", true, true) &&
+		sandboxKeepaliveMatches(empty, "REQUEST", "600s", true, true) &&
+		sandboxKeepaliveMatches(override, "CONNECTION", "30m", true, true) &&
+		sandboxString(inherited, "InstanceId") == inheritedID &&
+		sandboxString(override, "InstanceId") == overrideID
+	if !createStep {
+		sandboxDiagnoseKeepalive("inherited instance", inherited)
+		sandboxDiagnoseKeepalive("empty override instance", empty)
+		sandboxDiagnoseKeepalive("full override instance", override)
+	}
+	if err := s.Assert("keepalive.instance.create", createStep); err != nil {
 		return err
 	}
 	// Before the tool update every omitted member follows the tool value.
-	if err := s.Assert("keepalive.inheritance",
-		sandboxKeepaliveMatches(modeOnly, "NONE", "600s", true, true) &&
-			sandboxKeepaliveMatches(timeoutOnly, "REQUEST", "5m", true, true)); err != nil {
+	inheritanceStep := sandboxKeepaliveMatches(modeOnly, "NONE", "600s", true, true) &&
+		sandboxKeepaliveMatches(timeoutOnly, "REQUEST", "5m", true, true)
+	if !inheritanceStep {
+		sandboxDiagnoseKeepalive("mode-only instance", modeOnly)
+		sandboxDiagnoseKeepalive("timeout-only instance", timeoutOnly)
+	}
+	if err := s.Assert("keepalive.inheritance", inheritanceStep); err != nil {
 		return err
 	}
 	if err := sandboxWaitRunning(s, ctx, inheritedID); err != nil {
@@ -526,6 +553,9 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	updated, err := sandboxGetTool(s, ctx, toolID)
 	if err != nil {
 		return err
+	}
+	if !sandboxKeepaliveMatches(updated, "MIXED", "900s", true, true) {
+		sandboxDiagnoseKeepalive("updated tool", updated)
 	}
 	if err := s.Assert("keepalive.tool.update", sandboxKeepaliveMatches(updated, "MIXED", "900s", true, true)); err != nil {
 		return err
@@ -547,6 +577,8 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 			return err
 		}
 		if !sandboxKeepaliveMatches(instance, expected.mode, expected.timeout, true, true) {
+			sandboxDiagnostic("followed step: instance %s wants %s/%s", expected.id, expected.mode, expected.timeout)
+			sandboxDiagnoseKeepalive("followed instance", instance)
 			followed = false
 		}
 	}
@@ -563,6 +595,9 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	modeOnly, err = sandboxGetInstance(s, ctx, modeOnlyID)
 	if err != nil {
 		return err
+	}
+	if !sandboxKeepaliveMatches(modeOnly, "CONNECTION", "900s", false, false) {
+		sandboxDiagnoseKeepalive("instance update instance", modeOnly)
 	}
 	if err := s.Assert("keepalive.instance.update",
 		sandboxKeepaliveMatches(modeOnly, "CONNECTION", "900s", false, false)); err != nil {
@@ -588,14 +623,19 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	if err := s.Assert("keepalive.boundaries", minimumAccepted &&
-		sandboxKeepaliveMatches(timeoutOnly, "MIXED", "1800s", true, true)); err != nil {
+	maxAccepted := sandboxKeepaliveMatches(timeoutOnly, "MIXED", "1800s", true, true)
+	if !minimumAccepted || !maxAccepted {
+		sandboxDiagnostic("boundaries step: minimumAccepted=%v maxAccepted=%v", minimumAccepted, maxAccepted)
+		sandboxDiagnoseKeepalive("boundary instance", timeoutOnly)
+	}
+	if err := s.Assert("keepalive.boundaries", minimumAccepted && maxAccepted); err != nil {
 		return err
 	}
 
 	// A tool without keepalive and with AutoPause=false yields no object, while
 	// an instance that enables AutoPause gets the documented platform default.
-	bareID, err := sandboxCreateTool(s, ctx, sandboxUniqueName("keepalive-bare"), "--auto-pause=false")
+	bareID, err := sandboxCreateTool(s, ctx, sandboxUniqueName("keepalive-bare"),
+		sandboxNetworkConfiguration, "--auto-pause=false")
 	if err != nil {
 		return err
 	}
@@ -607,12 +647,21 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	barePause, barePauseSet := sandboxBool(bare, "AutoPause")
-	instancePause, instancePauseSet := sandboxBool(bareInstance, "AutoPause")
-	if err := s.Assert("keepalive.inheritance",
-		sandboxKeepaliveAbsent(bare) && barePauseSet && !barePause && sandboxBoolAbsent(bare, "AutoResume") &&
-			sandboxKeepaliveAbsent(bareInstance) && instancePauseSet && !instancePause &&
-			sandboxBoolAbsent(bareInstance, "AutoResume")); err != nil {
+	// Neither bool was enabled, so "off or not sent" is the only claim here; the
+	// explicit false the CLI sent is echoed-checked on the instance update below.
+	bareToolClean := sandboxKeepaliveAbsent(bare) && sandboxBoolOff(bare, "AutoPause") &&
+		sandboxBoolOff(bare, "AutoResume")
+	bareInstanceClean := sandboxKeepaliveAbsent(bareInstance) && sandboxBoolOff(bareInstance, "AutoPause") &&
+		sandboxBoolOff(bareInstance, "AutoResume")
+	if !bareToolClean || !bareInstanceClean {
+		sandboxDiagnostic("bare step: toolClean=%v instanceClean=%v toolPause=%s toolResume=%s instancePause=%s instanceResume=%s",
+			bareToolClean, bareInstanceClean,
+			sandboxBoolPair(bare, "AutoPause"), sandboxBoolPair(bare, "AutoResume"),
+			sandboxBoolPair(bareInstance, "AutoPause"), sandboxBoolPair(bareInstance, "AutoResume"))
+		sandboxDiagnoseKeepalive("bare tool", bare)
+		sandboxDiagnoseKeepalive("bare instance", bareInstance)
+	}
+	if err := s.Assert("keepalive.inheritance", bareToolClean && bareInstanceClean); err != nil {
 		return err
 	}
 	defaultID, defaultInstance, err := sandboxCreateInstance(s, ctx, bareID, "--auto-pause=true")
@@ -621,12 +670,18 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	}
 	// AutoResume was never configured, so the documented platform default
 	// REQUEST/10m is the only keepalive source here.
-	defaultPause, defaultPauseSet := sandboxBool(defaultInstance, "AutoPause")
 	mode, timeout, present := sandboxKeepaliveMembers(defaultInstance)
-	if err := s.Assert("keepalive.inheritance",
-		sandboxString(defaultInstance, "InstanceId") == defaultID &&
-			present && mode == "REQUEST" && timeout == "10m" &&
-			defaultPauseSet && defaultPause && sandboxBoolAbsent(defaultInstance, "AutoResume")); err != nil {
+	defaultPause, _ := sandboxBool(defaultInstance, "AutoPause")
+	defaultStep := sandboxString(defaultInstance, "InstanceId") == defaultID &&
+		present && mode == "REQUEST" && timeout == "10m" &&
+		defaultPause && sandboxBoolOff(defaultInstance, "AutoResume")
+	if !defaultStep {
+		sandboxDiagnostic("default step: idMatches=%v keepalive=%v mode=%q timeout=%q autoPause=%s autoResume=%s",
+			sandboxString(defaultInstance, "InstanceId") == defaultID, present, mode, timeout,
+			sandboxBoolPair(defaultInstance, "AutoPause"), sandboxBoolPair(defaultInstance, "AutoResume"))
+		sandboxDiagnoseKeepalive("default instance", defaultInstance)
+	}
+	if err := s.Assert("keepalive.inheritance", defaultStep); err != nil {
 		return err
 	}
 	defaultReadback, err := sandboxGetInstance(s, ctx, defaultID)
@@ -634,6 +689,10 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 		return err
 	}
 	readbackMode, readbackTimeout, readbackPresent := sandboxKeepaliveMembers(defaultReadback)
+	if !readbackPresent || readbackMode != "REQUEST" || readbackTimeout != "10m" {
+		sandboxDiagnostic("default readback: present=%v mode=%q timeout=%q", readbackPresent, readbackMode, readbackTimeout)
+		sandboxDiagnoseKeepalive("default readback", defaultReadback)
+	}
 	if err := s.Assert("keepalive.inheritance",
 		readbackPresent && readbackMode == "REQUEST" && readbackTimeout == "10m"); err != nil {
 		return err
@@ -889,7 +948,7 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 	ctx := s.Context
 
 	createLogged := func(name, logConfiguration string) (map[string]any, error) {
-		toolID, err := sandboxCreateTool(s, ctx, name,
+		toolID, err := sandboxCreateTool(s, ctx, name, sandboxLogNetworkConfiguration,
 			"--role-arn", fixture.roleArn, "--log-configuration", logConfiguration)
 		if err != nil {
 			return nil, err
@@ -960,7 +1019,7 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 	} {
 		envelope, callErr := sandboxRunExpected(s, ctx, "tool", "create",
 			"-n", sandboxUniqueName("log-invalid"), "-t", "code-interpreter",
-			"--network-configuration", sandboxNetworkConfiguration,
+			"--network-configuration", sandboxLogNetworkConfiguration,
 			"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout,
 			"--role-arn", fixture.roleArn,
 			"--log-configuration", logConfiguration)

@@ -252,10 +252,14 @@ agr instance list --tool-ids sdt-xxxx -o text
 
 ```bash
 agr tool create -n logs-tool -t code-interpreter \
-  --network-configuration '{"NetworkMode":"SANDBOX"}' \
+  --network-configuration '{"NetworkMode":"PUBLIC"}' \
   --role-arn '<role-arn>' \
   --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
 ```
+
+CLS 主题需要带公网出向的网络模式：日志 sidecar 在该网络下无法访问 CLS，服务端会以
+`InvalidParameterValue.CLSConfig` 拒绝 `SANDBOX` 加 `CLSConfig` 的组合。要投递日志的
+Tool 请用 `PUBLIC` 或其它有出向的模式；只需要沙箱网络时继续用 `SANDBOX`。
 
 `raw` 保留原始日志行；`auto` 提取第一层 JSON 对象或完整的 logfmt 行，无法完整提取时整条
 回退为原始内容。取值大小写不敏感、存储为小写；省略该成员或传空字符串都保持 `raw`，

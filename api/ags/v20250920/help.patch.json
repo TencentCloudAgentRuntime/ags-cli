@@ -679,7 +679,7 @@
           "usage": "LogConfiguration JSON object, @file, or - for stdin",
           "format": "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"},\"ContentFormat\":\"raw|auto\"}",
           "examples": [
-            "agr tool create -n logs-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"xxxxx-xxxx-xxxx\"},\"ContentFormat\":\"auto\"}' -o text"
+            "agr tool create -n logs-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"xxxxx-xxxx-xxxx\"},\"ContentFormat\":\"auto\"}' -o text"
           ],
           "fields": [
             "ContentFormat: raw keeps the original text; auto extracts the first JSON object level or a complete logfmt line and falls back to the whole entry in content when it cannot extract it fully. Values are case-insensitive and normalized to lower case by the server; omitting it or sending an empty string keeps raw. auto requires a valid CLSConfig.TopicId. Log body processing happens on the server; the CLI does not parse logs."

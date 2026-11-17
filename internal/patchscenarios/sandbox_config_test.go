@@ -383,6 +383,13 @@ func (f *sandboxFixture) copyToolFields(stored, req map[string]any, keepalive, b
 		for _, name := range []string{"AutoPause", "AutoResume"} {
 			value, present := req[name]
 			if !present {
+				// The real service may echo a stored false even when the
+				// request omitted the member; the scenario must not read that
+				// as a client-side default. An update that omits the member
+				// keeps the stored value, so only a fresh tool echoes.
+				if _, stored0 := stored[name]; f.fault == "echo-server-bools" && !stored0 {
+					stored[name] = false
+				}
 				continue
 			}
 			enabled, _ := value.(bool)
@@ -524,6 +531,15 @@ func (f *sandboxFixture) storeLogConfiguration(tool, req map[string]any) map[str
 		format = text
 	}
 	topic := volumeString(volumeNested(configuration, "CLSConfig"), "TopicId")
+	// The service needs outbound access for the sidecar that pushes logs, so it
+	// rejects a CLS topic on the sandbox network.
+	if topic != "" && volumeString(volumeNested(req, "NetworkConfiguration"), "NetworkMode") == "SANDBOX" {
+		return map[string]any{
+			"Code": "InvalidParameterValue.CLSConfig",
+			"Message": "LogConfiguration.CLSConfig cannot be used when NetworkMode is SANDBOX " +
+				"(sidecar requires network access to push logs to CLS)",
+		}
+	}
 	if f.fault != "accept-invalid-log" {
 		if format != "" && format != "raw" && format != "auto" {
 			return map[string]any{"Code": "InvalidParameter", "Message": "ContentFormat must be raw or auto"}
@@ -666,6 +682,56 @@ func TestSandboxKeepaliveCandidate(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestSandboxKeepaliveAcceptsServerEchoedFalseBools covers the live failure the
+// old expectation caused: the service echoes a stored false for a member the
+// request never sent, which is allowed. #172 only forbids the client inventing
+// the member, and the request side stays covered by the control-plane tests.
+func TestSandboxKeepaliveAcceptsServerEchoedFalseBools(t *testing.T) {
+	binary := sandboxBuildCandidate(t)
+	sandboxShortenWaits(t)
+	fixture := newSandboxFixture(t, "echo-server-bools")
+	server, caFile := sandboxTLSServer(t, fixture)
+	defer server.Close()
+	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+		{Scenario: "sandbox.keepalive", Assertions: sandboxKeepaliveAssertions},
+	}}
+	results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+	if err != nil {
+		t.Fatalf("server-echoed false booleans broke the scenario: %v results=%+v", err, results)
+	}
+	if len(results) != 1 || results[0].Status != "pass" || results[0].Cleanup != "pass" {
+		t.Fatalf("results=%+v", results)
+	}
+}
+
+// TestSandboxFixtureRejectsCLSOnSandboxNetwork keeps the offline fixture honest
+// about the precondition the live service enforced: a CLS topic needs a network
+// mode with egress, and the sandbox network must be rejected.
+func TestSandboxFixtureRejectsCLSOnSandboxNetwork(t *testing.T) {
+	fixture := newSandboxFixture(t, "")
+	tool := map[string]any{}
+	request := map[string]any{
+		"NetworkConfiguration": map[string]any{"NetworkMode": "SANDBOX"},
+		"LogConfiguration":     map[string]any{"CLSConfig": map[string]any{"TopicId": sandboxFixtureTopic}},
+	}
+	failure := fixture.storeLogConfiguration(tool, request)
+	if failure == nil || failure["Code"] != "InvalidParameterValue.CLSConfig" {
+		t.Fatalf("sandbox network with a CLS topic was accepted: %v", failure)
+	}
+	if _, present := tool["LogConfiguration"]; present {
+		t.Fatal("a rejected request stored a log configuration")
+	}
+
+	request["NetworkConfiguration"] = map[string]any{"NetworkMode": "PUBLIC"}
+	if failure := fixture.storeLogConfiguration(tool, request); failure != nil {
+		t.Fatalf("public network with a CLS topic was rejected: %v", failure)
+	}
+	topic := volumeString(volumeNested(tool, "LogConfiguration", "CLSConfig"), "TopicId")
+	if topic != sandboxFixtureTopic {
+		t.Fatalf("stored topic = %q, want %q", topic, sandboxFixtureTopic)
 	}
 }
 
