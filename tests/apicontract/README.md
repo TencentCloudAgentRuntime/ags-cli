@@ -75,7 +75,10 @@ the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
   `custom` with a custom configuration, because the service rejects a
   `CLSConfig` on the built-in types with `InvalidParameter` "only supported for
   custom sandbox type for now"; the custom tool uses a reviewed system image so
-  it never pulls a user image. The keepalive scenario stays on `SANDBOX` with
+  it never pulls a user image, and it runs that image's own entrypoint: an
+  overridden `Command`/`Args` kept the sandbox agent from starting, and the
+  service then reported the tool as failed with an internal dependency error.
+  The keepalive scenario stays on `SANDBOX` with
   `code-interpreter`. The rejection probes keep the same tool type and egress
   network so neither a type nor a network precondition can stand in for the
   `ContentFormat` validation under test. The suite never creates CLS or CAM

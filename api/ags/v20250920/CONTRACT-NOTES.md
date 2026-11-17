@@ -43,6 +43,16 @@ The preview overlay adds `KeepaliveConfiguration` (`KeepaliveMode`,
   unchanged. A CLS topic is not required for the rejection: an `auto`
   `ContentFormat` without a topic is rejected on any tool type with
   "LogConfiguration.CLSConfig.TopicId is required when ContentFormat is auto".
+- Observed on the live service (ap-guangzhou, 2026-11-17): a `custom` tool whose
+  `CustomConfiguration` overrides `Command`/`Args` with its own start command is
+  accepted by `CreateSandboxTool` and then stops at `Status: FAILED` within
+  seconds with `StatusReason`
+  "FailedOperation.DependencyUnavailable: Internal server error": the sandbox
+  agent never starts, so provisioning cannot complete. A custom tool that must
+  reach `ACTIVE` therefore keeps the image's own entrypoint; the CLI's own
+  ready-shaped custom tool (`instance debug`) runs the sandbox agent as its
+  command. This is a provisioning precondition of the service, not something the
+  CLI validates.
 
 ## Review status
 

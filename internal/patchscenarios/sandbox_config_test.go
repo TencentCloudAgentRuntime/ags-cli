@@ -823,6 +823,14 @@ func TestSandboxCustomConfigurationIsToolReady(t *testing.T) {
 			t.Fatalf("custom configuration is missing %s: %v", name, configuration)
 		}
 	}
+	// The live service failed provisioning with an internal dependency error
+	// while the start command was overridden, so the sandbox must run the
+	// system image's own entrypoint instead of a command the scenario invents.
+	for _, name := range []string{"Command", "Args"} {
+		if _, ok := configuration[name]; ok {
+			t.Fatalf("custom configuration overrides %s: %v", name, configuration)
+		}
+	}
 }
 
 // sandboxCapturedStderr runs fn with os.Stderr redirected and returns what it

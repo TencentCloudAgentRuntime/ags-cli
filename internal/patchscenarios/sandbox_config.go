@@ -43,9 +43,12 @@ const (
 	sandboxInstanceTimeout         = "30m"
 	// The service accepts LogConfiguration.CLSConfig only on custom tools, and
 	// a custom tool needs a custom configuration. This one is the reviewed
-	// system image with a long-lived command, so the tool never pulls a user
-	// image and reaches ACTIVE on its own.
-	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"system","Command":["/bin/sh"],"Args":["-c","sleep 3600"],"Resources":{"CPU":"1","Memory":"2Gi"},"Probe":{"ReadyTimeoutMs":30000,"ProbeTimeoutMs":5000,"ProbePeriodMs":10000,"SuccessThreshold":1,"FailureThreshold":3}}`
+	// system image, run through its own entrypoint: the image already knows how
+	// to start the sandbox agent, and overriding Command kept the agent from
+	// starting, which the service reported as
+	// "FailedOperation.DependencyUnavailable: Internal server error" on a live
+	// run. No user image is pulled.
+	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"system","Resources":{"CPU":"1","Memory":"2Gi"},"Probe":{"ReadyTimeoutMs":30000,"ProbeTimeoutMs":5000,"ProbePeriodMs":10000,"SuccessThreshold":1,"FailureThreshold":3}}`
 )
 
 // sandboxToolSpec declares the tool a scenario creates. The tool type is a
