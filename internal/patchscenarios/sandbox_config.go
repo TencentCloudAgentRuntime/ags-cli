@@ -271,9 +271,20 @@ func sandboxBoolOff(object map[string]any, key string) bool {
 
 // sandboxOwnTool registers cleanup for a tool immediately after its ID is known,
 // including IDs returned on a non-success envelope.
+//
+// The deletion goes through the raw pass-through instead of `tool delete`, and
+// sandboxOwnInstance does the same, because every fixture call has to survive a
+// candidate that cannot trust the fixture certificate: the CLI's typed client
+// verifies against the platform trust store, which a fixture CA cannot join (Go's
+// macOS root loader ignores SSL_CERT_FILE), while the raw channel accepts the
+// loopback `AGR_INSECURE_SKIP_VERIFY` override. The deletion itself is unchanged
+// server-side and is still confirmed by an independent list query; the typed
+// `tool delete` / `instance delete` commands are covered by the live apicontract
+// suites instead.
 func sandboxOwnTool(s *patchtest.Session, toolID string) {
 	s.Cleanup(func(ctx context.Context) error {
-		if _, err := sandboxRun(s, ctx, "tool", "delete", toolID); err != nil {
+		if _, err := sandboxRawCall(s, ctx, "DeleteSandboxTool", map[string]any{"ToolId": toolID}); err != nil {
+			sandboxDiagnostic("cleanup DeleteSandboxTool %s: %v", toolID, err)
 			return err
 		}
 		return sandboxToolGone(s, ctx, toolID)
@@ -282,7 +293,8 @@ func sandboxOwnTool(s *patchtest.Session, toolID string) {
 
 func sandboxOwnInstance(s *patchtest.Session, instanceID string) {
 	s.Cleanup(func(ctx context.Context) error {
-		if _, err := sandboxRun(s, ctx, "instance", "delete", instanceID); err != nil {
+		if _, err := sandboxRawCall(s, ctx, "StopSandboxInstance", map[string]any{"InstanceId": instanceID}); err != nil {
+			sandboxDiagnostic("cleanup StopSandboxInstance %s: %v", instanceID, err)
 			return err
 		}
 		return sandboxInstanceGone(s, ctx, instanceID)

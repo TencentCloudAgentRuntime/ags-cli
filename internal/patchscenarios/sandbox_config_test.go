@@ -1,20 +1,11 @@
 package patchscenarios
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"maps"
-	"math/big"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -63,7 +54,7 @@ func sandboxLogEnv(t *testing.T) {
 	t.Setenv("AGR_TEST_ROLE_ARN", sandboxFixtureRole)
 }
 
-func sandboxEnv(t *testing.T, serverURL, caFile string) []string {
+func sandboxEnv(t *testing.T, serverURL string) []string {
 	t.Helper()
 	return []string{
 		"HOME=" + t.TempDir(),
@@ -73,63 +64,20 @@ func sandboxEnv(t *testing.T, serverURL, caFile string) []string {
 		"TENCENTCLOUD_TOKEN=fake-session",
 		"AGR_REGION=ap-guangzhou",
 		"AGR_CLOUD_ENDPOINT=" + strings.TrimPrefix(serverURL, "https://"),
-		// The raw pass-through accepts a loopback certificate override, but the
-		// typed SDK client only trusts the system pool. A fixture CA in
-		// SSL_CERT_FILE keeps both channels on the same TLS server.
-		"SSL_CERT_FILE=" + caFile,
+		// The fixture certificate is in no trust store, so it is accepted only
+		// through the loopback override the raw pass-through honours. Installing
+		// it as a CA file is not portable: Go's macOS root loader ignores
+		// SSL_CERT_FILE and always uses the platform verifier.
 		"AGR_INSECURE_SKIP_VERIFY=1",
 	}
 }
 
-// sandboxTLSServer serves the fixture with a certificate signed by a CA the
-// candidate CLI trusts through SSL_CERT_FILE, so typed SDK actions are exercised
-// too instead of only the dynamic pass-through.
-func sandboxTLSServer(t *testing.T, handler http.Handler) (*httptest.Server, string) {
+// sandboxTLSServer serves the fixture over TLS. The candidate reaches it through
+// the raw pass-through, which honours the loopback certificate override in
+// sandboxEnv, so the fixture works on every platform the CLI supports.
+func sandboxTLSServer(t *testing.T, handler http.Handler) *httptest.Server {
 	t.Helper()
-	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		t.Fatalf("ca key: %v", err)
-	}
-	notBefore, notAfter := time.Now().Add(-time.Hour), time.Now().Add(24*time.Hour)
-	caTemplate := &x509.Certificate{
-		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{CommonName: "agr-fixture-ca"},
-		NotBefore:             notBefore,
-		NotAfter:              notAfter,
-		IsCA:                  true,
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
-		BasicConstraintsValid: true,
-	}
-	caDER, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, &caKey.PublicKey, caKey)
-	if err != nil {
-		t.Fatalf("ca certificate: %v", err)
-	}
-	leafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		t.Fatalf("leaf key: %v", err)
-	}
-	leafTemplate := &x509.Certificate{
-		SerialNumber: big.NewInt(2),
-		Subject:      pkix.Name{CommonName: "agr-fixture"},
-		NotBefore:    notBefore,
-		NotAfter:     notAfter,
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		DNSNames:     []string{"localhost"},
-		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
-	}
-	leafDER, err := x509.CreateCertificate(rand.Reader, leafTemplate, caTemplate, &leafKey.PublicKey, caKey)
-	if err != nil {
-		t.Fatalf("leaf certificate: %v", err)
-	}
-	server := httptest.NewUnstartedServer(handler)
-	server.TLS = &tls.Config{Certificates: []tls.Certificate{{Certificate: [][]byte{leafDER}, PrivateKey: leafKey}}}
-	server.StartTLS()
-	caFile := filepath.Join(t.TempDir(), "fixture-ca.pem")
-	if err := os.WriteFile(caFile, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caDER}), 0o600); err != nil {
-		t.Fatalf("write ca: %v", err)
-	}
-	return server, caFile
+	return httptest.NewTLSServer(handler)
 }
 
 // sandboxBuildCandidate compiles the preview channel once per test binary run.
@@ -755,12 +703,12 @@ func TestSandboxKeepaliveCandidate(t *testing.T) {
 	for _, fault := range sandboxKeepaliveFaults {
 		t.Run("fault="+fault, func(t *testing.T) {
 			fixture := newSandboxFixture(t, fault)
-			server, caFile := sandboxTLSServer(t, fixture)
+			server := sandboxTLSServer(t, fixture)
 			defer server.Close()
 			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 				{Scenario: "sandbox.keepalive", Assertions: sandboxKeepaliveAssertions},
 			}}
-			results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+			results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL))
 			if (err != nil) != (fault != "") {
 				t.Fatalf("fault %q: err=%v results=%+v", fault, err, results)
 			}
@@ -801,12 +749,12 @@ func TestSandboxKeepaliveAcceptsServerEchoedFalseBools(t *testing.T) {
 	binary := sandboxBuildCandidate(t)
 	sandboxShortenWaits(t)
 	fixture := newSandboxFixture(t, "echo-server-bools")
-	server, caFile := sandboxTLSServer(t, fixture)
+	server := sandboxTLSServer(t, fixture)
 	defer server.Close()
 	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 		{Scenario: "sandbox.keepalive", Assertions: sandboxKeepaliveAssertions},
 	}}
-	results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+	results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL))
 	if err != nil {
 		t.Fatalf("server-echoed false booleans broke the scenario: %v results=%+v", err, results)
 	}
@@ -1021,12 +969,12 @@ func TestSandboxKeepaliveWaitsForDeferredToolConfiguration(t *testing.T) {
 	binary := sandboxBuildCandidate(t)
 	sandboxShortenWaits(t)
 	fixture := newSandboxFixture(t, "pending-tool-config")
-	server, caFile := sandboxTLSServer(t, fixture)
+	server := sandboxTLSServer(t, fixture)
 	defer server.Close()
 	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 		{Scenario: "sandbox.keepalive", Assertions: sandboxKeepaliveAssertions},
 	}}
-	results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+	results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL))
 	if err != nil {
 		t.Fatalf("readiness wait did not absorb the deferred publish: %v results=%+v", err, results)
 	}
@@ -1045,12 +993,12 @@ func TestSandboxLogFormatCandidate(t *testing.T) {
 		t.Run("fault="+fault, func(t *testing.T) {
 			sandboxLogEnv(t)
 			fixture := newSandboxFixture(t, fault)
-			server, caFile := sandboxTLSServer(t, fixture)
+			server := sandboxTLSServer(t, fixture)
 			defer server.Close()
 			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 				{Scenario: "sandbox.log-format", Assertions: sandboxLogAssertions},
 			}}
-			results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+			results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL))
 			if (err != nil) != (fault != "") {
 				t.Fatalf("fault %q: err=%v results=%+v", fault, err, results)
 			}
@@ -1071,12 +1019,12 @@ func TestSandboxLogFormatCandidate(t *testing.T) {
 			sandboxLogEnv(t)
 			t.Setenv(missing, "")
 			fixture := newSandboxFixture(t, "")
-			server, caFile := sandboxTLSServer(t, fixture)
+			server := sandboxTLSServer(t, fixture)
 			defer server.Close()
 			plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 				{Scenario: "sandbox.log-format", Assertions: sandboxLogAssertions},
 			}}
-			if _, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile)); err == nil {
+			if _, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL)); err == nil {
 				t.Fatalf("missing %s produced a passing run", missing)
 			}
 			fixture.mu.Lock()
@@ -1097,7 +1045,7 @@ func TestSandboxFailedToolDiagnosticNamesTheReason(t *testing.T) {
 	sandboxShortenWaits(t)
 	sandboxLogEnv(t)
 	fixture := newSandboxFixture(t, "fail-tool-provision")
-	server, caFile := sandboxTLSServer(t, fixture)
+	server := sandboxTLSServer(t, fixture)
 	defer server.Close()
 	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
 		{Scenario: "sandbox.log-format", Assertions: sandboxLogAssertions},
@@ -1107,7 +1055,7 @@ func TestSandboxFailedToolDiagnosticNamesTheReason(t *testing.T) {
 		runErr  error
 	)
 	logged := sandboxCapturedStderr(t, func() {
-		results, runErr = patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL, caFile))
+		results, runErr = patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL))
 	})
 	if runErr == nil {
 		t.Fatalf("a tool that failed provisioning produced a passing run: %+v", results)
@@ -1212,7 +1160,7 @@ case "$*" in
     printf '%s\n' '{"Status":"failed","Failure":{"Code":"WAIT_TIMEOUT","Kind":"timeout","Message":"tool did not become ACTIVE","Details":{"ResourceId":"tool-fork-leaked"}}}'
     exit 1
     ;;
-  "tool delete "*)
+  "api call DeleteSandboxTool "*)
     : > "$CALL_LOG.deleted"
     printf '%s\n' '{"Status":"succeeded","Data":{"ToolId":"tool-fork-leaked"}}'
     ;;
@@ -1258,7 +1206,7 @@ esac
 			if !strings.Contains(string(log), "tool fork tool-source -n copy "+strings.Join(tc.extra, " ")) {
 				t.Fatalf("the scenario did not fork the source tool as declared:\n%s", log)
 			}
-			if !strings.Contains(string(log), "tool delete tool-fork-leaked") {
+			if !strings.Contains(string(log), "api call DeleteSandboxTool --request {\"ToolId\":\"tool-fork-leaked\"}") {
 				t.Fatalf("the tool returned with the failure was not deleted:\n%s", log)
 			}
 			if !strings.Contains(string(log), "tool list --tool-ids tool-fork-leaked") {
@@ -1303,5 +1251,113 @@ func TestSandboxParameterRejectionIgnoresServerFailures(t *testing.T) {
 	}
 	if sandboxParameterRejection(errors.New("transport failure"), sandboxEnvelope{}) {
 		t.Error("a failure without a failure envelope counted as a rejection")
+	}
+}
+
+// TestSandboxFixtureNeedsNoPlatformTrustStore pins the portability property the
+// fixture depends on: the candidate is given only the loopback certificate
+// override, never a CA file. Go's macOS root loader ignores SSL_CERT_FILE and
+// always uses the platform verifier, so a fixture that installed a CA file would
+// pass on Linux and fail on the macOS CI runners.
+func TestSandboxFixtureNeedsNoPlatformTrustStore(t *testing.T) {
+	var sawSkipVerify bool
+	for _, entry := range sandboxEnv(t, "https://127.0.0.1:1") {
+		name, _, _ := strings.Cut(entry, "=")
+		switch name {
+		case "SSL_CERT_FILE", "SSL_CERT_DIR":
+			t.Fatalf("the fixture installs %s, which the macOS verifier ignores: %s", name, entry)
+		case "AGR_INSECURE_SKIP_VERIFY":
+			sawSkipVerify = entry == "AGR_INSECURE_SKIP_VERIFY=1"
+		}
+	}
+	if !sawSkipVerify {
+		t.Fatal("the fixture does not enable the loopback certificate override")
+	}
+}
+
+// TestSandboxCleanupNeedsNoTypedChannel pins the cleanup commands to the raw
+// pass-through. The typed SDK client verifies TLS against the platform trust
+// store, which a fixture certificate cannot join on macOS, so a cleanup that
+// ran `tool delete` or `instance delete` would fail on one platform only. Both
+// deletions still happen server-side and are confirmed by an independent list
+// query; the typed delete commands are covered by the live suites.
+func TestSandboxCleanupNeedsNoTypedChannel(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "calls.log")
+	binary := filepath.Join(t.TempDir(), "fake-agr")
+	script := `#!/bin/sh
+printf '%s\n' "$*" >> "$CALL_LOG"
+case "$*" in
+  "api call DeleteSandboxTool "*)
+    : > "$CALL_LOG.tool-deleted"
+    printf '%s\n' '{"Status":"succeeded","Data":{"Response":{"RequestId":"fake"}}}'
+    ;;
+  "api call StopSandboxInstance "*)
+    : > "$CALL_LOG.instance-deleted"
+    printf '%s\n' '{"Status":"succeeded","Data":{"Response":{"RequestId":"fake"}}}'
+    ;;
+  "tool list "*)
+    if [ -f "$CALL_LOG.tool-deleted" ]; then
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[],"Pagination":{"Total":0}}}'
+    else
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[{"ToolId":"tool-raw"}],"Pagination":{"Total":1}}}'
+    fi
+    ;;
+  "instance list "*)
+    if [ -f "$CALL_LOG.instance-deleted" ]; then
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[],"Pagination":{"Total":0}}}'
+    else
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[{"InstanceId":"ins-raw","Status":"RUNNING"}],"Pagination":{"Total":1}}}'
+    fi
+    ;;
+  *)
+    printf '%s\n' '{"Status":"failed","Failure":{"Code":"UnexpectedCall","Kind":"internal","Message":"unexpected fake CLI call"}}'
+    exit 1
+    ;;
+esac
+`
+	if err := os.WriteFile(binary, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	registry := patchtest.Registry{
+		"cleanup-channel": {
+			Assertions: []string{"cleanup.registered"},
+			Run: sandboxScenario("cleanup-channel", func(s *patchtest.Session) error {
+				if _, err := sandboxRun(s, s.Context, "tool", "list", "--tool-ids", "tool-raw"); err != nil {
+					return err
+				}
+				sandboxOwnTool(s, "tool-raw")
+				sandboxOwnInstance(s, "ins-raw")
+				return s.Assert("cleanup.registered", true)
+			}),
+		},
+	}
+	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+		{Scenario: "cleanup-channel", Assertions: []string{"cleanup.registered"}},
+	}}
+	results, err := patchtest.Run(t.Context(), plan, registry, binary, []string{"CALL_LOG=" + logPath})
+	if err != nil {
+		t.Fatalf("the raw-pass-through cleanup must pass: %v; results=%+v", err, results)
+	}
+	if len(results) != 1 || results[0].Status != "pass" || results[0].Cleanup != "pass" {
+		t.Fatalf("results = %+v, want one passing scenario with a passing cleanup", results)
+	}
+	log, logErr := os.ReadFile(logPath)
+	if logErr != nil {
+		t.Fatal(logErr)
+	}
+	for _, want := range []string{
+		`api call DeleteSandboxTool --request {"ToolId":"tool-raw"}`,
+		`api call StopSandboxInstance --request {"InstanceId":"ins-raw"}`,
+		"tool list --tool-ids tool-raw",
+		"instance list --instance-ids ins-raw",
+	} {
+		if !strings.Contains(string(log), want) {
+			t.Fatalf("the cleanup did not run %q:\n%s", want, log)
+		}
+	}
+	for _, unwanted := range []string{"tool delete ", "instance delete "} {
+		if strings.Contains(string(log), unwanted) {
+			t.Fatalf("the cleanup used the typed channel %q:\n%s", unwanted, log)
+		}
 	}
 }
