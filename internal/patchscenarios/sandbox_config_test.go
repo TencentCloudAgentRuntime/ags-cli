@@ -844,13 +844,27 @@ func TestSandboxCustomConfigurationIsToolReady(t *testing.T) {
 	}
 	// Two live rejections fix the shape: omitting Command is a MissingParameter
 	// error, and a command that does not start the sandbox agent leaves the tool
-	// FAILED. Run the agent binary the reviewed image carries, with no args.
+	// FAILED. Start the agent through a shell, and declare its health endpoint as
+	// the probe and as a port, like the custom tools already running here.
 	command, _ := configuration["Command"].([]any)
-	if len(command) != 1 || command[0] != "/usr/bin/envd" {
+	if len(command) != 3 || command[0] != "/bin/bash" || command[1] != "-c" || command[2] != "/usr/bin/envd" {
 		t.Fatalf("custom configuration must start the sandbox agent, got %v", configuration["Command"])
 	}
-	if args, ok := configuration["Args"].([]any); !ok || len(args) != 0 {
-		t.Fatalf("custom configuration must not pass args to the agent, got %v", configuration["Args"])
+	if _, ok := configuration["Args"]; ok {
+		t.Fatalf("custom configuration passes args next to the shell command: %v", configuration)
+	}
+	if value, _ := configuration["ImageRegistryType"].(string); value == "system" {
+		t.Fatalf("custom configuration uses an unpublished registry type: %v", configuration)
+	}
+	ports, _ := configuration["Ports"].([]any)
+	if len(ports) != 1 {
+		t.Fatalf("custom configuration must declare the agent port: %v", configuration["Ports"])
+	}
+	port, _ := ports[0].(map[string]any)
+	probe, _ := configuration["Probe"].(map[string]any)
+	health, _ := probe["HttpGet"].(map[string]any)
+	if port["Port"] != health["Port"] || health["Path"] != "/health" {
+		t.Fatalf("the agent port and the probe health check disagree: port=%v probe=%v", port, health)
 	}
 }
 
@@ -1047,7 +1061,7 @@ func TestSandboxFailedToolDiagnosticNamesTheReason(t *testing.T) {
 		`reason="fixture: assume the log delivery role failed"`,
 		`ToolType="custom"`,
 		`logContentFormat=`,
-		`image="ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14"`,
+		`image="ccr.ccs.tencentyun.com/ags-image/envd:v0.6.13"`,
 	} {
 		if !strings.Contains(logged, want) {
 			t.Fatalf("diagnostic log %q does not carry %q", logged, want)
@@ -1078,13 +1092,13 @@ func sandboxShortenWaits(t *testing.T) {
 func TestSandboxFixtureRequiresCustomStartCommand(t *testing.T) {
 	request := map[string]any{
 		"ToolType":            "custom",
-		"CustomConfiguration": map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14"},
+		"CustomConfiguration": map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.6.13"},
 	}
 	failure := sandboxValidateCustomConfiguration(request)
 	if failure == nil || failure["Code"] != "MissingParameter" {
 		t.Fatalf("a custom tool without a start command was accepted: %v", failure)
 	}
-	request["CustomConfiguration"] = map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14", "Command": []any{"/usr/bin/envd"}}
+	request["CustomConfiguration"] = map[string]any{"Image": "ccr.ccs.tencentyun.com/ags-image/envd:v0.6.13", "Command": []any{"/usr/bin/envd"}}
 	if failure := sandboxValidateCustomConfiguration(request); failure != nil {
 		t.Fatalf("a custom tool with the agent command was rejected: %v", failure)
 	}

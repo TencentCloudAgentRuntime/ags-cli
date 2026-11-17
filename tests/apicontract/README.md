@@ -74,11 +74,12 @@ the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
   to CLS from the sandbox network. Tools that carry the topic are also
   `custom` with a custom configuration, because the service rejects a
   `CLSConfig` on the built-in types with `InvalidParameter` "only supported for
-  custom sandbox type for now"; the custom tool uses a reviewed system image so
-  it never pulls a user image, and it starts the sandbox agent of that image
-  (`/usr/bin/envd`) with no args: `Command` is a required member the service
-  answers `MissingParameter` without, and a start command that leaves the agent
-  down makes the tool stop at `FAILED` with an internal dependency error.
+  custom sandbox type for now"; the custom tool uses the same shape as the
+  custom tools already running in this account - a public CCR image, a shell
+  command that starts the sandbox agent, and the agent's `/health` endpoint
+  declared both as the probe and as a port. `Command` is a required member the
+  service answers `MissingParameter` without, and a start command that leaves the
+  agent down makes the tool stop at `FAILED` with an internal dependency error.
   The keepalive scenario stays on `SANDBOX` with
   `code-interpreter`. The rejection probes keep the same tool type and egress
   network so neither a type nor a network precondition can stand in for the

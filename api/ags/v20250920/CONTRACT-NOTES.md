@@ -51,9 +51,9 @@ The preview overlay adds `KeepaliveConfiguration` (`KeepaliveMode`,
   `Status: FAILED` within seconds with `StatusReason`
   "FailedOperation.DependencyUnavailable: Internal server error", because
   provisioning never sees the agent. A custom tool that must reach `ACTIVE`
-  therefore runs the agent binary of its image; the CLI's own ready-shaped custom
-  tool (`instance debug`) runs it as `/envd`. Both rules are service-side
-  preconditions and the CLI validates neither.
+  therefore starts the agent and declares its health endpoint as the probe; the
+  custom tools already running in the account are shaped that way. Both rules
+  are service-side preconditions and the CLI validates neither.
 
 ## Review status
 

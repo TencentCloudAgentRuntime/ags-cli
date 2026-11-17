@@ -46,11 +46,11 @@ const (
 	// omitting Command is rejected with "CustomConfiguration.Command is
 	// required". The command must start the sandbox agent, otherwise provisioning
 	// stops at FAILED with "FailedOperation.DependencyUnavailable: Internal
-	// server error" (both observed live on 2026-11-17). /usr/bin/envd is where
-	// this reviewed system image carries that agent, the same binary the CLI's
-	// own ready-shaped custom tool runs as /envd; no user image is pulled and
-	// Args stay empty, as in that tool.
-	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"system","Command":["/usr/bin/envd"],"Args":[],"Resources":{"CPU":"1","Memory":"2Gi"},"Probe":{"ReadyTimeoutMs":30000,"ProbeTimeoutMs":5000,"ProbePeriodMs":10000,"SuccessThreshold":1,"FailureThreshold":3}}`
+	// server error" (both observed live on 2026-11-17). This is the shape of the
+	// custom tools already running in this account: a public CCR image, started
+	// through a shell that runs the agent binary, with the agent's health
+	// endpoint declared as the probe and as a port.
+	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.6.13","ImageRegistryType":"personal","Command":["/bin/bash","-c","/usr/bin/envd"],"Resources":{"CPU":"2","Memory":"4Gi"},"Probe":{"HttpGet":{"Path":"/health","Port":49983,"Scheme":"HTTP"},"ReadyTimeoutMs":30000,"ProbeTimeoutMs":1000,"ProbePeriodMs":1000,"SuccessThreshold":1,"FailureThreshold":3},"Ports":[{"Name":"envd","Port":49983,"Protocol":"TCP"}]}`
 )
 
 // sandboxToolSpec declares the tool a scenario creates. The tool type is a
