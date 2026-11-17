@@ -41,6 +41,30 @@ const (
 	sandboxLogNetworkConfiguration = `{"NetworkMode":"PUBLIC"}`
 	sandboxToolDefaultTimeout      = "30m"
 	sandboxInstanceTimeout         = "30m"
+	// The service accepts LogConfiguration.CLSConfig only on custom tools, and
+	// a custom tool needs a custom configuration. This one is the reviewed
+	// system image with a long-lived command, so the tool never pulls a user
+	// image and reaches ACTIVE on its own.
+	sandboxCustomConfiguration = `{"Image":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"system","Command":["/bin/sh"],"Args":["-c","sleep 3600"],"Resources":{"CPU":"1","Memory":"2Gi"},"Probe":{"ReadyTimeoutMs":30000,"ProbeTimeoutMs":5000,"ProbePeriodMs":10000,"SuccessThreshold":1,"FailureThreshold":3}}`
+)
+
+// sandboxToolSpec declares the tool a scenario creates. The tool type is a
+// documented precondition, not a shared default: the service rejects a CLS
+// topic on the built-in types with "LogConfiguration with CLSConfig is only
+// supported for custom sandbox type for now".
+type sandboxToolSpec struct {
+	toolType string
+	network  string
+	args     []string
+}
+
+var (
+	sandboxKeepaliveTool = sandboxToolSpec{toolType: "code-interpreter", network: sandboxNetworkConfiguration}
+	sandboxLogTool       = sandboxToolSpec{
+		toolType: "custom",
+		network:  sandboxLogNetworkConfiguration,
+		args:     []string{"--custom-configuration", sandboxCustomConfiguration},
+	}
 )
 
 // The waits are variables so the offline fixture test can shorten them; the
@@ -340,10 +364,11 @@ func sandboxWaitToolActive(s *patchtest.Session, ctx context.Context, toolID str
 	}
 }
 
-func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name, networkConfiguration string, extra ...string) (string, error) {
-	args := []string{"tool", "create", "-n", name, "-t", "code-interpreter",
-		"--network-configuration", networkConfiguration,
+func sandboxCreateTool(s *patchtest.Session, ctx context.Context, name string, tool sandboxToolSpec, extra ...string) (string, error) {
+	args := []string{"tool", "create", "-n", name, "-t", tool.toolType,
+		"--network-configuration", tool.network,
 		"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout}
+	args = append(args, tool.args...)
 	envelope, err := sandboxRun(s, ctx, append(args, extra...)...)
 	toolID := sandboxString(envelope.Data, "ToolId")
 	if toolID == "" {
@@ -475,7 +500,7 @@ func sandboxEqualKeepalive(left, right map[string]any) bool {
 func runSandboxKeepalive(s *patchtest.Session) error {
 	ctx := s.Context
 	toolName := sandboxUniqueName("keepalive")
-	toolID, err := sandboxCreateTool(s, ctx, toolName, sandboxNetworkConfiguration,
+	toolID, err := sandboxCreateTool(s, ctx, toolName, sandboxKeepaliveTool,
 		"--keepalive-configuration", `{"KeepaliveMode":"REQUEST","KeepaliveTimeout":"600s"}`,
 		"--auto-pause", "--auto-resume")
 	if err != nil {
@@ -635,7 +660,7 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	// A tool without keepalive and with AutoPause=false yields no object, while
 	// an instance that enables AutoPause gets the documented platform default.
 	bareID, err := sandboxCreateTool(s, ctx, sandboxUniqueName("keepalive-bare"),
-		sandboxNetworkConfiguration, "--auto-pause=false")
+		sandboxKeepaliveTool, "--auto-pause=false")
 	if err != nil {
 		return err
 	}
@@ -948,7 +973,7 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 	ctx := s.Context
 
 	createLogged := func(name, logConfiguration string) (map[string]any, error) {
-		toolID, err := sandboxCreateTool(s, ctx, name, sandboxLogNetworkConfiguration,
+		toolID, err := sandboxCreateTool(s, ctx, name, sandboxLogTool,
 			"--role-arn", fixture.roleArn, "--log-configuration", logConfiguration)
 		if err != nil {
 			return nil, err
@@ -1017,12 +1042,13 @@ func runSandboxLogFormat(s *patchtest.Session) error {
 		`{"ContentFormat":"auto"}`,
 		fmt.Sprintf(`{"CLSConfig":{"TopicId":%q},"ContentFormat":"json"}`, fixture.topicID),
 	} {
-		envelope, callErr := sandboxRunExpected(s, ctx, "tool", "create",
-			"-n", sandboxUniqueName("log-invalid"), "-t", "code-interpreter",
-			"--network-configuration", sandboxLogNetworkConfiguration,
-			"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout,
-			"--role-arn", fixture.roleArn,
-			"--log-configuration", logConfiguration)
+		args := []string{"tool", "create",
+			"-n", sandboxUniqueName("log-invalid"), "-t", sandboxLogTool.toolType,
+			"--network-configuration", sandboxLogTool.network,
+			"--persistent=false", "--default-timeout", sandboxToolDefaultTimeout}
+		args = append(args, sandboxLogTool.args...)
+		args = append(args, "--role-arn", fixture.roleArn, "--log-configuration", logConfiguration)
+		envelope, callErr := sandboxRunExpected(s, ctx, args...)
 		toolID := sandboxString(envelope.Data, "ToolId")
 		if toolID == "" {
 			toolID = sandboxFailureDetail(envelope, "ResourceId")

@@ -251,11 +251,16 @@ agr instance list --tool-ids sdt-xxxx -o text
 `tool create --log-configuration` 可在 `CLSConfig` 之外接受 `ContentFormat` 成员：
 
 ```bash
-agr tool create -n logs-tool -t code-interpreter \
+agr tool create -n logs-tool -t custom \
   --network-configuration '{"NetworkMode":"PUBLIC"}' \
+  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal"}' \
   --role-arn '<role-arn>' \
   --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
 ```
+
+CLS 日志目前只接受 `custom` 类型：在内置类型（`code-interpreter`、`browser` 等）上传
+`CLSConfig` 会被服务端以 `InvalidParameter` 拒绝（“LogConfiguration with CLSConfig is
+only supported for custom sandbox type for now”），因此还需要提供自定义配置。
 
 CLS 主题需要带公网出向的网络模式：日志 sidecar 在该网络下无法访问 CLS，服务端会以
 `InvalidParameterValue.CLSConfig` 拒绝 `SANDBOX` 加 `CLSConfig` 的组合。要投递日志的

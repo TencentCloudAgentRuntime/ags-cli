@@ -275,11 +275,17 @@ outside the enum or range.
 `CLSConfig`:
 
 ```bash
-agr tool create -n logs-tool -t code-interpreter \
+agr tool create -n logs-tool -t custom \
   --network-configuration '{"NetworkMode":"PUBLIC"}' \
+  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal"}' \
   --role-arn '<role-arn>' \
   --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
 ```
+
+CLS logging is currently accepted only on `custom` tools: the service rejects a
+`CLSConfig` on the built-in types (`code-interpreter`, `browser`, ...) with
+`InvalidParameter` and "LogConfiguration with CLSConfig is only supported for
+custom sandbox type for now", so a custom configuration is required too.
 
 A CLS topic needs a network mode with outbound access: the service rejects
 `CLSConfig` on `SANDBOX` because the log sidecar cannot reach CLS from that

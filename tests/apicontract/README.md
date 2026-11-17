@@ -71,9 +71,15 @@ the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
   skipping it. Every tool in this scenario uses a network mode with egress
   (`PUBLIC`), because the service rejects `LogConfiguration.CLSConfig` on
   `SANDBOX` with `InvalidParameterValue.CLSConfig`: the log sidecar cannot push
-  to CLS from the sandbox network. The keepalive scenario stays on `SANDBOX`.
-  The rejection probes use the same egress network so a network precondition can
-  never stand in for the `ContentFormat` validation under test. The suite never creates CLS or CAM resources, never deletes the
+  to CLS from the sandbox network. Tools that carry the topic are also
+  `custom` with a custom configuration, because the service rejects a
+  `CLSConfig` on the built-in types with `InvalidParameter` "only supported for
+  custom sandbox type for now"; the custom tool uses a reviewed system image so
+  it never pulls a user image. The keepalive scenario stays on `SANDBOX` with
+  `code-interpreter`. The rejection probes keep the same tool type and egress
+  network so neither a type nor a network precondition can stand in for the
+  `ContentFormat` validation under test. The suite never creates CLS or CAM
+  resources, never deletes the
   fixture topic or role, and does not read either value into metadata.
 
 Both scenarios wait (read-only, with a deadline) for a created or forked tool to

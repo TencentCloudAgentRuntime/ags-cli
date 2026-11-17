@@ -531,6 +531,14 @@ func (f *sandboxFixture) storeLogConfiguration(tool, req map[string]any) map[str
 		format = text
 	}
 	topic := volumeString(volumeNested(configuration, "CLSConfig"), "TopicId")
+	// The service accepts a CLS topic only on custom tools and rejects it on the
+	// built-in types before the topic itself is validated.
+	if topic != "" && volumeString(req, "ToolType") != "custom" {
+		return map[string]any{
+			"Code":    "InvalidParameter",
+			"Message": "LogConfiguration with CLSConfig is only supported for custom sandbox type for now",
+		}
+	}
 	// The service needs outbound access for the sidecar that pushes logs, so it
 	// rejects a CLS topic on the sandbox network.
 	if topic != "" && volumeString(volumeNested(req, "NetworkConfiguration"), "NetworkMode") == "SANDBOX" {
@@ -545,7 +553,7 @@ func (f *sandboxFixture) storeLogConfiguration(tool, req map[string]any) map[str
 			return map[string]any{"Code": "InvalidParameter", "Message": "ContentFormat must be raw or auto"}
 		}
 		if format == "auto" && topic == "" {
-			return map[string]any{"Code": "InvalidParameter.ContentFormatUnsupported", "Message": "auto requires a CLS topic"}
+			return map[string]any{"Code": "InvalidParameter", "Message": "LogConfiguration.CLSConfig.TopicId is required when ContentFormat is auto"}
 		}
 	}
 	switch {
@@ -749,6 +757,7 @@ func TestSandboxFixtureRejectsCLSOnSandboxNetwork(t *testing.T) {
 	fixture := newSandboxFixture(t, "")
 	tool := map[string]any{}
 	request := map[string]any{
+		"ToolType":             "custom",
 		"NetworkConfiguration": map[string]any{"NetworkMode": "SANDBOX"},
 		"LogConfiguration":     map[string]any{"CLSConfig": map[string]any{"TopicId": sandboxFixtureTopic}},
 	}
@@ -767,6 +776,46 @@ func TestSandboxFixtureRejectsCLSOnSandboxNetwork(t *testing.T) {
 	topic := volumeString(volumeNested(tool, "LogConfiguration", "CLSConfig"), "TopicId")
 	if topic != sandboxFixtureTopic {
 		t.Fatalf("stored topic = %q, want %q", topic, sandboxFixtureTopic)
+	}
+}
+
+// The log scenario must create custom tools: the service rejects a CLS topic on
+// the built-in types, so a scenario that still sent -t code-interpreter would
+// fail live for a reason the offline fixture now reproduces.
+func TestSandboxFixtureRejectsCLSOnBuiltinToolType(t *testing.T) {
+	fixture := newSandboxFixture(t, "")
+	tool := map[string]any{}
+	request := map[string]any{
+		"ToolType":             "code-interpreter",
+		"NetworkConfiguration": map[string]any{"NetworkMode": "PUBLIC"},
+		"LogConfiguration":     map[string]any{"CLSConfig": map[string]any{"TopicId": sandboxFixtureTopic}},
+	}
+	failure := fixture.storeLogConfiguration(tool, request)
+	message, _ := failure["Message"].(string)
+	if failure == nil || failure["Code"] != "InvalidParameter" ||
+		!strings.Contains(message, "only supported for custom sandbox type") {
+		t.Fatalf("built-in tool type with a CLS topic was accepted: %v", failure)
+	}
+	if _, present := tool["LogConfiguration"]; present {
+		t.Fatal("a rejected request stored a log configuration")
+	}
+	request["ToolType"] = sandboxLogTool.toolType
+	if failure := fixture.storeLogConfiguration(tool, request); failure != nil {
+		t.Fatalf("custom tool type with a CLS topic was rejected: %v", failure)
+	}
+}
+
+// The log scenario's custom tool must carry a usable image and registry type;
+// the service needs both to bring a custom tool up.
+func TestSandboxCustomConfigurationIsToolReady(t *testing.T) {
+	var configuration map[string]any
+	if err := json.Unmarshal([]byte(sandboxCustomConfiguration), &configuration); err != nil {
+		t.Fatalf("custom configuration is not JSON: %v", err)
+	}
+	for _, name := range []string{"Image", "ImageRegistryType"} {
+		if value, _ := configuration[name].(string); value == "" {
+			t.Fatalf("custom configuration is missing %s: %v", name, configuration)
+		}
 	}
 }
 

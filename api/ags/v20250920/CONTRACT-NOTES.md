@@ -34,6 +34,15 @@ The preview overlay adds `KeepaliveConfiguration` (`KeepaliveMode`,
   cannot be used when NetworkMode is SANDBOX (sidecar requires network access to
   push logs to CLS)". A CLS topic therefore needs a network mode with egress; the
   CLI sends the user's choice unchanged and adds no validation of its own.
+- Observed on the live service (ap-guangzhou, 2026-11-17): `CreateSandboxTool`
+  rejects `LogConfiguration.CLSConfig` on the built-in tool types with
+  `InvalidParameter` and the message "LogConfiguration with CLSConfig is only
+  supported for custom sandbox type for now". A tool that ships logs to CLS is
+  therefore `ToolType: custom` with a `CustomConfiguration`; the restriction is
+  service-side ("for now"), and the CLI again sends the caller's choice
+  unchanged. A CLS topic is not required for the rejection: an `auto`
+  `ContentFormat` without a topic is rejected on any tool type with
+  "LogConfiguration.CLSConfig.TopicId is required when ContentFormat is auto".
 
 ## Review status
 
