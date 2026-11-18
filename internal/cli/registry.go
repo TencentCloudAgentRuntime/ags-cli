@@ -30,9 +30,6 @@ func buildCLIRegistryCommand(module command.Module, _ command.Deps) (*cobra.Comm
 		if generateSkeleton && supportsSkeleton(spec.ID) {
 			return nil
 		}
-		if requestFlagChanged(cmd) {
-			return nil
-		}
 		if baseArgs != nil {
 			return baseArgs(cmd, args)
 		}
@@ -103,12 +100,4 @@ func registryRuntimeDeps(commandID string) command.Deps {
 		deps.Stdin = deps.IO.In
 	}
 	return deps
-}
-
-func requestFlagChanged(cmd *cobra.Command) bool {
-	if cmd == nil {
-		return false
-	}
-	flag := cmd.Flags().Lookup("request")
-	return flag != nil && flag.Changed
 }

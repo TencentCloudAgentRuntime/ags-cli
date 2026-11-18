@@ -36,6 +36,8 @@ type registryResponse struct {
 		Version struct {
 			VersionId, Status, Descriptors, ContentStatus, ContentSHA256, ChangeLog string
 			ContentSizeBytes                                                        int64
+			Metadata                                                                []registryMetadataEntry
+			SupportedHarnessVersions                                                []registryHarnessVersion
 		}
 	}
 }

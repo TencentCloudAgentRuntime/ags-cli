@@ -29,7 +29,7 @@ func registryRemoteLifecycle(s *patchtest.Session) error {
 	health := *base
 	health.Path = "/health"
 	health.RawQuery = ""
-	raw, err := registryHTTP(ctx, http.MethodGet, health.String(), nil)
+	raw, err := registryHTTP(ctx, http.MethodGet, health.String(), "", nil)
 	if err != nil {
 		return err
 	}
