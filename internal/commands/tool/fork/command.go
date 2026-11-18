@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
@@ -190,9 +191,38 @@ func forkHelpFields() []apicli.FieldSpec {
 		}, Type: command.FlagString}}},
 		{Name: "CustomConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "custom-configuration", Flag: "custom-configuration", Usage: "Replace the entire CustomConfiguration using JSON, @file, or - for stdin; omitted fields are not inherited; repeat SecurityContext to retain source restrictions; Privileged defaults to true", Examples: []string{`agr tool fork sdt-xxxx -n my-copy --custom-configuration '{"Image":"ubuntu:22.04","ImageRegistryType":"personal","Resources":{"CPU":"4","Memory":"8Gi","Storage":"16Gi"},"SecurityContext":{"Privileged":false,"Capabilities":{"Drop":["ALL"]}}}' -o text`}, Type: command.FlagString}}},
 		{Name: "ComputerConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "computer-configuration", Flag: "computer-configuration", Usage: "Override ComputerConfiguration JSON object, @file, or - for stdin", Format: "{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}", Examples: []string{"agr tool fork sdt-xxxx -n my-copy --region ap-guangzhou --computer-configuration '{\"OSWorldConfiguration\":{\"Version\":\"osworld2\"}}'"}, Type: command.FlagString}}},
-		{Name: "LogConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "log-configuration", Flag: "log-configuration", Usage: "Override LogConfiguration JSON object, @file, or - for stdin", Examples: []string{`agr tool fork sdt-xxxx -n my-copy --log-configuration '{"CLSConfig":{"TopicId":"xxxxx-xxxx-xxxx"}}' -o text`}, Type: command.FlagString}}},
+		{Name: "LogConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{forkLogConfigurationHelp()}},
 		{Name: "Persistent", Parser: "common.default_bool", Inputs: []apicli.InputSpec{{Name: "persistent", Flag: "persistent", Usage: "Override whether the sandbox tool creates persistent sandboxes", Type: command.FlagBool}}},
+		{Name: "KeepaliveConfiguration", Parser: "common.default_json", Inputs: []apicli.InputSpec{{Name: "keepalive-configuration", Flag: "keepalive-configuration", Usage: "Replace the entire KeepaliveConfiguration using JSON, @file, or - for stdin. Include every member you want to carry over. Omit the flag to copy the source configuration, or pass {} to replace it with an empty object. The CLI applies no default.", Format: "{\"KeepaliveMode\":\"<NONE|REQUEST|CONNECTION|MIXED>\",\"KeepaliveTimeout\":\"<300s-1800s>\"}", Fields: []string{"KeepaliveMode: NONE, REQUEST, CONNECTION or MIXED", "KeepaliveTimeout: integer seconds with a unit, from 300s to 1800s, for example 600s, 5m or 30m"}, Examples: []string{`agr tool fork sdt-xxxx -n my-copy --keepalive-configuration '{"KeepaliveMode":"REQUEST","KeepaliveTimeout":"600s"}' --auto-pause --auto-resume -o text`}, Values: []string{"NONE: no keepalive", "REQUEST: renew while requests are being served", "CONNECTION: renew while a connection stays open", "MIXED: renew on requests and connections"}, Type: command.FlagString}}},
+		{Name: "AutoPause", Parser: "common.default_bool", Inputs: []apicli.InputSpec{{Name: "auto-pause", Flag: "auto-pause", Usage: "Choose whether instances pause (true) or stop (false) at expiry. Omit the flag to copy the source value. --auto-pause=false sends an explicit false.", Type: command.FlagBool}}},
+		{Name: "AutoResume", Parser: "common.default_bool", Inputs: []apicli.InputSpec{{Name: "auto-resume", Flag: "auto-resume", Usage: "Automatically resume paused instances on data-plane access. Omit the flag to copy the source value. --auto-resume=false sends an explicit false.", Type: command.FlagBool}}},
 	}
+}
+
+// forkLogConfigurationHelp keeps the editorial help in sync with the active
+// create contract. The preview contract extends LogConfiguration with
+// ContentFormat, so the fork override must not hide that documentation.
+func forkLogConfigurationHelp() apicli.InputSpec {
+	help := apicli.InputSpec{
+		Name:     "log-configuration",
+		Flag:     "log-configuration",
+		Usage:    "Override LogConfiguration JSON object, @file, or - for stdin",
+		Examples: []string{`agr tool fork sdt-xxxx -n my-copy --log-configuration '{"CLSConfig":{"TopicId":"xxxxx-xxxx-xxxx"}}' -o text`},
+		Type:     command.FlagString,
+	}
+	if apimeta.BuildChannel != apimeta.Preview {
+		return help
+	}
+	help.Format = `{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"raw|auto"}`
+	help.Fields = []string{
+		"ContentFormat: raw keeps the original text; auto extracts the first JSON object level or a complete logfmt line and falls back to the whole entry in content when it cannot extract it fully. Values are case-insensitive and normalized to lower case by the server; omitting it or sending an empty string keeps raw. auto requires a valid CLSConfig.TopicId. Log body processing happens on the server; the CLI does not parse logs.",
+	}
+	help.Values = []string{
+		"raw: keep the log line exactly as written",
+		"auto: extract structured fields when the server can do so completely",
+	}
+	help.Examples = []string{`agr tool fork sdt-xxxx -n my-copy --log-configuration '{"CLSConfig":{"TopicId":"xxxxx-xxxx-xxxx"},"ContentFormat":"auto"}' -o text`}
+	return help
 }
 
 func sourceToolID(req command.Request) string {
@@ -218,11 +248,6 @@ func applyExplicitEmptyStringOverrides(overrides map[string]any, req command.Req
 			}
 		}
 	}
-}
-
-func baseCreateRequestFromTool(value any) map[string]any {
-	req, _ := toolcopy.Request(value)
-	return req
 }
 
 func stringValue(value any) string {

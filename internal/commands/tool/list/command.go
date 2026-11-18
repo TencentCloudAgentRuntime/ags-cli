@@ -12,6 +12,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/sandboxconfig"
 	toolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/get"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -130,6 +131,8 @@ func renderToolList(w io.Writer, value any) {
 		return
 	}
 	headers := []string{"ID", "NAME", "TYPE", "STATUS", "NETWORK", "DESCRIPTION", "TAGS", "CREATED"}
+	headers = append(headers, sandboxconfig.Headers(true)...)
+	rawTools := rawToolRows(value)
 	rows := make([][]string, len(response.SandboxToolSet))
 	for i, tool := range response.SandboxToolSet {
 		networkMode := "-"
@@ -150,8 +153,25 @@ func renderToolList(w io.Writer, value any) {
 			strings.Join(sortedTagStrings(tool.Tags), ","),
 			formatShortTime(derefString(tool.CreateTime)),
 		}
+		if i < len(rawTools) {
+			rows[i] = append(rows[i], sandboxconfig.Values(rawTools[i], true)...)
+		} else {
+			rows[i] = append(rows[i], make([]string, len(sandboxconfig.Headers(true)))...)
+		}
 	}
 	printTableWithPagination(w, headers, rows, len(rows), derefInt64(response.TotalCount))
+}
+
+func rawToolRows(value any) []apivalue.Object {
+	raw, err := apivalue.Decode(value)
+	if err != nil {
+		return nil
+	}
+	rows, err := raw.ReadObjects("SandboxToolSet")
+	if err != nil {
+		return nil
+	}
+	return rows
 }
 
 func canonicalToolData(value any) map[string]any { return toolget.CanonicalData(value) }

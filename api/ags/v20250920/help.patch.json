@@ -452,5 +452,244 @@
         "Example - Delete by name:\n  agr volume-template delete --volume-template-name agent-session-workspace"
       ]
     }
+  },
+  {
+    "op": "add",
+    "path": "/commands/tool.create/fields/KeepaliveConfiguration",
+    "value": {
+      "description": "Keepalive configuration overrides.",
+      "inputs": {
+        "keepalive-configuration": {
+          "usage": "KeepaliveConfiguration as JSON object, @file, or - for stdin. Members are inherited one by one from the instance value, then the tool's current value, then the platform default; the CLI applies no default. Omit the flag to send nothing, or pass {} to send an empty override.",
+          "format": "{\"KeepaliveMode\":\"<NONE|REQUEST|CONNECTION|MIXED>\",\"KeepaliveTimeout\":\"<300s-1800s>\"}",
+          "fields": [
+            "KeepaliveMode: NONE, REQUEST, CONNECTION or MIXED",
+            "KeepaliveTimeout: integer seconds with a unit, from 300s to 1800s, for example 600s, 5m or 30m"
+          ],
+          "values": [
+            "NONE: no keepalive",
+            "REQUEST: renew while requests are being served",
+            "CONNECTION: renew while a connection stays open",
+            "MIXED: renew on requests and connections"
+          ],
+          "examples": [
+            "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --keepalive-configuration '{\"KeepaliveMode\":\"REQUEST\",\"KeepaliveTimeout\":\"600s\"}' --auto-pause --auto-resume -o json"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/tool.create/fields/AutoPause",
+    "value": {
+      "description": "Automatic pause setting.",
+      "inputs": {
+        "auto-pause": {
+          "usage": "Choose whether instances pause (true) or stop (false) at expiry. Omit the flag to use the service default. --auto-pause=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/tool.create/fields/AutoResume",
+    "value": {
+      "description": "Automatic resume setting.",
+      "inputs": {
+        "auto-resume": {
+          "usage": "Automatically resume paused instances on data-plane access. Omit the flag to use the service default. --auto-resume=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/tool.update/fields/KeepaliveConfiguration",
+    "value": {
+      "description": "Keepalive configuration overrides.",
+      "inputs": {
+        "keepalive-configuration": {
+          "usage": "KeepaliveConfiguration as JSON object, @file, or - for stdin. Members are inherited one by one from the instance value, then the tool's current value, then the platform default; the CLI applies no default. Omit the flag to send nothing, or pass {} to send an empty override.",
+          "format": "{\"KeepaliveMode\":\"<NONE|REQUEST|CONNECTION|MIXED>\",\"KeepaliveTimeout\":\"<300s-1800s>\"}",
+          "fields": [
+            "KeepaliveMode: NONE, REQUEST, CONNECTION or MIXED",
+            "KeepaliveTimeout: integer seconds with a unit, from 300s to 1800s, for example 600s, 5m or 30m"
+          ],
+          "values": [
+            "NONE: no keepalive",
+            "REQUEST: renew while requests are being served",
+            "CONNECTION: renew while a connection stays open",
+            "MIXED: renew on requests and connections"
+          ],
+          "examples": [
+            "agr tool update sdt-xxxx --keepalive-configuration '{\"KeepaliveMode\":\"MIXED\",\"KeepaliveTimeout\":\"900s\"}' -o text"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/tool.update/fields/AutoPause",
+    "value": {
+      "description": "Automatic pause setting.",
+      "inputs": {
+        "auto-pause": {
+          "usage": "Choose whether instances pause (true) or stop (false) at expiry. Omit the flag to keep the current tool setting. --auto-pause=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/tool.update/fields/AutoResume",
+    "value": {
+      "description": "Automatic resume setting.",
+      "inputs": {
+        "auto-resume": {
+          "usage": "Automatically resume paused instances on data-plane access. Omit the flag to keep the current tool setting. --auto-resume=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/instance.create/fields/KeepaliveConfiguration",
+    "value": {
+      "description": "Keepalive configuration overrides.",
+      "inputs": {
+        "keepalive-configuration": {
+          "usage": "KeepaliveConfiguration as JSON object, @file, or - for stdin. Members are inherited one by one from the instance value, then the tool's current value, then the platform default; the CLI applies no default. Omit the flag to send nothing, or pass {} to send an empty override.",
+          "format": "{\"KeepaliveMode\":\"<NONE|REQUEST|CONNECTION|MIXED>\",\"KeepaliveTimeout\":\"<300s-1800s>\"}",
+          "fields": [
+            "KeepaliveMode: NONE, REQUEST, CONNECTION or MIXED",
+            "KeepaliveTimeout: integer seconds with a unit, from 300s to 1800s, for example 600s, 5m or 30m"
+          ],
+          "values": [
+            "NONE: no keepalive",
+            "REQUEST: renew while requests are being served",
+            "CONNECTION: renew while a connection stays open",
+            "MIXED: renew on requests and connections"
+          ],
+          "examples": [
+            "agr instance create --tool-id sdt-xxxx --keepalive-configuration '{\"KeepaliveTimeout\":\"5m\"}' --auto-pause=false -o text"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/instance.create/fields/AutoPause",
+    "value": {
+      "description": "Automatic pause setting.",
+      "inputs": {
+        "auto-pause": {
+          "usage": "Choose whether the instance pauses (true) or stops (false) at expiry. When creating from a tool, omit the flag to inherit its setting. --auto-pause=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/instance.create/fields/AutoResume",
+    "value": {
+      "description": "Automatic resume setting.",
+      "inputs": {
+        "auto-resume": {
+          "usage": "Automatically resume the paused instance on data-plane access. When creating from a tool, omit the flag to inherit its setting. --auto-resume=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/instance.update/fields/KeepaliveConfiguration",
+    "value": {
+      "description": "Keepalive configuration overrides.",
+      "inputs": {
+        "keepalive-configuration": {
+          "usage": "KeepaliveConfiguration as JSON object, @file, or - for stdin. Members are inherited one by one from the instance value, then the tool's current value, then the platform default; the CLI applies no default. Omit the flag to send nothing, or pass {} to send an empty override.",
+          "format": "{\"KeepaliveMode\":\"<NONE|REQUEST|CONNECTION|MIXED>\",\"KeepaliveTimeout\":\"<300s-1800s>\"}",
+          "fields": [
+            "KeepaliveMode: NONE, REQUEST, CONNECTION or MIXED",
+            "KeepaliveTimeout: integer seconds with a unit, from 300s to 1800s, for example 600s, 5m or 30m"
+          ],
+          "values": [
+            "NONE: no keepalive",
+            "REQUEST: renew while requests are being served",
+            "CONNECTION: renew while a connection stays open",
+            "MIXED: renew on requests and connections"
+          ],
+          "examples": [
+            "agr instance update ins-xxxx --keepalive-configuration '{\"KeepaliveTimeout\":\"1800s\"}' --auto-resume=false -o text"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/instance.update/fields/AutoPause",
+    "value": {
+      "description": "Automatic pause setting.",
+      "inputs": {
+        "auto-pause": {
+          "usage": "Choose whether the instance pauses (true) or stops (false) at expiry. Omit the flag to keep the current instance setting. --auto-pause=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/instance.update/fields/AutoResume",
+    "value": {
+      "description": "Automatic resume setting.",
+      "inputs": {
+        "auto-resume": {
+          "usage": "Automatically resume the paused instance on data-plane access. Omit the flag to keep the current instance setting. --auto-resume=false sends an explicit false."
+        }
+      }
+    }
+  },
+  {
+    "op": "test",
+    "path": "/commands/tool.create/fields/LogConfiguration",
+    "value": {
+      "description": "Log configuration.",
+      "inputs": {
+        "log-configuration": {
+          "usage": "LogConfiguration JSON object, @file, or - for stdin",
+          "format": "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"}}",
+          "examples": [
+            "agr tool create -n my-tool -t code-interpreter --network-configuration '{\"NetworkMode\":\"SANDBOX\"}' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"xxxxx-xxxx-xxxx\"}}'"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "replace",
+    "path": "/commands/tool.create/fields/LogConfiguration",
+    "value": {
+      "description": "Log configuration.",
+      "inputs": {
+        "log-configuration": {
+          "usage": "LogConfiguration JSON object, @file, or - for stdin",
+          "format": "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"},\"ContentFormat\":\"raw|auto\"}",
+          "examples": [
+            "agr tool create -n logs-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"<entrypoint>\"]}' --role-arn '<role-arn>' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"},\"ContentFormat\":\"auto\"}' -o text"
+          ],
+          "fields": [
+            "ContentFormat: raw keeps the original text; auto extracts the first JSON object level or a complete logfmt line and falls back to the whole entry in content when it cannot extract it fully. Values are case-insensitive and normalized to lower case by the server; omitting it or sending an empty string keeps raw. auto requires a valid CLSConfig.TopicId. CLSConfig is only accepted on --tool-type custom tools, and that custom configuration must name its start command; the service requires --role-arn and a network mode with egress for CLS logging. Log body processing happens on the server; the CLI does not parse logs."
+          ],
+          "values": [
+            "raw: keep the log line exactly as written",
+            "auto: extract structured fields when the server can do so completely"
+          ]
+        }
+      }
+    }
   }
 ]

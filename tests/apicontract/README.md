@@ -41,6 +41,75 @@ GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
 
+## Sandbox keepalive and log format (preview)
+
+The preview-only `sandbox.keepalive` and `sandbox.log-format` scenarios run as
+part of this suite through the registered patch scenarios:
+
+```sh
+GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Sandbox keepalive and log format'
+```
+
+Both specs derive their assertion plan from `api/ags/v20250920/e2e-coverage.yaml`
+and require a `pass` result with a passing cleanup and at least one real CLI
+call; a skipped or empty plan is not acceptance. The executed assertion set must
+equal the bound set exactly, so every assertion a scenario registers has to be
+bound to at least one manifest entry: an unbound one fails the spec even when
+the backend behaved correctly. `TestRegistryAssertionsAreBoundInManifest` in
+`internal/patchscenarios` enforces that offline for both scenarios.
+
+- `sandbox.keepalive` creates one disposable code-interpreter tool and several
+  `30m` instances in `ap-guangzhou`, checks tool defaults, per-member instance
+  inheritance, explicit `false`, `{}` overrides, mode-only and timeout-only
+  overrides, the `300s`/`1800s` boundaries, `tool fork` copy/override, and reads
+  the stored values back through `tool get/list`, `instance get/list` and
+  `api call DescribeSandboxInstances`. Service-side rejections are probed with
+  `api call` against a disposable instance; unknown top-level members are
+  rejected locally and are not counted as backend evidence.
+- `sandbox.log-format` requires an existing CLS topic and a role usable for it,
+  supplied as the non-sensitive fixtures `AGR_TEST_CLS_TOPIC_ID` and
+  `AGR_TEST_ROLE_ARN`. It creates disposable tools to check omitted, empty,
+  `raw`/`RAW` and `auto`/`AuTo` values through `tool create`, `tool get/list`
+  and `tool fork`, plus the two structured rejections (no topic with `auto`, an
+  unknown format). Missing or unusable fixtures fail the scenario instead of
+  skipping it. Every tool in this scenario uses a network mode with egress
+  (`PUBLIC`), because the service rejects `LogConfiguration.CLSConfig` on
+  `SANDBOX` with `InvalidParameterValue.CLSConfig`: the log sidecar cannot push
+  to CLS from the sandbox network. Tools that carry the topic are also
+  `custom` with a custom configuration, because the service rejects a
+  `CLSConfig` on the built-in types with `InvalidParameter` "only supported for
+  custom sandbox type for now"; the custom tool uses the same shape as the
+  custom tools already running in this account - a public CCR image, a shell
+  command that starts the sandbox agent, and the agent's `/health` endpoint
+  declared both as the probe and as a port. `Command` is a required member the
+  service answers `MissingParameter` without. A configuration the service accepts
+  can still stop at `FAILED` with `FailedOperation.DependencyUnavailable` and no
+  more specific cause, so this scenario pins the whole configuration observed to
+  reach `ACTIVE` rather than attributing the stop to one member.
+  The keepalive scenario stays on `SANDBOX` with
+  `code-interpreter`. The rejection probes keep the same tool type and egress
+  network so neither a type nor a network precondition can stand in for the
+  `ContentFormat` validation under test. The suite never creates CLS or CAM
+  resources, never deletes the
+  fixture topic or role, and does not read either value into metadata.
+
+Both scenarios wait (read-only, with a deadline) for a created or forked tool to
+report `ACTIVE` before reading the copied configuration back: create and fork are
+asynchronous, so an immediate readback observes a tool that has not published its
+members yet. A failure of that wait reports the observed status together with the
+service's `StatusReason` and the preconditions the scenario chose (tool type,
+network mode, log `ContentFormat`, image and command), because the report itself
+carries no raw response: a tool that stops at `FAILED` is then triaged from the
+run log instead of costing another live round.
+
+Cleanup deletes every instance and tool created by the run and then queries them
+independently until they are gone or stopped; `Cleanup=pass` reflects that
+verification, not the exit code of `delete`. The scenarios prove configuration
+persistence, normalization and cleanup only. They do not prove data-plane
+keepalive renewal, the server-side log extraction engine, or actual log
+delivery, and those claims stay unverified until an API owner accepts the
+semantics described in `api/ags/v20250920/CONTRACT-NOTES.md`.
+
 ## Registry Plugin acceptance
 
 Use an explicit candidate binary and authorized cloud credentials. In the

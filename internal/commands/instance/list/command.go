@@ -11,6 +11,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/sandboxconfig"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
@@ -298,6 +299,7 @@ func renderInstanceList(w io.Writer, value any, opts ...listRenderOptions) {
 	}
 
 	headers := []string{"ID", "TOOL", "STATUS", "TIMEOUT", "EXPIRES", "MOUNTS", "CREATED"}
+	headers = append(headers, sandboxconfig.Headers(false)...)
 	var renderOpts listRenderOptions
 	if len(opts) > 0 {
 		renderOpts = opts[0]
@@ -306,6 +308,7 @@ func renderInstanceList(w io.Writer, value any, opts ...listRenderOptions) {
 		headers = append([]string{"REGION"}, headers...)
 	}
 	rows := make([][]string, len(response.InstanceSet))
+	rawInstances := rawInstanceRows(value)
 	for i, inst := range response.InstanceSet {
 		timeout := "-"
 		if inst.TimeoutSeconds != nil {
@@ -324,9 +327,26 @@ func renderInstanceList(w io.Writer, value any, opts ...listRenderOptions) {
 			instanceview.MountOptionsSummary(inst.MountOptions),
 			instanceview.TimeShort(instanceview.DerefString(inst.CreateTime)),
 		}
+		if i < len(rawInstances) {
+			rows[i] = append(rows[i], sandboxconfig.Values(rawInstances[i], false)...)
+		} else {
+			rows[i] = append(rows[i], make([]string, len(sandboxconfig.Headers(false)))...)
+		}
 		if renderOpts.Region != "" {
 			rows[i] = append([]string{renderOpts.Region}, rows[i]...)
 		}
 	}
 	instanceview.PrintTableWithPagination(w, headers, rows, len(response.InstanceSet), instanceview.DerefInt64(response.TotalCount))
+}
+
+func rawInstanceRows(value any) []apivalue.Object {
+	raw, err := apivalue.Decode(value)
+	if err != nil {
+		return nil
+	}
+	rows, err := raw.ReadObjects("InstanceSet")
+	if err != nil {
+		return nil
+	}
+	return rows
 }

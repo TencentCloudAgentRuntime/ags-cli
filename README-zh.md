@@ -216,6 +216,70 @@ agr instance exec \
 `Data.ExecutionContext.TemporarySandboxInstance` 与
 `Data.ExecutionContext.Cleanup`，方便脚本检查工作流。
 
+## 沙箱保活与日志格式（preview）
+
+这些 flag 只在 preview 构建（`-tags=preview`）中存在；stable 渠道既不发送也不展示。
+
+Tool 提供默认保活配置，实例按成员覆盖。未显式覆盖的成员依次继承实例值、Tool 当前值、
+平台默认值（`REQUEST` / `10m`）。CLI 不施加任何默认：省略 flag 即不发送，显式 `{}` 表示
+空覆盖，显式 `--auto-pause=false` 会发送 `false`，不会被当作零值丢弃。
+
+```bash
+# Tool 默认值：请求期间续期，600 秒。
+agr tool create -n my-tool -t code-interpreter \
+  --network-configuration '{"NetworkMode":"SANDBOX"}' \
+  --keepalive-configuration '{"KeepaliveMode":"REQUEST","KeepaliveTimeout":"600s"}' \
+  --auto-pause --auto-resume -o text
+
+# 实例覆盖：只改时长，并显式关闭自动暂停。
+agr instance create --tool-id sdt-xxxx --timeout 30m \
+  --keepalive-configuration '{"KeepaliveTimeout":"5m"}' --auto-pause=false -o json
+
+# 之后修改 Tool 默认值；未覆盖该成员的实例会跟随新值。
+agr tool update sdt-xxxx --keepalive-configuration '{"KeepaliveMode":"MIXED","KeepaliveTimeout":"900s"}'
+agr instance update ins-xxxx --auto-resume=false -o json
+
+# 读回已保存的值（实例 > Tool > 平台默认）。
+agr tool get sdt-xxxx -o json
+agr instance list --tool-id sdt-xxxx -o text
+```
+
+`KeepaliveTimeout` 是保活续期窗口（300～1800 秒，带单位的整秒时长，服务端按你发送的
+写法原样回显），与限制沙箱存活时长的 `--default-timeout` / `--timeout` 无关。
+枚举与时长由服务端校验，越界或未知值会被拒绝。`--auto-pause` 决定实例到期时暂停还是停止。
+`--auto-resume` 允许数据面访问自动恢复已暂停的实例。
+
+`tool fork` 省略 `--keepalive-configuration` 时会复制源 Tool 的配置。传入 JSON 会替换
+整个对象，请带上所有需要保留的成员。传入 `{}` 会将配置替换为空对象。
+
+`tool create --log-configuration` 可在 `CLSConfig` 之外接受 `ContentFormat` 成员：
+
+```bash
+agr tool create -n logs-tool -t custom \
+  --network-configuration '{"NetworkMode":"PUBLIC"}' \
+  --custom-configuration '{"Image":"<registry>/<image>:<tag>","ImageRegistryType":"personal","Command":["<entrypoint>"]}' \
+  --role-arn '<role-arn>' \
+  --log-configuration '{"CLSConfig":{"TopicId":"<cls-topic-id>"},"ContentFormat":"auto"}' -o text
+```
+
+CLS 日志目前只接受 `custom` 类型：在内置类型（`code-interpreter`、`browser` 等）上传
+`CLSConfig` 会被服务端以 `InvalidParameter` 拒绝（“LogConfiguration with CLSConfig is
+only supported for custom sandbox type for now”），因此还需要提供自定义配置。该自定义
+配置必须给出启动命令：省略 `Command` 会被服务端以 `MissingParameter`
+（“CustomConfiguration.Command is required”）拒绝。服务端接受的配置也可能停在 `FAILED`
+（`FailedOperation.DependencyUnavailable`）；请按账号里已经在运行的 custom 工具的形状来
+写：`Command` 拉起沙箱 agent，并把该 agent 的 `/health` 同时声明为探针和端口。
+
+CLS 主题需要带公网出向的网络模式：日志 sidecar 在该网络下无法访问 CLS，服务端会以
+`InvalidParameterValue.CLSConfig` 拒绝 `SANDBOX` 加 `CLSConfig` 的组合。要投递日志的
+Tool 请用 `PUBLIC` 或其它有出向的模式；只需要沙箱网络时继续用 `SANDBOX`。
+
+`raw` 保留原始日志行；`auto` 提取第一层 JSON 对象或完整的 logfmt 行，无法完整提取时整条
+回退为原始内容。取值大小写不敏感、存储为小写；省略该成员或传空字符串都保持 `raw`，
+`auto` 需要有效的 `CLSConfig.TopicId`。日志正文处理由服务端完成，CLI 不解析日志。
+`tool update` 不接受 `--log-configuration`，请新建或 fork 一个 Tool；`tool fork` 会复制
+该配置并支持同样的三个覆盖 flag。
+
 ## 按 ID 点查实例
 
 已知实例 ID 时，使用 `instance lookup` 查询当前地域内的 1～100 个实例：
