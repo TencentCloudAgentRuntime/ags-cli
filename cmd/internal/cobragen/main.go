@@ -587,6 +587,16 @@ func outputDescription(cmd commandModel) string {
 
 func outputEffects(cmd commandModel) []string {
 	switch cmd.Command {
+	case "gpu.group.list":
+		return []string{"read:gpu-resource-group"}
+	case "gpu.resource.list":
+		return []string{"read:gpu-resource"}
+	case "gpu.spec.list":
+		return []string{"read:gpu-spec"}
+	case "gpu.group.rename":
+		return []string{"update:gpu-resource-group"}
+	case "gpu.group.delete":
+		return []string{"delete:gpu-resource-group"}
 	case "instance.snapshot.create":
 		return []string{"create:snapshot"}
 	case "instance.snapshot.delete":

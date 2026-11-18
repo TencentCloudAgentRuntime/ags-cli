@@ -10,6 +10,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	instanceview "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/internal/instanceview"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/sandboxconfig"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	ags "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags/v20250920"
 )
@@ -111,6 +112,11 @@ func renderInstanceDetails(w io.Writer, value any) {
 	}
 	if mountOpts := instanceview.MountOptionsDetail(instance.MountOptions); mountOpts != "" {
 		kvs = append(kvs, instanceview.KeyValue{Key: "MountOptions", Value: mountOpts})
+	}
+	if raw, err := apivalue.Decode(value); err == nil {
+		for _, field := range sandboxconfig.Details(raw, false) {
+			kvs = append(kvs, instanceview.KeyValue{Key: field.Name, Value: field.Value})
+		}
 	}
 	instanceview.PrintKV(w, kvs)
 }

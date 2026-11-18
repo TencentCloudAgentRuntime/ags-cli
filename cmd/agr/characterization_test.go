@@ -246,9 +246,10 @@ func TestCharacterization_HelpAndSchemaExcerpts(t *testing.T) {
 		{
 			command: "pre-cache-image-task.create",
 			contains: []string{
-				"Create an image pre-cache task",
+				"Create an image or image volume pre-cache task",
 				"--image string",
 				"--image-registry-type string",
+				"--pre-cache-type string",
 				"Image registry type: enterprise, personal, or custom (required)",
 			},
 		},

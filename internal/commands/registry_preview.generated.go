@@ -28,6 +28,11 @@ import (
 	deploymentproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/proxy"
 	deploymentupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/update"
 	eventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/event/list"
+	gpugroupdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/group/delete"
+	gpugrouplist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/group/list"
+	gpugrouprename "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/group/rename"
+	gpuresourcelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/resource/list"
+	gpuspeclist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/spec/list"
 	harnessacp "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/acp"
 	harnesscreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/create"
 	harnessdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/delete"
@@ -159,6 +164,11 @@ func Registry() (*command.Registry, error) {
 		deploymentproxy.Module(),
 		deploymentupdate.Module(),
 		eventlist.Module(),
+		gpugroupdelete.GeneratedModule(),
+		gpugrouplist.Module(),
+		gpugrouprename.GeneratedModule(),
+		gpuresourcelist.Module(),
+		gpuspeclist.Module(),
 		harnessacp.Module(),
 		harnesscreate.Module(),
 		harnessdelete.Module(),

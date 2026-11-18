@@ -682,7 +682,8 @@ func argsValidator(spec command.Spec) cobra.PositionalArgs {
 				repeatable = true
 			}
 		}
-		if len(args) < required {
+		// --request may supply required values, but cannot add positional slots.
+		if len(args) < required && !cmd.Flags().Changed("request") {
 			return fmt.Errorf("%s requires at least %d arg(s), got %d", spec.ID, required, len(args))
 		}
 		if !repeatable && len(args) > len(spec.Args) {

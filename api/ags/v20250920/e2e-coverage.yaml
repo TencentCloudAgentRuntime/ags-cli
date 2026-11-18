@@ -2804,6 +2804,572 @@ coverage:
   - entry: /objects/VolumeTemplate/usage
     scenario: volume.lifecycle
     assertions: [template.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoPause/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/AutoResume/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/example
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback, keepalive.fork]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/CreateSandboxToolRequest/members/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.readback]
+  - entry: /objects/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/example
+    review: "示例值 REQUEST 只是取值样例，不单独构成行为约束；枚举语义由同成员的 document 条目绑定 keepalive.inheritance 与 keepalive.boundaries。"
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveMode/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/members/KeepaliveTimeout/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/KeepaliveConfiguration/usage
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/LogConfiguration/members/ContentFormat/@exists
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/disabled
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/document
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/example
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.normalization]
+  - entry: /objects/LogConfiguration/members/ContentFormat/member
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback, log.fork]
+  - entry: /objects/LogConfiguration/members/ContentFormat/name
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/output_required
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/required
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/type
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/LogConfiguration/members/ContentFormat/value_allowed_null
+    scenario: sandbox.log-format
+    assertions: [log.raw-default, log.auto, log.normalization, log.invalid, log.readback]
+  - entry: /objects/SandboxInstance/members/AutoPause/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/SandboxInstance/members/AutoPause/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/SandboxInstance/members/AutoPause/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoPause/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/SandboxInstance/members/AutoResume/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/SandboxInstance/members/AutoResume/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/AutoResume/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/example
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxInstance/members/KeepaliveConfiguration/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
+  - entry: /objects/SandboxTool/members/AutoPause/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
+  - entry: /objects/SandboxTool/members/AutoPause/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
+  - entry: /objects/SandboxTool/members/AutoPause/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoPause/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
+  - entry: /objects/SandboxTool/members/AutoResume/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
+  - entry: /objects/SandboxTool/members/AutoResume/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
+  - entry: /objects/SandboxTool/members/AutoResume/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/AutoResume/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.fork]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/example
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance, keepalive.fork]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/output_required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/SandboxTool/members/KeepaliveConfiguration/value_allowed_null
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback, keepalive.inheritance]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoPause/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.inheritance]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.inheritance]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/example
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/StartSandboxInstanceRequest/members/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoPause/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/AutoResume/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.create, keepalive.inheritance]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/example
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxInstanceRequest/members/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.instance.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/example
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/@exists
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/disabled
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/document
+    scenario: sandbox.keepalive
+    assertions: [keepalive.inheritance, keepalive.boundaries]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/example
+    review: "该成员在契约中的示例是字面「无」，不提供示例值，因此不含行为约束；成员语义由同一成员的 document 条目绑定断言覆盖。"
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/member
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/name
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/required
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
+  - entry: /objects/UpdateSandboxToolRequest/members/KeepaliveConfiguration/type
+    scenario: sandbox.keepalive
+    assertions: [keepalive.tool.update, keepalive.readback]
   - entry: /actions/CreateHarness/@exists
     scenario: harness.lifecycle
     assertions: [harness.create, harness.publish.first]

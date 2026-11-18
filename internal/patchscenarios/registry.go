@@ -11,8 +11,11 @@ var Registry = patchtest.Registry{
 	"harness.lifecycle":         {Assertions: harnessAssertions, Run: runHarnessLifecycle},
 	"volume.lifecycle":          {Assertions: volumeAssertions, Run: runVolumeLifecycle},
 	"volume.mount-lifecycle":    {Assertions: volumeMountAssertions, Run: runVolumeMountLifecycle},
+	"sandbox.keepalive":         {Assertions: sandboxKeepaliveAssertions, Run: sandboxScenario("sandbox.keepalive", runSandboxKeepalive)},
+	"sandbox.log-format":        {Assertions: sandboxLogAssertions, Run: sandboxScenario("sandbox.log-format", runSandboxLogFormat)},
 	"registry.remote.lifecycle": {Assertions: []string{"mcp.sync.changed", "mcp.sync.failed", "a2a.sync.changed", "a2a.sync.failed"}, Run: registryRemoteLifecycle},
 	"registry.skill.lifecycle":  {Assertions: []string{"skill.package.roundtrip", "skill.inline.readback"}, Run: registrySkillLifecycle},
+	"registry.plugin.lifecycle": {Assertions: []string{"plugin.create.file", "plugin.update.file", "plugin.update.reuse", "plugin.input.boundaries"}, Run: registryPluginLifecycle},
 	"registry.custom.lifecycle": {
 		Assertions: []string{"registry.description", "registry.tags.readback", "record.delete.selector", "record.label.readback", "version.decisions", "record.history", "manual.remote.rejected", "lists.filtered", "input.boundaries", "labels.removed", "mcp.manual.readback", "a2a.manual.readback", "version.deleted"},
 		Run:        registryCustomLifecycle,

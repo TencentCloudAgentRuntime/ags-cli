@@ -88,6 +88,8 @@ func groupShort(group string) string {
 		return "Manage deployments"
 	case "event":
 		return "Query operational events"
+	case "gpu":
+		return "Manage GPU resources and resource groups"
 	case "session":
 		return "Manage session spaces, sessions, and events"
 	case "volume":
@@ -114,6 +116,8 @@ func groupLong(group string) string {
 		return "Manage deployments and related data-plane workflows."
 	case "event":
 		return "Browse operational events in the configured account and region. Use list to filter resources, switch between Raw details and Aggregate results, and page through a fixed time window. Session conversation events use 'agr session event list'."
+	case "gpu":
+		return "Find purchased GPU groups in the configured account and region, inspect allocation of individual GPU resources, and check which GPU specifications are available for purchase. Use a group ID from 'agr gpu group list' as Resources.GPUResourceGroupId when configuring a custom sandbox tool."
 	case "session":
 		return "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history."
 	case "volume":
@@ -154,6 +158,16 @@ func parserForField(m apimeta.Member, fm *apimeta.FieldMapping) string {
 }
 
 func subgroupShort(group, sub string) string {
+	if group == "gpu" {
+		switch sub {
+		case "group":
+			return "Manage purchased GPU resource groups"
+		case "resource":
+			return "Inspect purchased GPU resources"
+		case "spec":
+			return "Inspect GPU specifications available for purchase"
+		}
+	}
 	if group == "instance" && sub == "snapshot" {
 		return "Manage sandbox snapshots (Beta)"
 	}
@@ -199,6 +213,8 @@ func subgroupLong(group, sub string) string {
 
 func groupExamples(group string) []string {
 	switch group {
+	case "gpu":
+		return []string{"agr gpu group list -o text", "agr gpu resource list --resource-group-id gpug-example --allocation-state Idle -o text", "agr gpu spec list -o text"}
 	case "event":
 		return []string{"Example - Browse recent operational events:\n  agr event list -o text", "Example - Inspect aggregate results:\n  agr event list --mode Aggregate --limit 20 -o json"}
 	case "instance.snapshot":
@@ -269,6 +285,10 @@ func argsForCommand(commandID string) string {
 
 func useForCommand(commandID string) string {
 	switch commandID {
+	case "gpu.group.rename":
+		return "rename <resource-group-id> --name <name>"
+	case "gpu.group.delete":
+		return "delete <resource-group-id>"
 	case "instance.snapshot.delete":
 		return "delete [snapshot-id]"
 	case "instance.update":

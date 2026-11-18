@@ -14,7 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"registry", "record", "update"},
 			Use:          "update",
 			Short:        "Update record metadata, labels, or content",
-			Long:         "Update Description and/or LabelMutations, or provide exactly one content source to create a new version. Content cannot be combined with Description or LabelMutations. VersionName and ChangeLog describe the new version. LabelMutations uses Operation, Name, optional VersionId and Reason; stable/latest labels cannot be deleted. Approval does not assign the stable label.",
+			Long:         "Update Description and/or LabelMutations, or provide exactly one content source to create a new version. Content cannot be combined with Description or LabelMutations. VersionName, ChangeLog, Metadata and SupportedHarnessVersions apply to the new version only. Version metadata and compatibility do not inherit from an earlier version.\n\nFor a Plugin file upload, use --file-source with Type=FILE. PUT the raw file to Data.UploadURL as application/octet-stream before Data.ExpireTime, then query the new Data.Version.VersionId with registry record get. To reuse a READY Skill or Plugin file from the same record, use Type=VERSION with SourceVersionId. This creates a new version without uploading bytes.\n\nLabelMutations uses Operation, Name, optional VersionId and Reason; stable/latest labels cannot be deleted. Approval does not assign the stable label.",
+			Examples:     []string{"agr registry record update --registry-id reg-xxxx --record-id rec-xxxx --file-source '{\"Type\":\"FILE\",\"SizeBytes\":5}' -o json", "agr registry record update --registry-id reg-xxxx --record-id rec-xxxx --file-source '{\"Type\":\"VERSION\",\"SourceVersionId\":\"rv-xxxx\"}' --metadata '[{\"Name\":\"publisher\",\"Value\":\"Example\"}]' -o json"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "UpdateRegistryRecordResponse",
@@ -103,6 +104,27 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
 					{Name: "label-mutations", Flag: "label-mutations", Usage: "Label operations: Operation, Name, VersionId and Reason. Accepts JSON, @file, or - for stdin.", Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "FileSource",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "file-source", Flag: "file-source", Usage: "Use FILE with SizeBytes (1–54525952) and optional SHA256 (64 lowercase hex digits), or VERSION with SourceVersionId. Accepts JSON, @file, or - for stdin.", Format: "{\"Type\":\"FILE\",\"SizeBytes\":<bytes>} or {\"Type\":\"VERSION\",\"SourceVersionId\":\"<version-id>\"}", Examples: []string{"{\"Type\":\"FILE\",\"SizeBytes\":5}", "{\"Type\":\"VERSION\",\"SourceVersionId\":\"rv-xxxx\"}"}, Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "SupportedHarnessVersions",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "supported-harness-versions", Flag: "supported-harness-versions", Usage: "Harness compatibility as a JSON array, @file, or - for stdin. Omit or pass [] for no declared compatibility.", Format: "[{\"HarnessEngine\":\"<engine>\",\"HarnessEngineVersion\":\"<version>\"}]", Examples: []string{"[{\"HarnessEngine\":\"pi\",\"HarnessEngineVersion\":\"1.3.0\"}]"}, Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "Metadata",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "metadata", Flag: "metadata", Usage: "Version metadata as a Name/Value JSON array, @file, or - for stdin. Omit or pass [] for empty metadata.", Format: "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]", Examples: []string{"[{\"Name\":\"publisher\",\"Value\":\"Example\"}]"}, Type: command.FlagString},
 				},
 			},
 		},

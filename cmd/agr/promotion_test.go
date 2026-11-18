@@ -39,9 +39,16 @@ func TestPrecachePromotedContract(t *testing.T) {
 		{"volume without ReadyTime", []string{"get", "sha256:test", "--image", "nginx:latest", "--image-registry-type", "personal", "--pre-cache-type", "image_volume"}, "", "DescribePreCacheImageTask"},
 		{"volume JSON", []string{"get", "--request", `{"Image":"nginx:latest","ImageDigest":"sha256:test","ImageRegistryType":"personal","PreCacheType":"image_volume"}`}, "", "DescribePreCacheImageTask"},
 		{"create", []string{"create", "--image", "nginx:latest", "--image-registry-type", "personal"}, "", "CreatePreCacheImageTask"},
+		{"create image", []string{"create", "--image", "nginx:latest", "--image-registry-type", "personal", "--pre-cache-type", "image"}, "", "CreatePreCacheImageTask"},
+		{"create volume", []string{"create", "--image", "nginx:latest", "--image-registry-type", "personal", "--pre-cache-type", "image_volume"}, "", "CreatePreCacheImageTask"},
+		{"create volume JSON", []string{"create", "--request", `{"Image":"nginx:latest","ImageRegistryType":"personal","PreCacheType":"image_volume"}`}, "", "CreatePreCacheImageTask"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			response := map[string]any{"Image": "nginx:latest", "ImageDigest": "sha256:test", "ImageRegistryType": "personal", "PreCacheImageId": "cache-test", "RequestId": "request-test"}
+			volumeCreate := strings.HasPrefix(tc.name, "create volume")
+			if volumeCreate {
+				delete(response, "PreCacheImageId")
+			}
 			if tc.action == "DescribePreCacheImageTask" {
 				response["Status"] = "Success"
 				response["Message"] = "cached"
@@ -109,8 +116,25 @@ func TestPrecachePromotedContract(t *testing.T) {
 					t.Fatalf("optional ReadyTime was fabricated: %v", envelope.Data["ReadyTime"])
 				}
 			}
+			if _, present := envelope.Data["PreCacheImageId"]; volumeCreate && present {
+				t.Fatal("volume creation fabricated a task ID")
+			}
 			select {
 			case req := <-requests:
+				if tc.action == "CreatePreCacheImageTask" {
+					mode, present := req["PreCacheType"]
+					if req["Image"] != response["Image"] || req["ImageRegistryType"] != response["ImageRegistryType"] {
+						t.Fatalf("create changed the image selector: %v", req)
+					}
+					switch {
+					case tc.name == "create" && present:
+						t.Fatalf("must leave omitted type to the service: %v", req)
+					case tc.name == "create image" && mode != "image":
+						t.Fatalf("explicit image was not sent: %v", req)
+					case volumeCreate && mode != "image_volume":
+						t.Fatalf("explicit image_volume was not sent: %v", req)
+					}
+				}
 				if strings.HasPrefix(tc.name, "ID") && (len(req) != 1 || req["PreCacheImageId"] != "cache-test") {
 					t.Fatalf("ID request: %v", req)
 				}
