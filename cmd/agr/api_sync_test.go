@@ -12,6 +12,7 @@ func TestSyncedCommandContracts(t *testing.T) {
 		command, field, flag string
 		values               []string
 	}{
+		{"pre-cache-image-task.create", "PreCacheType", "pre-cache-type", []string{"image", "image_volume"}},
 		{"pre-cache-image-task.get", "PreCacheType", "pre-cache-type", []string{"image", "image_volume"}},
 		{"instance.create", "StartMode", "start-mode", []string{"DEFAULT", "WAIT_UNTIL_HEALTHY"}},
 	} {

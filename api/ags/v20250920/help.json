@@ -1,6 +1,84 @@
 {
     "api_version": "v20250920",
     "commands": {
+        "gpu.group.list": {
+            "short": "List purchased GPU resource groups",
+            "long": "List GPU resource groups in the selected region and account. Use ResourceGroupId in Resources.GPUResourceGroupId when creating a custom sandbox tool. The result is a list even when you filter by one exact ID. A group may be empty. Each call returns one page; TotalCount counts all matches before pagination. Offset defaults to 0. Limit accepts 1–500, with 0 or omission using the service default of 100.",
+            "examples": [
+                "agr gpu group list --limit 20 -o text",
+                "agr gpu group list --filters '[{\"Name\":\"resource-group-id\",\"Values\":[\"gpug-example\"]}]' -o json"
+            ],
+            "fields": {
+                "Filters": {
+                    "description": "Group filters. Conditions combine with AND, values within one condition combine with OR.",
+                    "inputs": {
+                        "filters": {
+                            "usage": "Group filters as a JSON array, @file, or - for stdin.",
+                            "format": "[{\"Name\":\"resource-group-id\",\"Values\":[\"gpug-example\"]}]",
+                            "values": ["resource-group-id (exact ID)", "resource-group-name (exact name)", "resource-group-name-like (literal substring)", "gpu-type", "gpu-num", "cpu", "memory"]
+                        }
+                    }
+                }
+            }
+        },
+        "gpu.resource.list": {
+            "short": "List purchased GPU resources and their allocation state",
+            "long": "List individual GPU resources in the selected region and account. ResourceId identifies the GPU resource; InstanceId identifies its current sandbox binding when present. Use AllocationState to check availability. Each call returns one page; TotalCount counts all matches before pagination. Offset defaults to 0. Limit accepts 1–500, with 0 or omission using the service default of 100.",
+            "examples": [
+                "agr gpu resource list --resource-group-id gpug-example --allocation-state Idle -o text",
+                "agr gpu resource list --resource-ids ins-example-001 --resource-ids ins-example-002 --limit 20 -o json"
+            ],
+            "fields": {
+                "ResourceIds": {
+                    "inputs": {
+                        "resource-ids": {
+                            "usage": "Filter by GPU resource IDs. Repeat the flag for multiple IDs, up to 500.",
+                            "format": "--resource-ids <id1> --resource-ids <id2>"
+                        }
+                    }
+                },
+                "State": {
+                    "inputs": {
+                        "state": {
+                            "usage": "Filter by the case-sensitive GPU resource state.",
+                            "values": ["Delivering", "Active", "Isolated", "Destroying"]
+                        }
+                    }
+                },
+                "AllocationState": {
+                    "inputs": {
+                        "allocation-state": {
+                            "usage": "Filter by the case-sensitive allocation state.",
+                            "values": ["Idle", "Allocating", "InUse", "Returning", "Unavailable"]
+                        }
+                    }
+                }
+            }
+        },
+        "gpu.spec.list": {
+            "short": "List GPU specifications for sale and purchase limits",
+            "long": "List GPU specifications for sale in the selected region and how many machines the account can currently purchase. AvailableCount is measured in machines. Zero means none can be purchased and null means the limit is unknown. For an exact match, provide GPU type, CPU cores, host memory in GiB, and GPU count together. Each call returns one page; TotalCount counts all matches before pagination. Offset defaults to 0. Limit accepts 1–500, with 0 or omission using the service default of 100.",
+            "examples": [
+                "agr gpu spec list -o text",
+                "agr gpu spec list --gpu-type 5090d --cpu 32 --memory 96 --gpu-num 1 -o json"
+            ]
+        },
+        "gpu.group.rename": {
+            "short": "Rename a GPU resource group",
+            "long": "Set the name of a GPU resource group selected by ID. Group names can repeat. The new name must be nonempty after trimming whitespace and at most 128 bytes.",
+            "examples": [
+                "agr gpu group rename gpug-example --name inference -o text",
+                "agr gpu group rename gpug-example --request '{\"Name\":\"inference\"}' -o json"
+            ]
+        },
+        "gpu.group.delete": {
+            "short": "Delete an empty GPU resource group",
+            "long": "Synchronously soft-delete one empty GPU resource group. The service returns ResourceInUse while any resources, bindings, or undeleted sandbox tools still reference the group. Repeating a successful deletion in the same account succeeds. Verify the group ID and region before running this command.",
+            "examples": [
+                "agr gpu group delete gpug-example -o text",
+                "agr gpu group delete --request '{\"ResourceGroupId\":\"gpug-example\"}' -o json"
+            ]
+        },
         "deployment.create": {
             "short": "Create a deployment",
             "long": "Create a remotely managed Deployment. Complex configuration fields accept a JSON value, @file, or - for stdin.",
@@ -855,9 +933,26 @@
                             "usage": "Image registry type: enterprise, personal, or custom (required)"
                         }
                     }
+                },
+                "PreCacheType": {
+                    "description": "Pre-cache type. The service defaults to image when omitted.",
+                    "inputs": {
+                        "pre-cache-type": {
+                            "usage": "Pre-cache type: image (service default) or image_volume.",
+                            "values": [
+                                "image",
+                                "image_volume"
+                            ]
+                        }
+                    }
                 }
             },
-            "long": "Create an image pre-cache task. JSON output includes PreCacheImageId for subsequent get requests."
+            "long": "Create an image or image volume pre-cache task. Omit --pre-cache-type to use the service default (image).\n\nFor image pre-caching, use the returned PreCacheImageId with get when supplied. For image volume pre-caching, use the returned ImageDigest, Image and ImageRegistryType with get and --pre-cache-type image_volume. List only shows ordinary image pre-cache resources.",
+            "examples": [
+                "Example - Pre-cache an image:\n  agr pre-cache-image-task create --image nginx:latest --image-registry-type personal -o json",
+                "Example - Pre-cache an image volume:\n  agr pre-cache-image-task create --image nginx:latest --image-registry-type personal --pre-cache-type image_volume -o json",
+                "Example - Query image volume pre-caching with fields from create:\n  agr pre-cache-image-task get \"$image_digest\" --image \"$image\" --image-registry-type \"$registry_type\" --pre-cache-type image_volume -o json"
+            ]
         },
         "event.list": {
             "short": "List operational events",
@@ -1166,7 +1261,7 @@
         },
         "registry.record.create": {
             "short": "Create a record and its first version",
-            "long": "Provide exactly one content source matching --descriptor-type: MCP uses --mcp-source; A2A and AGUI use --agent-source; AGENT_SKILLS uses --skill-source; CUSTOM uses --custom-descriptors. Source objects accept inline JSON, @file, or - for stdin. Descriptors inside a source are JSON strings, not nested objects. Approval and assigning the stable label are separate operations.",
+            "long": "Provide exactly one content source matching --descriptor-type: MCP uses --mcp-source; A2A and AGUI use --agent-source; AGENT_SKILLS uses --skill-source; CUSTOM uses --custom-descriptors; PLUGIN uses --file-source with Type=FILE. Source objects accept inline JSON, @file, or - for stdin. Descriptors inside a source are JSON strings, not nested objects.\n\nFor PLUGIN, set SizeBytes to the file's byte count and optionally set SHA256. Read Data.UploadURL from the JSON result and PUT the raw file with Content-Type: application/octet-stream before Data.ExpireTime. Use registry record get with Data.RecordId and Data.Version.VersionId to check Version.ContentStatus. READY indicates content is available. Approval and assigning the stable label are separate operations.",
             "fields": {
                 "RegistryId": {
                     "description": "Registry ID.",
@@ -1185,10 +1280,10 @@
                     }
                 },
                 "DescriptorType": {
-                    "description": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM.",
+                    "description": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, CUSTOM, or PLUGIN.",
                     "inputs": {
                         "descriptor-type": {
-                            "usage": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM."
+                            "usage": "Content type: MCP, A2A, AGUI, AGENT_SKILLS, CUSTOM, or PLUGIN."
                         }
                     }
                 },
@@ -1239,8 +1334,43 @@
                             "usage": "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input."
                         }
                     }
+                },
+                "FileSource": {
+                    "description": "Plugin file upload declaration.",
+                    "inputs": {
+                        "file-source": {
+                            "usage": "Plugin source with Type=FILE, SizeBytes (1–54525952), and optional SHA256 (64 lowercase hex digits). Accepts JSON, @file, or - for stdin.",
+                            "format": "{\"Type\":\"FILE\",\"SizeBytes\":<bytes>}",
+                            "examples": ["{\"Type\":\"FILE\",\"SizeBytes\":5}"]
+                        }
+                    }
+                },
+                "SupportedHarnessVersions": {
+                    "description": "Exact Harness engine and version pairs supported by this version.",
+                    "inputs": {
+                        "supported-harness-versions": {
+                            "usage": "Harness compatibility as a JSON array, @file, or - for stdin. Omit or pass [] for no declared compatibility.",
+                            "format": "[{\"HarnessEngine\":\"<engine>\",\"HarnessEngineVersion\":\"<version>\"}]",
+                            "examples": ["[{\"HarnessEngine\":\"pi\",\"HarnessEngineVersion\":\"1.3.0\"}]"]
+                        }
+                    }
+                },
+                "Metadata": {
+                    "description": "Metadata entries for this version. Names must be lowercase and unique.",
+                    "inputs": {
+                        "metadata": {
+                            "usage": "Version metadata as a Name/Value JSON array, @file, or - for stdin. Omit or pass [] for empty metadata.",
+                            "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
+                            "examples": ["[{\"Name\":\"publisher\",\"Value\":\"Example\"}]"]
+                        }
+                    }
                 }
-            }
+            },
+            "examples": [
+                "agr registry record create --registry-id reg-xxxx --name my-plugin --descriptor-type PLUGIN --file-source '{\"Type\":\"FILE\",\"SizeBytes\":5}' -o json",
+                "curl --fail --upload-file ./plugin.bin --header 'Content-Type: application/octet-stream' \"$upload_url\"",
+                "agr registry record get --registry-id reg-xxxx --record-id rec-xxxx --version-id rv-xxxx -o json"
+            ]
         },
         "registry.delete": {
             "short": "Delete an empty registry",
@@ -1764,7 +1894,7 @@
         },
         "registry.record.update": {
             "short": "Update record metadata, labels, or content",
-            "long": "Update Description and/or LabelMutations, or provide exactly one content source to create a new version. Content cannot be combined with Description or LabelMutations. VersionName and ChangeLog describe the new version. LabelMutations uses Operation, Name, optional VersionId and Reason; stable/latest labels cannot be deleted. Approval does not assign the stable label.",
+            "long": "Update Description and/or LabelMutations, or provide exactly one content source to create a new version. Content cannot be combined with Description or LabelMutations. VersionName, ChangeLog, Metadata and SupportedHarnessVersions apply to the new version only. Version metadata and compatibility do not inherit from an earlier version.\n\nFor a Plugin file upload, use --file-source with Type=FILE. PUT the raw file to Data.UploadURL as application/octet-stream before Data.ExpireTime, then query the new Data.Version.VersionId with registry record get. To reuse a READY Skill or Plugin file from the same record, use Type=VERSION with SourceVersionId. This creates a new version without uploading bytes.\n\nLabelMutations uses Operation, Name, optional VersionId and Reason; stable/latest labels cannot be deleted. Approval does not assign the stable label.",
             "fields": {
                 "RegistryId": {
                     "description": "Registry ID.",
@@ -1845,8 +1975,42 @@
                             "usage": "Label operations: Operation, Name, VersionId and Reason. Accepts JSON, @file, or - for stdin."
                         }
                     }
+                },
+                "FileSource": {
+                    "description": "Upload a new Plugin file or reuse a READY Skill or Plugin file from the same record.",
+                    "inputs": {
+                        "file-source": {
+                            "usage": "Use FILE with SizeBytes (1–54525952) and optional SHA256 (64 lowercase hex digits), or VERSION with SourceVersionId. Accepts JSON, @file, or - for stdin.",
+                            "format": "{\"Type\":\"FILE\",\"SizeBytes\":<bytes>} or {\"Type\":\"VERSION\",\"SourceVersionId\":\"<version-id>\"}",
+                            "examples": ["{\"Type\":\"FILE\",\"SizeBytes\":5}", "{\"Type\":\"VERSION\",\"SourceVersionId\":\"rv-xxxx\"}"]
+                        }
+                    }
+                },
+                "SupportedHarnessVersions": {
+                    "description": "Exact Harness engine and version pairs supported by the new version. Values are not inherited.",
+                    "inputs": {
+                        "supported-harness-versions": {
+                            "usage": "Harness compatibility as a JSON array, @file, or - for stdin. Omit or pass [] for no declared compatibility.",
+                            "format": "[{\"HarnessEngine\":\"<engine>\",\"HarnessEngineVersion\":\"<version>\"}]",
+                            "examples": ["[{\"HarnessEngine\":\"pi\",\"HarnessEngineVersion\":\"1.3.0\"}]"]
+                        }
+                    }
+                },
+                "Metadata": {
+                    "description": "Metadata entries for the new version. Names must be lowercase and unique. Values are not inherited.",
+                    "inputs": {
+                        "metadata": {
+                            "usage": "Version metadata as a Name/Value JSON array, @file, or - for stdin. Omit or pass [] for empty metadata.",
+                            "format": "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]",
+                            "examples": ["[{\"Name\":\"publisher\",\"Value\":\"Example\"}]"]
+                        }
+                    }
                 }
-            }
+            },
+            "examples": [
+                "agr registry record update --registry-id reg-xxxx --record-id rec-xxxx --file-source '{\"Type\":\"FILE\",\"SizeBytes\":5}' -o json",
+                "agr registry record update --registry-id reg-xxxx --record-id rec-xxxx --file-source '{\"Type\":\"VERSION\",\"SourceVersionId\":\"rv-xxxx\"}' --metadata '[{\"Name\":\"publisher\",\"Value\":\"Example\"}]' -o json"
+            ]
         },
         "session.space.create": {
             "short": "Create a session space",

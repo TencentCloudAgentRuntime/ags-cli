@@ -542,6 +542,40 @@ agr event list --mode Raw --order Asc --start-time "$START" --end-time "$END" --
 通过 `agr event --help`、`agr event list --help` 或
 `agr schema event.list -o json` 查看接口。
 
+## 上传 Registry Plugin
+
+准备已有 Registry 和本地 Plugin 文件。创建记录时使用
+`--descriptor-type PLUGIN`，`FILE` 来源声明原始文件字节数（1 字节至 52 MiB）。
+也可以提供 64 位小写十六进制 `SHA256` 摘要。
+
+```bash
+plugin=./plugin.bin
+registry_id=reg-xxxx
+source=$(jq -cn --argjson bytes "$(wc -c < "$plugin")" '{Type:"FILE",SizeBytes:$bytes}')
+result=$(agr registry record create --registry-id "$registry_id" --name my-plugin \
+  --descriptor-type PLUGIN --file-source "$source" -o json)
+record_id=$(printf '%s\n' "$result" | jq -er '.Data.RecordId')
+version_id=$(printf '%s\n' "$result" | jq -er '.Data.Version.VersionId')
+upload_url=$(printf '%s\n' "$result" | jq -er '.Data.UploadURL')
+curl --fail --proto '=https' --upload-file "$plugin" \
+  --header 'Content-Type: application/octet-stream' "$upload_url"
+agr registry record get --registry-id "$registry_id" --record-id "$record_id" \
+  --version-id "$version_id" -o json
+```
+
+在 `Data.ExpireTime` 前上传。`Data.Version.ContentStatus` 为 `READY` 时，
+文件内容已就绪。如果仍在准备，继续查询同一版本。审批和设置 stable 标签
+是独立操作。
+
+上传新版本时，向 `registry record update` 传 `Type=FILE` 的 `--file-source`，
+使用新返回的上传链接和 Version ID。复用同一 Record 内已就绪的 Skill 或
+Plugin 文件时，更新命令使用
+`--file-source '{"Type":"VERSION","SourceVersionId":"rv-xxxx"}'`，无需上传。
+`--metadata` 接收 `Name` / `Value` 对象数组，`--supported-harness-versions`
+接收 `HarnessEngine` / `HarnessEngineVersion` 精确配对的对象数组。两项都
+作用于新版本，省略时为空，包括复用旧文件的场景。完整请求可用
+`--request @file` 从 JSON 文件传入。
+
 ## 原始 API 调用
 
 每个已映射 API 操作的稳定入口仍是对应的资源命令。当需要调试或访问
@@ -604,6 +638,24 @@ agr pre-cache-image-task create|list|get
 agr event list
 agr completion bash|zsh|fish|powershell
 ```
+
+`agr pre-cache-image-task create` 省略 `--pre-cache-type` 时，服务端默认使用 `image`。
+创建镜像卷预热任务时传 `--pre-cache-type image_volume -o json`，再用创建结果中的
+`ImageDigest`、`Image` 和 `ImageRegistryType` 查询：
+
+```bash
+agr pre-cache-image-task create --image "$image" --image-registry-type "$registry_type" --pre-cache-type image_volume -o json
+agr pre-cache-image-task get "$image_digest" --image "$image" --image-registry-type "$registry_type" --pre-cache-type image_volume -o json
+```
+
+`pre-cache-image-task list` 列出普通镜像预热任务。查询账号镜像预热并发上限：
+
+```bash
+agr api call DescribeQuotaOverview --request '{}' -o json \
+  --jq '.Data.Response.Response.AccountQuotaOverview.Quota.PreCacheImageConcurrency'
+```
+
+该配额字段可能不返回。
 
 ## 机器可读输出
 

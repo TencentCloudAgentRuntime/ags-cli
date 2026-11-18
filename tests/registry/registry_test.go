@@ -213,6 +213,9 @@ func testRegistryChannel(t *testing.T, channel string) {
 	for _, body := range []string{
 		`{"RegistryId":"reg-test","Name":"x","DescriptorType":"MCP","MCPSource":{"Type":"MANUAL","Unknown":true}}`,
 		`{"RegistryId":"reg-test","Name":"x","DescriptorType":"MCP","MCPSource":{"Type":"MANUAL","Descriptors":{}}}`,
+		`{"RegistryId":"reg-test","Name":"x","DescriptorType":"PLUGIN","FileSource":{"Type":"FILE","SizeBytes":"1"}}`,
+		`{"RegistryId":"reg-test","Name":"x","DescriptorType":"PLUGIN","Metadata":{"publisher":"value"}}`,
+		`{"RegistryId":"reg-test","Name":"x","DescriptorType":"PLUGIN","SupportedHarnessVersions":["pi:1.3.0"]}`,
 	} {
 		mu.Lock()
 		before := calls
@@ -228,6 +231,22 @@ func testRegistryChannel(t *testing.T, channel string) {
 			t.Fatal("invalid request reached server")
 		}
 	}
+	t.Run("PluginInputTransport", func(t *testing.T) {
+		source := filepath.Join(dir, "plugin-source.json")
+		if err := os.WriteFile(source, []byte(`{"Type":"FILE","SizeBytes":5}`), 0600); err != nil {
+			t.Fatal(err)
+		}
+		run(channel, `[{"Name":"publisher","Value":""}]`, true, "registry", "record", "create",
+			"--registry-id", "reg-test", "--name", "plugin", "--descriptor-type", "PLUGIN",
+			"--file-source", "@"+source, "--metadata", "-", "--supported-harness-versions", "[]", "-o", "json")
+		mu.Lock()
+		defer mu.Unlock()
+		if !reflect.DeepEqual(payload["FileSource"], map[string]any{"Type": "FILE", "SizeBytes": json.Number("5")}) ||
+			!reflect.DeepEqual(payload["Metadata"], []any{map[string]any{"Name": "publisher", "Value": ""}}) ||
+			!reflect.DeepEqual(payload["SupportedHarnessVersions"], []any{}) {
+			t.Fatalf("plugin input transport changed the request: %v", payload)
+		}
+	})
 	// Explicit selectors must never disappear and widen the deletion scope.
 	for _, raw := range []bool{false, true} {
 		for _, selector := range []struct {

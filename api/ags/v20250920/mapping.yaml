@@ -26,6 +26,47 @@
 api_version: "v20250920"
 
 actions:
+  DescribeGPUResourceGroups:
+    command: gpu.group.list
+    request: DescribeGPUResourceGroupsRequest
+    response: DescribeGPUResourceGroupsResponse
+    status: mapped
+
+  DescribeGPUResources:
+    command: gpu.resource.list
+    request: DescribeGPUResourcesRequest
+    response: DescribeGPUResourcesResponse
+    status: mapped
+    fields:
+      ResourceIds:
+        inputs:
+          - flag: resource-ids
+            type: string_array
+
+  DescribeGPUResourceSpecs:
+    command: gpu.spec.list
+    request: DescribeGPUResourceSpecsRequest
+    response: DescribeGPUResourceSpecsResponse
+    status: mapped
+
+  ModifyGPUResourceGroup:
+    command: gpu.group.rename
+    request: ModifyGPUResourceGroupRequest
+    response: ModifyGPUResourceGroupResponse
+    status: mapped
+    fields:
+      ResourceGroupId:
+        positional: true
+
+  DeleteGPUResourceGroup:
+    command: gpu.group.delete
+    request: DeleteGPUResourceGroupRequest
+    response: DeleteGPUResourceGroupResponse
+    status: mapped
+    fields:
+      ResourceGroupId:
+        positional: true
+
   DescribeEventCenterEvents:
     command: event.list
     request: DescribeEventCenterEventsRequest
@@ -459,6 +500,18 @@ actions:
         inputs:
         - flag: skill-source
           type: json
+      FileSource:
+        inputs:
+        - flag: file-source
+          type: json
+      SupportedHarnessVersions:
+        inputs:
+        - flag: supported-harness-versions
+          type: json
+      Metadata:
+        inputs:
+        - flag: metadata
+          type: json
   DeleteRegistry:
     command: registry.delete
     request: DeleteRegistryRequest
@@ -604,6 +657,18 @@ actions:
       LabelMutations:
         inputs:
         - flag: label-mutations
+          type: json
+      FileSource:
+        inputs:
+        - flag: file-source
+          type: json
+      SupportedHarnessVersions:
+        inputs:
+        - flag: supported-harness-versions
+          type: json
+      Metadata:
+        inputs:
+        - flag: metadata
           type: json
       Description:
         allow_empty: true

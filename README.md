@@ -612,6 +612,43 @@ text and JSON output; NDJSON remains reserved for streaming commands. Discover
 the interface with `agr event --help`, `agr event list --help`, or
 `agr schema event.list -o json`.
 
+## Uploading a Registry Plugin
+
+Use an existing Registry and a local Plugin file. Create a record with
+`--descriptor-type PLUGIN` and a `FILE` source declaring the raw byte count
+(1 byte to 52 MiB). An optional `SHA256` is a 64-character lowercase
+hexadecimal digest.
+
+```bash
+plugin=./plugin.bin
+registry_id=reg-xxxx
+source=$(jq -cn --argjson bytes "$(wc -c < "$plugin")" '{Type:"FILE",SizeBytes:$bytes}')
+result=$(agr registry record create --registry-id "$registry_id" --name my-plugin \
+  --descriptor-type PLUGIN --file-source "$source" -o json)
+record_id=$(printf '%s\n' "$result" | jq -er '.Data.RecordId')
+version_id=$(printf '%s\n' "$result" | jq -er '.Data.Version.VersionId')
+upload_url=$(printf '%s\n' "$result" | jq -er '.Data.UploadURL')
+curl --fail --proto '=https' --upload-file "$plugin" \
+  --header 'Content-Type: application/octet-stream' "$upload_url"
+agr registry record get --registry-id "$registry_id" --record-id "$record_id" \
+  --version-id "$version_id" -o json
+```
+
+Upload before `Data.ExpireTime`. The file is ready once
+`Data.Version.ContentStatus` is `READY`. Check the same version again if it is
+still being prepared. Approval and assigning the stable label are separate
+operations.
+
+To upload a new version, pass `--file-source` with `Type=FILE` to
+`registry record update` and use the new upload URL and Version ID. To reuse a
+READY Skill or Plugin file from the same record without uploading, update with
+`--file-source '{"Type":"VERSION","SourceVersionId":"rv-xxxx"}'`.
+`--metadata` takes a JSON array of `Name`/`Value` objects and
+`--supported-harness-versions` takes a JSON array of exact
+`HarnessEngine`/`HarnessEngineVersion` pairs. These values apply to the new
+version and are empty when omitted, including when reusing a file. Use
+`--request @file` to supply the complete API request from a JSON file.
+
 ## Low-level API access
 
 For undocumented fields or debugging, use the raw API channel:
@@ -672,6 +709,25 @@ agr apikey create/list/delete
 agr pre-cache-image-task create|list|get
 agr event list
 agr completion bash|zsh|fish|powershell
+```
+
+Omit `--pre-cache-type` on `agr pre-cache-image-task create` to use the service
+default (`image`). For image volume pre-caching, create with
+`--pre-cache-type image_volume -o json`, then query with the returned image
+digest, image address and registry type:
+
+```bash
+agr pre-cache-image-task create --image "$image" --image-registry-type "$registry_type" --pre-cache-type image_volume -o json
+agr pre-cache-image-task get "$image_digest" --image "$image" --image-registry-type "$registry_type" --pre-cache-type image_volume -o json
+```
+
+Use `ImageDigest`, `Image`, and `ImageRegistryType` from the create response for
+the lookup. `pre-cache-image-task list` shows ordinary image tasks. To see the
+optional account concurrency limit, query:
+
+```bash
+agr api call DescribeQuotaOverview --request '{}' -o json \
+  --jq '.Data.Response.Response.AccountQuotaOverview.Quota.PreCacheImageConcurrency'
 ```
 
 ## Machine-readable output and `--jq`
