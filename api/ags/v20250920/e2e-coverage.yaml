@@ -3196,26 +3196,26 @@ coverage:
     assertions: [harness.create, harness.publish.first]
   - entry: /objects/CreateHarnessRequest/members/MCPServers/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/CreateHarnessRequest/members/MCPServers/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/CreateHarnessRequest/members/MCPServers/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/MCPServers/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/MCPServers/member
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/CreateHarnessRequest/members/MCPServers/name
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/CreateHarnessRequest/members/MCPServers/required
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/CreateHarnessRequest/members/MCPServers/type
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/CreateHarnessRequest/members/ModelProviders/@exists
     scenario: harness.lifecycle
     assertions: [harness.create, harness.publish.first]
@@ -3240,70 +3240,70 @@ coverage:
     assertions: [harness.create, harness.publish.first]
   - entry: /objects/CreateHarnessRequest/members/Plugins/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.plugins]
   - entry: /objects/CreateHarnessRequest/members/Plugins/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.plugins]
   - entry: /objects/CreateHarnessRequest/members/Plugins/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/Plugins/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/Plugins/member
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.plugins]
   - entry: /objects/CreateHarnessRequest/members/Plugins/name
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.plugins]
   - entry: /objects/CreateHarnessRequest/members/Plugins/required
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.plugins]
   - entry: /objects/CreateHarnessRequest/members/Plugins/type
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.plugins]
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.session]
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.session]
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/member
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.session]
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/name
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.session]
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/required
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.session]
   - entry: /objects/CreateHarnessRequest/members/SessionConfiguration/type
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.session]
   - entry: /objects/CreateHarnessRequest/members/Skills/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.skills]
   - entry: /objects/CreateHarnessRequest/members/Skills/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.skills]
   - entry: /objects/CreateHarnessRequest/members/Skills/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/Skills/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateHarnessRequest/members/Skills/member
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.skills]
   - entry: /objects/CreateHarnessRequest/members/Skills/name
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.skills]
   - entry: /objects/CreateHarnessRequest/members/Skills/required
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.skills]
   - entry: /objects/CreateHarnessRequest/members/Skills/type
     scenario: harness.lifecycle
-    assertions: [harness.create, harness.publish.first]
+    assertions: [harness.spec.skills]
   - entry: /objects/CreateHarnessRequest/members/SystemPrompt/@exists
     scenario: harness.lifecycle
     assertions: [harness.create, harness.publish.first]
@@ -3560,26 +3560,26 @@ coverage:
     assertions: [provider.create]
   - entry: /objects/CreateModelProviderRequest/members/Source/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.openai.base-url, provider.openai.credential]
   - entry: /objects/CreateModelProviderRequest/members/Source/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.openai.base-url, provider.openai.credential]
   - entry: /objects/CreateModelProviderRequest/members/Source/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateModelProviderRequest/members/Source/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CreateModelProviderRequest/members/Source/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.openai.base-url, provider.openai.credential]
   - entry: /objects/CreateModelProviderRequest/members/Source/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.openai.base-url, provider.openai.credential]
   - entry: /objects/CreateModelProviderRequest/members/Source/required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.openai.base-url, provider.openai.credential]
   - entry: /objects/CreateModelProviderRequest/members/Source/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.openai.base-url, provider.openai.credential]
   - entry: /objects/CreateModelProviderRequest/members/Tags/@exists
     scenario: harness.lifecycle
     assertions: [provider.create]
@@ -3657,99 +3657,99 @@ coverage:
     assertions: [provider.create]
   - entry: /objects/CredentialReference/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/CredentialProviderId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/CredentialProviderId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/CredentialProviderId/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/Scope/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/Scope/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/Scope/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/UserId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/CredentialReference/members/UserId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/members/UserId/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/CredentialReference/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential, provider.openai.credential]
   - entry: /objects/DeleteHarnessRequest/@exists
     scenario: harness.lifecycle
     assertions: [harness.delete]
@@ -4913,71 +4913,71 @@ coverage:
     assertions: [provider.revisions]
   - entry: /objects/HTTPHeader/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HTTPHeader/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HTTPHeader/members/Name/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HTTPHeader/members/Name/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Name/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HTTPHeader/members/Value/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HTTPHeader/members/Value/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/members/Value/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/HTTPHeader/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/Harness/@exists
     scenario: harness.lifecycle
     assertions: [harness.get]
@@ -6036,59 +6036,59 @@ coverage:
     assertions: [harness.create]
   - entry: /objects/HarnessNetworkConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessNetworkConfiguration/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/NetworkMode/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/members/VpcConfig/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessNetworkConfiguration/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessResourceConfiguration/@exists
     scenario: harness.lifecycle
     assertions: [harness.create]
@@ -6523,29 +6523,29 @@ coverage:
     assertions: [harness.revision.get]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/@exists
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/disabled
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/member
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/name
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/output_required
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/type
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/MCPServers/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessRevisionSpec/members/ModelProviders/@exists
     scenario: harness.lifecycle
     assertions: [harness.revision.get]
@@ -6573,79 +6573,79 @@ coverage:
     assertions: [harness.revision.get]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/@exists
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/disabled
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/Plugins/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/Plugins/member
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/name
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/output_required
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/type
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/Plugins/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/disabled
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/member
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/name
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/output_required
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/type
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/SessionConfiguration/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessRevisionSpec/members/Skills/@exists
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/Skills/disabled
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/Skills/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/Skills/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessRevisionSpec/members/Skills/member
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/Skills/name
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/Skills/output_required
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/Skills/type
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/Skills/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.revision.get]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessRevisionSpec/members/SystemPrompt/@exists
     scenario: harness.lifecycle
     assertions: [harness.revision.get]
@@ -6728,48 +6728,48 @@ coverage:
     assertions: [harness.create]
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/NetworkConfiguration/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/RoleArn/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessSandboxToolConfiguration/members/StorageMounts/@exists
     scenario: harness.lifecycle
     assertions: [harness.create]
@@ -6874,73 +6874,73 @@ coverage:
     assertions: [harness.create]
   - entry: /objects/HarnessSessionConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSessionConfiguration/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/members/SessionSpaceId/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfiguration/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSessionConfigurationInput/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/members/SessionSpaceId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSessionConfigurationInput/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.session, harness.clear.SessionConfiguration]
   - entry: /objects/HarnessSpec/@exists
     scenario: harness.lifecycle
     assertions: [harness.update]
@@ -7026,29 +7026,29 @@ coverage:
     assertions: [harness.update]
   - entry: /objects/HarnessSpec/members/MCPServers/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/MCPServers/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/MCPServers/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/MCPServers/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/MCPServers/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/MCPServers/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/MCPServers/output_required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/MCPServers/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/MCPServers/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/HarnessSpec/members/ModelProviders/@exists
     scenario: harness.lifecycle
     assertions: [harness.update]
@@ -7076,79 +7076,79 @@ coverage:
     assertions: [harness.update]
   - entry: /objects/HarnessSpec/members/Plugins/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/Plugins/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/Plugins/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/Plugins/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/Plugins/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/Plugins/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/Plugins/output_required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/Plugins/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/Plugins/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.plugins]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/SessionConfiguration/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/SessionConfiguration/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/output_required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/SessionConfiguration/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.session]
   - entry: /objects/HarnessSpec/members/Skills/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/Skills/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/Skills/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/Skills/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessSpec/members/Skills/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/Skills/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/Skills/output_required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/Skills/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/Skills/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.spec.skills]
   - entry: /objects/HarnessSpec/members/SystemPrompt/@exists
     scenario: harness.lifecycle
     assertions: [harness.update]
@@ -7531,424 +7531,424 @@ coverage:
     assertions: [harness.create]
   - entry: /objects/HarnessVpcConfig/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessVpcConfig/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SecurityGroupIds/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/members/SubnetIds/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/HarnessVpcConfig/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.initialize.vpc]
   - entry: /objects/MCPConnection/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Credential/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Credential/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Credential/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Credential/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Credential/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Credential/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Credential/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Credential/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Credential/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnection/members/Headers/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Headers/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Headers/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Headers/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Headers/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Headers/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Headers/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Headers/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Headers/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Name/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Name/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Name/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Source/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnection/members/Source/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/members/Source/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnection/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Credential/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnectionInput/members/Credential/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnectionInput/members/Credential/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Credential/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Credential/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnectionInput/members/Credential/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnectionInput/members/Credential/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnectionInput/members/Credential/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-credential]
   - entry: /objects/MCPConnectionInput/members/Headers/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Headers/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Headers/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Headers/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Headers/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Headers/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Headers/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Headers/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Name/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Name/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Name/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Name/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Name/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Name/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Name/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Name/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Source/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Source/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Source/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Source/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPConnectionInput/members/Source/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Source/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Source/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/members/Source/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPConnectionInput/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPRemoteSource/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPRemoteSource/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPRemoteSource/members/URL/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPRemoteSource/members/URL/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/members/URL/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPRemoteSource/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPSource/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSource/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPSource/members/Registry/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Registry/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Registry/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSource/members/Registry/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSource/members/Registry/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Registry/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Registry/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Registry/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Registry/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSource/members/Remote/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/members/Remote/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/members/Remote/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSource/members/Remote/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSource/members/Remote/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/members/Remote/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/members/Remote/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/members/Remote/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/members/Remote/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSource/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPSourceInput/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPSourceInput/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSourceInput/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/MCPSourceInput/members/Registry/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSourceInput/members/Registry/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSourceInput/members/Registry/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSourceInput/members/Registry/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSourceInput/members/Registry/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSourceInput/members/Registry/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSourceInput/members/Registry/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSourceInput/members/Registry/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry]
   - entry: /objects/MCPSourceInput/members/Remote/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSourceInput/members/Remote/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSourceInput/members/Remote/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSourceInput/members/Remote/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/MCPSourceInput/members/Remote/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSourceInput/members/Remote/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSourceInput/members/Remote/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSourceInput/members/Remote/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-remote]
   - entry: /objects/MCPSourceInput/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.mcp-registry, harness.spec.mcp-remote, harness.spec.mcp-credential, harness.spec.mcp-headers]
   - entry: /objects/ModelProvider/@exists
     scenario: harness.lifecycle
     assertions: [provider.get]
@@ -8434,29 +8434,29 @@ coverage:
     assertions: [provider.create]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/OpenAICompatible/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSource/members/TokenHub/@exists
     scenario: harness.lifecycle
     assertions: [provider.create]
@@ -8495,26 +8495,26 @@ coverage:
     assertions: [provider.create]
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSourceInput/members/OpenAICompatible/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/ModelProviderSourceInput/members/TokenHub/@exists
     scenario: harness.lifecycle
     assertions: [provider.create]
@@ -8929,26 +8929,26 @@ coverage:
     assertions: [harness.update]
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.MCPServers]
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.MCPServers]
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.MCPServers]
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.MCPServers]
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.MCPServers]
   - entry: /objects/ModifyHarnessRequest/members/MCPServers/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.MCPServers]
   - entry: /objects/ModifyHarnessRequest/members/ModelProviders/@exists
     scenario: harness.lifecycle
     assertions: [harness.update]
@@ -8973,70 +8973,70 @@ coverage:
     assertions: [harness.update]
   - entry: /objects/ModifyHarnessRequest/members/Plugins/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Plugins]
   - entry: /objects/ModifyHarnessRequest/members/Plugins/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Plugins]
   - entry: /objects/ModifyHarnessRequest/members/Plugins/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/Plugins/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/Plugins/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Plugins]
   - entry: /objects/ModifyHarnessRequest/members/Plugins/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Plugins]
   - entry: /objects/ModifyHarnessRequest/members/Plugins/required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Plugins]
   - entry: /objects/ModifyHarnessRequest/members/Plugins/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Plugins]
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.SessionConfiguration]
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.SessionConfiguration]
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.SessionConfiguration]
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.SessionConfiguration]
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.SessionConfiguration]
   - entry: /objects/ModifyHarnessRequest/members/SessionConfiguration/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.SessionConfiguration]
   - entry: /objects/ModifyHarnessRequest/members/Skills/@exists
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Skills]
   - entry: /objects/ModifyHarnessRequest/members/Skills/disabled
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Skills]
   - entry: /objects/ModifyHarnessRequest/members/Skills/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/Skills/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyHarnessRequest/members/Skills/member
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Skills]
   - entry: /objects/ModifyHarnessRequest/members/Skills/name
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Skills]
   - entry: /objects/ModifyHarnessRequest/members/Skills/required
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Skills]
   - entry: /objects/ModifyHarnessRequest/members/Skills/type
     scenario: harness.lifecycle
-    assertions: [harness.update]
+    assertions: [harness.clear.Skills]
   - entry: /objects/ModifyHarnessRequest/members/SystemPrompt/@exists
     scenario: harness.lifecycle
     assertions: [harness.update]
@@ -9188,48 +9188,48 @@ coverage:
     assertions: [provider.update]
   - entry: /objects/ModifyModelProviderRequest/members/Models/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.update, provider.model.capabilities]
   - entry: /objects/ModifyModelProviderRequest/members/Models/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.update, provider.model.capabilities]
   - entry: /objects/ModifyModelProviderRequest/members/Models/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyModelProviderRequest/members/Models/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyModelProviderRequest/members/Models/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.update, provider.model.capabilities]
   - entry: /objects/ModifyModelProviderRequest/members/Models/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.update, provider.model.capabilities]
   - entry: /objects/ModifyModelProviderRequest/members/Models/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.update, provider.model.capabilities]
   - entry: /objects/ModifyModelProviderRequest/members/Models/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.update, provider.model.capabilities]
   - entry: /objects/ModifyModelProviderRequest/members/Source/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.source.update, provider.openai.update]
   - entry: /objects/ModifyModelProviderRequest/members/Source/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.source.update, provider.openai.update]
   - entry: /objects/ModifyModelProviderRequest/members/Source/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyModelProviderRequest/members/Source/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/ModifyModelProviderRequest/members/Source/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.source.update, provider.openai.update]
   - entry: /objects/ModifyModelProviderRequest/members/Source/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.source.update, provider.openai.update]
   - entry: /objects/ModifyModelProviderRequest/members/Source/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.source.update, provider.openai.update]
   - entry: /objects/ModifyModelProviderRequest/members/Source/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.source.update, provider.openai.update]
   - entry: /objects/ModifyModelProviderRequest/members/Tags/@exists
     scenario: harness.lifecycle
     assertions: [provider.update]
@@ -9307,198 +9307,198 @@ coverage:
     assertions: [provider.update]
   - entry: /objects/OpenAICompatibleSource/@exists
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSource/members/@exists
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/@exists
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/disabled
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/member
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/name
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/output_required
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/type
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/BaseURL/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSource/members/Credential/@exists
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/Credential/disabled
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/Credential/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSource/members/Credential/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSource/members/Credential/member
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/Credential/name
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/Credential/output_required
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/Credential/type
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/members/Credential/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSource/usage
     scenario: harness.lifecycle
-    assertions: [provider.get]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSourceInput/members/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSourceInput/members/BaseURL/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url]
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/members/Credential/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.credential]
   - entry: /objects/OpenAICompatibleSourceInput/usage
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.openai.base-url, provider.openai.credential]
   - entry: /objects/PluginReference/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/PluginReference/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/PluginReference/members/Source/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/PluginReference/members/Source/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/members/Source/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginReference/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/PluginSource/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/PluginSource/members/Registry/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/PluginSource/members/Registry/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/members/Registry/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PluginSource/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.plugins]
   - entry: /objects/PublishHarnessRevisionRequest/@exists
     scenario: harness.lifecycle
     assertions: [harness.publish, harness.publish.idempotent, harness.rollback]
@@ -9614,154 +9614,154 @@ coverage:
     assertions: [provider.create]
   - entry: /objects/RegisteredModel/members/ContextWindow/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ContextWindow/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ContextWindow/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/ContextWindow/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/ContextWindow/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ContextWindow/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ContextWindow/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ContextWindow/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ContextWindow/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/ID/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/ID/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/ID/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/Input/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/Input/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Input/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/MaxOutputTokens/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/Name/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/Name/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Name/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/@exists
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/disabled
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/Reasoning/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModel/members/Reasoning/member
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/name
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/output_required
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/type
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/members/Reasoning/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [provider.create]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModel/usage
     scenario: harness.lifecycle
     assertions: [provider.create]
@@ -9775,312 +9775,312 @@ coverage:
     assertions: [provider.update]
   - entry: /objects/RegisteredModelInput/members/ContextWindow/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ContextWindow/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ContextWindow/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/ContextWindow/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/ContextWindow/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ContextWindow/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ContextWindow/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ContextWindow/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ID/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ID/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ID/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/ID/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/ID/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ID/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ID/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/ID/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Input/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Input/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Input/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/Input/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/Input/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Input/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Input/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Input/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.create, provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/MaxOutputTokens/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Name/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Name/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Name/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/Name/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/Name/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Name/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Name/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Name/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Reasoning/@exists
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Reasoning/disabled
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Reasoning/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/Reasoning/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegisteredModelInput/members/Reasoning/member
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Reasoning/name
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Reasoning/required
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/members/Reasoning/type
     scenario: harness.lifecycle
-    assertions: [provider.update]
+    assertions: [provider.model.capabilities]
   - entry: /objects/RegisteredModelInput/usage
     scenario: harness.lifecycle
     assertions: [provider.update]
   - entry: /objects/RegistryReference/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/RecordId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/RecordId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RecordId/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/RegistryId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/RegistryId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/RegistryId/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/VersionId/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/RegistryReference/members/VersionId/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/members/VersionId/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/RegistryReference/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills, harness.spec.plugins, harness.spec.mcp-registry]
   - entry: /objects/SkillReference/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/SkillReference/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/SkillReference/members/Source/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/SkillReference/members/Source/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/members/Source/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillReference/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/SkillSource/members/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/@exists
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/disabled
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/document
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/SkillSource/members/Registry/example
     review: Preview contract documentation and examples copied from the reviewed Harness YunAPI export; no runtime behavior.
   - entry: /objects/SkillSource/members/Registry/member
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/name
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/output_required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/required
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/type
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/members/Registry/value_allowed_null
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/SkillSource/usage
     scenario: harness.lifecycle
-    assertions: [harness.create]
+    assertions: [harness.spec.skills]
   - entry: /objects/TokenHubSource/@exists
     scenario: harness.lifecycle
     assertions: [provider.create]

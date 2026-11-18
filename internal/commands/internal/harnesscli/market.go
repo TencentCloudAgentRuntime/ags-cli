@@ -246,7 +246,8 @@ func orEmpty(value any) any {
 
 func summarizeMCP(descriptors string, metadata map[string]any) *ToolMCP {
 	mcp := &ToolMCP{Headers: []ToolMCPHeader{}}
-	mcp.RequiresCredentials = fmt.Sprint(metadata["requires_credentials"]) == "true"
+	metadataRequiresCredentials := fmt.Sprint(metadata["requires_credentials"]) == "true"
+	mcp.RequiresCredentials = metadataRequiresCredentials
 	mcp.CredentialURL = fmt.Sprint(orEmpty(metadata["credential_url"]))
 	var server struct {
 		Name    string `json:"name"`
@@ -286,15 +287,18 @@ func summarizeMCP(descriptors string, metadata map[string]any) *ToolMCP {
 					Default    *string `json:"default"`
 				}
 				if json.Unmarshal(raw, &variable) == nil {
+					required := variable.IsRequired && variable.Value == nil && variable.Default == nil
 					entry.Secret = entry.Secret || variable.IsSecret
-					entry.Required = entry.Required || (variable.IsRequired && variable.Value == nil && variable.Default == nil)
+					entry.Required = entry.Required || required
+					mcp.RequiresCredentials = mcp.RequiresCredentials || (required && variable.IsSecret)
 				}
 			}
 			// Without a value or default the service cannot fill the header itself.
-			if header.Value == nil && header.Default == nil && header.IsRequired {
-				entry.Required = true
+			if header.Value == nil && header.Default == nil && header.IsRequired && header.IsSecret {
+				mcp.RequiresCredentials = true
 			}
-			if mcp.RequiresCredentials && entry.Secret {
+			// A requirement inferred from another header does not make this header required.
+			if metadataRequiresCredentials && entry.Secret {
 				entry.Required = true
 			}
 			mcp.Headers = append(mcp.Headers, entry)

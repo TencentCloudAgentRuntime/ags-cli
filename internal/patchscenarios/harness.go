@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -21,6 +22,12 @@ var harnessAssertions = []string{
 	"harness.create", "harness.publish.first", "harness.get", "harness.list", "harness.update", "harness.revision.create",
 	"harness.revision.get", "harness.revision.list", "harness.publish", "harness.publish.idempotent", "harness.rollback",
 	"harness.diff", "harness.status", "harness.delete",
+	"harness.initialize.vpc",
+	"harness.spec.skills", "harness.spec.plugins", "harness.spec.session", "harness.spec.mcp-registry",
+	"harness.spec.mcp-remote", "harness.spec.mcp-credential", "harness.spec.mcp-headers",
+	"harness.clear.Skills", "harness.clear.Plugins", "harness.clear.MCPServers", "harness.clear.SessionConfiguration",
+	"provider.openai.create", "provider.openai.base-url", "provider.openai.credential", "provider.openai.update",
+	"provider.source.update", "provider.model.capabilities",
 	"input.validation",
 }
 
@@ -118,6 +125,10 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 	if err != nil {
 		return err
 	}
+	contract, err := loadHarnessContractFixture()
+	if err != nil {
+		return err
+	}
 	ctx := s.Context
 	suffix := fmt.Sprintf("%d", time.Now().UnixNano()%1_000_000_000)
 
@@ -179,11 +190,15 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 	if err := s.Assert("provider.list", len(set) == 1 && harnessInt(listed.Data["TotalCount"]) == 1); err != nil {
 		return err
 	}
+	if err := verifyOpenAIProvider(s, contract, providerName+"-openai", fixture.apiKeyID, fixture.model); err != nil {
+		return err
+	}
 
 	harnessName := "agr-e2e-hns-" + suffix
 	createArgs := []string{"harness", "create", "--name", harnessName, "--engine", fixture.engine, "--engine-version", version,
 		"--model", providerID + ":" + fixture.model, "--role-arn", fixture.roleArn,
 		"--subnet-id", fixture.subnetID, "--security-group-id", fixture.securityGroupID, "--system-prompt", "revision one", "--tags", "agr-e2e=harness", "--wait"}
+	createArgs = append(createArgs, contract.attachmentArgs()...)
 	if fixture.initializeConfiguration != "" {
 		createArgs = append(createArgs, "--initialize-configuration", fixture.initializeConfiguration)
 	}
@@ -192,9 +207,10 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 	if harnessID == "" && harness.Failure != nil {
 		harnessID = harnessText(harness.Failure.Details["HarnessId"])
 	}
+	owned := harnessCleanup{harnessID: harnessID}
 	if harnessID != "" {
 		// Registered after the provider cleanup, so it runs first.
-		s.Cleanup(func(ctx context.Context) error { return harnessDeleteHarness(s, ctx, harnessID) })
+		s.Cleanup(func(ctx context.Context) error { return owned.remove(s, ctx) })
 	}
 	if err := s.Assert("harness.create", harnessID != ""); err != nil {
 		return err
@@ -216,7 +232,20 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 		return err
 	}
 	resources := harnessObject(harnessObject(described.Data["Harness"])["ResourceInfo"])
+	owned.toolID = harnessText(resources["ToolId"])
+	owned.deploymentID = harnessText(resources["DeploymentId"])
 	if err := s.Assert("harness.get", harnessText(resources["DeploymentId"]) != "" && harnessText(resources["ToolId"]) != ""); err != nil {
+		return err
+	}
+	if err := verifyHarnessVPC(s, harnessText(resources["ToolId"]), fixture); err != nil {
+		return err
+	}
+	first, err := harnessCLI(s, ctx, "harness", "revision", "get", harnessID, "1")
+	if err != nil {
+		return err
+	}
+	if err := contract.assertAttachments(s, harnessObject(harnessObject(described.Data["Harness"])["Spec"]),
+		harnessObject(harnessObject(first.Data["HarnessRevision"])["Spec"])); err != nil {
 		return err
 	}
 	harnesses, err := harnessCLI(s, ctx, "harness", "list", "--name", harnessName, "--tag", "agr-e2e=harness")
@@ -245,7 +274,12 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 		return err
 	}
 
-	if _, err := harnessCLI(s, ctx, "harness", "update", harnessID, "--system-prompt", "revision two"); err != nil {
+	if _, err := harnessCLI(s, ctx, "harness", "update", harnessID, "--system-prompt", "revision two",
+		"--skill", "", "--plugin", "", "--mcp", "", "--session-space-id", ""); err != nil {
+		return err
+	}
+	updated, err := harnessCLI(s, ctx, "harness", "get", harnessID)
+	if err != nil {
 		return err
 	}
 	diff, err := harnessCLI(s, ctx, "harness", "revision", "diff", harnessID, "live", "draft")
@@ -253,7 +287,10 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 		return err
 	}
 	changes, _ := diff.Data["Changes"].([]any)
-	if err := s.Assert("harness.update", diff.Data["Changed"] == true && len(changes) == 1 && harnessText(harnessObject(changes[0])["Path"]) == "SystemPrompt"); err != nil {
+	if err := s.Assert("harness.update", diff.Data["Changed"] == true && slices.ContainsFunc(changes, func(item any) bool {
+		change := harnessObject(item)
+		return change["Path"] == "SystemPrompt" && change["New"] == "revision two"
+	})); err != nil {
 		return err
 	}
 	status, err := harnessCLI(s, ctx, "harness", "status", harnessID)
@@ -278,7 +315,11 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 	if err != nil {
 		return err
 	}
-	pinned := harnessObject(harnessObject(harnessObject(revision.Data["HarnessRevision"])["Spec"])["DefaultModel"])
+	revisionSpec := harnessObject(harnessObject(revision.Data["HarnessRevision"])["Spec"])
+	if err := assertClearedAttachments(s, harnessObject(harnessObject(updated.Data["Harness"])["Spec"]), revisionSpec); err != nil {
+		return err
+	}
+	pinned := harnessObject(revisionSpec["DefaultModel"])
 	if err := s.Assert("harness.revision.get", harnessInt(pinned["Revision"]) == 2); err != nil {
 		return err
 	}
@@ -313,7 +354,7 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 		return err
 	}
 
-	if err := harnessDeleteHarness(s, ctx, harnessID); err != nil {
+	if err := owned.remove(s, ctx); err != nil {
 		return err
 	}
 	if err := s.Assert("harness.delete", true); err != nil {
@@ -325,30 +366,46 @@ func runHarnessLifecycle(s *patchtest.Session) (err error) {
 	return s.Assert("provider.delete", true)
 }
 
-// harnessDeleteHarness deletes and waits, then removes the Sandbox Tool that
-// DeleteHarness intentionally keeps, so the scenario leaves nothing behind.
-func harnessDeleteHarness(s *patchtest.Session, ctx context.Context, harnessID string) error {
-	described, getErr := harnessCLI(s, ctx, "harness", "get", harnessID)
-	if getErr != nil {
-		if described.Failure != nil && described.Failure.Kind == "not_found" {
-			return nil
+// Keep bound IDs across cleanup attempts. The Harness may already be absent
+// when the runner retries cleanup of its remaining resources.
+type harnessCleanup struct{ harnessID, toolID, deploymentID string }
+
+func (owned *harnessCleanup) remove(s *patchtest.Session, ctx context.Context) error {
+	described, getErr := harnessCLI(s, ctx, "harness", "get", owned.harnessID)
+	if getErr == nil {
+		resources := harnessObject(harnessObject(described.Data["Harness"])["ResourceInfo"])
+		if id := harnessText(resources["ToolId"]); id != "" {
+			owned.toolID = id
 		}
+		if id := harnessText(resources["DeploymentId"]); id != "" {
+			owned.deploymentID = id
+		}
+		if _, err := harnessCLI(s, ctx, "harness", "delete", owned.harnessID, "--yes", "--wait"); err != nil {
+			return err
+		}
+		if after, err := harnessCLI(s, ctx, "harness", "get", owned.harnessID); err == nil || after.Failure == nil || after.Failure.Kind != "not_found" {
+			return errors.New("harness still readable after delete")
+		}
+	} else if described.Failure == nil || described.Failure.Kind != "not_found" {
 		return getErr
 	}
-	toolID := harnessText(harnessObject(harnessObject(described.Data["Harness"])["ResourceInfo"])["ToolId"])
-	if _, err := harnessCLI(s, ctx, "harness", "delete", harnessID, "--yes", "--wait"); err != nil {
-		return err
+	var deploymentErr error
+	if owned.deploymentID != "" {
+		if after, err := harnessCLI(s, ctx, "deployment", "get", owned.deploymentID); err == nil || after.Failure == nil || after.Failure.Kind != "not_found" {
+			deploymentErr = errors.New("bound Deployment absence was not confirmed after Harness deletion")
+		}
 	}
-	if after, err := harnessCLI(s, ctx, "harness", "get", harnessID); err == nil || after.Failure == nil || after.Failure.Kind != "not_found" {
-		return errors.New("harness still readable after delete")
+	if owned.toolID == "" {
+		return deploymentErr
 	}
-	if toolID == "" {
-		return nil
+	if tool, err := harnessCLI(s, ctx, "tool", "get", owned.toolID); err != nil && tool.Failure != nil && tool.Failure.Kind == "not_found" {
+		return deploymentErr
 	}
-	if _, err := harnessCLI(s, ctx, "tool", "delete", toolID, "--yes", "--wait"); err != nil {
-		return err
+	_, toolErr := harnessCLI(s, ctx, "tool", "delete", owned.toolID, "--yes", "--wait")
+	if after, err := harnessCLI(s, ctx, "tool", "get", owned.toolID); err != nil && after.Failure != nil && after.Failure.Kind == "not_found" {
+		return deploymentErr
 	}
-	return nil
+	return errors.Join(deploymentErr, toolErr, errors.New("bound Sandbox Tool absence was not confirmed"))
 }
 
 func harnessDeleteProvider(s *patchtest.Session, ctx context.Context, providerID string) error {

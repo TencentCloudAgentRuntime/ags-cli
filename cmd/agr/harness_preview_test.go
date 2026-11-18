@@ -179,6 +179,9 @@ func (f *harnessFake) handle(action string, req map[string]any) (map[string]any,
 		if f.revisions[n]["Status"] == "PUBLISHED" {
 			return nil, "InvalidParameter:revision is already published"
 		}
+		if f.revisions[n]["Status"] == "PUBLISHING" {
+			return nil, "InvalidParameter:revision is already publishing"
+		}
 		f.revisions[n]["Status"] = "PUBLISHING"
 		f.publishReads[n] = 1
 		return map[string]any{"HarnessRevision": f.revisions[n]}, ""
@@ -326,6 +329,30 @@ func TestHarnessPublishSemantics(t *testing.T) {
 			t.Fatal("already published revision was sent to PublishHarnessRevision")
 		}
 	})
+	for _, tc := range []struct {
+		name   string
+		flag   string
+		status string
+	}{
+		{name: "reports ongoing publish", flag: "--wait=false", status: "PUBLISHING"},
+		{name: "waits for ongoing publish", flag: "--wait", status: "PUBLISHED"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fake := newHarnessFake(t)
+			fake.seedHarness("PUBLISHING")
+			fake.publishReads[1] = 1
+			server := httptest.NewTLSServer(fake)
+			defer server.Close()
+			result, _, err := runHarness(t, server, "harness", "revision", "publish", "hns-test", "1", tc.flag)
+			revision, _ := result.Data["HarnessRevision"].(map[string]any)
+			if err != nil || revision["Status"] != tc.status || result.Data["AlreadyPublished"] != false {
+				t.Fatalf("publish: %v %+v", err, result)
+			}
+			if fake.last("PublishHarnessRevision") != nil {
+				t.Fatal("ongoing publish sent a second PublishHarnessRevision request")
+			}
+		})
+	}
 	t.Run("rollback supersedes the live revision", func(t *testing.T) {
 		fake := newHarnessFake(t)
 		fake.seedHarness("SUPERSEDED", "PUBLISHED")

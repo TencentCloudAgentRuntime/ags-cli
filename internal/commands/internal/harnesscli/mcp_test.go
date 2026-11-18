@@ -109,3 +109,29 @@ func TestMCPServersRejectsInvalidInput(t *testing.T) {
 		})
 	}
 }
+
+func TestMCPHeaderValidationDoesNotDiscloseValues(t *testing.T) {
+	const secret = "synthetic-secret"
+	for _, tc := range []struct {
+		name, header, code string
+	}{
+		{"unknown server", "typo:Authorization=" + secret, "UNKNOWN_MCP_NAME"},
+		{"missing equals", "docs:Authorization " + secret, "INVALID_MCP_HEADER"},
+		{"misplaced equals", "docs=" + secret + ":Authorization=unused", "UNKNOWN_MCP_NAME"},
+		{"invalid header name", "docs:Authorization " + secret + "=unused", "INVALID_MCP_HEADER"},
+		{"invalid header value", "docs:Authorization=" + secret + "\n", "INVALID_MCP_HEADER"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, err := MCPServers(mcpRequest(map[string][]string{
+				"mcp":        {"docs=https://example.com/mcp"},
+				"mcp-header": {tc.header},
+			}))
+			if code := usageCode(t, err); code != tc.code {
+				t.Fatalf("code = %s, want %s", code, tc.code)
+			}
+			if strings.Contains(err.Error(), secret) {
+				t.Error("validation error disclosed input containing a secret")
+			}
+		})
+	}
+}

@@ -35,6 +35,33 @@ such as CPU/memory. Runtime E2E retains those Tool settings and uses Min=0,
 Max=6, `EXCLUSIVE_BEST_EFFORT` for six independent ACP clients. It checks
 distinct instance IDs, rather than assuming a new session means a new instance.
 
+The control-plane `harness.lifecycle` scenario also requires
+`AGR_HARNESS_CONTRACT_FIXTURE` for the attachment and model provider assertions.
+Supply reviewed values in this JSON shape:
+
+~~~json
+{
+  "SkillReference": "MARKETPLACE/rec-skill/rv-skill",
+  "PluginReference": "MARKETPLACE/rec-plugin/rv-plugin",
+  "MCPReference": "MARKETPLACE/rec-mcp/rv-mcp",
+  "SessionSpaceID": "space-reviewed",
+  "MCPURL": "https://mcp.example.com/mcp",
+  "MCPCredential": "cp-mcp/mcp-user/read",
+  "OpenAIBaseURL": "https://llm.example.com/v1",
+  "OpenAICredential": "cp-model/model-user/inference",
+  "OpenAIModel": "reviewed-model"
+}
+~~~
+
+Use approved, ready Registry versions, with a Plugin that supports the pinned
+engine version. The Marketplace MCP fixture should work without extra headers.
+The separate HTTPS MCP fixture uses a managed `Authorization` header. Both
+credential values above are references to existing managed credentials. The
+scenario reads the attachments back from the draft and published revision,
+clears them, and reads back the new revision. It verifies the OpenAI-compatible
+URL, credential reference and model capabilities through a separate provider,
+which it deletes after the check. Existing fixture resources are retained.
+
 For MCP, choose a ready fixed MARKETPLACE version of a read-only server. Supply
 all four inputs; the test names the server `live`:
 

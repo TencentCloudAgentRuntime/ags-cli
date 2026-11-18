@@ -232,6 +232,64 @@ func TestBridgeCancelWhileOpeningStream(t *testing.T) {
 	}
 }
 
+func TestBridgeFailsWhilePOSTBlocked(t *testing.T) {
+	postStarted := make(chan struct{})
+	stopStream := make(chan struct{})
+	agent := newFakeAgent(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet:
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.(http.Flusher).Flush()
+			select {
+			case <-stopStream:
+			case <-r.Context().Done():
+			}
+		case r.Method == http.MethodPost && r.Header.Get(headerConnection) != "":
+			if _, err := io.Copy(io.Discard, r.Body); err != nil {
+				t.Error(err)
+			}
+			close(postStarted)
+			<-r.Context().Done()
+		default:
+			agent.ServeHTTP(w, r)
+		}
+	}))
+	defer server.Close()
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	in, input := io.Pipe()
+	defer func() { _ = in.Close() }()
+	defer func() { _ = input.Close() }()
+	done := make(chan error, 1)
+	go func() {
+		_, err := ServeStdio(ctx, endpoint(server), in, io.Discard)
+		done <- err
+	}()
+	for _, line := range []string{
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}`,
+		`{"jsonrpc":"2.0","id":2,"method":"session/list"}`,
+	} {
+		if _, err := io.WriteString(input, line+"\n"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	select {
+	case <-postStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("POST did not start")
+	}
+	close(stopStream)
+	select {
+	case err := <-done:
+		if err == nil || err.Error() != "ACP event stream closed by the server" {
+			t.Fatalf("ServeStdio returned %v, want the stream error", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("the closed SSE did not interrupt the stalled POST")
+	}
+}
+
 func TestSessionCloseWhileOpeningStream(t *testing.T) {
 	server, started, release := blockedStreamServer(t, "")
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)

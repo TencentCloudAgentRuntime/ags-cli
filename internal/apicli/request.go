@@ -2,7 +2,9 @@ package apicli
 
 import (
 	"cmp"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli/parsers"
@@ -212,17 +214,29 @@ func mergePositionals(raw map[string]any, fields []FieldSpec, req command.Reques
 			if !ok || strings.TrimSpace(value) == "" {
 				continue
 			}
-			if existing, exists := raw[field.Name]; exists {
-				if existingString, _ := existing.(string); existingString != "" && existingString != value {
-					// Positional args are treated as an explicit confirmation of the
-					// target resource, so mismatches should fail instead of silently
-					// preferring either source.
-					return output.NewUsageError("REQUEST_ARG_CONFLICT",
-						fmt.Sprintf("%s in --request does not match positional %s", field.Name, input.Name),
-						fmt.Sprintf("Use the same %s in the request JSON and positional argument, or omit it from --request.", field.Name))
+			merged := any(value)
+			existing, exists := raw[field.Name]
+			existingString, _ := existing.(string)
+			conflict := existingString != "" && existingString != value
+			if field.Parser == "common.default_int" {
+				parsed, err := strconv.Atoi(value)
+				if err != nil {
+					return output.NewUsageError("INVALID_POSITIONAL_ARG", fmt.Sprintf("%s must be an integer, got %q", input.Name, value), "").WithCause(err)
+				}
+				merged = parsed
+				if exists {
+					number, _ := existing.(json.Number)
+					decoded, err := number.Int64()
+					conflict = err != nil || decoded != int64(parsed)
 				}
 			}
-			raw[field.Name] = value
+			if conflict {
+				// Positionals explicitly confirm the target resource.
+				return output.NewUsageError("REQUEST_ARG_CONFLICT",
+					fmt.Sprintf("%s in --request does not match positional %s", field.Name, input.Name),
+					fmt.Sprintf("Use the same %s in the request JSON and positional argument, or omit it from --request.", field.Name))
+			}
+			raw[field.Name] = merged
 		}
 	}
 	return nil

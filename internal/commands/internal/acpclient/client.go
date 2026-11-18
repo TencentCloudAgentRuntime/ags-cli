@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	acp "github.com/coder/acp-go-sdk"
@@ -33,9 +34,10 @@ type Session struct {
 	Bridge *Bridge
 	Info   AgentInfo
 
-	cancel  context.CancelFunc
-	done    chan error
-	closers []io.Closer
+	cancel    context.CancelFunc
+	done      chan error
+	closers   []io.Closer
+	closeOnce sync.Once
 }
 
 // Handler receives session updates and permission requests.
@@ -59,7 +61,7 @@ func Connect(ctx context.Context, endpoint Endpoint, handler Handler) (*Session,
 	stopClosingPipes := context.AfterFunc(runCtx, session.closePipes)
 	go func() {
 		defer stopClosingPipes()
-		err := bridge.Run(runCtx, clientToBridgeR)
+		err := bridge.run(runCtx, clientToBridgeR)
 		_ = bridgeToClientW.CloseWithError(errOrEOF(err))
 		_ = clientToBridgeR.CloseWithError(errOrEOF(err))
 		session.done <- err
@@ -117,14 +119,21 @@ func Classify(err error, hint string) error {
 	return output.NewCLIError(&output.Failure{Code: "ACP_UNREACHABLE", Kind: output.KindNetwork, Message: err.Error(), Hint: hint, Retryable: true}).WithCause(err)
 }
 
-// Cancel bypasses the SDK pipe: a stalled prompt POST must not block the
-// cancellation notification. The HTTP request is bounded by the caller's ctx.
-func (s *Session) Cancel(ctx context.Context, sessionID string) error {
+// CancelAndClose attempts to cancel a turn before releasing its connection.
+// Bypass the SDK pipe so a stalled prompt POST cannot block the notification.
+func (s *Session) CancelAndClose(ctx context.Context, sessionID string) error {
+	closeCtx, stopClose := context.WithTimeout(context.WithoutCancel(ctx), cleanupTimeout)
+	defer stopClose()
+	defer s.close(closeCtx)
+
+	// Leave part of the shared budget for connection cleanup if cancel stalls.
+	cancelCtx, stopCancel := context.WithTimeout(closeCtx, cleanupTimeout-time.Second)
+	defer stopCancel()
 	message, _ := json.Marshal(map[string]any{
 		"jsonrpc": "2.0", "method": "session/cancel",
 		"params": acp.CancelNotification{SessionId: acp.SessionId(sessionID)},
 	})
-	response, err := s.Bridge.do(ctx, http.MethodPost, sessionID, message, false)
+	response, err := s.Bridge.do(cancelCtx, http.MethodPost, sessionID, message, false)
 	if err != nil {
 		return err
 	}
@@ -143,10 +152,19 @@ func (s *Session) closePipes() {
 
 // Close stops the bridge and releases the remote connection.
 func (s *Session) Close() {
-	s.cancel()
-	s.closePipes()
-	err := <-s.done
-	s.done <- err
+	ctx, cancel := context.WithTimeout(context.Background(), cleanupTimeout)
+	defer cancel()
+	s.close(ctx)
+}
+
+func (s *Session) close(ctx context.Context) {
+	s.closeOnce.Do(func() {
+		s.cancel()
+		s.closePipes()
+		err := <-s.done
+		s.done <- err
+		s.Bridge.close(ctx)
+	})
 }
 
 func errOrEOF(err error) error {

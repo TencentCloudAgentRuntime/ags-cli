@@ -82,9 +82,13 @@ func promptText(req command.Request) (string, error) {
 	if req.Stdin == nil {
 		return "", output.NewUsageError("INVALID_PROMPT_INPUT", "stdin is not available", "Pass the prompt as an argument instead.")
 	}
-	data, err := io.ReadAll(io.LimitReader(req.Stdin, 4<<20))
+	const maxPromptBytes = 4 << 20
+	data, err := io.ReadAll(io.LimitReader(req.Stdin, maxPromptBytes+1))
 	if err != nil {
 		return "", err
+	}
+	if len(data) > maxPromptBytes {
+		return "", output.NewUsageError("INVALID_PROMPT_INPUT", "stdin prompt exceeds 4 MiB", "Reduce the size of the prompt and retry.")
 	}
 	if strings.TrimSpace(string(data)) == "" {
 		return "", output.NewUsageError("INVALID_PROMPT_INPUT", "stdin was empty", "Pipe the prompt text into the command.")
@@ -150,11 +154,9 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	if promptErr != nil && signalCtx.Err() != nil {
 		// Interrupted or timed out: ask the agent to stop, but report the
 		// outcome as unknown because the turn may still finish remotely.
-		cancelCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
-		if session.Cancel(cancelCtx, sessionID) == nil {
+		if session.CancelAndClose(ctx, sessionID) == nil {
 			cancelNote = "session/cancel was accepted"
 		}
-		cancel()
 	}
 	data := map[string]any{
 		"HarnessId":  harnessID,

@@ -753,7 +753,7 @@
     "path": "/commands/harness.revision.publish",
     "value": {
       "short": "Publish a harness revision",
-      "long": "Publish a revision asynchronously. UNPUBLISHED, PUBLISH_FAILED and SUPERSEDED revisions can be published; republishing an earlier revision is how you roll back. If the revision is already PUBLISHED, the command reports AlreadyPublished and sends no request, so retries are safe.\n\nPublishing changes only instances created afterwards; existing instances and sessions keep their configuration. Available in preview builds.",
+      "long": "Publish a revision asynchronously. UNPUBLISHED, PUBLISH_FAILED and SUPERSEDED revisions can be published; republishing an earlier revision is how you roll back. For a PUBLISHING revision, --wait follows the ongoing publish; otherwise the command reports its current state. If the revision is already PUBLISHED, the command reports AlreadyPublished. Both cases skip the publish request.\n\nPublishing changes only instances created afterwards; existing instances and sessions keep their configuration. Available in preview builds.",
       "examples": [
         "Example - Publish and wait for the outcome:\n  agr harness revision publish hns-a1b2c3d4 3 --wait -o text",
         "Example - Roll back to revision 1:\n  agr harness revision publish hns-a1b2c3d4 1 --wait"

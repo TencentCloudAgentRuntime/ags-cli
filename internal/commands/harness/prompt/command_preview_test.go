@@ -28,6 +28,30 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
+func TestPromptRejectsOversizedStdinBeforeEndpointPreparation(t *testing.T) {
+	const limit = 4 << 20
+	req := command.Request{
+		ArgValues: map[string]string{"harness-id": "hns-test", "text": "-"},
+		Stdin:     strings.NewReader(strings.Repeat("a", limit) + "tail"),
+	}
+	deps := command.Deps{Values: map[string]any{
+		harnesscli.DataPlaneKey: func(string) (acpclient.Endpoint, harnesscli.Target) {
+			t.Fatal("oversized stdin reached endpoint preparation")
+			return acpclient.Endpoint{}, harnesscli.Target{}
+		},
+	}}
+	_, err := run(t.Context(), req, deps, harnesscli.Client{})
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "INVALID_PROMPT_INPUT" {
+		t.Fatalf("expected INVALID_PROMPT_INPUT, got %v", err)
+	}
+
+	req.Stdin = strings.NewReader(strings.Repeat("a", limit))
+	if text, err := promptText(req); err != nil || len(text) != limit {
+		t.Fatalf("stdin at the size limit: length = %d, error = %v", len(text), err)
+	}
+}
+
 func TestPromptDeadlineInterruptsStalledPOST(t *testing.T) {
 	flags := cli.RootCmd().PersistentFlags()
 	flag := flags.Lookup("output")
@@ -47,6 +71,8 @@ func TestPromptDeadlineInterruptsStalledPOST(t *testing.T) {
 			releasePOST := sync.OnceFunc(func() { close(release) })
 			defer releasePOST()
 			arrived, interrupted := make(chan struct{}), make(chan struct{})
+			deleteStarted := make(chan struct{})
+			cancelResponded := make(chan struct{})
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("X-Tencent-Agr-Affinity-Id", "aff-timeout")
 				switch r.Method {
@@ -56,6 +82,21 @@ func TestPromptDeadlineInterruptsStalledPOST(t *testing.T) {
 					<-r.Context().Done()
 					return
 				case http.MethodDelete:
+					close(deleteStarted)
+					if tc.cancel == "stalled" {
+						// A stalled cancellation must leave time for DELETE, and
+						// both requests must fit within the same cleanup budget.
+						select {
+						case <-r.Context().Done():
+						case <-release:
+						}
+						return
+					}
+					select {
+					case <-cancelResponded:
+					default:
+						t.Error("DELETE closed the connection before the cancel response")
+					}
 					w.WriteHeader(http.StatusNoContent)
 					return
 				}
@@ -85,6 +126,15 @@ func TestPromptDeadlineInterruptsStalledPOST(t *testing.T) {
 				case "session/cancel":
 					if message.Params.SessionId != "sess-timeout" || r.Header.Get("Acp-Session-Id") != "sess-timeout" || r.Header.Get("Acp-Connection-Id") != "conn-timeout" || r.Header.Get("X-Access-Token") != "test-token" || r.Header.Get("X-Tencent-Agr-Affinity-Id") != "aff-timeout" {
 						t.Error("cancellation lost the session, connection, token or affinity")
+					}
+					if tc.cancel != "stalled" {
+						select {
+						case <-deleteStarted:
+							w.WriteHeader(http.StatusNotFound)
+							return
+						case <-time.After(50 * time.Millisecond):
+						}
+						close(cancelResponded)
 					}
 					switch tc.cancel {
 					case "rejected":
@@ -137,6 +187,11 @@ func TestPromptDeadlineInterruptsStalledPOST(t *testing.T) {
 			case <-interrupted:
 			case <-time.After(time.Second):
 				t.Fatal("deadline did not cancel the in-flight prompt POST")
+			}
+			select {
+			case <-deleteStarted:
+			default:
+				t.Fatal("connection cleanup was never attempted")
 			}
 			var failure *output.Failure
 			if tc.format == "ndjson" {

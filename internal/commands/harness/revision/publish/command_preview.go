@@ -13,8 +13,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/internal/resourcewait"
 )
 
-// Module wraps PublishHarnessRevision. An already published revision is a
-// no-op success, so retries never hit the backend's InvalidParameter.
+// Module wraps PublishHarnessRevision and can wait for an ongoing publish.
 func Module() command.Module {
 	return harnesscli.Mixed(APIDescriptor(), func(spec *command.Spec) {
 		spec.Flags = append(spec.Flags, resourcewait.Flag())
@@ -43,7 +42,8 @@ func Publish(ctx context.Context, req command.Request, env harnesscli.Env, harne
 	if err != nil {
 		return nil, err
 	}
-	if current.String("Status") == "PUBLISHED" {
+	status := current.String("Status")
+	if status == "PUBLISHED" {
 		return &command.Result{
 			Data: map[string]any{"HarnessRevision": current, "AlreadyPublished": true},
 			Text: func(w io.Writer) {
@@ -52,12 +52,21 @@ func Publish(ctx context.Context, req command.Request, env harnesscli.Env, harne
 			MetaExtra: map[string]any{"Action": "PublishHarnessRevision", "Skipped": "AlreadyPublished"},
 		}, nil
 	}
-	result, response, err := env.Execute(ctx, map[string]any{"HarnessId": harnessID, "Revision": revisionNumber})
-	if err != nil {
-		return nil, err
+	var result *command.Result
+	revision := current
+	data := map[string]any{"AlreadyPublished": false}
+	if status == "PUBLISHING" {
+		result = &command.Result{MetaExtra: map[string]any{"Action": "PublishHarnessRevision", "Skipped": "AlreadyPublishing"}}
+	} else {
+		mutation, response, err := env.Execute(ctx, map[string]any{"HarnessId": harnessID, "Revision": revisionNumber})
+		if err != nil {
+			return nil, err
+		}
+		result = mutation
+		revision = response.Object("HarnessRevision")
+		data["RequestId"] = response.String("RequestId")
 	}
-	revision := response.Object("HarnessRevision")
-	data := map[string]any{"HarnessRevision": revision, "AlreadyPublished": false, "RequestId": response.String("RequestId")}
+	data["HarnessRevision"] = revision
 	result.Data = data
 	if !resourcewait.Requested(req) {
 		result.Text = func(w io.Writer) {

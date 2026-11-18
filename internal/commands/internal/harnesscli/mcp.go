@@ -144,10 +144,10 @@ func invalidMCP(message string) error {
 		"Example: --mcp docs=MARKETPLACE/rec-0123abcd/rv-0123abcd. Find official MCP servers with 'agr harness tool list --type mcp'.")
 }
 
-func serverFor(byName map[string]map[string]any, flag, name, value string) (map[string]any, error) {
+func serverFor(byName map[string]map[string]any, flag, name string) (map[string]any, error) {
 	server, ok := byName[name]
 	if !ok {
-		return nil, output.NewUsageError("UNKNOWN_MCP_NAME", fmt.Sprintf("--%s %q names MCP server %q, which no --mcp declares", flag, value, name),
+		return nil, output.NewUsageError("UNKNOWN_MCP_NAME", fmt.Sprintf("--%s names an MCP server that no --mcp declares", flag),
 			"Use the name given before '=' in --mcp.")
 	}
 	return server, nil
@@ -160,15 +160,15 @@ func attachHeaders(byName map[string]map[string]any, values []string) error {
 		header, headerValue, okValue := strings.Cut(rest, "=")
 		name, header = strings.TrimSpace(name), strings.TrimSpace(header)
 		if !okName || !okValue || name == "" || header == "" {
-			return output.NewUsageError("INVALID_MCP_HEADER", fmt.Sprintf("--mcp-header %q must be <name>:<Header>=<value>", value),
+			return output.NewUsageError("INVALID_MCP_HEADER", "--mcp-header must be <name>:<Header>=<value>",
 				"Example: --mcp-header github:Authorization='Bearer ${credential}'")
 		}
-		server, err := serverFor(byName, "mcp-header", name, value)
+		server, err := serverFor(byName, "mcp-header", name)
 		if err != nil {
 			return err
 		}
 		if !headerNamePattern.MatchString(header) {
-			return output.NewUsageError("INVALID_MCP_HEADER", fmt.Sprintf("header name %q is not a valid HTTP header name", header), "Use letters, digits and '-', such as Authorization or X-Api-Key.")
+			return output.NewUsageError("INVALID_MCP_HEADER", "--mcp-header contains an invalid HTTP header name", "Use letters, digits and '-', such as Authorization or X-Api-Key.")
 		}
 		if strings.ContainsAny(headerValue, "\r\n\x00") {
 			return output.NewUsageError("INVALID_MCP_HEADER", fmt.Sprintf("header %q value contains a line break or NUL", header), "Remove control characters from the value.")
@@ -193,7 +193,7 @@ func attachCredentials(byName map[string]map[string]any, values []string) error 
 			return output.NewUsageError("INVALID_MCP_CREDENTIAL", fmt.Sprintf("--mcp-credential %q must be <name>=<credential-provider-id>/<user-id>/<scope>", value),
 				"Create a SecretMultiUser provider with 'agr credential provider create --type SecretMultiUser' and store the secret with 'agr credential secret set'.")
 		}
-		server, err := serverFor(byName, "mcp-credential", name, value)
+		server, err := serverFor(byName, "mcp-credential", name)
 		if err != nil {
 			return err
 		}

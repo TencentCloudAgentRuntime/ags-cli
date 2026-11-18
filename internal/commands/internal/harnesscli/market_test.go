@@ -43,6 +43,64 @@ func TestSummarizeToolMCPWithCredential(t *testing.T) {
 	}
 }
 
+func TestSummarizeMCPCredentialRequirements(t *testing.T) {
+	for _, tc := range []struct {
+		name, headers       string
+		metadata            map[string]any
+		requiresCredentials bool
+		requiredHeaders     []bool
+	}{
+		{
+			name:                "required secret header",
+			headers:             `[{"name":"X-Key","isRequired":true,"isSecret":true},{"name":"X-Optional","isSecret":true}]`,
+			requiresCredentials: true,
+			requiredHeaders:     []bool{true, false},
+		},
+		{
+			name:                "required secret variable",
+			headers:             `[{"name":"Authorization","value":"Bearer {token}","variables":{"token":{"isSecret":true,"isRequired":true}}}]`,
+			requiresCredentials: true,
+			requiredHeaders:     []bool{true},
+		},
+		{
+			name:            "supplied values and defaults",
+			headers:         `[{"name":"X-Static","isRequired":true,"isSecret":true,"value":"static"},{"name":"X-Default","isRequired":true,"isSecret":true,"default":"default"},{"name":"X-Template","value":"{specified}-{fallback}","variables":{"specified":{"isSecret":true,"isRequired":true,"value":"static"},"fallback":{"isSecret":true,"isRequired":true,"default":"default"}}}]`,
+			requiredHeaders: []bool{true, true, false},
+		},
+		{
+			name:            "optional secret and required public variable",
+			headers:         `[{"name":"X-Template","value":"{tenant}-{token}","variables":{"tenant":{"isRequired":true},"token":{"isSecret":true}}}]`,
+			requiredHeaders: []bool{true},
+		},
+		{
+			name:                "metadata requires credentials",
+			headers:             `[{"name":"X-Optional","isSecret":true}]`,
+			metadata:            map[string]any{"requires_credentials": "true", "credential_url": "https://example.com/credentials"},
+			requiresCredentials: true,
+			requiredHeaders:     []bool{true},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			descriptor := `{"remotes":[{"type":"streamable-http","url":"https://example.com/mcp","headers":` + tc.headers + `}]}`
+			mcp := summarizeMCP(descriptor, tc.metadata)
+			if mcp.RequiresCredentials != tc.requiresCredentials {
+				t.Errorf("RequiresCredentials = %v, want %v", mcp.RequiresCredentials, tc.requiresCredentials)
+			}
+			if len(mcp.Headers) != len(tc.requiredHeaders) {
+				t.Fatalf("headers = %+v, want %d headers", mcp.Headers, len(tc.requiredHeaders))
+			}
+			for i, required := range tc.requiredHeaders {
+				if mcp.Headers[i].Required != required {
+					t.Errorf("%s Required = %v, want %v", mcp.Headers[i].Name, mcp.Headers[i].Required, required)
+				}
+			}
+			if url, ok := tc.metadata["credential_url"]; ok && mcp.CredentialURL != url {
+				t.Errorf("CredentialURL = %q, want %q", mcp.CredentialURL, url)
+			}
+		})
+	}
+}
+
 func TestSummarizeToolMCPWithoutStreamableHTTP(t *testing.T) {
 	raw := strings.Replace(bearerMCP, `\"type\":\"streamable-http\"`, `\"type\":\"sse\"`, 1)
 	tool := SummarizeTool(marketVersion(t, raw), Engine{})

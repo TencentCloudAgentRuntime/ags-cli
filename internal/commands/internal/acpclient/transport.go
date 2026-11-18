@@ -17,6 +17,7 @@ package acpclient
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -36,6 +37,7 @@ const (
 	headerToken      = "X-Access-Token"
 	maxMessageBytes  = 16 << 20
 	maxErrorBody     = 4 << 10
+	cleanupTimeout   = 5 * time.Second
 )
 
 // Endpoint identifies one remote ACP entry.
@@ -60,12 +62,12 @@ type Bridge struct {
 	mu         sync.Mutex
 	connection string
 	affinity   string
-	streams    map[string]context.CancelFunc
+	streams    map[string]struct{}
 	// pendingNew maps outstanding session/new|load|resume request IDs, whose
 	// results reveal the session ID that needs its own SSE stream.
 	pendingNew map[string]bool
 	wg         sync.WaitGroup
-	failed     chan error
+	fail       context.CancelCauseFunc // Set before starting the streams.
 }
 
 // NewBridge creates a bridge that writes inbound messages to out.
@@ -79,8 +81,8 @@ func NewBridge(endpoint Endpoint, out io.Writer) *Bridge {
 	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	return &Bridge{
 		endpoint: endpoint, http: client, out: &lineWriter{w: out},
-		affinity: endpoint.AffinityID, streams: map[string]context.CancelFunc{},
-		pendingNew: map[string]bool{}, failed: make(chan error, 1),
+		affinity: endpoint.AffinityID, streams: map[string]struct{}{},
+		pendingNew: map[string]bool{},
 	}
 }
 
@@ -94,9 +96,19 @@ func (b *Bridge) Affinity() string {
 // Run forwards newline-delimited JSON-RPC from in until in closes, ctx ends,
 // or a remote stream fails. It always closes the remote connection.
 func (b *Bridge) Run(ctx context.Context, in io.Reader) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer b.close()
+	err := b.run(ctx, in)
+	closeCtx, cancel := context.WithTimeout(context.Background(), cleanupTimeout)
 	defer cancel()
+	b.close(closeCtx)
+	return err
+}
+
+// run stops the local transport on failure. Close the remote connection
+// separately so a timed-out prompt can still send session/cancel.
+func (b *Bridge) run(ctx context.Context, in io.Reader) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	b.fail = cancel
+	defer cancel(nil)
 	lines := make(chan []byte)
 	readErr := make(chan error, 1)
 	go func() {
@@ -118,14 +130,12 @@ func (b *Bridge) Run(ctx context.Context, in io.Reader) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
-		case err := <-b.failed:
-			return err
+			return context.Cause(ctx)
 		case err := <-readErr:
-			return err
+			return cmp.Or(context.Cause(ctx), err)
 		case line := <-lines:
 			if err := b.send(ctx, line); err != nil {
-				return err
+				return cmp.Or(context.Cause(ctx), err)
 			}
 		}
 	}
@@ -269,7 +279,7 @@ func (b *Bridge) openStream(ctx context.Context, session string) error {
 		cancel()
 		return nil
 	}
-	b.streams[session] = cancel
+	b.streams[session] = struct{}{}
 	b.mu.Unlock()
 	response, err := b.do(streamCtx, http.MethodGet, session, nil, true)
 	if err != nil {
@@ -282,6 +292,7 @@ func (b *Bridge) openStream(ctx context.Context, session string) error {
 		return httpError("stream", response)
 	}
 	b.wg.Go(func() {
+		defer cancel()
 		defer func() { _ = response.Body.Close() }()
 		err := readSSE(response.Body, func(data []byte) { b.deliver(streamCtx, data) })
 		if streamCtx.Err() == nil {
@@ -362,13 +373,6 @@ func (b *Bridge) connectionID() string {
 	return b.connection
 }
 
-func (b *Bridge) fail(err error) {
-	select {
-	case b.failed <- err:
-	default:
-	}
-}
-
 // replyError answers a failed request locally so the client is not left
 // waiting; notifications have no ID and fail the bridge instead.
 func (b *Bridge) replyError(id json.RawMessage, err error) error {
@@ -380,23 +384,11 @@ func (b *Bridge) replyError(id json.RawMessage, err error) error {
 	return nil
 }
 
-func (b *Bridge) close() {
-	b.mu.Lock()
-	cancels := make([]context.CancelFunc, 0, len(b.streams))
-	for _, cancel := range b.streams {
-		cancels = append(cancels, cancel)
-	}
-	connection := b.connection
-	b.mu.Unlock()
-	for _, cancel := range cancels {
-		cancel()
-	}
-	if connection != "" {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (b *Bridge) close(ctx context.Context) {
+	if b.connectionID() != "" && ctx.Err() == nil {
 		if response, err := b.do(ctx, http.MethodDelete, "", nil, false); err == nil {
 			_ = response.Body.Close()
 		}
-		cancel()
 	}
 	b.wg.Wait()
 	b.http.CloseIdleConnections()
