@@ -14,7 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"pre-cache-image-task", "create"},
 			Use:          "create --image <image> --image-registry-type <type>",
 			Short:        "Create an image pre-cache task",
-			Long:         "Create an image pre-cache task. JSON output includes PreCacheImageId for subsequent get requests.",
+			Long:         "Create an image or image volume pre-cache task. Omit --pre-cache-type to use the service default (image).\n\nFor image pre-caching, use the returned PreCacheImageId with get when supplied. For image volume pre-caching, use the returned ImageDigest, Image and ImageRegistryType with get and --pre-cache-type image_volume. List only shows ordinary image pre-cache resources.",
+			Examples:     []string{"Example - Pre-cache an image:\n  agr pre-cache-image-task create --image nginx:latest --image-registry-type personal -o json", "Example - Pre-cache an image volume:\n  agr pre-cache-image-task create --image nginx:latest --image-registry-type personal --pre-cache-type image_volume -o json", "Example - Query image volume pre-caching with fields from create:\n  agr pre-cache-image-task get \"$image_digest\" --image \"$image\" --image-registry-type \"$registry_type\" --pre-cache-type image_volume -o json"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreatePreCacheImageTaskResponse",
@@ -44,6 +45,13 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "image-registry-type", Flag: "image-registry-type", Usage: "Image registry type: enterprise, personal, or custom (required)", Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "PreCacheType",
+				Parser: "common.default_string",
+				Inputs: []apicli.InputSpec{
+					{Name: "pre-cache-type", Flag: "pre-cache-type", Usage: "Pre-cache type: image (service default) or image_volume.", Values: []string{"image", "image_volume"}, Type: command.FlagString},
 				},
 			},
 		},

@@ -14,7 +14,8 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"registry", "record", "create"},
 			Use:          "create",
 			Short:        "Create a record and its first version",
-			Long:         "Provide exactly one content source matching --descriptor-type: MCP uses --mcp-source; A2A and AGUI use --agent-source; AGENT_SKILLS uses --skill-source; CUSTOM uses --custom-descriptors. Source objects accept inline JSON, @file, or - for stdin. Descriptors inside a source are JSON strings, not nested objects. Approval and assigning the stable label are separate operations.",
+			Long:         "Provide exactly one content source matching --descriptor-type: MCP uses --mcp-source; A2A and AGUI use --agent-source; AGENT_SKILLS uses --skill-source; CUSTOM uses --custom-descriptors; PLUGIN uses --file-source with Type=FILE. Source objects accept inline JSON, @file, or - for stdin. Descriptors inside a source are JSON strings, not nested objects.\n\nFor PLUGIN, set SizeBytes to the file's byte count and optionally set SHA256. Read Data.UploadURL from the JSON result and PUT the raw file with Content-Type: application/octet-stream before Data.ExpireTime. Use registry record get with Data.RecordId and Data.Version.VersionId to check Version.ContentStatus. READY indicates content is available. Approval and assigning the stable label are separate operations.",
+			Examples:     []string{"agr registry record create --registry-id reg-xxxx --name my-plugin --descriptor-type PLUGIN --file-source '{\"Type\":\"FILE\",\"SizeBytes\":5}' -o json", "curl --fail --upload-file ./plugin.bin --header 'Content-Type: application/octet-stream' \"$upload_url\"", "agr registry record get --registry-id reg-xxxx --record-id rec-xxxx --version-id rv-xxxx -o json"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateRegistryRecordResponse",
@@ -53,7 +54,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Required: true,
 				Parser:   "common.default_string",
 				Inputs: []apicli.InputSpec{
-					{Name: "descriptor-type", Flag: "descriptor-type", Usage: "Content type: MCP, A2A, AGUI, AGENT_SKILLS, or CUSTOM. (required)", Type: command.FlagString},
+					{Name: "descriptor-type", Flag: "descriptor-type", Usage: "Content type: MCP, A2A, AGUI, AGENT_SKILLS, CUSTOM, or PLUGIN. (required)", Type: command.FlagString},
 				},
 			},
 			{
@@ -96,6 +97,27 @@ func APIDescriptor() apicli.APIDescriptor {
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
 					{Name: "custom-descriptors", Flag: "custom-descriptors", Usage: "CUSTOM descriptors as a JSON object encoded in a string; use --request @file for file input.", Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "FileSource",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "file-source", Flag: "file-source", Usage: "Plugin source with Type=FILE, SizeBytes (1–54525952), and optional SHA256 (64 lowercase hex digits). Accepts JSON, @file, or - for stdin.", Format: "{\"Type\":\"FILE\",\"SizeBytes\":<bytes>}", Examples: []string{"{\"Type\":\"FILE\",\"SizeBytes\":5}"}, Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "SupportedHarnessVersions",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "supported-harness-versions", Flag: "supported-harness-versions", Usage: "Harness compatibility as a JSON array, @file, or - for stdin. Omit or pass [] for no declared compatibility.", Format: "[{\"HarnessEngine\":\"<engine>\",\"HarnessEngineVersion\":\"<version>\"}]", Examples: []string{"[{\"HarnessEngine\":\"pi\",\"HarnessEngineVersion\":\"1.3.0\"}]"}, Type: command.FlagString},
+				},
+			},
+			{
+				Name:   "Metadata",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "metadata", Flag: "metadata", Usage: "Version metadata as a Name/Value JSON array, @file, or - for stdin. Omit or pass [] for empty metadata.", Format: "[{\"Name\":\"<name>\",\"Value\":\"<value>\"}]", Examples: []string{"[{\"Name\":\"publisher\",\"Value\":\"Example\"}]"}, Type: command.FlagString},
 				},
 			},
 		},

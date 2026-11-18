@@ -24,6 +24,10 @@ configuration. Keep credentials out of command arguments.
   `source-type` separately and check that returned fields match each selector;
   an ID filter must return exactly one task. Together with the ReadyTime checks,
   the suite exercises all six documented filter names.
+- The pre-cache concurrency check uses read-only `DescribeQuotaOverview`.
+  The configured account must have quota visibility and return the optional
+  `AccountQuotaOverview.Quota.PreCacheImageConcurrency` field. Run the check
+  alone with `-ginkgo.focus='reads the pre-cache concurrency limit'`.
 - Registry checks browse `MARKETPLACE` without `RecordId`, verify the five new
   version fields, and exercise positive and negative metadata filters. A
   marketplace version with nonempty metadata must exist.
@@ -36,6 +40,20 @@ configuration. Keep credentials out of command arguments.
 GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
+
+## Registry Plugin acceptance
+
+Use an explicit candidate binary and authorized cloud credentials. In the
+selected region, this test creates a disposable Registry and Plugin record,
+uploads two distinct raw files (create and update), then reuses the first READY
+version without an upload. It verifies recorded digests, version metadata and
+compatibility, rejected file inputs, and cleanup.
+
+```sh
+AGR_REGION=ap-chongqing AGR_REGISTRY_E2E_BINARY=/absolute/path/to/agr \
+  AGR_REGISTRY_E2E_SCENARIO=registry.plugin.lifecycle \
+  go test ./internal/patchscenarios -run '^TestRegistryLive$' -count=1 -v
+```
 
 ## Dedicated operational event acceptance
 

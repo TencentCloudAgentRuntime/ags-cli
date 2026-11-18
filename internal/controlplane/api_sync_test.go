@@ -13,7 +13,8 @@ func TestSyncedSDKRequestDecoding(t *testing.T) {
 		request interface{ FromJsonString(string) error }
 		body    string
 	}{
-		{"pre-cache type", ags.NewDescribePreCacheImageTaskRequest(), `{"PreCacheType":"image_volume","Image":"example:latest","ImageDigest":"sha256:test","ImageRegistryType":"personal"}`},
+		{"describe pre-cache type", ags.NewDescribePreCacheImageTaskRequest(), `{"PreCacheType":"image_volume","Image":"example:latest","ImageDigest":"sha256:test","ImageRegistryType":"personal"}`},
+		{"create pre-cache type", ags.NewCreatePreCacheImageTaskRequest(), `{"PreCacheType":"image_volume","Image":"example:latest","ImageRegistryType":"personal"}`},
 		{"start mode", ags.NewStartSandboxInstanceRequest(), `{"ToolId":"sdt-test","StartMode":"WAIT_UNTIL_HEALTHY","CustomConfiguration":{"Resources":{"GPUResourceGroupId":"gpug-test"}}}`},
 		{"create GPU tool", ags.NewCreateSandboxToolRequest(), `{"ToolName":"gpu-test","ToolType":"custom","NetworkConfiguration":{"NetworkMode":"SANDBOX"},"CustomConfiguration":{"Resources":{"GPUResourceGroupId":"gpug-test"}}}`},
 		{"update GPU tool", ags.NewUpdateSandboxToolRequest(), `{"ToolId":"sdt-test","CustomConfiguration":{"Resources":{"GPUResourceGroupId":"gpug-test"}}}`},

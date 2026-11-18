@@ -137,6 +137,16 @@ var _ = Describe("Synced public API contract", func() {
 		}
 	})
 
+	It("reads the pre-cache concurrency limit through quota overview", func() {
+		data := raw("DescribeQuotaOverview", `{}`)
+		account, ok := data["AccountQuotaOverview"].(map[string]any)
+		Expect(ok).To(BeTrue(), "requires account quota visibility")
+		quota, ok := account["Quota"].(map[string]any)
+		Expect(ok).To(BeTrue(), "requires an account quota response")
+		Expect(quota).To(HaveKey("PreCacheImageConcurrency"), "requires a quota fixture that returns the pre-cache concurrency limit")
+		Expect(testutil.NumberField(quota, "PreCacheImageConcurrency")).To(BeNumerically(">=", 0))
+	})
+
 	It("browses marketplace versions and filters metadata without RecordId", func() {
 		args := []string{"registry", "record", "version", "list", "--registry-id", "MARKETPLACE", "--limit", "100"}
 		rows := run(args...).Data["VersionSet"].([]any)

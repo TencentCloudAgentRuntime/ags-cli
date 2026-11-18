@@ -67,7 +67,7 @@ func registrySkillLifecycle(s *patchtest.Session) error {
 	if err := zip.Close(); err != nil {
 		return err
 	}
-	if _, err := registryHTTP(ctx, http.MethodPut, upload.Data.UploadURL, buf.Bytes()); err != nil {
+	if _, err := registryHTTP(ctx, http.MethodPut, upload.Data.UploadURL, "application/gzip", buf.Bytes()); err != nil {
 		return err
 	}
 	var ready registryResponse
@@ -94,7 +94,7 @@ func registrySkillLifecycle(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	data, err := registryHTTP(ctx, http.MethodGet, download.Data.DownloadURL, nil)
+	data, err := registryHTTP(ctx, http.MethodGet, download.Data.DownloadURL, "", nil)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func registrySkillLifecycle(s *patchtest.Session) error {
 	return s.Assert("skill.inline.readback", readback.Data.Version.VersionId == next && descriptors.AgentSkills.SkillMd.InlineContent == registrySkillMD)
 }
 
-func registryHTTP(ctx context.Context, method, address string, body []byte) ([]byte, error) {
+func registryHTTP(ctx context.Context, method, address, contentType string, body []byte) ([]byte, error) {
 	u, err := url.Parse(address)
 	if err != nil || u.Scheme != "https" || u.Host == "" {
 		return nil, fmt.Errorf("expected HTTPS transfer URL")
@@ -135,8 +135,8 @@ func registryHTTP(ctx context.Context, method, address string, body []byte) ([]b
 	if err != nil {
 		return nil, fmt.Errorf("invalid transfer request")
 	}
-	if method == http.MethodPut {
-		req.Header.Set("Content-Type", "application/gzip")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
 	}
 	client := &http.Client{Timeout: 45 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	resp, err := client.Do(req)
