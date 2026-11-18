@@ -87,10 +87,20 @@ happens to contain the fields is not sufficient: the SDK is a generated client
 for the same contract and can lead or lag it, so SDK compatibility is checked
 separately and never decides whether a patch entry is still needed.
 
-When the base contract has absorbed them, delete the corresponding
-`api.patch.json` additions (keepalive members, `/objects/KeepaliveConfiguration`,
-`LogConfiguration.ContentFormat`), keep the `e2e-coverage.yaml` bindings and the
-two `sandbox.*` scenarios as regression evidence for the absorbed behavior, then
-regenerate both channels with `go run ./cmd/internal/cobragen` and re-check the
-affected commands, channels and README sections. The preview-only flags become
-stable behavior at that point and the `preview` labels must be removed.
+When the base contract absorbs these members, remove the corresponding
+`api.patch.json` additions and the bindings for the absorbed entries from
+`e2e-coverage.yaml`. The coverage plan is derived from the remaining patch
+differences and rejects stale bindings. Keep bindings for any behavior still in
+the overlay.
+
+Keep the two `sandbox.*` scenarios as regression tests for the absorbed
+behavior. Once a scenario's last patch binding is removed, change its
+`tests/apicontract` spec to require the assertion IDs from
+`patchscenarios.Registry` directly. Retain its result and cleanup checks, and
+update the manifest guards to check only behavior still in the overlay.
+Run the absorbed cases against the stable channel as well.
+
+Move the matching editorial help to `help.json` and remove the corresponding
+`help.patch.json` overrides. Regenerate both channels with
+`go run ./cmd/internal/cobragen`, run `apipatch coverage`, and verify the
+affected commands, text output and README labels in both channels.

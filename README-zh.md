@@ -246,7 +246,11 @@ agr instance list --tool-id sdt-xxxx -o text
 
 `KeepaliveTimeout` 是保活续期窗口（300～1800 秒，带单位的整秒时长，服务端按你发送的
 写法原样回显），与限制沙箱存活时长的 `--default-timeout` / `--timeout` 无关。
-枚举与时长由服务端校验，越界或未知值会被拒绝。
+枚举与时长由服务端校验，越界或未知值会被拒绝。`--auto-pause` 决定实例到期时暂停还是停止。
+`--auto-resume` 允许数据面访问自动恢复已暂停的实例。
+
+`tool fork` 省略 `--keepalive-configuration` 时会复制源 Tool 的配置。传入 JSON 会替换
+整个对象，请带上所有需要保留的成员。传入 `{}` 会将配置替换为空对象。
 
 `tool create --log-configuration` 可在 `CLSConfig` 之外接受 `ContentFormat` 成员：
 

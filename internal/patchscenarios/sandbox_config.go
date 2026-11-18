@@ -338,19 +338,19 @@ func sandboxToolGone(s *patchtest.Session, ctx context.Context, toolID string) e
 	}
 }
 
-// sandboxInstanceGone accepts the contract's terminal outcomes: the instance is
-// absent from the list or reports a stopped terminal status.
+// sandboxInstanceGone confirms absence from the filtered list or a terminal
+// status on the target instance's row.
 func sandboxInstanceGone(s *patchtest.Session, ctx context.Context, instanceID string) error {
 	deadline := time.Now().Add(sandboxGoneDeadline)
 	for {
 		envelope, err := sandboxRun(s, ctx, "instance", "list", "--instance-ids", instanceID)
 		if err == nil {
-			rows, _, listErr := sandboxList(envelope)
+			rows, total, listErr := sandboxList(envelope)
 			if listErr == nil {
-				if len(rows) == 0 {
+				if total == 0 && len(rows) == 0 {
 					return nil
 				}
-				switch sandboxString(sandboxObject(rows[0]), "Status") {
+				switch sandboxString(sandboxInstanceRow(rows, instanceID), "Status") {
 				case "STOPPED", "TERMINATED":
 					return nil
 				}
@@ -652,19 +652,27 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 		return err
 	}
 	overrideID, override, err := sandboxCreateInstance(s, ctx, toolID,
-		"--keepalive-configuration", `{"KeepaliveMode":"CONNECTION","KeepaliveTimeout":"30m"}`)
+		"--keepalive-configuration", `{"KeepaliveMode":"CONNECTION","KeepaliveTimeout":"30m"}`,
+		"--auto-resume=false")
+	if err != nil {
+		return err
+	}
+	overrideReadback, err := sandboxGetInstance(s, ctx, overrideID)
 	if err != nil {
 		return err
 	}
 	createStep := sandboxKeepaliveMatches(inherited, "REQUEST", "600s", true, true) &&
 		sandboxKeepaliveMatches(empty, "REQUEST", "600s", true, true) &&
-		sandboxKeepaliveMatches(override, "CONNECTION", "30m", true, true) &&
+		sandboxKeepaliveMatches(override, "CONNECTION", "30m", true, false) &&
+		sandboxKeepaliveMatches(overrideReadback, "CONNECTION", "30m", true, false) &&
 		sandboxString(inherited, "InstanceId") == inheritedID &&
-		sandboxString(override, "InstanceId") == overrideID
+		sandboxString(override, "InstanceId") == overrideID &&
+		sandboxString(overrideReadback, "InstanceId") == overrideID
 	if !createStep {
 		sandboxDiagnoseKeepalive("inherited instance", inherited)
 		sandboxDiagnoseKeepalive("empty override instance", empty)
 		sandboxDiagnoseKeepalive("full override instance", override)
+		sandboxDiagnoseKeepalive("full override readback", overrideReadback)
 	}
 	if err := s.Assert("keepalive.instance.create", createStep); err != nil {
 		return err
@@ -684,17 +692,24 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 	}
 
 	if _, err := sandboxRun(s, ctx, "tool", "update", toolID,
-		"--keepalive-configuration", `{"KeepaliveMode":"MIXED","KeepaliveTimeout":"900s"}`); err != nil {
+		"--keepalive-configuration", `{"KeepaliveMode":"MIXED","KeepaliveTimeout":"900s"}`,
+		"--auto-pause=false", "--auto-resume=false"); err != nil {
 		return err
 	}
 	updated, err := sandboxGetTool(s, ctx, toolID)
 	if err != nil {
 		return err
 	}
-	if !sandboxKeepaliveMatches(updated, "MIXED", "900s", true, true) {
+	toolUpdateStep := sandboxKeepaliveMatches(updated, "MIXED", "900s", false, false)
+	if !toolUpdateStep {
 		sandboxDiagnoseKeepalive("updated tool", updated)
 	}
-	if err := s.Assert("keepalive.tool.update", sandboxKeepaliveMatches(updated, "MIXED", "900s", true, true)); err != nil {
+	if err := s.Assert("keepalive.tool.update", toolUpdateStep); err != nil {
+		return err
+	}
+	// Restore the tool's boolean defaults before checking keepalive inheritance.
+	if _, err := sandboxRun(s, ctx, "tool", "update", toolID,
+		"--auto-pause", "--auto-resume"); err != nil {
 		return err
 	}
 	// Every omitted member follows the new tool value; explicit members keep the
@@ -713,7 +728,8 @@ func runSandboxKeepalive(s *patchtest.Session) error {
 		if err != nil {
 			return err
 		}
-		if !sandboxKeepaliveMatches(instance, expected.mode, expected.timeout, true, true) {
+		autoResume := expected.id != overrideID // The full override explicitly disabled it.
+		if !sandboxKeepaliveMatches(instance, expected.mode, expected.timeout, true, autoResume) {
 			sandboxDiagnostic("followed step: instance %s wants %s/%s", expected.id, expected.mode, expected.timeout)
 			sandboxDiagnoseKeepalive("followed instance", instance)
 			followed = false

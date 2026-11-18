@@ -3189,10 +3189,10 @@ coverage:
     assertions: [keepalive.instance.create, keepalive.readback]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/document
     scenario: sandbox.keepalive
-    assertions: [keepalive.readback]
+    assertions: [keepalive.instance.create, keepalive.inheritance]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/example
     scenario: sandbox.keepalive
-    assertions: [keepalive.readback]
+    assertions: [keepalive.instance.create]
   - entry: /objects/StartSandboxInstanceRequest/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.instance.create, keepalive.readback]
@@ -3310,7 +3310,7 @@ coverage:
     assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/example
     scenario: sandbox.keepalive
-    assertions: [keepalive.tool.create]
+    assertions: [keepalive.tool.update]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoPause/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]
@@ -3334,7 +3334,7 @@ coverage:
     assertions: [keepalive.tool.create, keepalive.tool.update, keepalive.inheritance]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/example
     scenario: sandbox.keepalive
-    assertions: [keepalive.tool.create]
+    assertions: [keepalive.tool.update]
   - entry: /objects/UpdateSandboxToolRequest/members/AutoResume/member
     scenario: sandbox.keepalive
     assertions: [keepalive.tool.update, keepalive.readback]

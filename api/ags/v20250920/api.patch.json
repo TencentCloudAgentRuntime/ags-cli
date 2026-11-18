@@ -1250,7 +1250,7 @@
     "path": "/objects/CreateSandboxToolRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定实例到期时暂停（true）还是停止（false）。未传入时使用服务端默认值。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoPause",
@@ -1263,7 +1263,7 @@
     "path": "/objects/CreateSandboxToolRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定数据面访问能否自动恢复已暂停的实例。未传入时使用服务端默认值。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoResume",
@@ -1289,7 +1289,7 @@
     "path": "/objects/UpdateSandboxToolRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定实例到期时暂停（true）还是停止（false）。未传入时保留工具当前设置。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoPause",
@@ -1302,7 +1302,7 @@
     "path": "/objects/UpdateSandboxToolRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定数据面访问能否自动恢复已暂停的实例。未传入时保留工具当前设置。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoResume",
@@ -1328,7 +1328,7 @@
     "path": "/objects/StartSandboxInstanceRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定实例到期时暂停（true）还是停止（false）。通过工具创建实例时，未传入则继承工具设置。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoPause",
@@ -1341,7 +1341,7 @@
     "path": "/objects/StartSandboxInstanceRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定数据面访问能否自动恢复已暂停的实例。通过工具创建实例时，未传入则继承工具设置。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoResume",
@@ -1367,7 +1367,7 @@
     "path": "/objects/UpdateSandboxInstanceRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例空闲时是否自动暂停。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定实例到期时暂停（true）还是停止（false）。未传入时保留实例当前设置。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoPause",
@@ -1380,7 +1380,7 @@
     "path": "/objects/UpdateSandboxInstanceRequest/members/-",
     "value": {
       "disabled": false,
-      "document": "实例被访问时是否自动恢复。未传入时沿用来源配置，显式 false 必须发送。",
+      "document": "决定数据面访问能否自动恢复已暂停的实例。未传入时保留实例当前设置。传入 false 会显式关闭该设置。",
       "example": "false",
       "member": "bool",
       "name": "AutoResume",
@@ -1408,7 +1408,7 @@
     "path": "/objects/SandboxTool/members/-",
     "value": {
       "disabled": false,
-      "document": "实例空闲时是否自动暂停。",
+      "document": "决定实例到期时暂停（true）还是停止（false）。",
       "example": "false",
       "member": "bool",
       "name": "AutoPause",
@@ -1423,7 +1423,7 @@
     "path": "/objects/SandboxTool/members/-",
     "value": {
       "disabled": false,
-      "document": "实例被访问时是否自动恢复。",
+      "document": "决定数据面访问能否自动恢复已暂停的实例。",
       "example": "false",
       "member": "bool",
       "name": "AutoResume",
@@ -1453,7 +1453,7 @@
     "path": "/objects/SandboxInstance/members/-",
     "value": {
       "disabled": false,
-      "document": "实例空闲时是否自动暂停。",
+      "document": "决定实例到期时暂停（true）还是停止（false）。",
       "example": "false",
       "member": "bool",
       "name": "AutoPause",
@@ -1468,7 +1468,7 @@
     "path": "/objects/SandboxInstance/members/-",
     "value": {
       "disabled": false,
-      "document": "实例被访问时是否自动恢复。",
+      "document": "决定数据面访问能否自动恢复已暂停的实例。",
       "example": "false",
       "member": "bool",
       "name": "AutoResume",

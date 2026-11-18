@@ -67,14 +67,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "AutoPause",
 				Parser: "common.default_bool",
 				Inputs: []apicli.InputSpec{
-					{Name: "auto-pause", Flag: "auto-pause", Usage: "Pause the instance automatically when it is idle. Omit the flag to inherit the source setting; --auto-pause=false sends an explicit false.", Type: command.FlagBool},
+					{Name: "auto-pause", Flag: "auto-pause", Usage: "Choose whether the instance pauses (true) or stops (false) at expiry. Omit the flag to keep the current instance setting. --auto-pause=false sends an explicit false.", Type: command.FlagBool},
 				},
 			},
 			{
 				Name:   "AutoResume",
 				Parser: "common.default_bool",
 				Inputs: []apicli.InputSpec{
-					{Name: "auto-resume", Flag: "auto-resume", Usage: "Resume the instance automatically when it is accessed. Omit the flag to inherit the source setting; --auto-resume=false sends an explicit false.", Type: command.FlagBool},
+					{Name: "auto-resume", Flag: "auto-resume", Usage: "Automatically resume the paused instance on data-plane access. Omit the flag to keep the current instance setting. --auto-resume=false sends an explicit false.", Type: command.FlagBool},
 				},
 			},
 		},

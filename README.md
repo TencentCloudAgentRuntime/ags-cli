@@ -269,7 +269,12 @@ agr instance list --tool-id sdt-xxxx -o text
 seconds with a unit, echoed with the spelling you sent). It is unrelated to
 `--default-timeout` / `--timeout`, which bound how long a sandbox may live.
 Mode and duration are validated by the service, which also rejects values
-outside the enum or range.
+outside the enum or range. `--auto-pause` selects pause or stop at expiry.
+`--auto-resume` allows data-plane access to resume a paused instance.
+
+Omit `--keepalive-configuration` on `tool fork` to copy the source Tool's
+configuration. Supplying JSON replaces the entire object. Include every member
+you want to carry over, or pass `{}` for an empty object.
 
 `tool create --log-configuration` accepts a `ContentFormat` member next to
 `CLSConfig`:

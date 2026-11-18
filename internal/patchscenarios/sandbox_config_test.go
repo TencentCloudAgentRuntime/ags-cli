@@ -230,6 +230,12 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fail("ResourceNotFound.ToolNotExist", "missing fixture tool")
 			break
 		}
+		switch f.fault {
+		case "drop-tool-update-auto-pause":
+			delete(req, "AutoPause")
+		case "drop-tool-update-auto-resume":
+			delete(req, "AutoResume")
+		}
 		if failure := f.copyToolFields(stored, req, f.fault != "drop-keepalive-tool-update", f.fault != "drop-auto-flags"); failure != nil {
 			response["Error"] = failure
 			break
@@ -242,6 +248,9 @@ func (f *sandboxFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		response["ToolId"] = id
 	case "StartSandboxInstance":
+		if f.fault == "drop-instance-create-auto-resume" {
+			delete(req, "AutoResume")
+		}
 		id := f.nextID("ins")
 		toolID, _ := req["ToolId"].(string)
 		if _, ok := f.tools[toolID]; !ok {
@@ -736,6 +745,32 @@ func TestSandboxKeepaliveCandidate(t *testing.T) {
 				if len(results) != 1 || results[0].Cleanup != "pass" || results[0].Calls < 30 {
 					t.Fatalf("insufficient execution: %+v", results)
 				}
+			}
+		})
+	}
+}
+
+func TestSandboxKeepaliveRejectsDroppedAutoFlags(t *testing.T) {
+	binary := sandboxBuildCandidate(t)
+	sandboxShortenWaits(t)
+	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
+		{Scenario: "sandbox.keepalive", Assertions: sandboxKeepaliveAssertions},
+	}}
+	for _, tc := range []struct {
+		fault  string
+		passed []string
+	}{
+		{"drop-tool-update-auto-pause", []string{"keepalive.inheritance", "keepalive.instance.create", "keepalive.tool.create"}},
+		{"drop-tool-update-auto-resume", []string{"keepalive.inheritance", "keepalive.instance.create", "keepalive.tool.create"}},
+		{"drop-instance-create-auto-resume", []string{"keepalive.tool.create"}},
+	} {
+		t.Run(tc.fault, func(t *testing.T) {
+			server := sandboxTLSServer(t, newSandboxFixture(t, tc.fault))
+			defer server.Close()
+			results, err := patchtest.Run(t.Context(), plan, Registry, binary, sandboxEnv(t, server.URL))
+			if err == nil || len(results) != 1 || results[0].Status != "fail" ||
+				results[0].Cleanup != "pass" || !slices.Equal(results[0].Assertions, tc.passed) {
+				t.Fatalf("expected the targeted assertion to fail after %v with cleanup confirmed: err=%v results=%+v", tc.passed, err, results)
 			}
 		})
 	}
@@ -1359,5 +1394,60 @@ esac
 		if strings.Contains(string(log), unwanted) {
 			t.Fatalf("the cleanup used the typed channel %q:\n%s", unwanted, log)
 		}
+	}
+}
+
+func TestSandboxInstanceCleanupConfirmsTarget(t *testing.T) {
+	previousGone := sandboxGoneDeadline
+	sandboxGoneDeadline = 0 // Always read the first response, then fail if it is inconclusive.
+	t.Cleanup(func() { sandboxGoneDeadline = previousGone })
+
+	binary := filepath.Join(t.TempDir(), "fake-agr")
+	script := `#!/bin/sh
+case "$*" in
+  'api call StopSandboxInstance --request {"InstanceId":"ins-target"} -o json')
+    : > "$STOP_MARKER"
+    printf '%s\n' '{"Status":"succeeded","Data":{"Response":{"RequestId":"fake"}}}'
+    ;;
+  'instance list --instance-ids ins-target -o json')
+    if [ -f "$STOP_MARKER" ]; then
+      printf '{"Status":"succeeded","Data":%s}\n' "$LIST_DATA"
+    else
+      printf '%s\n' '{"Status":"succeeded","Data":{"Items":[{"InstanceId":"ins-target","Status":"RUNNING"}],"Pagination":{"Total":1}}}'
+    fi
+    ;;
+  *) exit 1 ;;
+esac
+`
+	if err := os.WriteFile(binary, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	const scenario = "instance-cleanup"
+	registry := patchtest.Registry{scenario: {Run: func(s *patchtest.Session) error {
+		sandboxOwnInstance(s, "ins-target")
+		_, err := sandboxRun(s, s.Context, "instance", "list", "--instance-ids", "ins-target")
+		return err
+	}}}
+	plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{{Scenario: scenario}}}
+
+	for _, tc := range []struct {
+		name, listData, want string
+	}{
+		{"unrelated stopped before running target", `{"Items":[{"InstanceId":"ins-other","Status":"STOPPED"},{"InstanceId":"ins-target","Status":"RUNNING"}],"Pagination":{"Total":2}}`, "fail"},
+		{"empty page with nonzero total", `{"Items":[],"Pagination":{"Total":1}}`, "fail"},
+		{"stopped target after unrelated running", `{"Items":[{"InstanceId":"ins-other","Status":"RUNNING"},{"InstanceId":"ins-target","Status":"STOPPED"}],"Pagination":{"Total":2}}`, "pass"},
+		{"terminated target", `{"Items":[{"InstanceId":"ins-target","Status":"TERMINATED"}],"Pagination":{"Total":1}}`, "pass"},
+		{"confirmed empty", `{"Items":[],"Pagination":{"Total":0}}`, "pass"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			marker := filepath.Join(t.TempDir(), "stopped")
+			results, err := patchtest.Run(t.Context(), plan, registry, binary, []string{
+				"STOP_MARKER=" + marker, "LIST_DATA=" + tc.listData,
+			})
+			if len(results) != 1 || results[0].Cleanup != tc.want || results[0].Status != tc.want ||
+				results[0].Calls != 3 || (err != nil) != (tc.want == "fail") {
+				t.Fatalf("wanted cleanup=%s after stop and list, got results=%+v err=%v", tc.want, results, err)
+			}
+		})
 	}
 }

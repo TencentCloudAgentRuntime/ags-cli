@@ -118,7 +118,7 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "LogConfiguration",
 				Parser: "common.default_json",
 				Inputs: []apicli.InputSpec{
-					{Name: "log-configuration", Flag: "log-configuration", Usage: "LogConfiguration JSON object, @file, or - for stdin", Format: "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"},\"ContentFormat\":\"raw|auto\"}", Fields: []string{"ContentFormat: raw keeps the original text; auto extracts the first JSON object level or a complete logfmt line and falls back to the whole entry in content when it cannot extract it fully. Values are case-insensitive and normalized to lower case by the server; omitting it or sending an empty string keeps raw. auto requires a valid CLSConfig.TopicId. CLSConfig is only accepted on --tool-type custom tools, and that custom configuration must name its start command; the service rejects CLSConfig on the built-in types and rejects a custom configuration without CustomConfiguration.Command. Log body processing happens on the server; the CLI does not parse logs."}, Examples: []string{"agr tool create -n logs-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"ubuntu:22.04\",\"ImageRegistryType\":\"personal\",\"Command\":[\"/entrypoint.sh\"]}' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"xxxxx-xxxx-xxxx\"},\"ContentFormat\":\"auto\"}' -o text"}, Values: []string{"raw: keep the log line exactly as written", "auto: extract structured fields when the server can do so completely"}, Type: command.FlagString},
+					{Name: "log-configuration", Flag: "log-configuration", Usage: "LogConfiguration JSON object, @file, or - for stdin", Format: "{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"},\"ContentFormat\":\"raw|auto\"}", Fields: []string{"ContentFormat: raw keeps the original text; auto extracts the first JSON object level or a complete logfmt line and falls back to the whole entry in content when it cannot extract it fully. Values are case-insensitive and normalized to lower case by the server; omitting it or sending an empty string keeps raw. auto requires a valid CLSConfig.TopicId. CLSConfig is only accepted on --tool-type custom tools, and that custom configuration must name its start command; the service requires --role-arn and a network mode with egress for CLS logging. Log body processing happens on the server; the CLI does not parse logs."}, Examples: []string{"agr tool create -n logs-tool -t custom --network-configuration '{\"NetworkMode\":\"PUBLIC\"}' --custom-configuration '{\"Image\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"Command\":[\"<entrypoint>\"]}' --role-arn '<role-arn>' --log-configuration '{\"CLSConfig\":{\"TopicId\":\"<cls-topic-id>\"},\"ContentFormat\":\"auto\"}' -o text"}, Values: []string{"raw: keep the log line exactly as written", "auto: extract structured fields when the server can do so completely"}, Type: command.FlagString},
 				},
 			},
 			{
@@ -139,14 +139,14 @@ func APIDescriptor() apicli.APIDescriptor {
 				Name:   "AutoPause",
 				Parser: "common.default_bool",
 				Inputs: []apicli.InputSpec{
-					{Name: "auto-pause", Flag: "auto-pause", Usage: "Pause the instance automatically when it is idle. Omit the flag to inherit the source setting; --auto-pause=false sends an explicit false.", Type: command.FlagBool},
+					{Name: "auto-pause", Flag: "auto-pause", Usage: "Choose whether instances pause (true) or stop (false) at expiry. Omit the flag to use the service default. --auto-pause=false sends an explicit false.", Type: command.FlagBool},
 				},
 			},
 			{
 				Name:   "AutoResume",
 				Parser: "common.default_bool",
 				Inputs: []apicli.InputSpec{
-					{Name: "auto-resume", Flag: "auto-resume", Usage: "Resume the instance automatically when it is accessed. Omit the flag to inherit the source setting; --auto-resume=false sends an explicit false.", Type: command.FlagBool},
+					{Name: "auto-resume", Flag: "auto-resume", Usage: "Automatically resume paused instances on data-plane access. Omit the flag to use the service default. --auto-resume=false sends an explicit false.", Type: command.FlagBool},
 				},
 			},
 		},
