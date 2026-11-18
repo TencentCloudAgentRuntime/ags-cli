@@ -144,13 +144,13 @@ func registryReadyPlugin(s *patchtest.Session, reg, rec, ver string) (registryRe
 			return registryResponse{}, err
 		}
 		if got.Data.Version.VersionId != ver {
-			return registryResponse{}, fmt.Errorf("Plugin readback did not resolve the requested version")
+			return registryResponse{}, fmt.Errorf("readback did not resolve the requested Plugin version")
 		}
 		switch got.Data.Version.ContentStatus {
 		case "READY":
 			return got, nil
 		case "FAILED", "INVALID", "EXPIRED":
-			return registryResponse{}, fmt.Errorf("Plugin content did not become READY")
+			return registryResponse{}, fmt.Errorf("content for the Plugin version did not become READY")
 		}
 		select {
 		case <-ctx.Done():
