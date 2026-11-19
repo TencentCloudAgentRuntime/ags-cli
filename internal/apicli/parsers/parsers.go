@@ -31,8 +31,9 @@ type FieldInputs struct {
 // FlagInput is the normalized value captured from a single CLI flag or
 // positional argument. Changed distinguishes "not provided" from a zero value.
 type FlagInput struct {
-	Changed bool
-	Values  []string
+	Changed    bool
+	Values     []string
+	Positional bool
 }
 
 // FieldParser converts one field's CLI inputs into an API request value. The
@@ -87,7 +88,15 @@ func defaultBool(_ FieldContext, inputs FieldInputs) (any, bool, error) {
 func defaultInt(ctx FieldContext, inputs FieldInputs) (any, bool, error) {
 	for flag, in := range inputs.ByFlag {
 		if in.Changed && len(in.Values) > 0 {
-			value, err := strconv.Atoi(in.Values[len(in.Values)-1])
+			raw := in.Values[len(in.Values)-1]
+			if in.Positional {
+				value, err := ParsePositionalInt(flag, raw)
+				if err != nil {
+					return nil, false, err
+				}
+				return value, true, nil
+			}
+			value, err := strconv.Atoi(raw)
 			if err != nil {
 				return nil, false, fmt.Errorf("%s.%s --%s: %w", ctx.Command, ctx.Field, flag, err)
 			}
@@ -95,6 +104,15 @@ func defaultInt(ctx FieldContext, inputs FieldInputs) (any, bool, error) {
 		}
 	}
 	return nil, false, nil
+}
+
+// ParsePositionalInt applies the same usage error in flag and raw request modes.
+func ParsePositionalInt(name, raw string) (int, error) {
+	value, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, output.NewUsageError("INVALID_POSITIONAL_ARG", fmt.Sprintf("%s must be an integer, got %q", name, raw), "").WithCause(err)
+	}
+	return value, nil
 }
 
 func defaultStringArray(_ FieldContext, inputs FieldInputs) (any, bool, error) {

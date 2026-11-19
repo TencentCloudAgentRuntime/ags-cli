@@ -4,8 +4,10 @@ package harnesscli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -101,7 +103,24 @@ func (c Client) RevisionGetter(harnessID string, revision int64) func(context.Co
 	}
 }
 
-// RevisionNumber normalizes the parsed Revision request value.
+// ValidateRevisionNumber checks positivity for read commands without narrowing
+// the wire contract's uint64 range or changing its errors for malformed types.
+func ValidateRevisionNumber(value any, resource string) error {
+	var nonPositive bool
+	switch n := value.(type) {
+	case int:
+		nonPositive = n < 1
+	case json.Number:
+		number, ok := new(big.Rat).SetString(n.String())
+		nonPositive = ok && number.IsInt() && number.Sign() <= 0
+	}
+	if nonPositive {
+		return nonPositiveRevision(value, resource)
+	}
+	return nil
+}
+
+// RevisionNumber normalizes the parsed Revision value for publishing.
 func RevisionNumber(value any) (int64, error) {
 	var number int64
 	switch v := value.(type) {
@@ -114,14 +133,23 @@ func RevisionNumber(value any) (int64, error) {
 	case interface{ Int64() (int64, error) }:
 		parsed, err := v.Int64()
 		if err != nil {
-			return 0, output.NewUsageError("INVALID_REVISION", fmt.Sprintf("revision %v is not an integer", value), "Use a revision number from 'agr harness revision list <harness-id>'.")
+			return 0, revisionUsageError(fmt.Sprintf("revision %v is not an integer", value), "harness")
 		}
 		number = parsed
 	}
 	if number < 1 {
-		return 0, output.NewUsageError("INVALID_REVISION", fmt.Sprintf("revision must be a positive integer, got %v", value), "Use a revision number from 'agr harness revision list <harness-id>'.")
+		return 0, nonPositiveRevision(value, "harness")
 	}
 	return number, nil
+}
+
+func nonPositiveRevision(value any, resource string) error {
+	return revisionUsageError(fmt.Sprintf("revision must be a positive integer, got %v", value), resource)
+}
+
+func revisionUsageError(message, resource string) error {
+	return output.NewUsageError("INVALID_REVISION", message,
+		fmt.Sprintf("Use a revision number from 'agr %[1]s revision list <%[1]s-id>'.", resource))
 }
 
 // IsNotFound reports a structured not-found failure from the control plane.

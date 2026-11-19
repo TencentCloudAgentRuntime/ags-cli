@@ -35,7 +35,11 @@ func runSnapshotCLIWithOutput(t *testing.T, server *httptest.Server, stdin io.Re
 	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
-	args = append(args, "-o", format)
+	if separator := slices.Index(args, "--"); separator >= 0 {
+		args = slices.Insert(args, separator, "-o", format)
+	} else {
+		args = append(args, "-o", format)
+	}
 	cmd := exec.CommandContext(ctx, os.Args[0], append([]string{"-test.run=^TestTransportLifecycleHelper$", "--"}, args...)...)
 	home := t.TempDir()
 	cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.Certificate().Raw})

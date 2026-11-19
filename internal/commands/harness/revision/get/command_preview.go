@@ -17,6 +17,9 @@ func Module() command.Module {
 		if err != nil {
 			return nil, err
 		}
+		if err := harnesscli.ValidateRevisionNumber(request["Revision"], "harness"); err != nil {
+			return nil, err
+		}
 		result, response, err := env.Execute(ctx, request)
 		if err != nil {
 			return nil, err

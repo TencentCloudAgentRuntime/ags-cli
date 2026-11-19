@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli/parsers"
@@ -162,7 +161,7 @@ func collectInputs(field FieldSpec, req command.Request) parsers.FieldInputs {
 	for _, input := range field.Inputs {
 		if input.Positional {
 			if value, ok := req.ArgValues[input.Name]; ok {
-				out.ByFlag[input.Name] = parsers.FlagInput{Changed: true, Values: []string{value}}
+				out.ByFlag[input.Name] = parsers.FlagInput{Changed: true, Values: []string{value}, Positional: true}
 			}
 			continue
 		}
@@ -219,9 +218,9 @@ func mergePositionals(raw map[string]any, fields []FieldSpec, req command.Reques
 			existingString, _ := existing.(string)
 			conflict := existingString != "" && existingString != value
 			if field.Parser == "common.default_int" {
-				parsed, err := strconv.Atoi(value)
+				parsed, err := parsers.ParsePositionalInt(input.Name, value)
 				if err != nil {
-					return output.NewUsageError("INVALID_POSITIONAL_ARG", fmt.Sprintf("%s must be an integer, got %q", input.Name, value), "").WithCause(err)
+					return err
 				}
 				merged = parsed
 				if exists {
