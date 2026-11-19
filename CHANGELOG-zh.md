@@ -2,6 +2,71 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.8.0-preview.3] - 2026-11-19
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- Tool 和实例的创建、更新及 Tool fork 支持通过 `--keepalive-configuration`、
+  `--auto-pause` 和 `--auto-resume` 配置沙箱保活、自动暂停和自动恢复。实例可逐字段
+  覆盖保活配置，Tool 和实例的 `get/list` 文本输出展示服务端返回的设置。
+- `tool create/fork --log-configuration` 支持将 `LogConfiguration.ContentFormat`
+  设置为 `raw` 或 `auto`。有出网能力且配置了有效 CLS 主题的 `custom` Tool 可使用
+  `auto`。Tool 的 `get/list` 文本输出展示服务端返回的格式。
+- 新增 `agr event list` 查询运维事件，支持 `Raw` 和 `Aggregate` 模式、资源筛选、
+  时间窗口、排序、分页及文本和 JSON 输出。
+- 新增 `agr gpu group list|rename|delete`、`agr gpu resource list` 和
+  `agr gpu spec list`，可管理资源组并查看已购 GPU 和可售规格。可通过
+  `CustomConfiguration.Resources.GPUResourceGroupId` 绑定 GPU 资源组。对支持的
+  WAA 和 GPU 沙箱，`agr instance create --start-mode WAIT_UNTIL_HEALTHY --wait`
+  会等待实例进入 `RUNNING`。
+- 新增 `agr pre-cache-image-task list`，支持筛选普通镜像预热任务并分页查看。
+  使用 `--pre-cache-type image_volume` 创建和查询镜像卷预热任务，查询时指定镜像
+  摘要、地址和仓库类型。服务端返回 `PreCacheImageConcurrency` 时，配额响应会保留
+  此字段。
+- 使用 `registry record create/update` 返回的预签名 URL 上传 Registry Plugin 文件。
+  支持复用同一记录中处于 `READY` 状态的 Skill 或 Plugin 文件，以及设置版本元数据和
+  Harness 兼容性。可在私有 Registry 或 `MARKETPLACE` 中跨记录浏览版本，并按 Harness
+  和元数据筛选。
+
+### Bug 修复
+- `agr pre-cache-image-task get -o json` 保留服务端返回的 `ReadyTime`。
+- 生成的命令在通过 `--request` 提供输入时，也会拒绝多余的位置参数。
+
+### 文档
+- 补充沙箱保活、CLS 日志格式、运维事件、Registry Plugin 上传和镜像卷预热示例。
+  稳定版安装和下载示例更新至 v0.7.2。
+
+## [0.7.2] - 2026-11-19
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 新增 `agr event list` 查询运维事件，支持 `Raw` 和 `Aggregate` 模式、资源筛选、
+  时间窗口、排序、分页及文本和 JSON 输出。
+- 新增 `agr gpu group list|rename|delete`、`agr gpu resource list` 和
+  `agr gpu spec list`，可管理资源组并查看已购 GPU 和可售规格。可通过
+  `CustomConfiguration.Resources.GPUResourceGroupId` 绑定 GPU 资源组。对支持的
+  WAA 和 GPU 沙箱，`agr instance create --start-mode WAIT_UNTIL_HEALTHY --wait`
+  会等待实例进入 `RUNNING`。
+- 新增 `agr pre-cache-image-task list`，支持筛选普通镜像预热任务并分页查看。
+  使用 `--pre-cache-type image_volume` 创建和查询镜像卷预热任务，查询时指定镜像
+  摘要、地址和仓库类型。服务端返回 `PreCacheImageConcurrency` 时，配额响应会保留
+  此字段。
+- Registry 支持上传 Plugin、复用同一记录中的文件、配置版本元数据和 Harness
+  兼容性。可在私有 Registry 或 `MARKETPLACE` 中跨记录浏览版本，并按 Harness 和
+  元数据筛选。
+
+### Bug 修复
+- `agr pre-cache-image-task get` 保留服务端返回的 `ReadyTime`。
+- 生成的命令在通过 `--request` 提供输入时，也会拒绝多余的位置参数。
+
+### 文档
+- 补充运维事件、Registry Plugin 上传和镜像卷预热示例。将安装和下载示例更新到
+  v0.7.2。
+
 ## [0.8.0-preview.2] - 2026-11-03
 
 ### 破坏性变更
