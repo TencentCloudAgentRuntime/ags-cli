@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "list",
 			Short:        "List Endpoints",
 			Long:         "Lists the Endpoints visible to the configured cloud identity.",
+			Examples:     []string{"agr endpoint list"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointListResponse",

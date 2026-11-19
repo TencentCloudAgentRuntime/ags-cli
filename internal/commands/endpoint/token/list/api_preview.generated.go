@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "list",
 			Short:        "List Endpoint Tokens",
 			Long:         "Returns paginated token metadata and status.",
+			Examples:     []string{"agr endpoint token list --endpoint-id ep-0123456789abcdef01234567 --limit 20"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointTokenListResponse",

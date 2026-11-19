@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "list",
 			Short:        "List Endpoint Targets",
 			Long:         "Lists all configured Targets, including disabled ones.",
+			Examples:     []string{"agr endpoint target list --endpoint-id ep-0123456789abcdef01234567"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointTargetListResponse",

@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "create",
 			Short:        "Issue an Endpoint Token",
 			Long:         "Returns the bearer credential once. Store it securely. It authenticates data-plane calls for this Endpoint.",
+			Examples:     []string{"agr endpoint token create --endpoint-id ep-0123456789abcdef01234567 --name demo-token --expires-in 3600"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateEndpointTokenResponse",

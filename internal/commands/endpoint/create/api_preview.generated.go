@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "create",
 			Short:        "Create an Endpoint",
 			Long:         "Creates an active Endpoint and returns its data-plane URL and initial revision.",
+			Examples:     []string{"agr endpoint create --name demo-endpoint"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateEndpointResponse",

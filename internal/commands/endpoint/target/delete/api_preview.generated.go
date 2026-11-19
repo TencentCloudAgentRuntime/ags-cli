@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "delete",
 			Short:        "Delete an Endpoint Target",
 			Long:         "Deletes the specified Target using its current revision.",
+			Examples:     []string{"agr endpoint target delete --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567 --expected-revision 1"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DeleteEndpointTargetResponse",

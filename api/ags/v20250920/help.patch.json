@@ -723,7 +723,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint create --name demo-endpoint"
+      ]
     }
   },
   {
@@ -731,7 +734,10 @@
     "path": "/commands/endpoint.list",
     "value": {
       "short": "List Endpoints",
-      "long": "Lists the Endpoints visible to the configured cloud identity."
+      "long": "Lists the Endpoints visible to the configured cloud identity.",
+      "examples": [
+        "agr endpoint list"
+      ]
     }
   },
   {
@@ -749,7 +755,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint get --endpoint-id ep-0123456789abcdef01234567"
+      ]
     }
   },
   {
@@ -807,7 +816,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint update --endpoint-id ep-0123456789abcdef01234567 --expected-revision 1 --qps 25"
+      ]
     }
   },
   {
@@ -833,7 +845,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint delete --endpoint-id ep-0123456789abcdef01234567 --expected-revision 1"
+      ]
     }
   },
   {
@@ -883,7 +898,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint metrics --endpoint-ids ep-0123456789abcdef01234567 --metric-names InvocationCount"
+      ]
     }
   },
   {
@@ -901,7 +919,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target candidates --endpoint-id ep-0123456789abcdef01234567"
+      ]
     }
   },
   {
@@ -967,7 +988,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target create --endpoint-id ep-0123456789abcdef01234567 --registry-id rgy-example --record-id rec-example --version-id ver-example"
+      ]
     }
   },
   {
@@ -985,7 +1009,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target list --endpoint-id ep-0123456789abcdef01234567"
+      ]
     }
   },
   {
@@ -1011,7 +1038,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target get --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567"
+      ]
     }
   },
   {
@@ -1085,7 +1115,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target update --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567 --expected-revision 1 --path-alias="
+      ]
     }
   },
   {
@@ -1119,7 +1152,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target delete --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567 --expected-revision 1"
+      ]
     }
   },
   {
@@ -1153,7 +1189,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint target sync --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567 --expected-revision 1"
+      ]
     }
   },
   {
@@ -1187,7 +1226,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint token create --endpoint-id ep-0123456789abcdef01234567 --name demo-token --expires-in 3600"
+      ]
     }
   },
   {
@@ -1221,7 +1263,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint token list --endpoint-id ep-0123456789abcdef01234567 --limit 20"
+      ]
     }
   },
   {
@@ -1247,7 +1292,10 @@
             }
           }
         }
-      }
+      },
+      "examples": [
+        "agr endpoint token revoke --endpoint-id ep-0123456789abcdef01234567 --token-id eptk-0123456789abcdef01234567"
+      ]
     }
   }
 ]

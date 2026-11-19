@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -112,6 +111,10 @@ func runEndpointLifecycle(s *patchtest.Session) error {
 	if recordID == "" {
 		return errors.New("AGR_ENDPOINT_FIXTURE_RECORD_ID must identify an MCP record with two READY versions")
 	}
+	fixture, err := loadEndpointMetricFixture()
+	if err != nil {
+		return err
+	}
 	ctx := s.Context
 	name := fmt.Sprintf("agr-endpoint-e2e-%d", time.Now().UnixNano())
 	endpoint, err := createEndpointFixture(s, name, "--description", "preview lifecycle", "--qps", "17")
@@ -140,9 +143,12 @@ func runEndpointLifecycle(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	state := updated.Object("Endpoint")
-	if err := s.Assert("endpoint.update", state.String("Name") == name+"-updated" && state["Description"] == "" &&
-		state.String("Status") == "DISABLED" && state.Int64("QPS") == 31 && state.Int64("Revision") == 2); err != nil {
+	persisted, err := endpointCall(s, ctx, "get", "--endpoint-id", id)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("endpoint.update", endpointUpdated(updated, id, name+"-updated") &&
+		endpointUpdated(persisted, id, name+"-updated")); err != nil {
 		return err
 	}
 	_, err = endpointCall(s, ctx, "delete", "--endpoint-id", id, "--expected-revision", "1")
@@ -152,7 +158,11 @@ func runEndpointLifecycle(s *patchtest.Session) error {
 	if _, err := endpointCall(s, ctx, "update", "--endpoint-id", id, "--expected-revision", "2", "--status", "ACTIVE"); err != nil {
 		return err
 	}
-	if err := runEndpointTarget(s, id, recordID); err != nil {
+	versions, err := endpointTargetVersions(s, id, recordID)
+	if err != nil {
+		return err
+	}
+	if err := runEndpointTarget(s, id, recordID, versions); err != nil {
 		return err
 	}
 	if err := runEndpointToken(s, endpoint); err != nil {
@@ -162,7 +172,7 @@ func runEndpointLifecycle(s *patchtest.Session) error {
 	if err != nil {
 		return err
 	}
-	if err := runEndpointMetrics(s, id, other.String("EndpointId")); err != nil {
+	if err := runEndpointMetrics(s, endpoint, other, versions[0], fixture); err != nil {
 		return err
 	}
 	if err := deleteEndpointFixture(s, ctx, id); err != nil {
@@ -171,14 +181,16 @@ func runEndpointLifecycle(s *patchtest.Session) error {
 	return s.Assert("endpoint.delete", true)
 }
 
-func runEndpointTarget(s *patchtest.Session, endpointID, recordID string) error {
-	ctx := s.Context
-	run := func(command string, flags ...string) (apivalue.Object, error) {
-		return endpointCall(s, ctx, "target "+command, append([]string{"--endpoint-id", endpointID}, flags...)...)
-	}
-	data, err := run("candidates")
+func endpointUpdated(response apivalue.Object, id, name string) bool {
+	state := response.Object("Endpoint")
+	return state.String("EndpointId") == id && state.String("Name") == name && state["Description"] == "" &&
+		state.String("Status") == "DISABLED" && state.Int64("QPS") == 31 && state.Int64("Revision") == 2
+}
+
+func endpointTargetVersions(s *patchtest.Session, endpointID, recordID string) ([]apivalue.Object, error) {
+	data, err := endpointCall(s, s.Context, "target candidates", "--endpoint-id", endpointID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var versions []apivalue.Object
 	for _, candidate := range data.Objects("CandidateSet") {
@@ -187,12 +199,22 @@ func runEndpointTarget(s *patchtest.Session, endpointID, recordID string) error 
 			versions = append(versions, candidate)
 		}
 	}
-	if err := s.Assert("target.candidates", data.Int64("TotalCount") >= 2 && len(versions) >= 2); err != nil {
-		return fmt.Errorf("target.candidates: two READY MCP versions from the configured record are required: %w", err)
+	if err := s.Assert("target.candidates", data.Int64("TotalCount") >= 2 && len(versions) >= 2 &&
+		versions[0].String("RegistryId") != "" && versions[0].String("RegistryId") == versions[1].String("RegistryId") &&
+		versions[0].String("VersionId") != versions[1].String("VersionId")); err != nil {
+		return nil, fmt.Errorf("target.candidates: two distinct READY MCP versions from the configured record are required: %w", err)
+	}
+	return versions, nil
+}
+
+func runEndpointTarget(s *patchtest.Session, endpointID, recordID string, versions []apivalue.Object) error {
+	ctx := s.Context
+	run := func(command string, flags ...string) (apivalue.Object, error) {
+		return endpointCall(s, ctx, "target "+command, append([]string{"--endpoint-id", endpointID}, flags...)...)
 	}
 	registryID := versions[0].String("RegistryId")
 	oldVersion, newVersion := versions[0].String("VersionId"), versions[1].String("VersionId")
-	data, err = run("create", "--registry-id", registryID, "--record-id", recordID, "--version-id", oldVersion,
+	data, err := run("create", "--registry-id", registryID, "--record-id", recordID, "--version-id", oldVersion,
 		"--name", "preview target", "--description", "preview target description", "--path-alias", "preview-target")
 	if err != nil {
 		return err
@@ -218,10 +240,12 @@ func runEndpointTarget(s *patchtest.Session, endpointID, recordID string) error 
 	if err != nil {
 		return err
 	}
-	state := data.Object("Target")
-	if err := s.Assert("target.update", state.String("TargetId") == id && state.String("VersionId") == newVersion &&
-		state.String("Name") == "updated target" && state["Description"] == "" && state.String("PathAlias") == "" &&
-		state.String("InvocationURL") == "" && state.String("Status") == "DISABLED" && state.Int64("Revision") == 2); err != nil {
+	persisted, err := run("get", "--target-id", id)
+	if err != nil {
+		return err
+	}
+	if err := s.Assert("target.update", endpointTargetUpdated(data, id, newVersion) &&
+		endpointTargetUpdated(persisted, id, newVersion)); err != nil {
 		return err
 	}
 	list, err := run("list")
@@ -247,6 +271,15 @@ func runEndpointTarget(s *patchtest.Session, endpointID, recordID string) error 
 	}
 	_, err = run("get", "--target-id", id)
 	return s.Assert("target.delete", endpointErrorIs(err, "ResourceNotFound"))
+}
+
+func endpointTargetUpdated(response apivalue.Object, id, version string) bool {
+	state := response.Object("Target")
+	return state.String("TargetId") == id && state.String("VersionId") == version &&
+		state.String("Name") == "updated target" && state["Description"] == "" &&
+		(state["PathAlias"] == nil || state["PathAlias"] == "") &&
+		(state["InvocationURL"] == nil || state["InvocationURL"] == "") &&
+		state.String("Status") == "DISABLED" && state.Int64("Revision") == 2
 }
 
 func runEndpointToken(s *patchtest.Session, endpoint apivalue.Object) error {
@@ -310,75 +343,4 @@ func runEndpointToken(s *patchtest.Session, endpoint apivalue.Object) error {
 	return s.Assert("token.revoke", err == nil && after == http.StatusUnauthorized &&
 		endpointFind(list, "TokenSet", "TokenId", id).String("Status") == "REVOKED" &&
 		endpointFind(list, "TokenSet", "TokenId", second.String("TokenId")).String("Status") == "ACTIVE")
-}
-
-func endpointMCPStatus(ctx context.Context, rawURL, bearer string) (int, error) {
-	address, err := url.Parse(rawURL)
-	if err != nil || address.Scheme != "https" || address.Hostname() == "" || address.User != nil {
-		return 0, errors.New("invalid HTTPS MCP URL returned by the endpoint")
-	}
-	body := strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"agr-preview-e2e","version":"1"}}}`)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, address.String(), body)
-	if err != nil {
-		return 0, errors.New("cannot build Endpoint MCP request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json, text/event-stream")
-	req.Header.Set("Authorization", "Bearer "+bearer)
-	client := http.Client{Timeout: 30 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error {
-		return http.ErrUseLastResponse
-	}}
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, errors.New("failed to send MCP request to the endpoint")
-	}
-	if err := resp.Body.Close(); err != nil {
-		return 0, errors.New("failed to close the MCP response body")
-	}
-	return resp.StatusCode, nil
-}
-
-func runEndpointMetrics(s *patchtest.Session, firstID, secondID string) error {
-	end := time.Now().UTC().Truncate(time.Minute).Add(-time.Minute)
-	start := end.Add(-3 * time.Minute)
-	for _, mode := range []struct {
-		resultType string
-		period     int64
-	}{
-		{"vector", 0},
-		{"matrix", 60},
-	} {
-		flags := []string{"--endpoint-ids", firstID, "--endpoint-ids", secondID,
-			"--metric-names", "InvocationCount", "--metric-names", "P95LatencyMs", "--metric-names", "ErrorRate",
-			"--start-time", start.Format(time.RFC3339), "--end-time", end.Format(time.RFC3339)}
-		if mode.period != 0 {
-			flags = append(flags, "--period", strconv.FormatInt(mode.period, 10))
-		}
-		data, err := endpointCall(s, s.Context, "metrics", flags...)
-		if err != nil {
-			return err
-		}
-		windowStart, _ := time.Parse(time.RFC3339, data.String("WindowStartTime"))
-		windowEnd, _ := time.Parse(time.RFC3339, data.String("WindowEndTime"))
-		if !windowStart.Equal(start) || !windowEnd.Equal(end) || data.Int64("Period") != mode.period ||
-			len(data.Objects("Results")) != 3 {
-			return fmt.Errorf("metrics %s returned an unexpected window or metric count", mode.resultType)
-		}
-		for _, name := range []string{"InvocationCount", "P95LatencyMs", "ErrorRate"} {
-			metric := endpointFind(data, "Results", "MetricName", name)
-			var points struct {
-				ResultType string
-				Result     []struct{ Metric map[string]string }
-			}
-			if json.Unmarshal([]byte(metric.String("Data")), &points) != nil || points.ResultType != mode.resultType {
-				return fmt.Errorf("metrics %s returned an invalid %s result", mode.resultType, name)
-			}
-			for _, point := range points.Result {
-				if id := point.Metric["endpoint_id"]; id != firstID && id != secondID {
-					return errors.New("metrics returned a series for an unrequested Endpoint")
-				}
-			}
-		}
-	}
-	return s.Assert("endpoint.metrics", true)
 }

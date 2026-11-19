@@ -45,8 +45,12 @@ above do not purchase resources or test GPU allocation.
 
 Use an Endpoint-enabled test environment and a test account that can manage
 Endpoints and read a fixture MCP Record with two compatible approved versions.
-Set `AGR_ENDPOINT_FIXTURE_RECORD_ID` to that Record ID. Provide test credentials,
-`AGR_REGION`, and `AGR_CLOUD_ENDPOINT` through the environment.
+Set `AGR_ENDPOINT_FIXTURE_RECORD_ID` to that Record ID and
+`AGR_ENDPOINT_FIXTURE_TOOL` to the upstream name of a read-only tool. The version
+used for metrics must expose that tool. Set `AGR_ENDPOINT_FIXTURE_ARGUMENTS` to
+a JSON object with valid inputs, or omit it for a tool that accepts `{}`.
+Provide test credentials, `AGR_REGION`, and `AGR_CLOUD_ENDPOINT` through the
+environment.
 
 ```sh
 go build -tags=preview -o /tmp/agr-endpoint-preview ./cmd/agr
@@ -57,8 +61,10 @@ AGR_ENDPOINT_E2E_BINARY=/tmp/agr-endpoint-preview \
 This runs the Endpoint, Target, Token, and metrics assertions with the candidate
 binary. It creates disposable Endpoints, checks both revision conflicts and
 verified cleanup, and uses the Registry fixture as a read-only dependency. The
-Token check calls the MCP URL before and after revocation. The strict
-`api-patch-e2e` runner also reads `AGR_ENDPOINT_FIXTURE_RECORD_ID`.
+Token check calls the MCP URL before and after revocation. Metrics use one
+successful tool call on the first Endpoint and four on the second, then wait for
+scraped samples and verify both Endpoint series in summary and trend responses.
+The strict `api-patch-e2e` runner uses the same fixture variables.
 
 ## Sandbox keepalive and log format (preview)
 

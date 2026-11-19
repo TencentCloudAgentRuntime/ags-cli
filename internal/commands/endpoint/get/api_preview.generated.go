@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "get",
 			Short:        "Get an Endpoint",
 			Long:         "Shows the current configuration, revision, and MCP URL.",
+			Examples:     []string{"agr endpoint get --endpoint-id ep-0123456789abcdef01234567"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointResponse",

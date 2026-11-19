@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "update",
 			Short:        "Update an Endpoint",
 			Long:         "Supply the current revision and at least one of --name, --description, --status, or --qps. Status accepts ACTIVE or DISABLED.",
+			Examples:     []string{"agr endpoint update --endpoint-id ep-0123456789abcdef01234567 --expected-revision 1 --qps 25"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "ModifyEndpointResponse",

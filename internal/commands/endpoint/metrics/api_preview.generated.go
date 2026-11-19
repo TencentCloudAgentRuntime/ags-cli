@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "metrics",
 			Short:        "Query Endpoint metrics",
 			Long:         "Queries invocation counts, P95 latency, or error rates by Endpoint. Omit both times for today in Asia/Shanghai. Set --period to request trend points.",
+			Examples:     []string{"agr endpoint metrics --endpoint-ids ep-0123456789abcdef01234567 --metric-names InvocationCount"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointMetricsResponse",

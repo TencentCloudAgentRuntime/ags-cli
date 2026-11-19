@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "create",
 			Short:        "Create an Endpoint Target",
 			Long:         "Pins a compatible Registry version to the Endpoint. An optional route alias enables direct invocation.",
+			Examples:     []string{"agr endpoint target create --endpoint-id ep-0123456789abcdef01234567 --registry-id rgy-example --record-id rec-example --version-id ver-example"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "CreateEndpointTargetResponse",

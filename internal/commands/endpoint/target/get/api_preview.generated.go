@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "get",
 			Short:        "Get an Endpoint Target",
 			Long:         "Shows the current Target configuration and the pinned Registry version.",
+			Examples:     []string{"agr endpoint target get --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointTargetResponse",

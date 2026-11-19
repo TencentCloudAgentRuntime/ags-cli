@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "update",
 			Short:        "Update an Endpoint Target",
 			Long:         "Supply the current revision and at least one field to update. Status accepts ENABLED or DISABLED. A replacement version must belong to the same Registry record.",
+			Examples:     []string{"agr endpoint target update --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567 --expected-revision 1 --path-alias="},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "ModifyEndpointTargetResponse",

@@ -66,10 +66,17 @@ func TestEndpointPreviewSignedRequests(t *testing.T) {
 			`{"Target":{"TargetId":"ept-test","Revision":5,"VersionId":"rv-test"},"RequestId":"request-id"}`,
 			[]string{"target", "update", "--endpoint-id", "ep-test", "--target-id", "ept-test",
 				"--expected-revision", "4", "--description=", "--path-alias=", "--version-id", "rv-test"}},
+		{"clear endpoint description", "ModifyEndpoint",
+			`{"EndpointId":"ep-test","ExpectedRevision":4,"Description":""}`,
+			`{"Endpoint":{"EndpointId":"ep-test","Revision":5,"Description":""},"RequestId":"request-id"}`,
+			[]string{"update", "--endpoint-id", "ep-test", "--expected-revision", "4", "--description="}},
 		{"permanent token", "CreateEndpointToken",
 			`{"EndpointId":"ep-test","Name":"smoke","ExpiresIn":0}`,
 			`{"TokenId":"eptk-test","Token":"example-token","RequestId":"request-id"}`,
 			[]string{"token", "create", "--endpoint-id", "ep-test", "--name", "smoke", "--expires-in", "0"}},
+		{"revoke token", "RevokeEndpointToken",
+			`{"EndpointId":"ep-test","TokenId":"eptk-test"}`, `{"RequestId":"request-id"}`,
+			[]string{"token", "revoke", "--endpoint-id", "ep-test", "--token-id", "eptk-test"}},
 		{"metrics lists", "DescribeEndpointMetrics",
 			`{"EndpointIds":["ep-test","ep-second"],"MetricNames":["InvocationCount","P95LatencyMs"]}`,
 			`{"Results":[{"MetricName":"InvocationCount","Data":"{\"resultType\":\"vector\",\"result\":[]}"}],"RequestId":"request-id"}`,
@@ -109,6 +116,72 @@ func TestEndpointPreviewSignedRequests(t *testing.T) {
 				}
 			default:
 				t.Fatal("no signed request")
+			}
+		})
+	}
+}
+
+func TestEndpointPreviewRejectsIncompleteTokenIssuance(t *testing.T) {
+	if apimeta.BuildChannel != apimeta.Preview {
+		t.Skip("requires a preview build")
+	}
+	for _, tc := range []struct{ name, data, tokenID string }{
+		{"RequestId only", `"RequestId":"issue-request"`, ""},
+		{"without token", `"RequestId":"issue-request","TokenId":"eptk-test"`, "eptk-test"},
+		{"without token ID", `"RequestId":"issue-request","Token":"test-secret"`, ""},
+		{"blank token", `"RequestId":"issue-request","TokenId":"eptk-test","Token":" "`, "eptk-test"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("X-TC-Action") != "CreateEndpointToken" {
+					t.Error("unexpected Cloud API action")
+				}
+				_, _ = io.WriteString(w, `{"Response":{`+tc.data+`}}`)
+			}))
+			defer server.Close()
+			call := operationalEventCLI(t, server, "", "endpoint", "token", "create",
+				"--endpoint-id", "ep-fixture", "--name", "demo", "-o", "json")
+			response := operationalEventObject(t, call.stdout)
+			failure, _ := response["Failure"].(map[string]any)
+			details, _ := failure["Details"].(map[string]any)
+			tokenID, _ := details["TokenId"].(string)
+			if call.code != 1 || failure["Code"] != "ENDPOINT_TOKEN_INCOMPLETE" ||
+				details["RequestId"] != "issue-request" || tokenID != tc.tokenID {
+				t.Fatalf("unexpected error for incomplete token response: exit=%d %s", call.code, call.stdout)
+			}
+			if strings.Contains(string(call.stdout)+string(call.stderr), "test-secret") {
+				t.Fatal("partial response leaked the Token")
+			}
+		})
+	}
+}
+
+func TestEndpointPreviewExamplesReachAPI(t *testing.T) {
+	if apimeta.BuildChannel != apimeta.Preview {
+		t.Skip("requires a preview build")
+	}
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, `{"Response":{"RequestId":"mock","TokenId":"eptk-test","Token":"example-token"}}`)
+	}))
+	defer server.Close()
+	for _, name := range []string{
+		"create", "list", "get", "update", "delete", "metrics", "target.candidates", "target.create",
+		"target.list", "target.get", "target.update", "target.delete", "target.sync", "token.create", "token.list", "token.revoke",
+	} {
+		t.Run(name, func(t *testing.T) {
+			schema := schemaForCommand(t, "endpoint."+name)
+			if len(schema.Examples) == 0 {
+				t.Fatal("command requires a runnable example")
+			}
+			for _, example := range schema.Examples {
+				args := strings.Fields(example)
+				if len(args) < 3 || args[0] != "agr" || args[1] != "endpoint" {
+					t.Fatalf("unexpected example %q", example)
+				}
+				result := operationalEventCLI(t, server, "", append(args[1:], "-o", "json")...)
+				if result.code != 0 {
+					t.Fatalf("%s exited %d: %s", example, result.code, result.stdout)
+				}
 			}
 		})
 	}

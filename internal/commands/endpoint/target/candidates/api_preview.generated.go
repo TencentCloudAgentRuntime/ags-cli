@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "candidates",
 			Short:        "List Endpoint Target candidates",
 			Long:         "Lists visible Registry versions and their compatibility. Select a READY version and supply its Registry, Record, and Version IDs when creating a Target.",
+			Examples:     []string{"agr endpoint target candidates --endpoint-id ep-0123456789abcdef01234567"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "DescribeEndpointTargetCandidateListResponse",

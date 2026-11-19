@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "sync",
 			Short:        "Sync an Endpoint Target",
 			Long:         "Refreshes the configuration snapshot from the pinned Registry version using the current Target revision.",
+			Examples:     []string{"agr endpoint target sync --endpoint-id ep-0123456789abcdef01234567 --target-id tgt-0123456789abcdef01234567 --expected-revision 1"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "SyncEndpointTargetResponse",

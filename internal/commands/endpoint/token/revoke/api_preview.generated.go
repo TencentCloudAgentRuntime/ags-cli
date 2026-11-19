@@ -17,6 +17,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Use:          "revoke",
 			Short:        "Revoke an Endpoint Token",
 			Long:         "Revokes the specified Token. Repeating the operation on an already-revoked Token is supported.",
+			Examples:     []string{"agr endpoint token revoke --endpoint-id ep-0123456789abcdef01234567 --token-id eptk-0123456789abcdef01234567"},
 			SupportsJSON: true,
 			Output: command.OutputSpec{
 				DataType:    "RevokeEndpointTokenResponse",
