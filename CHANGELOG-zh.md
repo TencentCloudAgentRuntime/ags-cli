@@ -12,8 +12,8 @@
   `--auto-pause` 和 `--auto-resume` 配置沙箱保活、自动暂停和自动恢复。实例可逐字段
   覆盖保活配置，Tool 和实例的 `get/list` 文本输出展示服务端返回的设置。
 - `tool create/fork --log-configuration` 支持将 `LogConfiguration.ContentFormat`
-  设置为 `raw` 或 `auto`，其中 `auto` 需要有效的 CLS 主题。Tool 的 `get/list`
-  文本输出展示服务端返回的格式。
+  设置为 `raw` 或 `auto`。有出网能力且配置了有效 CLS 主题的 `custom` Tool 可使用
+  `auto`。Tool 的 `get/list` 文本输出展示服务端返回的格式。
 - 新增 `agr event list` 查询运维事件，支持 `Raw` 和 `Aggregate` 模式、资源筛选、
   时间窗口、排序、分页及文本和 JSON 输出。
 - 新增 `agr gpu group list|rename|delete`、`agr gpu resource list` 和
@@ -25,9 +25,10 @@
   使用 `--pre-cache-type image_volume` 创建和查询镜像卷预热任务，查询时指定镜像
   摘要、地址和仓库类型。服务端返回 `PreCacheImageConcurrency` 时，配额响应会保留
   此字段。
-- Registry 支持上传 Plugin 文件、复用同一记录中处于 `READY` 状态的 Skill 或 Plugin
-  文件，以及设置版本元数据和 Harness 兼容性。可在私有 Registry 或 `MARKETPLACE`
-  中跨记录浏览版本，并按 Harness 和元数据筛选。
+- 使用 `registry record create/update` 返回的预签名 URL 上传 Registry Plugin 文件。
+  支持复用同一记录中处于 `READY` 状态的 Skill 或 Plugin 文件，以及设置版本元数据和
+  Harness 兼容性。可在私有 Registry 或 `MARKETPLACE` 中跨记录浏览版本，并按 Harness
+  和元数据筛选。
 
 ### Bug 修复
 - `agr pre-cache-image-task get -o json` 保留服务端返回的 `ReadyTime`。

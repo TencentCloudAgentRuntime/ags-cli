@@ -14,8 +14,9 @@ All notable changes to this project will be documented in this file.
   keepalive settings. Tool and instance get/list text output shows the returned
   settings.
 - Set `LogConfiguration.ContentFormat` to `raw` or `auto` with
-  `tool create/fork --log-configuration`. `auto` requires a valid CLS topic.
-  Tool get/list text output shows the returned format.
+  `tool create/fork --log-configuration`. `auto` is available on `custom` Tools
+  with outbound network access and a valid CLS topic. Tool get/list text output
+  shows the returned format.
 - Add `agr event list` for operational events, with `Raw` and `Aggregate`
   modes, resource filters, time windows, sorting, pagination, and text and
   JSON output.
@@ -28,7 +29,8 @@ All notable changes to this project will be documented in this file.
   tasks. Use `--pre-cache-type image_volume` to create and look up image-volume
   pre-cache tasks, using the image digest, address, and registry type for lookup.
   Quota responses expose `PreCacheImageConcurrency` when the service returns it.
-- Upload Registry Plugin files, reuse READY Skill or Plugin files within a
+- Upload Registry Plugin files through presigned URLs returned by
+  `registry record create/update`. Reuse READY Skill or Plugin files within a
   record, and attach version metadata and Harness compatibility. Browse versions
   across records in a private Registry or `MARKETPLACE` with Harness and metadata filters.
 
