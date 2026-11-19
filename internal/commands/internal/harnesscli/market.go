@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -31,7 +32,7 @@ func ToolGroups(harness []command.GroupSpec) []command.GroupSpec {
 		Long: "The tool market lists official MCP servers, Skills and Plugins published for managed harnesses in the current region. " +
 			"Every item is referenced by a fixed version as MARKETPLACE/<record-id>/<version-id> in harness create and update.\n\n" +
 			"Restrictions: Plugins must declare the exact engine and version of the harness; Skills are only downloaded and checked when a revision publishes; " +
-			"MCP servers need a streamable-http remote, and many need your own API key passed with --mcp-credential and --mcp-header.",
+			"MCP servers need a streamable-http remote with all required URL variables set. Many need your own API key passed with --mcp-credential and --mcp-header.",
 		Examples: []string{
 			"Example - Browse MCP servers:\n  agr harness tool list --type mcp -o text",
 			"Example - Plugins usable by an existing harness:\n  agr harness tool list --type plugin --compatible-with hns-a1b2c3d4 -o text",
@@ -177,17 +178,67 @@ type ToolMCP struct {
 	RequiresCredentials bool            `json:"RequiresCredentials"`
 	CredentialURL       string          `json:"CredentialURL,omitempty"`
 	Headers             []ToolMCPHeader `json:"Headers"`
+	missingURLVariables []string
 }
 
 // ToolMCPHeader is one Registry header and whether the user must supply it.
 type ToolMCPHeader struct {
-	Name     string `json:"Name"`
-	Template string `json:"Template,omitempty"`
-	Required bool   `json:"Required"`
-	Secret   bool   `json:"Secret"`
+	Name               string `json:"Name"`
+	Template           string `json:"Template,omitempty"`
+	Required           bool   `json:"Required"`
+	Secret             bool   `json:"Secret"`
+	credentialTemplate string
 }
 
-var templateVar = regexp.MustCompile(`\{[A-Za-z0-9_]+\}`)
+type marketMCPInput struct {
+	Value      *string `json:"value"`
+	Default    *string `json:"default"`
+	IsRequired bool    `json:"isRequired"`
+	IsSecret   bool    `json:"isSecret"`
+}
+
+func (i marketMCPInput) value() *string {
+	if i.Value != nil {
+		return i.Value
+	}
+	return i.Default
+}
+
+type marketMCPTemplate struct {
+	text                string
+	missing             []string
+	missingSecret       bool
+	hasConfiguredSecret bool
+}
+
+func resolveMarketTemplate(value string, variables map[string]marketMCPInput, credentialsRequired bool) marketMCPTemplate {
+	var result marketMCPTemplate
+	replacements := make([]string, 0, 2*len(variables))
+	for _, name := range slices.Sorted(maps.Keys(variables)) {
+		input := variables[name]
+		placeholder := "{" + name + "}"
+		resolved := input.value()
+		replacement := ""
+		switch {
+		case resolved != nil && input.IsSecret:
+			// Keep the placeholder rather than redisplaying a configured secret.
+			replacement = placeholder
+			result.hasConfiguredSecret = result.hasConfiguredSecret || strings.Contains(value, placeholder)
+		case resolved != nil:
+			replacement = *resolved
+		case input.IsRequired || credentialsRequired && input.IsSecret:
+			result.missing = append(result.missing, name)
+			replacement = placeholder
+			if input.IsSecret {
+				result.missingSecret = true
+				replacement = credentialPlaceholder
+			}
+		}
+		replacements = append(replacements, placeholder, replacement)
+	}
+	result.text = strings.NewReplacer(replacements...).Replace(value)
+	return result
+}
 
 // SummarizeTool derives type, readiness, compatibility, MCP needs and the
 // flags to paste. engine may be zero when no harness is targeted.
@@ -229,11 +280,19 @@ func SummarizeTool(version apivalue.Object, engine Engine) Tool {
 	}
 	if tool.Type == "mcp" {
 		tool.MCP = summarizeMCP(version.String("Descriptors"), metadata)
-		if !tool.MCP.Supported && tool.Unusable == "" {
-			tool.Unusable = "has no streamable-http remote"
+		if tool.Unusable == "" {
+			switch {
+			case !tool.MCP.Supported:
+				tool.Unusable = "has no streamable-http remote"
+			case len(tool.MCP.missingURLVariables) > 0:
+				tool.Unusable = "missing required MCP URL input: " + strings.Join(tool.MCP.missingURLVariables, ", ") +
+					"; use a fully specified --mcp <name>=<url> or another Registry version"
+			}
 		}
 	}
-	tool.Flags = toolFlags(tool)
+	if tool.Unusable == "" {
+		tool.Flags = toolFlags(tool)
+	}
 	return tool
 }
 
@@ -247,62 +306,74 @@ func orEmpty(value any) any {
 func summarizeMCP(descriptors string, metadata map[string]any) *ToolMCP {
 	mcp := &ToolMCP{Headers: []ToolMCPHeader{}}
 	metadataRequiresCredentials := fmt.Sprint(metadata["requires_credentials"]) == "true"
-	mcp.RequiresCredentials = metadataRequiresCredentials
 	mcp.CredentialURL = fmt.Sprint(orEmpty(metadata["credential_url"]))
 	var server struct {
-		Name    string `json:"name"`
-		Remotes []struct {
-			Type    string `json:"type"`
-			URL     string `json:"url"`
-			Headers []struct {
-				Name       string                     `json:"name"`
-				Value      *string                    `json:"value"`
-				Default    *string                    `json:"default"`
-				IsRequired bool                       `json:"isRequired"`
-				IsSecret   bool                       `json:"isSecret"`
-				Variables  map[string]json.RawMessage `json:"variables"`
-			} `json:"headers"`
-		} `json:"remotes"`
+		Name    string            `json:"name"`
+		Remotes []json.RawMessage `json:"remotes"`
 	}
 	if json.Unmarshal([]byte(descriptors), &server) != nil {
 		return mcp
 	}
 	mcp.ServerName = server.Name
-	for _, remote := range server.Remotes {
+	for _, raw := range server.Remotes {
+		var transport struct {
+			Type string `json:"type"`
+		}
+		if json.Unmarshal(raw, &transport) != nil {
+			return mcp
+		}
 		// The service uses the first streamable-http remote and ignores others.
-		if remote.Type != "streamable-http" {
+		if transport.Type != "streamable-http" {
 			continue
 		}
+		var remote struct {
+			URL       string                    `json:"url"`
+			Variables map[string]marketMCPInput `json:"variables"`
+			Headers   []struct {
+				marketMCPInput
+				Name      string                    `json:"name"`
+				Variables map[string]marketMCPInput `json:"variables"`
+			} `json:"headers"`
+		}
+		if json.Unmarshal(raw, &remote) != nil {
+			return mcp
+		}
 		mcp.Supported, mcp.URL = true, remote.URL
+		endpoint := resolveMarketTemplate(remote.URL, remote.Variables, false)
+		mcp.missingURLVariables = endpoint.missing
+		if len(endpoint.missing) == 0 {
+			mcp.URL = endpoint.text
+		}
+		var declaresSecret bool
 		for _, header := range remote.Headers {
-			entry := ToolMCPHeader{Name: header.Name, Required: header.IsRequired, Secret: header.IsSecret}
-			if header.Value != nil {
-				entry.Template = *header.Value
+			entry := ToolMCPHeader{Name: header.Name, Secret: header.IsSecret}
+			for _, input := range header.Variables {
+				entry.Secret = entry.Secret || input.IsSecret
 			}
-			for _, raw := range header.Variables {
-				var variable struct {
-					IsRequired bool    `json:"isRequired"`
-					IsSecret   bool    `json:"isSecret"`
-					Value      *string `json:"value"`
-					Default    *string `json:"default"`
+			declaresSecret = declaresSecret || entry.Secret
+			if value := header.value(); value != nil {
+				template := resolveMarketTemplate(*value, header.Variables, metadataRequiresCredentials)
+				entry.Required = len(template.missing) > 0
+				mcp.RequiresCredentials = mcp.RequiresCredentials || template.missingSecret || (entry.Required && header.IsSecret)
+				if !header.IsSecret {
+					entry.Template = *value
+					if len(template.missing) == 1 && template.missingSecret && !template.hasConfiguredSecret &&
+						strings.Count(template.text, credentialPlaceholder) == 1 && !strings.ContainsAny(template.text, "\r\n\x00") {
+						entry.credentialTemplate = template.text
+					}
 				}
-				if json.Unmarshal(raw, &variable) == nil {
-					required := variable.IsRequired && variable.Value == nil && variable.Default == nil
-					entry.Secret = entry.Secret || variable.IsSecret
-					entry.Required = entry.Required || required
-					mcp.RequiresCredentials = mcp.RequiresCredentials || (required && variable.IsSecret)
+			} else {
+				entry.Required = header.IsRequired || (metadataRequiresCredentials && header.IsSecret)
+				if entry.Required && header.IsSecret {
+					mcp.RequiresCredentials = true
+					entry.credentialTemplate = credentialPlaceholder
 				}
-			}
-			// Without a value or default the service cannot fill the header itself.
-			if header.Value == nil && header.Default == nil && header.IsRequired && header.IsSecret {
-				mcp.RequiresCredentials = true
-			}
-			// A requirement inferred from another header does not make this header required.
-			if metadataRequiresCredentials && entry.Secret {
-				entry.Required = true
 			}
 			mcp.Headers = append(mcp.Headers, entry)
 		}
+		// Preserve the publisher's authentication hint when it supplies no
+		// secret declarations. There is no known header to override in that case.
+		mcp.RequiresCredentials = mcp.RequiresCredentials || (metadataRequiresCredentials && !declaresSecret)
 		break
 	}
 	return mcp
@@ -318,28 +389,29 @@ func toolFlags(tool Tool) []string {
 	case "mcp":
 		name := MCPName(tool)
 		flags := []string{fmt.Sprintf("--mcp %s=%s", name, tool.Reference)}
-		var secret []ToolMCPHeader
+		var required []ToolMCPHeader
 		for _, header := range tool.MCP.Headers {
-			if header.Required || header.Secret {
-				secret = append(secret, header)
+			if header.Required {
+				required = append(required, header)
 			}
 		}
-		if len(secret) == 1 {
-			value := "${credential}"
-			if matches := templateVar.FindAllString(secret[0].Template, -1); len(matches) == 1 {
-				value = strings.Replace(secret[0].Template, matches[0], "${credential}", 1)
-			}
+		if len(required) == 1 && required[0].credentialTemplate != "" {
 			flags = append(flags,
 				fmt.Sprintf("--mcp-credential %s=<credential-provider-id>/<user-id>/<scope>", name),
-				fmt.Sprintf("--mcp-header '%s:%s=%s'", name, secret[0].Name, value))
+				mcpHeaderFlag(name, required[0].Name, required[0].credentialTemplate))
 		} else {
-			for _, header := range secret {
-				flags = append(flags, fmt.Sprintf("--mcp-header '%s:%s=<value>'", name, header.Name))
+			for _, header := range required {
+				flags = append(flags, mcpHeaderFlag(name, header.Name, "<value>"))
 			}
 		}
 		return flags
 	}
 	return nil
+}
+
+func mcpHeaderFlag(name, header, value string) string {
+	arg := name + ":" + header + "=" + value
+	return "--mcp-header '" + strings.ReplaceAll(arg, "'", `'"'"'`) + "'"
 }
 
 var nameUnsafe = regexp.MustCompile(`[^A-Za-z0-9_-]+`)
@@ -369,7 +441,8 @@ func RenderTools(w io.Writer, tools []Tool, total int64, engine Engine) {
 		return
 	}
 	headers := []string{"TYPE", "NAME", "REFERENCE", "VERSION", "AUTH", "ENGINES"}
-	if engine.Name != "" {
+	showUsability := engine.Name != "" || slices.ContainsFunc(tools, func(tool Tool) bool { return tool.Unusable != "" })
+	if showUsability {
 		headers = append(headers, "USABLE")
 	}
 	rows := make([][]string, 0, len(tools))
@@ -386,7 +459,7 @@ func RenderTools(w io.Writer, tools []Tool, total int64, engine Engine) {
 			engines = orDash(strings.Join(tool.Engines, ","))
 		}
 		row := []string{tool.Type, tool.Name, tool.Reference, orDash(tool.VersionName), auth, engines}
-		if engine.Name != "" {
+		if showUsability {
 			usable := "yes"
 			if tool.Unusable != "" {
 				usable = "no"

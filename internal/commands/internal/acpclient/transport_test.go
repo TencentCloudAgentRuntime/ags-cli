@@ -343,6 +343,39 @@ func TestPlatformErrorIsClassified(t *testing.T) {
 	}
 }
 
+func TestProbeBoundsInitialize(t *testing.T) {
+	called := make(chan struct{})
+	started := time.Now()
+	_, err := Probe(t.Context(), Endpoint{
+		URL:   "https://acp.example.invalid/acp",
+		Token: func(context.Context) (string, error) { return "fixture-token", nil },
+		HTTP: &http.Client{Transport: probeTransport(func(req *http.Request) (*http.Response, error) {
+			defer close(called)
+			if req.Method != http.MethodPost {
+				t.Errorf("method = %s, want initialize POST", req.Method)
+			}
+			deadline, ok := req.Context().Deadline()
+			if !ok || deadline.Before(started) || deadline.After(time.Now().Add(90*time.Second)) {
+				t.Errorf("initialize must have a deadline within 90s, got %v (present=%v)", deadline, ok)
+			}
+			return nil, context.DeadlineExceeded
+		})},
+	})
+	select {
+	case <-called:
+	default:
+		t.Fatal("probe did not start initialize")
+	}
+	var cliErr *output.CLIError
+	if !errors.As(Classify(err, "retry --check"), &cliErr) || cliErr.Failure.Code != "TIMEOUT" || cliErr.Failure.Kind != output.KindTimeout || !cliErr.Failure.Retryable {
+		t.Fatalf("probe timeout classified as %+v (cause %v)", cliErr, err)
+	}
+}
+
+type probeTransport func(*http.Request) (*http.Response, error)
+
+func (f probeTransport) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
 // A redirect would make Go forward X-Access-Token to the redirect target.
 func TestRedirectDoesNotLeakToken(t *testing.T) {
 	var leaked sync.Map
@@ -408,4 +441,82 @@ func TestServeStdioWritesOnlyJSONRPC(t *testing.T) {
 		}
 	}
 	_ = inW.Close()
+}
+
+func TestServeStdioExitsWithBlockedOutput(t *testing.T) {
+	for _, shutdown := range []string{"cancel", "stdin EOF"} {
+		t.Run(shutdown, func(t *testing.T) {
+			deleted := make(chan struct{})
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodPost:
+					w.Header().Set(headerConnection, "conn")
+					_, _ = io.WriteString(w, `{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1}}`)
+				case http.MethodGet:
+					w.Header().Set("Content-Type", "text/event-stream")
+					w.(http.Flusher).Flush()
+					_, _ = io.WriteString(w, "data: {\"jsonrpc\":\"2.0\",\"method\":\"session/update\"}\n\n")
+					w.(http.Flusher).Flush()
+					<-r.Context().Done()
+				case http.MethodDelete:
+					close(deleted)
+					w.WriteHeader(http.StatusNoContent)
+				}
+			}))
+			defer server.Close()
+			in, input := io.Pipe()
+			defer func() { _ = in.Close() }()
+			defer func() { _ = input.Close() }()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			writer := &blockingStdioWriter{started: make(chan struct{}), release: make(chan struct{})}
+			defer close(writer.release)
+			done := make(chan error, 1)
+			go func() { _, err := ServeStdio(ctx, endpoint(server), in, writer); done <- err }()
+			if _, err := io.WriteString(input, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n"); err != nil {
+				t.Fatal(err)
+			}
+			select {
+			case <-writer.started:
+			case <-time.After(2 * time.Second):
+				t.Fatal("SSE output never reached stdout")
+			}
+			if !strings.Contains(writer.first, `"id":1`) {
+				t.Fatalf("initialize did not reach stdout: %q", writer.first)
+			}
+			if shutdown == "cancel" {
+				cancel()
+			} else {
+				_ = input.Close()
+			}
+			select {
+			case err := <-done:
+				if (shutdown == "cancel" && !errors.Is(err, context.Canceled)) || (shutdown == "stdin EOF" && err != nil) {
+					t.Fatalf("shutdown = %v", err)
+				}
+			case <-time.After(2 * time.Second):
+				t.Fatal("bridge still blocked on stdout")
+			}
+			select {
+			case <-deleted:
+			default:
+				t.Fatal("bridge did not DELETE the ACP connection before returning")
+			}
+		})
+	}
+}
+
+type blockingStdioWriter struct {
+	first            string
+	started, release chan struct{}
+}
+
+func (w *blockingStdioWriter) Write(data []byte) (int, error) {
+	if w.first == "" {
+		w.first = string(data)
+	} else {
+		close(w.started)
+		<-w.release
+	}
+	return len(data), nil
 }

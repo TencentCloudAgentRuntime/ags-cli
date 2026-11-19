@@ -61,7 +61,7 @@ func run(ctx context.Context, client harnesscli.Client, harnessID string) (*comm
 	if live != nil {
 		draftChanges = harnesscli.DiffSpecs(live.Object("Spec"), harness.Object("Spec"), true)
 	}
-	next := nextStep(harness, live, latest, draftChanges)
+	next := nextStep(harness, live, latest, revisions, draftChanges)
 	data := map[string]any{
 		"Harness":        harnesscli.RedactHarnessForDiagnostics(harness),
 		"LiveRevision":   nullable(live),
@@ -80,15 +80,22 @@ func nullable(value apivalue.Object) any {
 	return harnesscli.RedactHarnessForDiagnostics(value)
 }
 
-func nextStep(harness, live, latest apivalue.Object, draftChanges []harnesscli.Change) string {
+func nextStep(harness, live, latest apivalue.Object, revisions []apivalue.Object, draftChanges []harnesscli.Change) string {
 	id := harness.String("HarnessId")
 	switch harness.String("Status") {
-	case "DELETING", "DELETE_FAILED":
+	case "DELETING":
+		return fmt.Sprintf("agr harness get %s", id)
+	case "DELETE_FAILED":
 		return fmt.Sprintf("agr harness delete %s --yes --wait", id)
+	}
+	for _, revision := range revisions {
+		if revision.String("Status") == "PUBLISHING" {
+			return fmt.Sprintf("agr harness revision publish %s %d --wait", id, revision.Int64("Revision"))
+		}
 	}
 	if latest != nil {
 		switch latest.String("Status") {
-		case "PUBLISHING", "PUBLISH_FAILED", "UNPUBLISHED":
+		case "PUBLISH_FAILED", "UNPUBLISHED":
 			return fmt.Sprintf("agr harness revision publish %s %d --wait", id, latest.Int64("Revision"))
 		}
 	}

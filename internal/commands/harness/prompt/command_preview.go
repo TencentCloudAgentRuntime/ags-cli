@@ -53,7 +53,7 @@ func Module() command.Module {
 			harnesscli.StringFlag("affinity-id", "Affinity value from an earlier run, to reach the same instance"),
 			{Name: "timeout", Usage: "Maximum time for endpoint/token preparation, session setup and the turn, such as 5m (default 10m)", Type: command.FlagString, Workflow: true},
 		},
-		Output: command.OutputSpec{DataType: "HarnessPromptData", Description: "Reply text, stop reason, session and affinity identifiers.", Effects: []string{"read:harness", "read:deployment-token", "read:acp-session"}},
+		Output: command.OutputSpec{DataType: "HarnessPromptData", Description: "Reply text, stop reason, session and affinity identifiers.", Effects: []string{"read:harness", "read:deployment-token", "create:acp-session", "update:acp-session"}},
 	}
 	return command.Module{
 		Descriptor: command.Descriptor{Spec: spec, Groups: harnesscli.GroupsOf(get.APIDescriptor(), 1), Source: command.SourceWorkflow},

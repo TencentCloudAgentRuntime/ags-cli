@@ -51,7 +51,7 @@ func Module() command.Module {
 			harnesscli.StringFlag("affinity-id", "Set affinity_id on the initial Webview URL; browser tabs on the same host share the affinity cookie"),
 			harnesscli.StringFlag("timeout", "Maximum time for preparation and Web readiness before browser launch, such as 2m (default 90s); --no-open skips readiness"),
 		},
-		Output: command.OutputSpec{DataType: "HarnessWebData", Description: "Safe Webview URL, published revision, browser launch status, and optionally AccessURL and ExpiresAt.", Effects: []string{"read:harness", "read:deployment", "read:deployment-token"}},
+		Output: command.OutputSpec{DataType: "HarnessWebData", Description: "Safe Webview URL, published revision, browser launch status, and optionally AccessURL and ExpiresAt.", Effects: []string{"read:harness", "read:deployment", "read:deployment-token", "create:instance"}},
 	}
 	return command.Module{
 		Descriptor: command.Descriptor{Spec: spec, Groups: harnesscli.GroupsOf(get.APIDescriptor(), 1), Source: command.SourceWorkflow},

@@ -185,7 +185,7 @@ func (b *Bridge) send(ctx context.Context, line []byte) error {
 		// A direct JSON reply is also valid transport behavior.
 		return b.forwardBody(ctx, response)
 	default:
-		return b.replyError(message.ID, httpError(message.Method, response))
+		return b.replyError(ctx, message.ID, httpError(message.Method, response))
 	}
 }
 
@@ -253,7 +253,7 @@ func (b *Bridge) deliver(ctx context.Context, data []byte) {
 			}
 		}
 	}
-	b.out.writeLine(data)
+	b.out.writeLine(ctx, data)
 }
 
 func (b *Bridge) ensureSessionStream(ctx context.Context, session string) {
@@ -375,12 +375,12 @@ func (b *Bridge) connectionID() string {
 
 // replyError answers a failed request locally so the client is not left
 // waiting; notifications have no ID and fail the bridge instead.
-func (b *Bridge) replyError(id json.RawMessage, err error) error {
+func (b *Bridge) replyError(ctx context.Context, id json.RawMessage, err error) error {
 	if len(id) == 0 {
 		return err
 	}
 	reply, _ := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": id, "error": map[string]any{"code": -32603, "message": err.Error()}})
-	b.out.writeLine(reply)
+	b.out.writeLine(ctx, reply)
 	return nil
 }
 
@@ -457,12 +457,32 @@ func httpError(operation string, response *http.Response) error {
 }
 
 type lineWriter struct {
-	mu sync.Mutex
-	w  io.Writer
+	mu          sync.Mutex
+	w           io.Writer
+	stdioWrites chan<- lineWrite
 }
 
-func (l *lineWriter) writeLine(data []byte) {
+type lineWrite struct {
+	line []byte
+	done chan struct{}
+}
+
+func (l *lineWriter) writeLine(ctx context.Context, data []byte) {
+	line := append(bytes.TrimSpace(data), '\n')
+	if l.stdioWrites != nil {
+		write := lineWrite{line: line, done: make(chan struct{})}
+		select {
+		case l.stdioWrites <- write:
+		case <-ctx.Done():
+			return
+		}
+		select {
+		case <-write.done:
+		case <-ctx.Done():
+		}
+		return
+	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	_, _ = l.w.Write(append(bytes.TrimSpace(data), '\n'))
+	_, _ = l.w.Write(line)
 }

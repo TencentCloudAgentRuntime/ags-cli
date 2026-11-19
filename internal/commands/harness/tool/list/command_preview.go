@@ -22,13 +22,13 @@ func Module() command.Module {
 		Use:   "list",
 		Short: "List official MCP servers, Skills and Plugins for harnesses",
 		Long: "List the stable version of every tool in the tool market of the current region. Each row shows the reference to pass to harness create or update, whether an MCP server needs your own credential, and which engines a Plugin supports.\n\n" +
-			"--compatible-with <harness-id> (or --engine with --engine-version) marks which tools that harness can use. Plugins must declare the exact engine and version; Skills and MCP servers work with every engine. " +
+			"--compatible-with <harness-id> (or --engine with --engine-version) checks compatibility. Plugins must declare the exact engine and version. MCP servers need a streamable-http remote with all required URL variables set. " +
 			"With --type plugin the incompatible Plugins are filtered out on the server. Available in preview builds.",
 		Examples: []string{
 			"Example - Browse every tool:\n  agr harness tool list -o text",
 			"Example - Search MCP servers:\n  agr harness tool list --type mcp --search github -o text",
 			"Example - Plugins an existing harness can use:\n  agr harness tool list --type plugin --compatible-with hns-a1b2c3d4 -o text",
-			"Example - References of MCP servers that need no credential:\n  agr harness tool list --type mcp --all -o json --jq '.Data.Tools[] | select(.MCP.RequiresCredentials | not) | .Reference'",
+			"Example - Usable references of MCP servers that need no credential:\n  agr harness tool list --type mcp --all -o json --jq '.Data.Tools[] | select(.UnusableReason == null and (.MCP.RequiresCredentials | not)) | .Reference'",
 		},
 		PreserveFlagOrder: true,
 		SupportsJSON:      true,

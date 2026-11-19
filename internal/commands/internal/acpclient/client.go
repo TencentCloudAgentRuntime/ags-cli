@@ -20,6 +20,9 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
+// ProbeTimeout bounds the one-shot initialize handshake, including a cold start.
+const ProbeTimeout = 90 * time.Second
+
 // AgentInfo is the part of the initialize result useful for diagnostics.
 type AgentInfo struct {
 	ProtocolVersion int    `json:"ProtocolVersion"`
@@ -116,6 +119,11 @@ func Classify(err error, hint string) error {
 	if errors.As(err, &cliErr) {
 		return err
 	}
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		classified := output.ClassifyError(err)
+		classified.Failure.Hint = hint
+		return classified
+	}
 	return output.NewCLIError(&output.Failure{Code: "ACP_UNREACHABLE", Kind: output.KindNetwork, Message: err.Error(), Hint: hint, Retryable: true}).WithCause(err)
 }
 
@@ -176,6 +184,8 @@ func errOrEOF(err error) error {
 
 // Probe performs one initialize handshake and closes the connection.
 func Probe(ctx context.Context, endpoint Endpoint) (AgentInfo, error) {
+	ctx, cancel := context.WithTimeout(ctx, ProbeTimeout)
+	defer cancel()
 	session, err := Connect(ctx, endpoint, denyAll{})
 	if err != nil {
 		return AgentInfo{}, err
@@ -186,7 +196,25 @@ func Probe(ctx context.Context, endpoint Endpoint) (AgentInfo, error) {
 
 // ServeStdio bridges a local stdio ACP client to the endpoint.
 func ServeStdio(ctx context.Context, endpoint Endpoint, in io.Reader, out io.Writer) (*Bridge, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	writes := make(chan lineWrite)
+	// A caller-owned stdout may block indefinitely. Keep a single writer
+	// outside the bridge's shutdown join, while its callers can stop waiting
+	// on cancellation. The acknowledgement preserves ordinary backpressure.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case write := <-writes:
+				_, _ = out.Write(write.line)
+				close(write.done)
+			}
+		}
+	}()
 	bridge := NewBridge(endpoint, out)
+	bridge.out.stdioWrites = writes
 	return bridge, bridge.Run(ctx, bufio.NewReader(in))
 }
 

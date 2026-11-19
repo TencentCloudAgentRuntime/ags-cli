@@ -10,6 +10,7 @@ import (
 	"net"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cli"
@@ -127,11 +128,24 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	defer cancel()
 	ndjson := cli.IsNDJSON()
 	events := output.NewNDJSONWriter(deps.IO.Out, "harness.proxy")
+	var eventsMu sync.Mutex
+	var readyWritten, completed bool
+	var earlyAffinity []string
+	writeAffinity := func(id string) {
+		_ = events.WriteEvent("affinity", map[string]any{"AffinityId": id})
+	}
 	var affinity *dataplaneproxy.AffinityOptions
 	if target.AffinityHeader != "" {
 		affinity = &dataplaneproxy.AffinityOptions{HeaderName: target.AffinityHeader, InitialID: affinityID, OnIDChange: func(id string) {
 			if ndjson {
-				_ = events.WriteEvent("affinity", map[string]any{"AffinityId": id})
+				eventsMu.Lock()
+				defer eventsMu.Unlock()
+				// The listener can serve requests before Start returns its address.
+				if !readyWritten {
+					earlyAffinity = append(earlyAffinity, id)
+				} else if !completed {
+					writeAffinity(id)
+				}
 				return
 			}
 			fmt.Fprintf(deps.IO.ErrOut, "Affinity ID: %s\n", id)
@@ -159,7 +173,14 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	localURL := "http://" + actual + harnesscli.ACPPath
 	ready := map[string]any{"AcpURL": localURL, "RemoteAcpURL": target.URL(), "HarnessId": target.HarnessID, "DeploymentId": target.DeploymentID, "AffinityHeader": target.AffinityHeader}
 	if ndjson {
+		eventsMu.Lock()
 		_ = events.WriteEvent("ready", ready)
+		readyWritten = true
+		for _, id := range earlyAffinity {
+			writeAffinity(id)
+		}
+		earlyAffinity = nil
+		eventsMu.Unlock()
 	} else {
 		fmt.Fprintf(deps.IO.Out, "ACP endpoint: %s\n", localURL)
 		fmt.Fprintf(deps.IO.ErrOut, "Forwarding to %s (Deployment %s). Local testing only.\nPress Ctrl+C to stop.\n", target.URL(), target.DeploymentID)
@@ -168,7 +189,10 @@ func run(ctx context.Context, req command.Request, deps command.Deps, client har
 	cancel()
 	proxy.Stop()
 	if ndjson {
+		eventsMu.Lock()
+		completed = true
 		_ = events.WriteCompleted(map[string]any{"AcpURL": localURL})
+		eventsMu.Unlock()
 	} else {
 		fmt.Fprintln(deps.IO.ErrOut, "Proxy stopped.")
 	}

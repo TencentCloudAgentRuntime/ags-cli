@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
@@ -140,19 +141,16 @@ func BuildCreateRequest(ctx context.Context, req command.Request, env Env) (map[
 		return nil, missingEngineVersion(ctx, env, String(req, "engine"))
 	}
 	buildReq := WithoutFlags(req, append(CreateShortcuts, "dry-run", "wait")...)
-	if ChangedAny(req, "role-arn", "subnet-id", "security-group-id") != "" && !Changed(req, "initialize-configuration") {
-		// The generated field is required; an empty object lets the shortcuts
-		// alone satisfy it before they are merged below.
+	if !Changed(req, "initialize-configuration") {
+		// The wrapper fills the generated required field from shortcuts and
+		// checks for missing role and VPC inputs when they are merged below.
 		flag := buildReq.Flags["initialize-configuration"]
 		flag.Changed, flag.String = true, "{}"
 		buildReq.Flags["initialize-configuration"] = flag
 	}
 	request, err := env.Builder.Build(buildReq)
 	if err != nil {
-		if ChangedAny(req, "role-arn", "subnet-id", "security-group-id") != "" || !strings.Contains(err.Error(), "initialize-configuration") {
-			return nil, err
-		}
-		return nil, missingInitialization("--role-arn", "SandboxTool.RoleArn")
+		return nil, err
 	}
 	if err := ApplySpecShortcuts(req, request, false); err != nil {
 		return nil, err
@@ -184,6 +182,15 @@ func mergeInitialization(req command.Request, request map[string]any) error {
 	init, _ := request["InitializeConfiguration"].(map[string]any)
 	if init == nil {
 		return output.NewUsageError("INVALID_JSON_FLAG", "--initialize-configuration must be a JSON object", `Example: {"SandboxTool":{"RoleArn":"<arn>"}}`)
+	}
+	// Validate the original value before merging: the final wire validator
+	// cannot see malformed fields that the shortcuts have already replaced.
+	catalog, err := apimeta.Get()
+	if err != nil {
+		return err
+	}
+	if err := catalog.Spec.ValidateRequest("CreateHarness", map[string]any{"InitializeConfiguration": init}); err != nil {
+		return output.NewUsageError("INVALID_JSON_FLAG", err.Error(), "Provide --initialize-configuration matching the installed API contract.")
 	}
 	tool := childObject(init, "SandboxTool")
 	if Changed(req, "role-arn") {

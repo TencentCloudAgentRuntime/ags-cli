@@ -360,7 +360,7 @@ func TestHarnessWebSchemaAndHelp(t *testing.T) {
 	server := httptest.NewTLSServer(fake)
 	defer server.Close()
 	schema, _, err := runHarness(t, server, "schema", "harness.web")
-	if err != nil || schema.Data["SupportsJson"] != true || schema.Data["SupportsNdjson"] != false || schema.Data["RequiresAuth"] != true || schema.Data["Mutation"] != false || schema.Data["CreatesResource"] != false {
+	if err != nil || schema.Data["SupportsJson"] != true || schema.Data["SupportsNdjson"] != false || schema.Data["RequiresAuth"] != true || schema.Data["Mutation"] != true || schema.Data["CreatesResource"] != true {
 		t.Fatalf("web schema: err=%v data=%+v", err, schema.Data)
 	}
 	flags, _ := schema.Data["Flags"].([]any)
@@ -387,5 +387,18 @@ func TestHarnessWebSchemaAndHelp(t *testing.T) {
 	}
 	if len(fake.actions()) != 0 {
 		t.Fatalf("help/schema/invalid arguments reached the cloud: %v", fake.actions())
+	}
+}
+
+func TestHarnessPromptSchemaReportsMutation(t *testing.T) {
+	fake := newHarnessWebFake(t)
+	server := httptest.NewTLSServer(fake)
+	defer server.Close()
+	schema, _, err := runHarness(t, server, "schema", "harness.prompt")
+	if err != nil || schema.Data["Mutation"] != true || schema.Data["CreatesResource"] != true {
+		t.Fatalf("prompt can create a session and send a turn: err=%v data=%+v", err, schema.Data)
+	}
+	if len(fake.actions()) != 0 {
+		t.Fatal("schema reached the cloud")
 	}
 }

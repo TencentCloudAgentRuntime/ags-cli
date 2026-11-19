@@ -23,7 +23,7 @@ func Module() command.Module {
 		Short: "Show a tool market item and the flags that add it to a harness",
 		Long: "Show one tool from the tool market: its fixed reference, the engines a Plugin supports, and for an MCP server the endpoint, the headers it needs and whether you must supply your own credential. " +
 			"Without a version ID the stable version is shown. A MARKETPLACE/ prefix is accepted.\n\n" +
-			"Data.Flags holds the harness create/update flags. On update, --skill, --plugin and --mcp replace the whole current list, so repeat the items you want to keep. " +
+			"Data.Tool.Flags holds the harness create/update flags when the version is usable. On update, --skill, --plugin and --mcp replace the whole current list, so repeat the items you want to keep. " +
 			"For an MCP server that needs a credential, store the secret first ('agr credential provider create --type SecretMultiUser' and 'agr credential secret set') and fill in the --mcp-credential placeholder. Available in preview builds.",
 		Examples: []string{
 			"Example - Inspect the stable version:\n  agr harness tool get rec-a1b2c3d4 -o text",

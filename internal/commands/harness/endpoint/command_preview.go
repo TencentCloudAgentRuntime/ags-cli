@@ -39,7 +39,7 @@ func Module() command.Module {
 		Args:         []command.ArgSpec{{Name: "harness-id", Required: true, Description: "Harness ID, such as hns-a1b2c3d4."}},
 		Flags: []command.FlagSpec{
 			harnesscli.BoolFlag("show-token", "Issue a short-lived Deployment access token and include it in the output"),
-			harnesscli.BoolFlag("check", "Run one ACP initialize handshake against the endpoint"),
+			harnesscli.BoolFlag("check", fmt.Sprintf("Run one ACP initialize handshake against the endpoint (timeout %s)", acpclient.ProbeTimeout)),
 		},
 		Output: command.OutputSpec{DataType: "HarnessEndpointData", Description: "ACP URL, required headers, and optionally a token and check result.", Effects: []string{"read:harness", "read:deployment-token"}},
 	}
