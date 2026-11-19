@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0-preview.3] - 2026-11-19
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Configure sandbox keepalive, automatic pause, and automatic resume with
+  `--keepalive-configuration`, `--auto-pause`, and `--auto-resume` on Tool and
+  instance create/update and Tool fork. Instances can override individual
+  keepalive settings. Tool and instance get/list text output shows the returned
+  settings.
+- Set `LogConfiguration.ContentFormat` to `raw` or `auto` with
+  `tool create/fork --log-configuration`. `auto` is available on `custom` Tools
+  with outbound network access and a valid CLS topic. Tool get/list text output
+  shows the returned format.
+- Add `agr event list` for operational events, with `Raw` and `Aggregate`
+  modes, resource filters, time windows, sorting, pagination, and text and
+  JSON output.
+- Add `agr gpu group list|rename|delete`, `agr gpu resource list`, and
+  `agr gpu spec list` to manage resource groups and inspect purchased GPUs
+  and available specifications. Use `CustomConfiguration.Resources.GPUResourceGroupId`
+  to bind a GPU group. For supported WAA and GPU sandboxes,
+  `agr instance create --start-mode WAIT_UNTIL_HEALTHY --wait` waits for `RUNNING`.
+- Add `agr pre-cache-image-task list` to filter and paginate ordinary image
+  tasks. Use `--pre-cache-type image_volume` to create and look up image-volume
+  pre-cache tasks, using the image digest, address, and registry type for lookup.
+  Quota responses expose `PreCacheImageConcurrency` when the service returns it.
+- Upload Registry Plugin files through presigned URLs returned by
+  `registry record create/update`. Reuse READY Skill or Plugin files within a
+  record, and attach version metadata and Harness compatibility. Browse versions
+  across records in a private Registry or `MARKETPLACE` with Harness and metadata filters.
+
+### Bug Fixes
+- Preserve `ReadyTime` in `agr pre-cache-image-task get -o json` when the service returns it.
+- Reject extra positional arguments on generated commands even when `--request`
+  supplies input.
+
+### Docs
+- Add examples for sandbox keepalive, CLS log format, operational events,
+  Registry Plugin uploads, and image-volume pre-caching. Update stable
+  installation and download examples to v0.7.2.
+
 ## [0.7.2] - 2026-11-19
 
 ### Breaking Changes
