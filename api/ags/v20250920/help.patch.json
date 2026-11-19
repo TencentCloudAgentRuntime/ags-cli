@@ -691,5 +691,563 @@
         }
       }
     }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.create",
+    "value": {
+      "short": "Create an Endpoint",
+      "long": "Creates an active Endpoint and returns its data-plane URL and initial revision.",
+      "fields": {
+        "Name": {
+          "description": "Display name, up to 128 characters.",
+          "inputs": {
+            "name": {
+              "usage": "Display name, up to 128 characters."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description, up to 2048 characters. An empty value clears it when updating.",
+          "inputs": {
+            "description": {
+              "usage": "Description, up to 2048 characters. An empty value clears it when updating."
+            }
+          }
+        },
+        "QPS": {
+          "description": "Shared invocation limit, from 1 to 500 requests per second. The create default is 100.",
+          "inputs": {
+            "qps": {
+              "usage": "Shared invocation limit, from 1 to 500 requests per second. The create default is 100."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.list",
+    "value": {
+      "short": "List Endpoints",
+      "long": "Lists the Endpoints visible to the configured cloud identity."
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.get",
+    "value": {
+      "short": "Get an Endpoint",
+      "long": "Shows the current configuration, revision, and MCP URL.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.update",
+    "value": {
+      "short": "Update an Endpoint",
+      "long": "Supply the current revision and at least one of --name, --description, --status, or --qps. Status accepts ACTIVE or DISABLED.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "ExpectedRevision": {
+          "description": "Current configuration revision from a read or successful write.",
+          "inputs": {
+            "expected-revision": {
+              "usage": "Current configuration revision from a read or successful write."
+            }
+          }
+        },
+        "Name": {
+          "description": "Display name, up to 128 characters.",
+          "inputs": {
+            "name": {
+              "usage": "Display name, up to 128 characters."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description, up to 2048 characters. An empty value clears it when updating.",
+          "inputs": {
+            "description": {
+              "usage": "Description, up to 2048 characters. An empty value clears it when updating."
+            }
+          }
+        },
+        "Status": {
+          "description": "ACTIVE or DISABLED.",
+          "inputs": {
+            "status": {
+              "usage": "ACTIVE or DISABLED."
+            }
+          }
+        },
+        "QPS": {
+          "description": "Shared invocation limit, from 1 to 500 requests per second. The create default is 100.",
+          "inputs": {
+            "qps": {
+              "usage": "Shared invocation limit, from 1 to 500 requests per second. The create default is 100."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.delete",
+    "value": {
+      "short": "Delete an Endpoint",
+      "long": "Deletes the Endpoint and its Targets and Tokens. Supply its current revision.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "ExpectedRevision": {
+          "description": "Current configuration revision from a read or successful write.",
+          "inputs": {
+            "expected-revision": {
+              "usage": "Current configuration revision from a read or successful write."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.metrics",
+    "value": {
+      "short": "Query Endpoint metrics",
+      "long": "Queries invocation counts, P95 latency, or error rates by Endpoint. Omit both times for today in Asia/Shanghai. Set --period to request trend points.",
+      "fields": {
+        "EndpointIds": {
+          "description": "One to twenty distinct Endpoint IDs.",
+          "inputs": {
+            "endpoint-ids": {
+              "usage": "One to twenty distinct Endpoint IDs. Repeat --endpoint-ids for multiple IDs."
+            }
+          }
+        },
+        "MetricNames": {
+          "description": "Distinct names from InvocationCount, P95LatencyMs, and ErrorRate.",
+          "inputs": {
+            "metric-names": {
+              "usage": "Distinct names from InvocationCount, P95LatencyMs, and ErrorRate. Repeat --metric-names for multiple metrics."
+            }
+          }
+        },
+        "StartTime": {
+          "description": "RFC 3339 start of the query window. Supply together with --end-time.",
+          "inputs": {
+            "start-time": {
+              "usage": "RFC 3339 start of the query window. Supply together with --end-time."
+            }
+          }
+        },
+        "EndTime": {
+          "description": "RFC 3339 end of the query window. Supply together with --start-time.",
+          "inputs": {
+            "end-time": {
+              "usage": "RFC 3339 end of the query window. Supply together with --start-time."
+            }
+          }
+        },
+        "Period": {
+          "description": "Optional trend interval in seconds, from 60 to 86400. Omit for a summary across the query window.",
+          "inputs": {
+            "period": {
+              "usage": "Optional trend interval in seconds, from 60 to 86400. Omit for a summary across the query window."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.candidates",
+    "value": {
+      "short": "List Endpoint Target candidates",
+      "long": "Lists visible Registry versions and their compatibility. Select a READY version and supply its Registry, Record, and Version IDs when creating a Target.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.create",
+    "value": {
+      "short": "Create an Endpoint Target",
+      "long": "Pins a compatible Registry version to the Endpoint. An optional route alias enables direct invocation.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "RegistryId": {
+          "description": "Registry ID containing the source record.",
+          "inputs": {
+            "registry-id": {
+              "usage": "Registry ID containing the source record."
+            }
+          }
+        },
+        "RecordId": {
+          "description": "Source Registry record ID.",
+          "inputs": {
+            "record-id": {
+              "usage": "Source Registry record ID."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Explicit immutable Registry version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Explicit immutable Registry version ID."
+            }
+          }
+        },
+        "Name": {
+          "description": "Display name, up to 128 characters.",
+          "inputs": {
+            "name": {
+              "usage": "Display name, up to 128 characters."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description, up to 2048 characters. An empty value clears it when updating.",
+          "inputs": {
+            "description": {
+              "usage": "Description, up to 2048 characters. An empty value clears it when updating."
+            }
+          }
+        },
+        "PathAlias": {
+          "description": "Route alias for the Target. An empty value clears it when updating.",
+          "inputs": {
+            "path-alias": {
+              "usage": "Route alias for the Target. An empty value clears it when updating."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.list",
+    "value": {
+      "short": "List Endpoint Targets",
+      "long": "Lists all configured Targets, including disabled ones.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.get",
+    "value": {
+      "short": "Get an Endpoint Target",
+      "long": "Shows the current Target configuration and the pinned Registry version.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "TargetId": {
+          "description": "Target ID within the Endpoint.",
+          "inputs": {
+            "target-id": {
+              "usage": "Target ID within the Endpoint."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.update",
+    "value": {
+      "short": "Update an Endpoint Target",
+      "long": "Supply the current revision and at least one field to update. Status accepts ENABLED or DISABLED. A replacement version must belong to the same Registry record.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "TargetId": {
+          "description": "Target ID within the Endpoint.",
+          "inputs": {
+            "target-id": {
+              "usage": "Target ID within the Endpoint."
+            }
+          }
+        },
+        "ExpectedRevision": {
+          "description": "Current configuration revision from a read or successful write.",
+          "inputs": {
+            "expected-revision": {
+              "usage": "Current configuration revision from a read or successful write."
+            }
+          }
+        },
+        "Name": {
+          "description": "Display name, up to 128 characters.",
+          "inputs": {
+            "name": {
+              "usage": "Display name, up to 128 characters."
+            }
+          }
+        },
+        "Description": {
+          "description": "Description, up to 2048 characters. An empty value clears it when updating.",
+          "inputs": {
+            "description": {
+              "usage": "Description, up to 2048 characters. An empty value clears it when updating."
+            }
+          }
+        },
+        "Status": {
+          "description": "ENABLED or DISABLED.",
+          "inputs": {
+            "status": {
+              "usage": "ENABLED or DISABLED."
+            }
+          }
+        },
+        "VersionId": {
+          "description": "Explicit immutable Registry version ID.",
+          "inputs": {
+            "version-id": {
+              "usage": "Explicit immutable Registry version ID."
+            }
+          }
+        },
+        "PathAlias": {
+          "description": "Route alias for the Target. An empty value clears it when updating.",
+          "inputs": {
+            "path-alias": {
+              "usage": "Route alias for the Target. An empty value clears it when updating."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.delete",
+    "value": {
+      "short": "Delete an Endpoint Target",
+      "long": "Deletes the specified Target using its current revision.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "TargetId": {
+          "description": "Target ID within the Endpoint.",
+          "inputs": {
+            "target-id": {
+              "usage": "Target ID within the Endpoint."
+            }
+          }
+        },
+        "ExpectedRevision": {
+          "description": "Current configuration revision from a read or successful write.",
+          "inputs": {
+            "expected-revision": {
+              "usage": "Current configuration revision from a read or successful write."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.target.sync",
+    "value": {
+      "short": "Sync an Endpoint Target",
+      "long": "Refreshes the configuration snapshot from the pinned Registry version using the current Target revision.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "TargetId": {
+          "description": "Target ID within the Endpoint.",
+          "inputs": {
+            "target-id": {
+              "usage": "Target ID within the Endpoint."
+            }
+          }
+        },
+        "ExpectedRevision": {
+          "description": "Current configuration revision from a read or successful write.",
+          "inputs": {
+            "expected-revision": {
+              "usage": "Current configuration revision from a read or successful write."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.token.create",
+    "value": {
+      "short": "Issue an Endpoint Token",
+      "long": "Returns the bearer credential once. Store it securely. It authenticates data-plane calls for this Endpoint.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "Name": {
+          "description": "Token display name, 1 to 128 characters.",
+          "inputs": {
+            "name": {
+              "usage": "Token display name, 1 to 128 characters."
+            }
+          }
+        },
+        "ExpiresIn": {
+          "description": "Lifetime in seconds. Omit for 30 days or pass 0 for no expiration.",
+          "inputs": {
+            "expires-in": {
+              "usage": "Lifetime in seconds. Omit for 30 days or pass 0 for no expiration."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.token.list",
+    "value": {
+      "short": "List Endpoint Tokens",
+      "long": "Returns paginated token metadata and status.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "Offset": {
+          "description": "Number of token records to skip. Defaults to 0.",
+          "inputs": {
+            "offset": {
+              "usage": "Number of token records to skip. Defaults to 0."
+            }
+          }
+        },
+        "Limit": {
+          "description": "Maximum token records to return, from 1 to 100. Defaults to 20.",
+          "inputs": {
+            "limit": {
+              "usage": "Maximum token records to return, from 1 to 100. Defaults to 20."
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/commands/endpoint.token.revoke",
+    "value": {
+      "short": "Revoke an Endpoint Token",
+      "long": "Revokes the specified Token. Repeating the operation on an already-revoked Token is supported.",
+      "fields": {
+        "EndpointId": {
+          "description": "Endpoint ID returned by create or list.",
+          "inputs": {
+            "endpoint-id": {
+              "usage": "Endpoint ID returned by create or list."
+            }
+          }
+        },
+        "TokenId": {
+          "description": "Token ID within the Endpoint.",
+          "inputs": {
+            "token-id": {
+              "usage": "Token ID within the Endpoint."
+            }
+          }
+        }
+      }
+    }
   }
 ]

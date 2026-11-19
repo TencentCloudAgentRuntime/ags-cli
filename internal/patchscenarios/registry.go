@@ -6,6 +6,7 @@ import "github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 
 // Scenarios remain ordinary Go source, subject to independent assertion review.
 var Registry = patchtest.Registry{
+	"endpoint.lifecycle":        {Assertions: endpointAssertions, Run: runEndpointLifecycle},
 	"session.event-count":       {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
 	"session.lifecycle":         {Assertions: sessionAssertions, Run: runSessionLifecycle},
 	"volume.lifecycle":          {Assertions: volumeAssertions, Run: runVolumeLifecycle},

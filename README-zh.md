@@ -427,6 +427,35 @@ agr deployment proxy "$deployment_id" 3000:8080
 `127.0.0.1`；通过 `--address` 监听非回环地址会把调试代理暴露到网络，并输出
 风险提示。
 
+## Agent Runtime Endpoint（preview）
+
+`agr endpoint` 随 preview 构建提供。将 `AGR_REGION` 和
+`AGR_CLOUD_ENDPOINT` 指向已开放 Endpoint 管理 API 的环境，并使用具备对应 CAM
+权限的腾讯云身份。
+
+| 命令 | 用途 |
+| --- | --- |
+| `endpoint create/list/get/update/delete` | 管理 Endpoint 配置并获取 MCP 地址。 |
+| `endpoint target candidates/create/list/get/update/sync/delete` | 查找兼容的 Registry 版本、挂载指定版本、切换版本或同步已固定的版本。 |
+| `endpoint token create/list/revoke` | 签发、查询和吊销 Endpoint 专用 Bearer Token。 |
+| `endpoint metrics` | 批量查询调用量、P95 耗时和错误率。 |
+
+```bash
+agr endpoint get --endpoint-id "$endpoint_id" -o json
+agr endpoint target candidates --endpoint-id "$endpoint_id" -o json
+agr endpoint metrics --endpoint-ids "$endpoint_id" \
+  --metric-names InvocationCount --metric-names P95LatencyMs --metric-names ErrorRate -o json
+```
+
+修改或删除 Endpoint 和 Target，以及同步 Target 时，通过 `--expected-revision`
+传入当前 `Revision`。创建 Target 时，显式传入 `--registry-id`、
+`--record-id` 和 `--version-id`。更新时用 `--description=` 或
+`--path-alias=` 清空对应字段。
+
+`agr endpoint token create` 只在签发时返回明文。请妥善保存，并通过
+`Authorization: Bearer <token>` 访问服务返回的数据面地址。轮换时先签发并部署
+新 Token，再按 `--token-id` 吊销旧 Token。
+
 ## 控制面端点与数据面域名
 
 | Flag | 默认值 | 作用对象 |

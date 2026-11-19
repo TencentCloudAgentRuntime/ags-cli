@@ -240,7 +240,7 @@ func run(ctx context.Context, args []string, out, diagnostics io.Writer) (retErr
 		return fmt.Errorf("create isolated CLI home failed")
 	}
 	env := []string{"HOME=" + home, "USERPROFILE=" + home, "PATH=" + os.Getenv("PATH")}
-	for _, key := range []string{"TENCENTCLOUD_SECRET_ID", "TENCENTCLOUD_SECRET_KEY", "TENCENTCLOUD_TOKEN", "AGR_REGION", "AGR_CLOUD_ENDPOINT", "AGR_DOMAIN"} {
+	for _, key := range []string{"TENCENTCLOUD_SECRET_ID", "TENCENTCLOUD_SECRET_KEY", "TENCENTCLOUD_TOKEN", "AGR_REGION", "AGR_CLOUD_ENDPOINT", "AGR_DOMAIN", "AGR_ENDPOINT_FIXTURE_RECORD_ID"} {
 		if v := os.Getenv(key); v != "" {
 			env = append(env, key+"="+v)
 		}

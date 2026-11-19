@@ -41,6 +41,25 @@ GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
 
+## Endpoint lifecycle (preview)
+
+Use an Endpoint-enabled test environment and a test account that can manage
+Endpoints and read a fixture MCP Record with two compatible approved versions.
+Set `AGR_ENDPOINT_FIXTURE_RECORD_ID` to that Record ID. Provide test credentials,
+`AGR_REGION`, and `AGR_CLOUD_ENDPOINT` through the environment.
+
+```sh
+go build -tags=preview -o /tmp/agr-endpoint-preview ./cmd/agr
+AGR_ENDPOINT_E2E_BINARY=/tmp/agr-endpoint-preview \
+  go test ./internal/patchscenarios -run '^TestEndpointLive$' -count=1 -v
+```
+
+This runs the Endpoint, Target, Token, and metrics assertions with the candidate
+binary. It creates disposable Endpoints, checks both revision conflicts and
+verified cleanup, and uses the Registry fixture as a read-only dependency. The
+Token check calls the MCP URL before and after revocation. The strict
+`api-patch-e2e` runner also reads `AGR_ENDPOINT_FIXTURE_RECORD_ID`.
+
 ## Sandbox keepalive and log format (preview)
 
 The preview-only `sandbox.keepalive` and `sandbox.log-format` scenarios run as

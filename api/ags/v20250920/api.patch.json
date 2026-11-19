@@ -1492,5 +1492,1800 @@
       "output_required": false,
       "value_allowed_null": false
     }
+  },
+  {
+    "op": "add",
+    "path": "/objects/EndpointInfo",
+    "value": {
+      "document": "Endpoint configuration.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current resource status.</p>",
+          "member": "string",
+          "name": "Status",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Endpoint data-plane authentication type.</p>",
+          "member": "string",
+          "name": "InboundAuthType",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Endpoint MCP data-plane URL.</p>",
+          "member": "string",
+          "name": "MCPURL",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Shared invocation limit, from 1 to 500 requests per second. The create default is 100.</p>",
+          "member": "int64",
+          "name": "QPS",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Configuration revision for optimistic concurrency.</p>",
+          "member": "int64",
+          "name": "Revision",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Creation time in RFC 3339.</p>",
+          "member": "string",
+          "name": "CreatedAt",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Last update time in RFC 3339.</p>",
+          "member": "string",
+          "name": "UpdatedAt",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/EndpointTargetInfo",
+    "value": {
+      "document": "Endpoint Target configuration and pinned Registry version.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Target ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TargetId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Type of Endpoint Target.</p>",
+          "member": "string",
+          "name": "Type",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>The target protocol.</p>",
+          "member": "string",
+          "name": "Protocol",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Registry ID containing the source record.</p>",
+          "member": "string",
+          "name": "RegistryId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Source Registry record ID.</p>",
+          "member": "string",
+          "name": "RecordId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Explicit immutable Registry version ID.</p>",
+          "member": "string",
+          "name": "VersionId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Type of Registry source.</p>",
+          "member": "string",
+          "name": "SourceType",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target backend authentication type.</p>",
+          "member": "string",
+          "name": "BackendAuthType",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current resource status.</p>",
+          "member": "string",
+          "name": "Status",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target availability status.</p>",
+          "member": "string",
+          "name": "Availability",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Reason for the current compatibility or availability status.</p>",
+          "member": "string",
+          "name": "StatusReason",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Route alias for the Target. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "PathAlias",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target data-plane URL, when a route alias is configured.</p>",
+          "member": "string",
+          "name": "InvocationURL",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Configuration revision for optimistic concurrency.</p>",
+          "member": "int64",
+          "name": "Revision",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Creation time in RFC 3339.</p>",
+          "member": "string",
+          "name": "CreatedAt",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Last update time in RFC 3339.</p>",
+          "member": "string",
+          "name": "UpdatedAt",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/EndpointTargetCandidate",
+    "value": {
+      "document": "A visible Registry version and its compatibility with Endpoint.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Registry ID containing the source record.</p>",
+          "member": "string",
+          "name": "RegistryId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Source Registry name.</p>",
+          "member": "string",
+          "name": "RegistryName",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Source Registry record ID.</p>",
+          "member": "string",
+          "name": "RecordId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Source record name.</p>",
+          "member": "string",
+          "name": "RecordName",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Explicit immutable Registry version ID.</p>",
+          "member": "string",
+          "name": "VersionId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Source version name.</p>",
+          "member": "string",
+          "name": "VersionName",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>The target protocol.</p>",
+          "member": "string",
+          "name": "Protocol",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Whether this Registry version can be attached to the Endpoint.</p>",
+          "member": "string",
+          "name": "Compatibility",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Reason for the current compatibility or availability status.</p>",
+          "member": "string",
+          "name": "StatusReason",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Whether the version is labeled stable.</p>",
+          "member": "bool",
+          "name": "Stable",
+          "required": false,
+          "type": "bool",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/EndpointTokenInfo",
+    "value": {
+      "document": "Endpoint Token metadata.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Token ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TokenId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Creation time in RFC 3339.</p>",
+          "member": "string",
+          "name": "CreatedAt",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Expiration time in RFC 3339, omitted for a permanent token.</p>",
+          "member": "string",
+          "name": "ExpiresAt",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current resource status.</p>",
+          "member": "string",
+          "name": "Status",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/EndpointMetricResult",
+    "value": {
+      "document": "Endpoint metric result.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Metric name.</p>",
+          "member": "string",
+          "name": "MetricName",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Prometheus result encoded as a JSON string.</p>",
+          "member": "string",
+          "name": "Data",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateEndpointRequest",
+    "value": {
+      "document": "Create an Endpoint request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Shared invocation limit, from 1 to 500 requests per second. The create default is 100.</p>",
+          "member": "int64",
+          "name": "QPS",
+          "required": false,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateEndpointResponse",
+    "value": {
+      "document": "Create an Endpoint response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint configuration.</p>",
+          "member": "EndpointInfo",
+          "name": "Endpoint",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateEndpoint",
+    "value": {
+      "document": "Creates an active Endpoint and returns its data-plane URL and initial revision.",
+      "input": "CreateEndpointRequest",
+      "name": "Create an Endpoint",
+      "output": "CreateEndpointResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointListRequest",
+    "value": {
+      "document": "List Endpoints request.",
+      "members": [],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointListResponse",
+    "value": {
+      "document": "List Endpoints response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Matching Endpoint configurations.</p>",
+          "member": "EndpointInfo",
+          "name": "EndpointSet",
+          "required": false,
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Total number of matching records.</p>",
+          "member": "int64",
+          "name": "TotalCount",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointList",
+    "value": {
+      "document": "Lists the Endpoints visible to the configured cloud identity.",
+      "input": "DescribeEndpointListRequest",
+      "name": "List Endpoints",
+      "output": "DescribeEndpointListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointRequest",
+    "value": {
+      "document": "Get an Endpoint request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointResponse",
+    "value": {
+      "document": "Get an Endpoint response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint configuration.</p>",
+          "member": "EndpointInfo",
+          "name": "Endpoint",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpoint",
+    "value": {
+      "document": "Shows the current configuration, revision, and MCP URL.",
+      "input": "DescribeEndpointRequest",
+      "name": "Get an Endpoint",
+      "output": "DescribeEndpointResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyEndpointRequest",
+    "value": {
+      "document": "Update an Endpoint request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current configuration revision from a read or successful write.</p>",
+          "member": "int64",
+          "name": "ExpectedRevision",
+          "required": true,
+          "type": "int64"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current resource status.</p>",
+          "member": "string",
+          "name": "Status",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Shared invocation limit, from 1 to 500 requests per second. The create default is 100.</p>",
+          "member": "int64",
+          "name": "QPS",
+          "required": false,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyEndpointResponse",
+    "value": {
+      "document": "Update an Endpoint response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint configuration.</p>",
+          "member": "EndpointInfo",
+          "name": "Endpoint",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyEndpoint",
+    "value": {
+      "document": "Supply the current revision and at least one of --name, --description, --status, or --qps. Status accepts ACTIVE or DISABLED.",
+      "input": "ModifyEndpointRequest",
+      "name": "Update an Endpoint",
+      "output": "ModifyEndpointResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteEndpointRequest",
+    "value": {
+      "document": "Delete an Endpoint request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current configuration revision from a read or successful write.</p>",
+          "member": "int64",
+          "name": "ExpectedRevision",
+          "required": true,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteEndpointResponse",
+    "value": {
+      "document": "Delete an Endpoint response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteEndpoint",
+    "value": {
+      "document": "Deletes the Endpoint and its Targets and Tokens. Supply its current revision.",
+      "input": "DeleteEndpointRequest",
+      "name": "Delete an Endpoint",
+      "output": "DeleteEndpointResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointMetricsRequest",
+    "value": {
+      "document": "Query Endpoint metrics request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>One to twenty distinct Endpoint IDs.</p>",
+          "member": "string",
+          "name": "EndpointIds",
+          "required": true,
+          "type": "list"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Distinct names from InvocationCount, P95LatencyMs, and ErrorRate.</p>",
+          "member": "string",
+          "name": "MetricNames",
+          "required": true,
+          "type": "list"
+        },
+        {
+          "disabled": false,
+          "document": "<p>RFC 3339 start of the query window. Supply together with --end-time.</p>",
+          "member": "string",
+          "name": "StartTime",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>RFC 3339 end of the query window. Supply together with --start-time.</p>",
+          "member": "string",
+          "name": "EndTime",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Optional trend interval in seconds, from 60 to 86400. Omit for window totals.</p>",
+          "member": "int64",
+          "name": "Period",
+          "required": false,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointMetricsResponse",
+    "value": {
+      "document": "Query Endpoint metrics response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Effective query window start in RFC 3339.</p>",
+          "member": "string",
+          "name": "WindowStartTime",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Effective query window end in RFC 3339.</p>",
+          "member": "string",
+          "name": "WindowEndTime",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Optional trend interval in seconds, from 60 to 86400. Omit for window totals.</p>",
+          "member": "int64",
+          "name": "Period",
+          "required": false,
+          "type": "int64",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Metric results in the requested order.</p>",
+          "member": "EndpointMetricResult",
+          "name": "Results",
+          "required": false,
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointMetrics",
+    "value": {
+      "document": "Queries invocation counts, P95 latency, or error rates by Endpoint. Omit both times for today in Asia/Shanghai. Set --period to request trend points.",
+      "input": "DescribeEndpointMetricsRequest",
+      "name": "Query Endpoint metrics",
+      "output": "DescribeEndpointMetricsResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTargetCandidateListRequest",
+    "value": {
+      "document": "List Endpoint Target candidates request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTargetCandidateListResponse",
+    "value": {
+      "document": "List Endpoint Target candidates response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Visible Registry version candidates.</p>",
+          "member": "EndpointTargetCandidate",
+          "name": "CandidateSet",
+          "required": false,
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Total number of matching records.</p>",
+          "member": "int64",
+          "name": "TotalCount",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTargetCandidateList",
+    "value": {
+      "document": "Lists visible Registry versions and their compatibility. Select a READY version and supply its Registry, Record, and Version IDs when creating a Target.",
+      "input": "DescribeEndpointTargetCandidateListRequest",
+      "name": "List Endpoint Target candidates",
+      "output": "DescribeEndpointTargetCandidateListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateEndpointTargetRequest",
+    "value": {
+      "document": "Create an Endpoint Target request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Registry ID containing the source record.</p>",
+          "member": "string",
+          "name": "RegistryId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Source Registry record ID.</p>",
+          "member": "string",
+          "name": "RecordId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Explicit immutable Registry version ID.</p>",
+          "member": "string",
+          "name": "VersionId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Route alias for the Target. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "PathAlias",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateEndpointTargetResponse",
+    "value": {
+      "document": "Create an Endpoint Target response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint Target configuration.</p>",
+          "member": "EndpointTargetInfo",
+          "name": "Target",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateEndpointTarget",
+    "value": {
+      "document": "Pins a compatible Registry version to the Endpoint. An optional route alias enables direct invocation.",
+      "input": "CreateEndpointTargetRequest",
+      "name": "Create an Endpoint Target",
+      "output": "CreateEndpointTargetResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTargetListRequest",
+    "value": {
+      "document": "List Endpoint Targets request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTargetListResponse",
+    "value": {
+      "document": "List Endpoint Targets response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Matching Endpoint Targets.</p>",
+          "member": "EndpointTargetInfo",
+          "name": "TargetSet",
+          "required": false,
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Total number of matching records.</p>",
+          "member": "int64",
+          "name": "TotalCount",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTargetList",
+    "value": {
+      "document": "Lists all configured Targets, including disabled ones.",
+      "input": "DescribeEndpointTargetListRequest",
+      "name": "List Endpoint Targets",
+      "output": "DescribeEndpointTargetListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTargetRequest",
+    "value": {
+      "document": "Get an Endpoint Target request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TargetId",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTargetResponse",
+    "value": {
+      "document": "Get an Endpoint Target response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint Target configuration.</p>",
+          "member": "EndpointTargetInfo",
+          "name": "Target",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTarget",
+    "value": {
+      "document": "Shows the current Target configuration and the pinned Registry version.",
+      "input": "DescribeEndpointTargetRequest",
+      "name": "Get an Endpoint Target",
+      "output": "DescribeEndpointTargetResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyEndpointTargetRequest",
+    "value": {
+      "document": "Update an Endpoint Target request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TargetId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current configuration revision from a read or successful write.</p>",
+          "member": "int64",
+          "name": "ExpectedRevision",
+          "required": true,
+          "type": "int64"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Description, up to 2048 characters. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "Description",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current resource status.</p>",
+          "member": "string",
+          "name": "Status",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Explicit immutable Registry version ID.</p>",
+          "member": "string",
+          "name": "VersionId",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Route alias for the Target. An empty value clears it when updating.</p>",
+          "member": "string",
+          "name": "PathAlias",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/ModifyEndpointTargetResponse",
+    "value": {
+      "document": "Update an Endpoint Target response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint Target configuration.</p>",
+          "member": "EndpointTargetInfo",
+          "name": "Target",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyEndpointTarget",
+    "value": {
+      "document": "Supply the current revision and at least one field to update. Status accepts ENABLED or DISABLED. A replacement version must belong to the same Registry record.",
+      "input": "ModifyEndpointTargetRequest",
+      "name": "Update an Endpoint Target",
+      "output": "ModifyEndpointTargetResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteEndpointTargetRequest",
+    "value": {
+      "document": "Delete an Endpoint Target request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TargetId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current configuration revision from a read or successful write.</p>",
+          "member": "int64",
+          "name": "ExpectedRevision",
+          "required": true,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DeleteEndpointTargetResponse",
+    "value": {
+      "document": "Delete an Endpoint Target response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteEndpointTarget",
+    "value": {
+      "document": "Deletes the specified Target using its current revision.",
+      "input": "DeleteEndpointTargetRequest",
+      "name": "Delete an Endpoint Target",
+      "output": "DeleteEndpointTargetResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SyncEndpointTargetRequest",
+    "value": {
+      "document": "Sync an Endpoint Target request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Target ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TargetId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Current configuration revision from a read or successful write.</p>",
+          "member": "int64",
+          "name": "ExpectedRevision",
+          "required": true,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/SyncEndpointTargetResponse",
+    "value": {
+      "document": "Sync an Endpoint Target response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint Target configuration.</p>",
+          "member": "EndpointTargetInfo",
+          "name": "Target",
+          "required": false,
+          "type": "object",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/SyncEndpointTarget",
+    "value": {
+      "document": "Refreshes the configuration snapshot from the pinned Registry version using the current Target revision.",
+      "input": "SyncEndpointTargetRequest",
+      "name": "Sync an Endpoint Target",
+      "output": "SyncEndpointTargetResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateEndpointTokenRequest",
+    "value": {
+      "document": "Issue an Endpoint Token request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Display name, up to 128 characters.</p>",
+          "member": "string",
+          "name": "Name",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Lifetime in seconds. Omit for 30 days or pass 0 for no expiration.</p>",
+          "member": "int64",
+          "name": "ExpiresIn",
+          "required": false,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/CreateEndpointTokenResponse",
+    "value": {
+      "document": "Issue an Endpoint Token response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Token ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TokenId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Bearer credential shown only at issuance. Capture it securely.</p>",
+          "member": "string",
+          "name": "Token",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Expiration time in RFC 3339, omitted for a permanent token.</p>",
+          "member": "string",
+          "name": "ExpiresAt",
+          "required": false,
+          "type": "string",
+          "output_required": false,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateEndpointToken",
+    "value": {
+      "document": "Returns the bearer credential once. Store it securely. It authenticates data-plane calls for this Endpoint.",
+      "input": "CreateEndpointTokenRequest",
+      "name": "Issue an Endpoint Token",
+      "output": "CreateEndpointTokenResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTokenListRequest",
+    "value": {
+      "document": "List Endpoint Tokens request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Number of token records to skip. Defaults to 0.</p>",
+          "member": "int64",
+          "name": "Offset",
+          "required": false,
+          "type": "int64"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Maximum token records to return, from 1 to 100. Defaults to 20.</p>",
+          "member": "int64",
+          "name": "Limit",
+          "required": false,
+          "type": "int64"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/DescribeEndpointTokenListResponse",
+    "value": {
+      "document": "List Endpoint Tokens response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Matching token metadata.</p>",
+          "member": "EndpointTokenInfo",
+          "name": "TokenSet",
+          "required": false,
+          "type": "list",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Total number of matching records.</p>",
+          "member": "int64",
+          "name": "TotalCount",
+          "required": false,
+          "type": "int64",
+          "output_required": true,
+          "value_allowed_null": false
+        },
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTokenList",
+    "value": {
+      "document": "Returns paginated token metadata and status.",
+      "input": "DescribeEndpointTokenListRequest",
+      "name": "List Endpoint Tokens",
+      "output": "DescribeEndpointTokenListResponse",
+      "status": "online"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/RevokeEndpointTokenRequest",
+    "value": {
+      "document": "Revoke an Endpoint Token request.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Endpoint ID returned by create or list.</p>",
+          "member": "string",
+          "name": "EndpointId",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "disabled": false,
+          "document": "<p>Token ID within the Endpoint.</p>",
+          "member": "string",
+          "name": "TokenId",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/objects/RevokeEndpointTokenResponse",
+    "value": {
+      "document": "Revoke an Endpoint Token response.",
+      "members": [
+        {
+          "disabled": false,
+          "document": "<p>Cloud API request ID.</p>",
+          "member": "string",
+          "name": "RequestId",
+          "required": false,
+          "type": "string",
+          "output_required": true,
+          "value_allowed_null": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/RevokeEndpointToken",
+    "value": {
+      "document": "Revokes the specified Token. Repeating the operation on an already-revoked Token is supported.",
+      "input": "RevokeEndpointTokenRequest",
+      "name": "Revoke an Endpoint Token",
+      "output": "RevokeEndpointTokenResponse",
+      "status": "online"
+    }
   }
 ]
