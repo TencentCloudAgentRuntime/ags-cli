@@ -315,7 +315,7 @@ func runEndpointToken(s *patchtest.Session, endpoint apivalue.Object) error {
 func endpointMCPStatus(ctx context.Context, rawURL, bearer string) (int, error) {
 	address, err := url.Parse(rawURL)
 	if err != nil || address.Scheme != "https" || address.Hostname() == "" || address.User != nil {
-		return 0, errors.New("Endpoint returned an invalid HTTPS MCP URL")
+		return 0, errors.New("invalid HTTPS MCP URL returned by the endpoint")
 	}
 	body := strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"agr-preview-e2e","version":"1"}}}`)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, address.String(), body)
@@ -330,9 +330,11 @@ func endpointMCPStatus(ctx context.Context, rawURL, bearer string) (int, error) 
 	}}
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, errors.New("Endpoint MCP request failed")
+		return 0, errors.New("failed to send MCP request to the endpoint")
 	}
-	defer resp.Body.Close()
+	if err := resp.Body.Close(); err != nil {
+		return 0, errors.New("failed to close the MCP response body")
+	}
 	return resp.StatusCode, nil
 }
 
