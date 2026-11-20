@@ -356,13 +356,21 @@ func volumeTemplateLifecycle(s *patchtest.Session, ctx context.Context, storage 
 		return "", nil, err
 	}
 
+	// Creation returns before tag synchronization finishes; ACTIVE marks readiness.
+	readyCtx, cancelReady := context.WithTimeout(ctx, 2*time.Minute)
+	err = mountWaitResourceActive(s, readyCtx, "volume-template.list", "VolumeTemplateSet", "VolumeTemplateIds", "VolumeTemplateId", templateID)
+	cancelReady()
+	if err != nil {
+		return "", nil, fmt.Errorf("wait for volume template activation: %w", err)
+	}
+
 	rows, total, err := volumeQuery(s, ctx, "volume-template.list", "VolumeTemplateSet", map[string]any{"VolumeTemplateIds": []string{templateID}})
 	if err != nil {
 		return "", nil, err
 	}
 	stored := volumeRow(rows, "VolumeTemplateId", templateID)
 	if err := s.Assert("template.readback", total == 1 && len(rows) == 1 && stored != nil &&
-		volumeString(stored, "Status") != "" && volumeTimestamps(stored) &&
+		volumeString(stored, "Status") == "ACTIVE" && volumeTimestamps(stored) &&
 		volumeString(stored, "DefaultCapacity") == templateDefaultCapacity &&
 		volumeString(volumeNested(stored, "StorageSpec", "Cos"), "BucketPathPattern") == pathPattern &&
 		volumeTagsEqual(stored["Tags"], tags)); err != nil {

@@ -1,0 +1,522 @@
+//go:build preview
+
+package acpclient
+
+import (
+	"bufio"
+	"context"
+	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	acp "github.com/coder/acp-go-sdk"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
+)
+
+func endpoint(server *httptest.Server) Endpoint {
+	return Endpoint{
+		URL:            server.URL + "/acp",
+		Token:          func(context.Context) (string, error) { return "tok-1", nil },
+		AffinityHeader: affinityHeader,
+		HTTP:           server.Client(),
+	}
+}
+
+type recorder struct {
+	mu      sync.Mutex
+	text    strings.Builder
+	tools   int
+	denials int
+}
+
+func (r *recorder) SessionUpdate(_ context.Context, n acp.SessionNotification) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if n.Update.AgentMessageChunk != nil {
+		r.text.WriteString(TextOf(n.Update.AgentMessageChunk.Content))
+	}
+	if n.Update.ToolCall != nil {
+		r.tools++
+	}
+	return nil
+}
+
+func (r *recorder) RequestPermission(context.Context, acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
+	r.mu.Lock()
+	r.denials++
+	r.mu.Unlock()
+	return Cancelled(), nil
+}
+
+func TestSessionPromptOverStreamableHTTP(t *testing.T) {
+	agent := newFakeAgent(t)
+	agent.permission = true
+	server := httptest.NewServer(agent)
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	rec := &recorder{}
+	session, err := Connect(ctx, endpoint(server), rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if session.Info.Name != "fake-pi" || !session.Info.LoadSession {
+		t.Fatalf("agent info = %+v", session.Info)
+	}
+	created, err := session.Conn.NewSession(ctx, acp.NewSessionRequest{Cwd: "/workspace", McpServers: []acp.McpServer{}})
+	if err != nil || created.SessionId != "sess-1" {
+		t.Fatalf("new session: %v %v", created, err)
+	}
+	result, err := session.Conn.Prompt(ctx, acp.PromptRequest{SessionId: created.SessionId, Prompt: []acp.ContentBlock{acp.TextBlock("hi")}})
+	if err != nil || result.StopReason != acp.StopReasonEndTurn {
+		t.Fatalf("prompt: %v %v", result, err)
+	}
+	if session.Bridge.Affinity() != "aff-1" {
+		t.Fatalf("affinity not learned: %q", session.Bridge.Affinity())
+	}
+	session.Close()
+
+	rec.mu.Lock()
+	defer rec.mu.Unlock()
+	if rec.text.String() != "hello world" || rec.tools != 1 || rec.denials != 1 {
+		t.Fatalf("text=%q tools=%d denials=%d", rec.text.String(), rec.tools, rec.denials)
+	}
+	agent.mu.Lock()
+	defer agent.mu.Unlock()
+	if !agent.deleted {
+		t.Fatal("close did not DELETE the ACP connection")
+	}
+	for i, token := range agent.tokens {
+		if token != "tok-1" {
+			t.Fatalf("request %d sent token %q", i, token)
+		}
+	}
+	// The first request cannot carry affinity; every later one must echo it.
+	for i, affinity := range agent.affinities[1:] {
+		if affinity != "aff-1" {
+			t.Fatalf("request %d affinity = %q", i+1, affinity)
+		}
+	}
+}
+
+func TestLoadSessionReceivesReplayOnSessionStream(t *testing.T) {
+	agent := newFakeAgent(t)
+	server := httptest.NewServer(agent)
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	session, err := Connect(ctx, endpoint(server), &recorder{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	if _, err := session.Conn.LoadSession(ctx, acp.LoadSessionRequest{SessionId: "sess-9", Cwd: "/workspace", McpServers: []acp.McpServer{}}); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+}
+
+func TestCancelStopsTurn(t *testing.T) {
+	agent := newFakeAgent(t)
+	agent.block = make(chan struct{})
+	server := httptest.NewServer(agent)
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	session, err := Connect(ctx, endpoint(server), &recorder{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	created, err := session.Conn.NewSession(ctx, acp.NewSessionRequest{Cwd: "/workspace", McpServers: []acp.McpServer{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan acp.PromptResponse, 1)
+	go func() {
+		result, _ := session.Conn.Prompt(ctx, acp.PromptRequest{SessionId: created.SessionId, Prompt: []acp.ContentBlock{acp.TextBlock("long")}})
+		done <- result
+	}()
+	time.Sleep(100 * time.Millisecond)
+	if err := session.Conn.Cancel(ctx, acp.CancelNotification{SessionId: created.SessionId}); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case result := <-done:
+		if result.StopReason != acp.StopReasonCancelled {
+			t.Fatalf("stop reason = %s", result.StopReason)
+		}
+	case <-ctx.Done():
+		t.Fatal("prompt did not finish after cancel")
+	}
+}
+
+// Leave the GET pending before any response headers arrive, as on a stalled
+// upstream. Releasing it also lets the unfixed bridge shut down after failure.
+func blockedStreamServer(t *testing.T, session string) (*httptest.Server, <-chan struct{}, func()) {
+	t.Helper()
+	agent := newFakeAgent(t)
+	started, release := make(chan struct{}), make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.Header.Get(headerSession) == session {
+			close(started)
+			select {
+			case <-r.Context().Done():
+			case <-release:
+			}
+			return
+		}
+		agent.ServeHTTP(w, r)
+	}))
+	t.Cleanup(server.Close)
+	return server, started, sync.OnceFunc(func() { close(release) })
+}
+
+func TestBridgeCancelWhileOpeningStream(t *testing.T) {
+	for _, session := range []string{"", "sess-9"} {
+		name := "connection"
+		if session != "" {
+			name = "session-load"
+		}
+		t.Run(name, func(t *testing.T) {
+			server, started, release := blockedStreamServer(t, session)
+			ctx, cancel := context.WithCancel(t.Context())
+			in, input := io.Pipe()
+			bridge := NewBridge(endpoint(server), io.Discard)
+			done := make(chan struct{})
+			var runErr error
+			go func() {
+				runErr = bridge.Run(ctx, in)
+				close(done)
+			}()
+			t.Cleanup(func() {
+				release()
+				cancel()
+				_ = input.Close()
+				_ = in.Close()
+				select {
+				case <-done:
+				case <-time.After(5 * time.Second):
+					t.Error("bridge did not shut down after releasing the stalled GET")
+				}
+			})
+			if _, err := io.WriteString(input, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}`+"\n"); err != nil {
+				t.Fatal(err)
+			}
+			if session != "" {
+				if _, err := io.WriteString(input, `{"jsonrpc":"2.0","id":2,"method":"session/load","params":{"sessionId":"sess-9","cwd":"/workspace","mcpServers":[]}}`+"\n"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			select {
+			case <-started:
+			case <-time.After(5 * time.Second):
+				t.Fatal("stream GET did not start")
+			}
+			cancel()
+			select {
+			case <-done:
+				if !errors.Is(runErr, context.Canceled) {
+					t.Fatalf("Run returned %v, want cancellation", runErr)
+				}
+			case <-time.After(time.Second):
+				t.Fatal("cancellation did not interrupt the pending stream GET")
+			}
+		})
+	}
+}
+
+func TestBridgeFailsWhilePOSTBlocked(t *testing.T) {
+	postStarted := make(chan struct{})
+	stopStream := make(chan struct{})
+	agent := newFakeAgent(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet:
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.(http.Flusher).Flush()
+			select {
+			case <-stopStream:
+			case <-r.Context().Done():
+			}
+		case r.Method == http.MethodPost && r.Header.Get(headerConnection) != "":
+			if _, err := io.Copy(io.Discard, r.Body); err != nil {
+				t.Error(err)
+			}
+			close(postStarted)
+			<-r.Context().Done()
+		default:
+			agent.ServeHTTP(w, r)
+		}
+	}))
+	defer server.Close()
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	in, input := io.Pipe()
+	defer func() { _ = in.Close() }()
+	defer func() { _ = input.Close() }()
+	done := make(chan error, 1)
+	go func() {
+		_, err := ServeStdio(ctx, endpoint(server), in, io.Discard)
+		done <- err
+	}()
+	for _, line := range []string{
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}`,
+		`{"jsonrpc":"2.0","id":2,"method":"session/list"}`,
+	} {
+		if _, err := io.WriteString(input, line+"\n"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	select {
+	case <-postStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("POST did not start")
+	}
+	close(stopStream)
+	select {
+	case err := <-done:
+		if err == nil || err.Error() != "ACP event stream closed by the server" {
+			t.Fatalf("ServeStdio returned %v, want the stream error", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("the closed SSE did not interrupt the stalled POST")
+	}
+}
+
+func TestSessionCloseWhileOpeningStream(t *testing.T) {
+	server, started, release := blockedStreamServer(t, "")
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	session, err := Connect(ctx, endpoint(server), &recorder{})
+	if err != nil {
+		release()
+		t.Fatal(err)
+	}
+	defer func() {
+		release()
+		session.Close()
+	}()
+	select {
+	case <-started:
+	case <-ctx.Done():
+		t.Fatal("stream GET did not start")
+	}
+	done := make(chan struct{})
+	go func() {
+		session.Close()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Session.Close did not interrupt the pending stream GET")
+	}
+}
+
+func TestPlatformErrorIsClassified(t *testing.T) {
+	agent := newFakeAgent(t)
+	agent.status = http.StatusServiceUnavailable
+	server := httptest.NewServer(agent)
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := Probe(ctx, endpoint(server))
+	var httpErr *HTTPError
+	if !errors.As(err, &httpErr) || httpErr.Status != 503 || httpErr.PlatformCode != "sandbox_tool_unavailable" || httpErr.RequestID != "REQ1" {
+		t.Fatalf("err = %#v", err)
+	}
+	var cliErr *output.CLIError
+	if !errors.As(Classify(err, "hint"), &cliErr) || cliErr.Failure.Code != "ACP_UNAVAILABLE" || cliErr.Failure.Details["PlatformRequestId"] != "REQ1" {
+		t.Fatalf("classified = %#v", cliErr)
+	}
+	agent.status = http.StatusUnauthorized
+	_, err = Probe(ctx, endpoint(server))
+	if !errors.As(Classify(err, "hint"), &cliErr) || cliErr.Failure.Kind != output.KindAuthOrPermission {
+		t.Fatalf("401 classified = %#v", cliErr)
+	}
+}
+
+func TestProbeBoundsInitialize(t *testing.T) {
+	called := make(chan struct{})
+	started := time.Now()
+	_, err := Probe(t.Context(), Endpoint{
+		URL:   "https://acp.example.invalid/acp",
+		Token: func(context.Context) (string, error) { return "fixture-token", nil },
+		HTTP: &http.Client{Transport: probeTransport(func(req *http.Request) (*http.Response, error) {
+			defer close(called)
+			if req.Method != http.MethodPost {
+				t.Errorf("method = %s, want initialize POST", req.Method)
+			}
+			deadline, ok := req.Context().Deadline()
+			if !ok || deadline.Before(started) || deadline.After(time.Now().Add(90*time.Second)) {
+				t.Errorf("initialize must have a deadline within 90s, got %v (present=%v)", deadline, ok)
+			}
+			return nil, context.DeadlineExceeded
+		})},
+	})
+	select {
+	case <-called:
+	default:
+		t.Fatal("probe did not start initialize")
+	}
+	var cliErr *output.CLIError
+	if !errors.As(Classify(err, "retry --check"), &cliErr) || cliErr.Failure.Code != "TIMEOUT" || cliErr.Failure.Kind != output.KindTimeout || !cliErr.Failure.Retryable {
+		t.Fatalf("probe timeout classified as %+v (cause %v)", cliErr, err)
+	}
+}
+
+type probeTransport func(*http.Request) (*http.Response, error)
+
+func (f probeTransport) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+// A redirect would make Go forward X-Access-Token to the redirect target.
+func TestRedirectDoesNotLeakToken(t *testing.T) {
+	var leaked sync.Map
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if token := r.Header.Get("X-Access-Token"); token != "" {
+			leaked.Store("token", token)
+		}
+	}))
+	defer other.Close()
+	redirect := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL+"/steal", http.StatusTemporaryRedirect)
+	}))
+	defer redirect.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := Probe(ctx, endpoint(redirect)); err == nil {
+		t.Fatal("redirected initialize succeeded")
+	}
+	if _, ok := leaked.Load("token"); ok {
+		t.Fatal("access token followed the redirect")
+	}
+}
+
+// The stdio bridge must keep stdout to ACP messages only.
+func TestServeStdioWritesOnlyJSONRPC(t *testing.T) {
+	agent := newFakeAgent(t)
+	server := httptest.NewServer(agent)
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	inR, inW := io.Pipe()
+	outR, outW := io.Pipe()
+	go func() {
+		_, err := ServeStdio(ctx, endpoint(server), inR, outW)
+		_ = outW.CloseWithError(errOrEOF(err))
+	}()
+	lines := bufio.NewScanner(outR)
+	send := func(line string) { _, _ = io.WriteString(inW, line+"\n") }
+	read := func() string {
+		if !lines.Scan() {
+			t.Fatalf("bridge closed: %v", lines.Err())
+		}
+		return lines.Text()
+	}
+	send(`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}`)
+	if got := read(); !strings.Contains(got, `"fake-pi"`) {
+		t.Fatalf("initialize reply = %s", got)
+	}
+	send(`{"jsonrpc":"2.0","id":2,"method":"session/new","params":{"cwd":"/workspace","mcpServers":[]}}`)
+	if got := read(); !strings.Contains(got, `"sess-1"`) {
+		t.Fatalf("session/new reply = %s", got)
+	}
+	send(`{"jsonrpc":"2.0","id":3,"method":"session/prompt","params":{"sessionId":"sess-1","prompt":[{"type":"text","text":"hi"}]}}`)
+	for {
+		got := read()
+		if !strings.HasPrefix(got, `{"jsonrpc":"2.0"`) && !strings.HasPrefix(got, `{"id"`) && !strings.HasPrefix(got, `{"method"`) {
+			if !strings.HasPrefix(got, "{") {
+				t.Fatalf("non-JSON line on stdout: %q", got)
+			}
+		}
+		if strings.Contains(got, `"end_turn"`) {
+			break
+		}
+	}
+	_ = inW.Close()
+}
+
+func TestServeStdioExitsWithBlockedOutput(t *testing.T) {
+	for _, shutdown := range []string{"cancel", "stdin EOF"} {
+		t.Run(shutdown, func(t *testing.T) {
+			deleted := make(chan struct{})
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodPost:
+					w.Header().Set(headerConnection, "conn")
+					_, _ = io.WriteString(w, `{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1}}`)
+				case http.MethodGet:
+					w.Header().Set("Content-Type", "text/event-stream")
+					w.(http.Flusher).Flush()
+					_, _ = io.WriteString(w, "data: {\"jsonrpc\":\"2.0\",\"method\":\"session/update\"}\n\n")
+					w.(http.Flusher).Flush()
+					<-r.Context().Done()
+				case http.MethodDelete:
+					close(deleted)
+					w.WriteHeader(http.StatusNoContent)
+				}
+			}))
+			defer server.Close()
+			in, input := io.Pipe()
+			defer func() { _ = in.Close() }()
+			defer func() { _ = input.Close() }()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			writer := &blockingStdioWriter{started: make(chan struct{}), release: make(chan struct{})}
+			defer close(writer.release)
+			done := make(chan error, 1)
+			go func() { _, err := ServeStdio(ctx, endpoint(server), in, writer); done <- err }()
+			if _, err := io.WriteString(input, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n"); err != nil {
+				t.Fatal(err)
+			}
+			select {
+			case <-writer.started:
+			case <-time.After(2 * time.Second):
+				t.Fatal("SSE output never reached stdout")
+			}
+			if !strings.Contains(writer.first, `"id":1`) {
+				t.Fatalf("initialize did not reach stdout: %q", writer.first)
+			}
+			if shutdown == "cancel" {
+				cancel()
+			} else {
+				_ = input.Close()
+			}
+			select {
+			case err := <-done:
+				if (shutdown == "cancel" && !errors.Is(err, context.Canceled)) || (shutdown == "stdin EOF" && err != nil) {
+					t.Fatalf("shutdown = %v", err)
+				}
+			case <-time.After(2 * time.Second):
+				t.Fatal("bridge still blocked on stdout")
+			}
+			select {
+			case <-deleted:
+			default:
+				t.Fatal("bridge did not DELETE the ACP connection before returning")
+			}
+		})
+	}
+}
+
+type blockingStdioWriter struct {
+	first            string
+	started, release chan struct{}
+}
+
+func (w *blockingStdioWriter) Write(data []byte) (int, error) {
+	if w.first == "" {
+		w.first = string(data)
+	} else {
+		close(w.started)
+		<-w.release
+	}
+	return len(data), nil
+}

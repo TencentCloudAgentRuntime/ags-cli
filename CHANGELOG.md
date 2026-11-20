@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0-preview.1] - 2026-11-20
+
+### Breaking Changes
+- This release has no Breaking Changes.
+
+### Features
+- Add managed Harnesses with `agr harness`. Discover engines, configure a draft
+  with multiple models and a default model, and attach Skills, Plugins and a
+  Session Space. Inspect status and revision diffs, wait for publication or
+  deletion, and roll back by republishing a revision. Running instances keep
+  their startup configuration.
+- Add `agr model-provider` to register TokenHub or OpenAI-compatible models and
+  manage provider configuration and revisions. A Harness revision pins the
+  model provider revisions it uses.
+- Browse Marketplace Skills, Plugins and MCP servers with
+  `agr harness tool list` and `agr harness tool get`. Attach pinned Registry
+  versions or direct Streamable HTTP MCP endpoints, with headers and managed
+  credentials where required.
+- Check ACP readiness with `agr harness endpoint --check`. Send prompts,
+  continue sessions and stream NDJSON with `agr harness prompt`. Connect editors
+  over stdio with `agr harness acp` or use local HTTP ACP with `agr harness proxy`.
+- Open the published DSH Harness console with `agr harness web`. The CLI waits
+  for readiness before launching a browser. Use `--no-open` to print the URL
+  without a readiness request.
+
+### Bug Fixes
+- Clarify NDJSON output errors in both channels. When explicit `-o ndjson` is
+  unavailable, the CLI points to `agr schema -o json` to find supported
+  streaming commands.
+
+### Docs
+- Add English and Chinese guides for managed Harness setup, session continuation,
+  MCP, DSH Web, revision publication and rollback, and resource cleanup.
+- Add Apache-2.0 attribution for the ACP SDK.
+
 ## [0.8.0-preview.3] - 2026-11-19
 
 ### Breaking Changes

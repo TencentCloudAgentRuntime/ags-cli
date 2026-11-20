@@ -9,6 +9,7 @@ var Registry = patchtest.Registry{
 	"endpoint.lifecycle":        {Assertions: endpointAssertions, Run: runEndpointLifecycle},
 	"session.event-count":       {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
 	"session.lifecycle":         {Assertions: sessionAssertions, Run: runSessionLifecycle},
+	"harness.lifecycle":         {Assertions: harnessAssertions, Run: runHarnessLifecycle},
 	"volume.lifecycle":          {Assertions: volumeAssertions, Run: runVolumeLifecycle},
 	"volume.mount-lifecycle":    {Assertions: volumeMountAssertions, Run: runVolumeMountLifecycle},
 	"sandbox.keepalive":         {Assertions: sandboxKeepaliveAssertions, Run: sandboxScenario("sandbox.keepalive", runSandboxKeepalive)},

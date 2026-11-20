@@ -13,6 +13,7 @@ import (
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/client"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/cmdtree"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/config"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/updatecheck"
@@ -744,13 +745,13 @@ func invalidNDJSONOutputError(cmd *cobra.Command) *output.CLIError {
 		}
 		return output.NewUsageError(
 			"NDJSON_REQUIRES_STREAM",
-			"-o ndjson is only supported with 'instance code run --stream' and 'instance exec --stream'",
-			"Use -o json for a single envelope, or add --stream on a supported streaming command.",
+			"-o ndjson is only supported by streaming commands",
+			"Use -o json for a single envelope. Streaming commands include 'instance code run --stream' and 'instance exec --stream'; 'agr schema -o json' lists SupportsNdjson per command.",
 		)
 	}
 	return output.NewUsageError(
 		"INVALID_CONFIG",
-		"-o ndjson is only supported with 'instance code run --stream' and 'instance exec --stream'",
+		"-o ndjson is only supported by streaming commands",
 		"Set output to 'text' or 'json', or override with -o text/-o json for this command.",
 	)
 }
@@ -783,7 +784,7 @@ func isNDJSONAllowedCommand(cmd *cobra.Command) bool {
 	case "instance.code.run", "instance.exec":
 		return true
 	default:
-		return false
+		return cmd.Annotations[cmdtree.NDJSONAnnotation] == "true"
 	}
 }
 

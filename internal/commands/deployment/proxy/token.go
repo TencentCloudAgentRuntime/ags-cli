@@ -37,6 +37,29 @@ func newTokenManager(
 	return &tokenManager{lifecycle: lifecycle, acquire: acquire, now: now}
 }
 
+// NewTokenSource returns a refreshing Deployment token provider bound to
+// lifecycle, shared with harness data-plane commands.
+func NewTokenSource(lifecycle context.Context, cp ControlPlane, deploymentID string, now func() time.Time) func(context.Context) (string, error) {
+	return deploymentTokenManager(lifecycle, cp, deploymentID, now).Token
+}
+
+// NewPrefetchedTokenSource acquires the initial token synchronously under ctx,
+// then reuses the same cache and singleflight refresh under lifecycle. No caller
+// can use the source until the initial acquisition has completed.
+func NewPrefetchedTokenSource(ctx, lifecycle context.Context, cp ControlPlane, deploymentID string, now func() time.Time) (func(context.Context) (string, error), error) {
+	manager := deploymentTokenManager(lifecycle, cp, deploymentID, now)
+	if _, err := manager.refresh(ctx); err != nil {
+		return nil, err
+	}
+	return manager.Token, nil
+}
+
+func deploymentTokenManager(lifecycle context.Context, cp ControlPlane, deploymentID string, now func() time.Time) *tokenManager {
+	return newTokenManager(lifecycle, func(ctx context.Context) (*ags.AcquireDeploymentTokenResponseParams, error) {
+		return acquireToken(ctx, cp, deploymentID)
+	}, now)
+}
+
 func (m *tokenManager) Token(ctx context.Context) (string, error) {
 	if token, fresh := m.current(true); fresh {
 		return token, nil
@@ -47,28 +70,7 @@ func (m *tokenManager) Token(ctx context.Context) (string, error) {
 		if token, fresh := m.current(true); fresh {
 			return token, nil
 		}
-		response, err := m.acquire(m.lifecycle)
-		if err != nil {
-			return m.fallback(err)
-		}
-		if response == nil || response.Token == nil || strings.TrimSpace(*response.Token) == "" {
-			return m.fallback(fmt.Errorf("deployment token response did not contain a token"))
-		}
-		if response.ExpiresAt == nil {
-			return m.fallback(fmt.Errorf("deployment token response did not contain an expiry"))
-		}
-		expires, err := time.Parse(time.RFC3339, *response.ExpiresAt)
-		if err != nil {
-			return m.fallback(fmt.Errorf("invalid deployment token expiry: %w", err))
-		}
-		if !expires.After(m.now()) {
-			return m.fallback(fmt.Errorf("deployment token is already expired"))
-		}
-		token := *response.Token
-		m.mu.Lock()
-		m.token, m.expires = token, expires
-		m.mu.Unlock()
-		return token, nil
+		return m.refresh(m.lifecycle)
 	})
 	select {
 	case <-ctx.Done():
@@ -80,6 +82,31 @@ func (m *tokenManager) Token(ctx context.Context) (string, error) {
 		token, _ := resolved.Val.(string)
 		return token, nil
 	}
+}
+
+func (m *tokenManager) refresh(ctx context.Context) (string, error) {
+	response, err := m.acquire(ctx)
+	if err != nil {
+		return m.fallback(err)
+	}
+	if response == nil || response.Token == nil || strings.TrimSpace(*response.Token) == "" {
+		return m.fallback(fmt.Errorf("deployment token response did not contain a token"))
+	}
+	if response.ExpiresAt == nil {
+		return m.fallback(fmt.Errorf("deployment token response did not contain an expiry"))
+	}
+	expires, err := time.Parse(time.RFC3339, *response.ExpiresAt)
+	if err != nil {
+		return m.fallback(fmt.Errorf("invalid deployment token expiry: %w", err))
+	}
+	if !expires.After(m.now()) {
+		return m.fallback(fmt.Errorf("deployment token is already expired"))
+	}
+	token := *response.Token
+	m.mu.Lock()
+	m.token, m.expires = token, expires
+	m.mu.Unlock()
+	return token, nil
 }
 
 func (m *tokenManager) current(requireFresh bool) (string, bool) {

@@ -2,6 +2,37 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
+## [0.9.0-preview.1] - 2026-11-20
+
+### 破坏性变更
+- 本版本没有破坏性变更。
+
+### 新功能
+- 新增托管 Harness 命令 `agr harness`。支持查看可用引擎、在草稿中配置多个模型并
+  选择默认模型，以及关联 Skill、Plugin 和 Session Space。可查看状态和修订差异、
+  等待发布或删除完成，并通过重新发布历史修订实现回滚。运行中的实例保留启动时的
+  配置。
+- 新增 `agr model-provider`，支持注册 TokenHub 或 OpenAI 兼容模型，并管理模型
+  提供方的配置与修订。Harness 修订会固定所用的模型提供方修订。
+- 通过 `agr harness tool list` 和 `agr harness tool get` 浏览 Marketplace
+  的 Skill、Plugin 和 MCP 服务。支持关联固定的 Registry 版本，或直接接入
+  Streamable HTTP MCP 地址，并按需配置请求头和托管凭据。
+- 通过 `agr harness endpoint --check` 检查 ACP 是否就绪。使用
+  `agr harness prompt` 发送提示、续接会话和流式输出 NDJSON。
+  编辑器可通过 `agr harness acp` 使用 stdio，也可通过 `agr harness proxy`
+  使用本地 HTTP ACP。
+- 通过 `agr harness web` 打开已发布的 DSH Harness 控制台。CLI 会等待页面就绪后
+  启动浏览器。使用 `--no-open` 可直接输出 URL，跳过就绪请求。
+
+### Bug 修复
+- 改进正式版和预览版的 NDJSON 输出错误提示。显式指定 `-o ndjson` 但当前命令
+  不支持时，CLI 会提示通过 `agr schema -o json` 查找支持流式输出的命令。
+
+### 文档
+- 新增中英文托管 Harness 指南，涵盖环境准备、会话续接、MCP、DSH Web、修订发布与
+  回滚及资源清理。
+- 补充 ACP SDK 的 Apache-2.0 归属声明。
+
 ## [0.8.0-preview.3] - 2026-11-19
 
 ### 破坏性变更

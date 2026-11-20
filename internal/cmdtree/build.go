@@ -14,6 +14,9 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// NDJSONAnnotation marks Cobra commands whose Spec opts into -o ndjson.
+const NDJSONAnnotation = "agr.command.ndjson"
+
 // Options controls how a command registry is projected into Cobra commands.
 type Options struct {
 	RootUse   string
@@ -213,6 +216,10 @@ func BuildModuleCommand(module command.Module, deps command.Deps) (*cobra.Comman
 	}
 	use := defaultString(spec.Use, spec.Path[len(spec.Path)-1])
 	long, examples := commandHelpText(spec)
+	annotations := map[string]string{"agr.command.id": spec.ID, "agr.command.source": module.Descriptor.Source}
+	if spec.SupportsNDJSON {
+		annotations[NDJSONAnnotation] = "true"
+	}
 	cmd := &cobra.Command{
 		Use:         use,
 		Short:       spec.Short,
@@ -221,7 +228,7 @@ func BuildModuleCommand(module command.Module, deps command.Deps) (*cobra.Comman
 		Aliases:     spec.Aliases,
 		Hidden:      spec.Hidden,
 		Args:        argsValidator(spec),
-		Annotations: map[string]string{"agr.command.id": spec.ID, "agr.command.source": module.Descriptor.Source},
+		Annotations: annotations,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runtime, err := module.Build(deps)
 			if err != nil {
