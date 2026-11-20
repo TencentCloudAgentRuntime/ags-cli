@@ -23,44 +23,91 @@ var endpointMCPHTTP = http.Client{
 	},
 }
 
-type endpointMCPSession struct{ address, token, session, version string }
-
-func endpointMCPStatus(ctx context.Context, address, token string) (int, error) {
-	client := endpointMCPSession{address: address, token: token}
-	_, status, _, err := client.initialize(ctx)
-	return status, err
+type endpointMCPSession struct {
+	address, token, session, version string
+	client                           *http.Client
+	closed                           bool
 }
 
-func openEndpointMCPSession(ctx context.Context, address, token string) (endpointMCPSession, error) {
-	client := endpointMCPSession{address: address, token: token}
-	result, status, session, err := client.initialize(ctx)
+func newEndpointMCPSession(address, token string) *endpointMCPSession {
+	return &endpointMCPSession{address: address, token: token, client: &endpointMCPHTTP}
+}
+
+func (c *endpointMCPSession) open(ctx context.Context, registerCleanup func(func(context.Context) error)) error {
+	status, err := c.initialize(ctx, registerCleanup)
 	if err != nil {
-		return client, err
+		return err
 	}
-	if status != http.StatusOK || session == "" || result.String("protocolVersion") != endpointMCPVersion {
-		return client, errors.New("metrics fixture failed to initialize an MCP session")
+	if status != http.StatusOK {
+		return fmt.Errorf("initialize metrics fixture MCP session returned HTTP %d", status)
 	}
-	client.session, client.version = session, endpointMCPVersion
-	_, status, _, err = client.post(ctx, 0, "notifications/initialized", nil)
+	_, status, err = c.post(ctx, 0, "notifications/initialized", nil)
 	if err != nil {
-		return client, err
+		return err
 	}
 	if status != http.StatusAccepted {
-		return client, errors.New("metrics fixture MCP initialization notification was rejected")
+		return errors.New("metrics fixture MCP initialization notification was rejected")
 	}
-	return client, nil
+	return nil
 }
 
-func (c endpointMCPSession) initialize(ctx context.Context) (apivalue.Object, int, string, error) {
-	return c.post(ctx, 1, "initialize", map[string]any{
+func (c *endpointMCPSession) initialize(ctx context.Context, registerCleanup func(func(context.Context) error)) (int, error) {
+	resp, err := c.postRequest(ctx, 1, "initialize", map[string]any{
 		"protocolVersion": endpointMCPVersion,
 		"capabilities":    map[string]any{},
 		"clientInfo":      map[string]string{"name": "agr-preview-e2e", "version": "1"},
 	})
+	if err != nil {
+		return 0, err
+	}
+	// Capture the session before decoding the response body or sending the
+	// initialized notification. Both operations can fail after it was created.
+	c.session = resp.Header.Get("Mcp-Session-Id")
+	if c.session != "" {
+		registerCleanup(c.close)
+	}
+	result, status, err := readEndpointMCPResponse(resp, 1, "initialize")
+	if err != nil || status != http.StatusOK {
+		return status, err
+	}
+	if c.session == "" || result.String("protocolVersion") != endpointMCPVersion {
+		return status, errors.New("invalid Endpoint MCP session or protocol version")
+	}
+	c.version = endpointMCPVersion
+	return status, nil
 }
 
-func (c endpointMCPSession) invokeFixture(ctx context.Context, fixture endpointMetricFixture, count int) error {
-	list, status, _, err := c.post(ctx, 2, "tools/list", nil)
+func (c *endpointMCPSession) close(ctx context.Context) error {
+	if c.closed || c.session == "" {
+		return nil
+	}
+	resp, err := c.request(ctx, http.MethodDelete, nil)
+	if err != nil {
+		return err
+	}
+	status := resp.StatusCode
+	if err := resp.Body.Close(); err != nil {
+		return errors.New("failed to close the MCP session deletion response body")
+	}
+	if status != http.StatusNoContent && status != http.StatusNotFound {
+		return fmt.Errorf("delete Endpoint MCP session returned HTTP %d", status)
+	}
+	// Confirm the session is gone while the same bearer is still valid.
+	// A 404 also permits retrying after a successful DELETE whose response
+	// was lost. Authorization or transport failures cannot confirm cleanup.
+	_, status, err = c.post(ctx, 1, "ping", nil)
+	if err != nil {
+		return err
+	}
+	if status != http.StatusNotFound {
+		return fmt.Errorf("could not confirm Endpoint MCP session termination (HTTP %d)", status)
+	}
+	c.closed = true
+	return nil
+}
+
+func (c *endpointMCPSession) invokeFixture(ctx context.Context, fixture endpointMetricFixture, count int) error {
+	list, status, err := c.post(ctx, 2, "tools/list", nil)
 	if err != nil {
 		return err
 	}
@@ -79,7 +126,7 @@ func (c endpointMCPSession) invokeFixture(ctx context.Context, fixture endpointM
 		return errors.New("configured metrics fixture MCP tool was not discovered")
 	}
 	for i := range count {
-		result, status, _, err := c.post(ctx, i+3, "tools/call", map[string]any{"name": name, "arguments": fixture.arguments})
+		result, status, err := c.post(ctx, i+3, "tools/call", map[string]any{"name": name, "arguments": fixture.arguments})
 		if err != nil {
 			return err
 		}
@@ -91,11 +138,15 @@ func (c endpointMCPSession) invokeFixture(ctx context.Context, fixture endpointM
 	return nil
 }
 
-func (c endpointMCPSession) post(ctx context.Context, id int, method string, params any) (apivalue.Object, int, string, error) {
-	address, err := url.Parse(c.address)
-	if err != nil || address.Scheme != "https" || address.Hostname() == "" || address.User != nil {
-		return nil, 0, "", errors.New("invalid HTTPS MCP URL returned by the endpoint")
+func (c *endpointMCPSession) post(ctx context.Context, id int, method string, params any) (apivalue.Object, int, error) {
+	resp, err := c.postRequest(ctx, id, method, params)
+	if err != nil {
+		return nil, 0, err
 	}
+	return readEndpointMCPResponse(resp, id, method)
+}
+
+func (c *endpointMCPSession) postRequest(ctx context.Context, id int, method string, params any) (*http.Response, error) {
 	payload, err := json.Marshal(struct {
 		JSONRPC string `json:"jsonrpc"`
 		ID      int    `json:"id,omitempty"`
@@ -103,23 +154,42 @@ func (c endpointMCPSession) post(ctx context.Context, id int, method string, par
 		Params  any    `json:"params,omitempty"`
 	}{"2.0", id, method, params})
 	if err != nil {
-		return nil, 0, "", errors.New("cannot encode Endpoint MCP request")
+		return nil, errors.New("cannot encode Endpoint MCP request")
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, address.String(), bytes.NewReader(payload))
+	return c.request(ctx, http.MethodPost, bytes.NewReader(payload))
+}
+
+func (c *endpointMCPSession) request(ctx context.Context, method string, body io.Reader) (*http.Response, error) {
+	address, err := url.Parse(c.address)
+	if err != nil || address.Scheme != "https" || address.Hostname() == "" || address.User != nil {
+		return nil, errors.New("invalid HTTPS MCP URL returned by the endpoint")
+	}
+	req, err := http.NewRequestWithContext(ctx, method, address.String(), body)
 	if err != nil {
-		return nil, 0, "", errors.New("cannot build Endpoint MCP request")
+		return nil, errors.New("cannot build Endpoint MCP request")
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	if c.session != "" {
 		req.Header.Set("Mcp-Session-Id", c.session)
-		req.Header.Set("MCP-Protocol-Version", c.version)
+		// After an invalid initialize response, the session ID can still be
+		// used for cleanup without asserting an unconfirmed protocol version.
+		if c.version != "" {
+			req.Header.Set("MCP-Protocol-Version", c.version)
+		}
 	}
-	resp, err := endpointMCPHTTP.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, 0, "", fmt.Errorf("send Endpoint MCP %s request failed", method)
+		return nil, fmt.Errorf("send Endpoint MCP %s request failed", method)
 	}
+	return resp, nil
+}
+
+func readEndpointMCPResponse(resp *http.Response, id int, method string) (apivalue.Object, int, error) {
+	status := resp.StatusCode
 	var envelope struct {
 		JSONRPC string
 		ID      int
@@ -127,15 +197,15 @@ func (c endpointMCPSession) post(ctx context.Context, id int, method string, par
 		Error   *struct{ Code int }
 	}
 	var decodeErr error
-	if resp.StatusCode == http.StatusOK {
+	if status == http.StatusOK {
 		decodeErr = json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&envelope)
 	}
 	if err := resp.Body.Close(); err != nil {
-		return nil, 0, "", errors.New("failed to close the MCP response body")
+		return nil, status, errors.New("failed to close the MCP response body")
 	}
-	if resp.StatusCode == http.StatusOK &&
+	if status == http.StatusOK &&
 		(decodeErr != nil || envelope.JSONRPC != "2.0" || envelope.ID != id || envelope.Error != nil || envelope.Result == nil) {
-		return nil, 0, "", fmt.Errorf("invalid or unsuccessful Endpoint MCP %s response", method)
+		return nil, status, fmt.Errorf("invalid or unsuccessful Endpoint MCP %s response", method)
 	}
-	return envelope.Result, resp.StatusCode, resp.Header.Get("Mcp-Session-Id"), nil
+	return envelope.Result, status, nil
 }

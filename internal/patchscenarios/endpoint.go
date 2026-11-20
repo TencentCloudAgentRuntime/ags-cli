@@ -326,16 +326,24 @@ func runEndpointToken(s *patchtest.Session, endpoint apivalue.Object) error {
 		permanent.String("Name") == "permanent" && permanent["ExpiresAt"] == nil); err != nil {
 		return err
 	}
-	before, err := endpointMCPStatus(ctx, endpoint.String("MCPURL"), bearer)
-	if err != nil || before != http.StatusOK {
+	probe := newEndpointMCPSession(endpoint.String("MCPURL"), bearer)
+	before, err := probe.initialize(ctx, s.Cleanup)
+	if err != nil {
+		return err
+	}
+	if before != http.StatusOK {
 		return fmt.Errorf("issued Token did not authenticate the MCP request (HTTP %d)", before)
+	}
+	if err := probe.close(ctx); err != nil {
+		return err
 	}
 	for range 2 {
 		if _, err := run("revoke", "--token-id", id); err != nil {
 			return err
 		}
 	}
-	after, err := endpointMCPStatus(ctx, endpoint.String("MCPURL"), bearer)
+	revokedProbe := newEndpointMCPSession(endpoint.String("MCPURL"), bearer)
+	after, err := revokedProbe.initialize(ctx, s.Cleanup)
 	if err != nil {
 		return err
 	}

@@ -64,6 +64,8 @@ verified cleanup, and uses the Registry fixture as a read-only dependency. The
 Token check calls the MCP URL before and after revocation. Metrics use one
 successful tool call on the first Endpoint and four on the second, then wait for
 scraped samples and verify both Endpoint series in summary and trend responses.
+The scenario closes all legacy MCP sessions and confirms that their IDs are
+rejected while the Endpoint and Token are still active.
 The strict `api-patch-e2e` runner uses the same fixture variables.
 
 ## Sandbox keepalive and log format (preview)

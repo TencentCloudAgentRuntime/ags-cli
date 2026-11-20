@@ -17,7 +17,7 @@ import (
 
 type endpointMetricFixture struct {
 	tool      string
-	arguments map[string]any
+	arguments json.RawMessage
 }
 
 func loadEndpointMetricFixture() (endpointMetricFixture, error) {
@@ -29,9 +29,11 @@ func loadEndpointMetricFixture() (endpointMetricFixture, error) {
 	if raw == "" {
 		raw = "{}"
 	}
-	if json.Unmarshal([]byte(raw), &fixture.arguments) != nil || fixture.arguments == nil {
+	arguments := json.RawMessage(strings.TrimSpace(raw))
+	if len(arguments) == 0 || arguments[0] != '{' || !json.Valid(arguments) {
 		return fixture, errors.New("AGR_ENDPOINT_FIXTURE_ARGUMENTS must be a JSON object")
 	}
+	fixture.arguments = arguments
 	return fixture, nil
 }
 
@@ -39,7 +41,7 @@ func runEndpointMetrics(s *patchtest.Session, first, second, version apivalue.Ob
 	ctx := s.Context
 	endpoints := []apivalue.Object{first, second}
 	ids := [2]string{first.String("EndpointId"), second.String("EndpointId")}
-	clients := make([]endpointMCPSession, 0, len(endpoints))
+	clients := make([]*endpointMCPSession, 0, len(endpoints))
 	for i, endpoint := range endpoints {
 		if _, err := endpointCall(s, ctx, "target create", "--endpoint-id", ids[i],
 			"--registry-id", version.String("RegistryId"), "--record-id", version.String("RecordId"),
@@ -50,8 +52,8 @@ func runEndpointMetrics(s *patchtest.Session, first, second, version apivalue.Ob
 		if err != nil {
 			return err
 		}
-		client, err := openEndpointMCPSession(ctx, endpoint.String("MCPURL"), token.String("Token"))
-		if err != nil {
+		client := newEndpointMCPSession(endpoint.String("MCPURL"), token.String("Token"))
+		if err := client.open(ctx, s.Cleanup); err != nil {
 			return err
 		}
 		clients = append(clients, client)
@@ -63,6 +65,11 @@ func runEndpointMetrics(s *patchtest.Session, first, second, version apivalue.Ob
 	for i, count := range []int{1, 4} {
 		if err := clients[i].invokeFixture(ctx, fixture, count); err != nil {
 			return fmt.Errorf("metrics fixture Endpoint %d: %w", i+1, err)
+		}
+	}
+	for _, client := range clients {
+		if err := client.close(ctx); err != nil {
+			return err
 		}
 	}
 	// Give the final call time to be scraped and use one complete trend
