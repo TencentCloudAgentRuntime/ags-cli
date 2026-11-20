@@ -27,6 +27,22 @@ import (
 	deploymentlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/list"
 	deploymentproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/proxy"
 	deploymentupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/deployment/update"
+	endpointcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/create"
+	endpointdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/delete"
+	endpointget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/get"
+	endpointlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/list"
+	endpointmetrics "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/metrics"
+	endpointtargetcandidates "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/candidates"
+	endpointtargetcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/create"
+	endpointtargetdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/delete"
+	endpointtargetget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/get"
+	endpointtargetlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/list"
+	endpointtargetsync "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/sync"
+	endpointtargetupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/target/update"
+	endpointtokencreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/token/create"
+	endpointtokenlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/token/list"
+	endpointtokenrevoke "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/token/revoke"
+	endpointupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/endpoint/update"
 	eventlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/event/list"
 	gpugroupdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/group/delete"
 	gpugrouplist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/group/list"
@@ -163,6 +179,22 @@ func Registry() (*command.Registry, error) {
 		deploymentlist.Module(),
 		deploymentproxy.Module(),
 		deploymentupdate.Module(),
+		endpointcreate.GeneratedModule(),
+		endpointdelete.GeneratedModule(),
+		endpointget.GeneratedModule(),
+		endpointlist.GeneratedModule(),
+		endpointmetrics.GeneratedModule(),
+		endpointtargetcandidates.GeneratedModule(),
+		endpointtargetcreate.GeneratedModule(),
+		endpointtargetdelete.GeneratedModule(),
+		endpointtargetget.GeneratedModule(),
+		endpointtargetlist.GeneratedModule(),
+		endpointtargetsync.GeneratedModule(),
+		endpointtargetupdate.GeneratedModule(),
+		endpointtokencreate.GeneratedModule(),
+		endpointtokenlist.GeneratedModule(),
+		endpointtokenrevoke.GeneratedModule(),
+		endpointupdate.GeneratedModule(),
 		eventlist.Module(),
 		gpugroupdelete.GeneratedModule(),
 		gpugrouplist.Module(),

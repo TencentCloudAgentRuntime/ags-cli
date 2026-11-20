@@ -86,6 +86,8 @@ func groupShort(group string) string {
 		return "Manage image pre-cache tasks"
 	case "deployment":
 		return "Manage deployments"
+	case "endpoint":
+		return "Manage Agent Runtime Endpoints (preview)"
 	case "event":
 		return "Query operational events"
 	case "gpu":
@@ -114,6 +116,8 @@ func groupLong(group string) string {
 		return "Manage API keys for AGR sandbox access."
 	case "deployment":
 		return "Manage deployments and related data-plane workflows."
+	case "endpoint":
+		return "Manage Endpoint configuration, pinned Registry Targets, bearer Tokens, and invocation metrics. Requires a preview build and a Cloud API environment with Endpoint support."
 	case "event":
 		return "Browse operational events in the configured account and region. Use list to filter resources, switch between Raw details and Aggregate results, and page through a fixed time window. Session conversation events use 'agr session event list'."
 	case "gpu":
@@ -158,6 +162,14 @@ func parserForField(m apimeta.Member, fm *apimeta.FieldMapping) string {
 }
 
 func subgroupShort(group, sub string) string {
+	if group == "endpoint" {
+		switch sub {
+		case "target":
+			return "Manage pinned Endpoint Targets"
+		case "token":
+			return "Manage Endpoint bearer Tokens"
+		}
+	}
 	if group == "gpu" {
 		switch sub {
 		case "group":

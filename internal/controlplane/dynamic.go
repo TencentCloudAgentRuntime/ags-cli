@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apimeta"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -35,6 +36,21 @@ func (s *SDK) callDynamic(ctx context.Context, action string, request map[string
 	}
 	if failure := response.Object("Error"); failure != nil {
 		return nil, client.ClassifyCloudError(diagnose(sdkerrors.NewTencentCloudSDKError(failure.String("Code"), failure.String("Message"), response.String("RequestId"))))
+	}
+	if action == "CreateEndpointToken" {
+		tokenID := strings.TrimSpace(response.String("TokenId"))
+		if tokenID == "" || strings.TrimSpace(response.String("Token")) == "" {
+			details := map[string]any{"RequestId": response.String("RequestId")}
+			if tokenID != "" {
+				details["TokenId"] = tokenID
+			}
+			return nil, output.NewCLIError(&output.Failure{
+				Code: "ENDPOINT_TOKEN_INCOMPLETE", Kind: output.KindGenericError,
+				Message: "token issuance returned an incomplete response",
+				Hint:    "List Endpoint tokens and revoke the incomplete issuance before retrying.",
+				Details: details,
+			})
+		}
 	}
 	if action == "StartSandboxInstance" {
 		instance := response.Object("Instance")

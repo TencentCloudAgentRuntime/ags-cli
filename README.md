@@ -496,6 +496,36 @@ agent, talking over ACP, publishing revisions and rolling back. The
 recovery, real MCP tools and cleanup. Publishing affects new instances; existing
 instances keep their snapshot.
 
+## Agent Runtime Endpoints (preview)
+
+`agr endpoint` is available in preview builds. Set `AGR_REGION` and
+`AGR_CLOUD_ENDPOINT` to an environment where the Endpoint management API is
+enabled, and use a Tencent Cloud identity with the required CAM permissions.
+
+| Command | Purpose |
+| --- | --- |
+| `endpoint create/list/get/update/delete` | Manage Endpoint configuration and retrieve its MCP URL. |
+| `endpoint target candidates/create/list/get/update/sync/delete` | Discover compatible Registry versions, attach an explicit version, switch versions, or resync the pinned version. |
+| `endpoint token create/list/revoke` | Issue and rotate Endpoint bearer credentials. |
+| `endpoint metrics` | Query invocation counts, P95 latency, and error rates across Endpoints. |
+
+```bash
+agr endpoint get --endpoint-id "$endpoint_id" -o json
+agr endpoint target candidates --endpoint-id "$endpoint_id" -o json
+agr endpoint metrics --endpoint-ids "$endpoint_id" \
+  --metric-names InvocationCount --metric-names P95LatencyMs --metric-names ErrorRate -o json
+```
+
+Use the current `Revision` with `--expected-revision` for Endpoint and Target
+updates and deletions, and for Target sync. Target creation takes explicit
+`--registry-id`, `--record-id`, and `--version-id` values. Use
+`--description=` or `--path-alias=` on an update to clear those fields.
+
+`agr endpoint token create` returns the bearer credential once. Store it
+securely and send it as `Authorization: Bearer <token>` to the server-returned
+data-plane URL. For token rotation, issue and deploy a replacement before
+revoking the old token by `--token-id`.
+
 ## Cloud endpoint vs data-plane domain
 
 | Flag                         | Default                  | Controls                         |

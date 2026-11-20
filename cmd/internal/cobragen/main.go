@@ -628,6 +628,22 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"delete:deployment"}
 	case "deployment.update":
 		return []string{"update:deployment"}
+	case "endpoint.create":
+		return []string{"create:endpoint"}
+	case "endpoint.delete":
+		return []string{"delete:endpoint"}
+	case "endpoint.update":
+		return []string{"update:endpoint"}
+	case "endpoint.target.create":
+		return []string{"create:endpoint-target"}
+	case "endpoint.target.delete":
+		return []string{"delete:endpoint-target"}
+	case "endpoint.target.update", "endpoint.target.sync":
+		return []string{"update:endpoint-target"}
+	case "endpoint.token.create":
+		return []string{"create:endpoint-token"}
+	case "endpoint.token.revoke":
+		return []string{"update:endpoint-token"}
 	case "session.space.create":
 		return []string{"create:session-space"}
 	case "session.space.delete":

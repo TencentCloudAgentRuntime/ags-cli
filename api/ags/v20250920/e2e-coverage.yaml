@@ -10686,3 +10686,4080 @@ coverage:
   - entry: /objects/TokenHubSource/usage
     scenario: harness.lifecycle
     assertions: [provider.create]
+  - entry: /actions/CreateEndpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /actions/CreateEndpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /actions/CreateEndpoint/input
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /actions/CreateEndpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /actions/CreateEndpoint/output
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /actions/CreateEndpoint/status
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /actions/CreateEndpointTarget/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /actions/CreateEndpointTarget/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /actions/CreateEndpointTarget/input
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /actions/CreateEndpointTarget/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /actions/CreateEndpointTarget/output
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /actions/CreateEndpointTarget/status
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /actions/CreateEndpointToken/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /actions/CreateEndpointToken/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /actions/CreateEndpointToken/input
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /actions/CreateEndpointToken/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /actions/CreateEndpointToken/output
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /actions/CreateEndpointToken/status
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /actions/DeleteEndpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /actions/DeleteEndpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /actions/DeleteEndpoint/input
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /actions/DeleteEndpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /actions/DeleteEndpoint/output
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /actions/DeleteEndpoint/status
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /actions/DeleteEndpointTarget/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /actions/DeleteEndpointTarget/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /actions/DeleteEndpointTarget/input
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /actions/DeleteEndpointTarget/name
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /actions/DeleteEndpointTarget/output
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /actions/DeleteEndpointTarget/status
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /actions/DescribeEndpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /actions/DescribeEndpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /actions/DescribeEndpoint/input
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /actions/DescribeEndpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /actions/DescribeEndpoint/output
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /actions/DescribeEndpoint/status
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /actions/DescribeEndpointList/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /actions/DescribeEndpointList/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /actions/DescribeEndpointList/input
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /actions/DescribeEndpointList/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /actions/DescribeEndpointList/output
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /actions/DescribeEndpointList/status
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /actions/DescribeEndpointMetrics/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /actions/DescribeEndpointMetrics/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /actions/DescribeEndpointMetrics/input
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /actions/DescribeEndpointMetrics/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /actions/DescribeEndpointMetrics/output
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /actions/DescribeEndpointMetrics/status
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /actions/DescribeEndpointTarget/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /actions/DescribeEndpointTarget/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /actions/DescribeEndpointTarget/input
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /actions/DescribeEndpointTarget/name
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /actions/DescribeEndpointTarget/output
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /actions/DescribeEndpointTarget/status
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /actions/DescribeEndpointTargetCandidateList/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /actions/DescribeEndpointTargetCandidateList/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /actions/DescribeEndpointTargetCandidateList/input
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /actions/DescribeEndpointTargetCandidateList/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /actions/DescribeEndpointTargetCandidateList/output
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /actions/DescribeEndpointTargetCandidateList/status
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /actions/DescribeEndpointTargetList/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /actions/DescribeEndpointTargetList/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /actions/DescribeEndpointTargetList/input
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /actions/DescribeEndpointTargetList/name
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /actions/DescribeEndpointTargetList/output
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /actions/DescribeEndpointTargetList/status
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /actions/DescribeEndpointTokenList/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /actions/DescribeEndpointTokenList/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /actions/DescribeEndpointTokenList/input
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /actions/DescribeEndpointTokenList/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /actions/DescribeEndpointTokenList/output
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /actions/DescribeEndpointTokenList/status
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /actions/ModifyEndpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /actions/ModifyEndpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /actions/ModifyEndpoint/input
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /actions/ModifyEndpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /actions/ModifyEndpoint/output
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /actions/ModifyEndpoint/status
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /actions/ModifyEndpointTarget/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /actions/ModifyEndpointTarget/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /actions/ModifyEndpointTarget/input
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /actions/ModifyEndpointTarget/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /actions/ModifyEndpointTarget/output
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /actions/ModifyEndpointTarget/status
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /actions/RevokeEndpointToken/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /actions/RevokeEndpointToken/document
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /actions/RevokeEndpointToken/input
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /actions/RevokeEndpointToken/name
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /actions/RevokeEndpointToken/output
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /actions/RevokeEndpointToken/status
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /actions/SyncEndpointTarget/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /actions/SyncEndpointTarget/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /actions/SyncEndpointTarget/input
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /actions/SyncEndpointTarget/name
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /actions/SyncEndpointTarget/output
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /actions/SyncEndpointTarget/status
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/CreateEndpointRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/members/QPS/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/Endpoint/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/CreateEndpointTargetRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/PathAlias/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RecordId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/RegistryId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/members/VersionId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/members/Target/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTargetResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create]
+  - entry: /objects/CreateEndpointTokenRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/ExpiresIn/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/ExpiresAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/Token/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/members/TokenId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/CreateEndpointTokenResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [token.create]
+  - entry: /objects/DeleteEndpointRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/members/ExpectedRevision/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.delete, endpoint.conflict]
+  - entry: /objects/DeleteEndpointTargetRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/member
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/name
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/required
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/ExpectedRevision/type
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/members/TargetId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DeleteEndpointTargetResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.delete]
+  - entry: /objects/DescribeEndpointListRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/EndpointSet/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/members/TotalCount/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointListResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.list]
+  - entry: /objects/DescribeEndpointMetricsRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndTime/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/EndpointIds/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/MetricNames/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/Period/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/members/StartTime/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Period/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/Results/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowEndTime/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/members/WindowStartTime/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointMetricsResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/DescribeEndpointRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/Endpoint/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.get]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/CandidateSet/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/members/TotalCount/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetCandidateListResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/DescribeEndpointTargetListRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/member
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/name
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/type
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TargetSet/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/document
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/member
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/name
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/required
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/type
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/members/TotalCount/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetListResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.list]
+  - entry: /objects/DescribeEndpointTargetRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/members/TargetId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/document
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/member
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/name
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/required
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/type
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/members/Target/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTargetResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.get]
+  - entry: /objects/DescribeEndpointTokenListRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Limit/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/members/Offset/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TokenSet/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/members/TotalCount/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/DescribeEndpointTokenListResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointInfo/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/CreatedAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Description/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/EndpointId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/InboundAuthType/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/MCPURL/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Name/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/QPS/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Revision/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/Status/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/members/UpdatedAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointInfo/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.create]
+  - entry: /objects/EndpointMetricResult/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/Data/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/members/MetricName/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointMetricResult/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.metrics]
+  - entry: /objects/EndpointTargetCandidate/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Compatibility/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Description/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Protocol/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RecordName/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/RegistryName/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/Stable/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/StatusReason/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/document
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/member
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/name
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/required
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/members/VersionName/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetCandidate/type
+    scenario: endpoint.lifecycle
+    assertions: [target.candidates]
+  - entry: /objects/EndpointTargetInfo/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Availability/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/BackendAuthType/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/CreatedAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Description/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/EndpointId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/InvocationURL/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Name/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/PathAlias/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Protocol/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RecordId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/RegistryId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Revision/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/SourceType/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Status/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/StatusReason/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/TargetId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/Type/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/UpdatedAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/members/VersionId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTargetInfo/type
+    scenario: endpoint.lifecycle
+    assertions: [target.create, target.update]
+  - entry: /objects/EndpointTokenInfo/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/CreatedAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/ExpiresAt/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Name/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/Status/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/members/TokenId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/EndpointTokenInfo/type
+    scenario: endpoint.lifecycle
+    assertions: [token.list]
+  - entry: /objects/ModifyEndpointRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/ExpectedRevision/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/QPS/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/members/Status/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/Endpoint/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [endpoint.update]
+  - entry: /objects/ModifyEndpointTargetRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Description/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/ExpectedRevision/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Name/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/PathAlias/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/Status/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/TargetId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/members/VersionId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/document
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/member
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/name
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/required
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/members/Target/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/ModifyEndpointTargetResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.update]
+  - entry: /objects/RevokeEndpointTokenRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/members/TokenId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/RevokeEndpointTokenResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [token.revoke]
+  - entry: /objects/SyncEndpointTargetRequest/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/EndpointId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/member
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/name
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/ExpectedRevision/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/members/TargetId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetRequest/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/member
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/name
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/RequestId/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/@exists
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/disabled
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/document
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/member
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/name
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/output_required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/required
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/members/Target/value_allowed_null
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]
+  - entry: /objects/SyncEndpointTargetResponse/type
+    scenario: endpoint.lifecycle
+    assertions: [target.sync, target.conflict]

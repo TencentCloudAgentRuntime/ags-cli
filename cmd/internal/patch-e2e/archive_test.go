@@ -17,7 +17,7 @@ func TestArchivedRunnerUsesCommittedScenarios(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := t.TempDir()
-	for _, dir := range []string{"cmd/internal/patch-e2e", "internal/apimeta", "internal/patchcoverage", "internal/patchtest", "internal/patchscenarios"} {
+	for _, dir := range []string{"cmd/internal/patch-e2e", "internal/apimeta", "internal/apivalue", "internal/patchcoverage", "internal/patchtest", "internal/patchscenarios"} {
 		if err := os.CopyFS(filepath.Join(root, dir), os.DirFS(filepath.Join(source, dir))); err != nil {
 			t.Fatal(err)
 		}

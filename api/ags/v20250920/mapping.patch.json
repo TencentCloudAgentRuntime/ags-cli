@@ -591,5 +591,196 @@
         }
       }
     }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateEndpoint",
+    "value": {
+      "command": "endpoint.create",
+      "request": "CreateEndpointRequest",
+      "response": "CreateEndpointResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointList",
+    "value": {
+      "command": "endpoint.list",
+      "request": "DescribeEndpointListRequest",
+      "response": "DescribeEndpointListResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpoint",
+    "value": {
+      "command": "endpoint.get",
+      "request": "DescribeEndpointRequest",
+      "response": "DescribeEndpointResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyEndpoint",
+    "value": {
+      "command": "endpoint.update",
+      "request": "ModifyEndpointRequest",
+      "response": "ModifyEndpointResponse",
+      "status": "mapped",
+      "fields": {
+        "Description": {
+          "allow_empty": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteEndpoint",
+    "value": {
+      "command": "endpoint.delete",
+      "request": "DeleteEndpointRequest",
+      "response": "DeleteEndpointResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointMetrics",
+    "value": {
+      "command": "endpoint.metrics",
+      "request": "DescribeEndpointMetricsRequest",
+      "response": "DescribeEndpointMetricsResponse",
+      "status": "mapped",
+      "fields": {
+        "EndpointIds": {
+          "inputs": [
+            {
+              "flag": "endpoint-ids",
+              "type": "string_array"
+            }
+          ]
+        },
+        "MetricNames": {
+          "inputs": [
+            {
+              "flag": "metric-names",
+              "type": "string_array"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTargetCandidateList",
+    "value": {
+      "command": "endpoint.target.candidates",
+      "request": "DescribeEndpointTargetCandidateListRequest",
+      "response": "DescribeEndpointTargetCandidateListResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateEndpointTarget",
+    "value": {
+      "command": "endpoint.target.create",
+      "request": "CreateEndpointTargetRequest",
+      "response": "CreateEndpointTargetResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTargetList",
+    "value": {
+      "command": "endpoint.target.list",
+      "request": "DescribeEndpointTargetListRequest",
+      "response": "DescribeEndpointTargetListResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTarget",
+    "value": {
+      "command": "endpoint.target.get",
+      "request": "DescribeEndpointTargetRequest",
+      "response": "DescribeEndpointTargetResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/ModifyEndpointTarget",
+    "value": {
+      "command": "endpoint.target.update",
+      "request": "ModifyEndpointTargetRequest",
+      "response": "ModifyEndpointTargetResponse",
+      "status": "mapped",
+      "fields": {
+        "Description": {
+          "allow_empty": true
+        },
+        "PathAlias": {
+          "allow_empty": true
+        }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DeleteEndpointTarget",
+    "value": {
+      "command": "endpoint.target.delete",
+      "request": "DeleteEndpointTargetRequest",
+      "response": "DeleteEndpointTargetResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/SyncEndpointTarget",
+    "value": {
+      "command": "endpoint.target.sync",
+      "request": "SyncEndpointTargetRequest",
+      "response": "SyncEndpointTargetResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/CreateEndpointToken",
+    "value": {
+      "command": "endpoint.token.create",
+      "request": "CreateEndpointTokenRequest",
+      "response": "CreateEndpointTokenResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/DescribeEndpointTokenList",
+    "value": {
+      "command": "endpoint.token.list",
+      "request": "DescribeEndpointTokenListRequest",
+      "response": "DescribeEndpointTokenListResponse",
+      "status": "mapped"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/actions/RevokeEndpointToken",
+    "value": {
+      "command": "endpoint.token.revoke",
+      "request": "RevokeEndpointTokenRequest",
+      "response": "RevokeEndpointTokenResponse",
+      "status": "mapped"
+    }
   }
 ]
