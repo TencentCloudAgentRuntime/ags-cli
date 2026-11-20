@@ -76,6 +76,10 @@ Copyright (c) 2017-2018 Tencent Ltd.
 
 3. github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common
 Copyright (c) 2017-2018 Tencent Ltd.
+
+4. github.com/coder/acp-go-sdk v0.13.5
+Copyright 2025 Coder Technologies, Inc.
+
 Terms of the Apache-2.0:
 --------------------------------------------------------------------
 Apache License

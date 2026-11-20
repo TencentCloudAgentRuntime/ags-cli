@@ -51,6 +51,11 @@ func (w *NDJSONWriter) WriteStderr(chunk string) error {
 	return w.writeEvent("stderr", map[string]string{"Chunk": chunk}, nil)
 }
 
+// WriteEvent emits a command-specific intermediate event.
+func (w *NDJSONWriter) WriteEvent(eventType string, data any) error {
+	return w.writeEvent(eventType, data, nil)
+}
+
 // WriteCompleted emits the terminal success event.
 func (w *NDJSONWriter) WriteCompleted(data any) error { return w.writeEvent("completed", data, nil) }
 

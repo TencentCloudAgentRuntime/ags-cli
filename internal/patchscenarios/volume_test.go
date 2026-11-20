@@ -118,10 +118,10 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 			}
 		})
 	}
-	t.Run("creating-volume-tags", func(t *testing.T) {
+	t.Run("creating-volume-and-template-tags", func(t *testing.T) {
 		volumeStorageEnv(t)
 		fixture := newVolumeFixture(t, "")
-		fixture.creatingVolumes = map[string]bool{}
+		fixture.asyncTags = true
 		server := httptest.NewTLSServer(fixture)
 		defer server.Close()
 		plan := patchcoverage.Plan{Bindings: []patchcoverage.Binding{
@@ -129,12 +129,12 @@ func TestVolumeLifecycleCandidate(t *testing.T) {
 		}}
 		results, err := patchtest.Run(t.Context(), plan, Registry, binary, volumeEnv(t, server.URL))
 		if err != nil || len(results) != 1 || results[0].Cleanup != "pass" {
-			t.Fatalf("asynchronous volume creation: err=%v results=%+v", err, results)
+			t.Fatalf("asynchronous creation: err=%v results=%+v", err, results)
 		}
 		fixture.mu.Lock()
 		defer fixture.mu.Unlock()
-		if fixture.creatingVolumeLists != 2 {
-			t.Fatalf("CREATING volume responses=%d, want 2", fixture.creatingVolumeLists)
+		if fixture.creatingVolumeLists != 2 || fixture.creatingTemplateLists != 2 {
+			t.Fatalf("CREATING readbacks: volumes=%d templates=%d, want 2 each", fixture.creatingVolumeLists, fixture.creatingTemplateLists)
 		}
 		if len(fixture.volumes) != 1 || len(fixture.templates) != 1 || len(fixture.tools) != 0 {
 			t.Fatalf("owned resources leaked: volumes=%d templates=%d tools=%d", len(fixture.volumes), len(fixture.templates), len(fixture.tools))
@@ -259,8 +259,9 @@ type volumeFixture struct {
 	tools     map[string]map[string]any
 	tokens    map[string]string
 
-	creatingVolumes     map[string]bool
-	creatingVolumeLists int
+	asyncTags             bool
+	creatingVolumeLists   int
+	creatingTemplateLists int
 }
 
 func newVolumeFixture(t *testing.T, fault string) *volumeFixture {
@@ -311,19 +312,7 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response["Volume"] = f.create(req, "vol", "VolumeId", "VolumeName", "Storage", f.volumes)
 	case "DescribeVolumeList":
 		set, total := f.list(req, f.volumes, "VolumeId", "VolumeName", "VolumeIds", "VolumeNames", "volume-name", "volume")
-		for i, item := range set {
-			stored := volumeObject(item)
-			id := volumeString(stored, "VolumeId")
-			if f.creatingVolumes[id] {
-				// Tag synchronization finishes after the first read, before ACTIVE.
-				pending := maps.Clone(stored)
-				pending["Tags"] = []any{}
-				set[i] = pending
-				stored["Status"] = "ACTIVE"
-				delete(f.creatingVolumes, id)
-				f.creatingVolumeLists++
-			}
-		}
+		f.creatingVolumeLists += finishFixtureTagSync(set)
 		response["VolumeSet"], response["TotalCount"] = set, total
 		if f.fault == "malformed-volume-set" && total == 0 {
 			response["VolumeSet"] = map[string]any{}
@@ -347,6 +336,7 @@ func (f *volumeFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case "DescribeVolumeTemplateList":
 		set, total := f.list(req, f.templates, "VolumeTemplateId", "VolumeTemplateName", "VolumeTemplateIds", "VolumeTemplateNames", "volume-template-name", "template")
+		f.creatingTemplateLists += finishFixtureTagSync(set)
 		response["VolumeTemplateSet"], response["TotalCount"] = set, total
 		if f.fault == "malformed-template-set" && total == 0 {
 			response["VolumeTemplateSet"] = "invalid"
@@ -400,13 +390,12 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 	delete(created, "ClientToken")
 	created[idField], created["Status"] = id, "ACTIVE"
 	created["CreatedAt"], created["UpdatedAt"] = "2026-09-18T00:00:00Z", "2026-09-18T00:00:00Z"
+	if f.asyncTags {
+		created["Status"] = "CREATING"
+	}
 	if idField == "VolumeId" {
 		// A standalone volume keeps its storage until it is deleted explicitly.
 		created["ReclaimPolicy"] = "Retain"
-		if f.creatingVolumes != nil {
-			created["Status"] = "CREATING"
-			f.creatingVolumes[id] = true
-		}
 	}
 	switch f.fault {
 	case "drop-volume-storage":
@@ -441,6 +430,23 @@ func (f *volumeFixture) create(req map[string]any, prefix, idField, nameField, s
 		f.tokens[token] = id
 	}
 	return created
+}
+
+// finishFixtureTagSync models a read before the asynchronous tag sync completes.
+func finishFixtureTagSync(set []any) int {
+	creating := 0
+	for i, item := range set {
+		stored := volumeObject(item)
+		if stored["Status"] != "CREATING" {
+			continue
+		}
+		pending := maps.Clone(stored)
+		pending["Tags"] = []any{}
+		set[i] = pending
+		stored["Status"] = "ACTIVE"
+		creating++
+	}
+	return creating
 }
 
 // ignoresIDSelector drops updates addressed by ID, leaving the name selector

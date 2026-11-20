@@ -8,6 +8,7 @@ import "github.com/TencentCloudAgentRuntime/ags-cli/internal/patchtest"
 var Registry = patchtest.Registry{
 	"session.event-count":       {Assertions: []string{"event-count.consistent"}, Run: runSessionEventCount},
 	"session.lifecycle":         {Assertions: sessionAssertions, Run: runSessionLifecycle},
+	"harness.lifecycle":         {Assertions: harnessAssertions, Run: runHarnessLifecycle},
 	"volume.lifecycle":          {Assertions: volumeAssertions, Run: runVolumeLifecycle},
 	"volume.mount-lifecycle":    {Assertions: volumeMountAssertions, Run: runVolumeMountLifecycle},
 	"sandbox.keepalive":         {Assertions: sandboxKeepaliveAssertions, Run: sandboxScenario("sandbox.keepalive", runSandboxKeepalive)},

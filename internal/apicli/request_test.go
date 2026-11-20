@@ -202,6 +202,49 @@ func TestRequestBuilderRejectsPositionalRequestMismatch(t *testing.T) {
 	}
 }
 
+func TestRequestBuilderMergesIntegerPositionalIntoRequest(t *testing.T) {
+	builder := NewRequestBuilder(APIDescriptor{
+		Spec: command.Spec{ID: "harness.revision.publish"},
+		API:  APISpec{Action: "PublishHarnessRevision"},
+		Fields: []FieldSpec{{
+			Name:     "Revision",
+			Required: true,
+			Parser:   "common.default_int",
+			Inputs:   []InputSpec{{Name: "revision", Positional: true}},
+		}},
+	})
+	for _, tc := range []struct {
+		name    string
+		body    string
+		arg     string
+		errCode string
+	}{
+		{name: "omitted", body: `{}`, arg: "2"},
+		{name: "matching", body: `{"Revision":2}`, arg: "02"},
+		{name: "mismatched", body: `{"Revision":3}`, arg: "2", errCode: "REQUEST_ARG_CONFLICT"},
+		{name: "wrong type", body: `{"Revision":"2"}`, arg: "2", errCode: "REQUEST_ARG_CONFLICT"},
+		{name: "invalid arg", body: `{}`, arg: "latest", errCode: "INVALID_POSITIONAL_ARG"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request, err := builder.Build(command.Request{
+				ArgValues: map[string]string{"revision": tc.arg},
+				Flags: map[string]command.FlagValue{
+					"request": {Name: "request", Type: command.FlagString, String: tc.body, Changed: true},
+				},
+			})
+			if tc.errCode != "" {
+				if err == nil || output.ClassifyError(err).Failure.Code != tc.errCode {
+					t.Fatalf("Build error = %v, want %s", err, tc.errCode)
+				}
+				return
+			}
+			if err != nil || request["Revision"] != 2 {
+				t.Fatalf("Build = %#v, %v, want integer Revision 2", request, err)
+			}
+		})
+	}
+}
+
 func TestRequestBuilderRejectsMissingRequiredFlagField(t *testing.T) {
 	builder := NewRequestBuilder(APIDescriptor{
 		Spec: command.Spec{ID: "pre-cache-image-task.create"},

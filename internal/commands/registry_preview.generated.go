@@ -33,6 +33,25 @@ import (
 	gpugrouprename "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/group/rename"
 	gpuresourcelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/resource/list"
 	gpuspeclist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/gpu/spec/list"
+	harnessacp "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/acp"
+	harnesscreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/create"
+	harnessdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/delete"
+	harnessendpoint "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/endpoint"
+	harnessenginelist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/engine/list"
+	harnessget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/get"
+	harnesslist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/list"
+	harnessprompt "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/prompt"
+	harnessproxy "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/proxy"
+	harnessrevisioncreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/revision/create"
+	harnessrevisiondiff "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/revision/diff"
+	harnessrevisionget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/revision/get"
+	harnessrevisionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/revision/list"
+	harnessrevisionpublish "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/revision/publish"
+	harnessstatus "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/status"
+	harnesstoolget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/tool/get"
+	harnesstoollist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/tool/list"
+	harnessupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/update"
+	harnessweb "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/harness/web"
 	identitycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/create"
 	identitydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/delete"
 	identityget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/identity/get"
@@ -63,6 +82,13 @@ import (
 	instancesnapshotdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/delete"
 	instancesnapshotlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot/list"
 	instanceupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/update"
+	modelprovidercreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/create"
+	modelproviderdelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/delete"
+	modelproviderget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/get"
+	modelproviderlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/list"
+	modelproviderrevisionget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/revision/get"
+	modelproviderrevisionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/revision/list"
+	modelproviderupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/update"
 	precacheimagetaskcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/create"
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
 	precacheimagetasklist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/list"
@@ -143,6 +169,25 @@ func Registry() (*command.Registry, error) {
 		gpugrouprename.GeneratedModule(),
 		gpuresourcelist.Module(),
 		gpuspeclist.Module(),
+		harnessacp.Module(),
+		harnesscreate.Module(),
+		harnessdelete.Module(),
+		harnessendpoint.Module(),
+		harnessenginelist.Module(),
+		harnessget.Module(),
+		harnesslist.Module(),
+		harnessprompt.Module(),
+		harnessproxy.Module(),
+		harnessrevisioncreate.Module(),
+		harnessrevisiondiff.Module(),
+		harnessrevisionget.Module(),
+		harnessrevisionlist.Module(),
+		harnessrevisionpublish.Module(),
+		harnessstatus.Module(),
+		harnesstoolget.Module(),
+		harnesstoollist.Module(),
+		harnessupdate.Module(),
+		harnessweb.Module(),
 		identitycreate.Module(),
 		identitydelete.Module(),
 		identityget.Module(),
@@ -173,6 +218,13 @@ func Registry() (*command.Registry, error) {
 		instancesnapshotdelete.GeneratedModule(),
 		instancesnapshotlist.GeneratedModule(),
 		instanceupdate.Module(),
+		modelprovidercreate.Module(),
+		modelproviderdelete.Module(),
+		modelproviderget.Module(),
+		modelproviderlist.Module(),
+		modelproviderrevisionget.Module(),
+		modelproviderrevisionlist.Module(),
+		modelproviderupdate.Module(),
 		precacheimagetaskcreate.Module(),
 		precacheimagetaskget.Module(),
 		precacheimagetasklist.Module(),

@@ -144,18 +144,7 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	tokenLifecycle, cancelTokens := context.WithCancel(ctx)
 	defer cancelTokens()
 	manager := newTokenManager(tokenLifecycle, func(tokenCtx context.Context) (*ags.AcquireDeploymentTokenResponseParams, error) {
-		value, err := cp.GetDeploymentToken(tokenCtx, deploymentID)
-		if err != nil {
-			return nil, err
-		}
-		var token ags.AcquireDeploymentTokenResponseParams
-		if err := apivalue.Project(value, &token); err != nil {
-			return nil, err
-		}
-		if token.Token != nil {
-			cli.MaskSecret(*token.Token)
-		}
-		return &token, nil
+		return acquireToken(tokenCtx, cp, deploymentID)
 	}, runtime.Now)
 	cfg := config.Get()
 	domain := fmt.Sprintf("%s.agents.%s", cfg.Region, cfg.DataPlaneDomain())
@@ -204,6 +193,21 @@ func runProxy(ctx context.Context, req command.Request, deps command.Deps, cp Co
 	fmt.Fprintln(deps.IO.Out, "\nStopping proxy...")
 	proxy.Stop()
 	return &command.Result{StreamDone: true}, nil
+}
+
+func acquireToken(ctx context.Context, cp ControlPlane, deploymentID string) (*ags.AcquireDeploymentTokenResponseParams, error) {
+	value, err := cp.GetDeploymentToken(ctx, deploymentID)
+	if err != nil {
+		return nil, err
+	}
+	var token ags.AcquireDeploymentTokenResponseParams
+	if err := apivalue.Project(value, &token); err != nil {
+		return nil, err
+	}
+	if token.Token != nil {
+		cli.MaskSecret(*token.Token)
+	}
+	return &token, nil
 }
 
 const defaultAffinityHeader = "X-Tencent-Agr-Affinity-Id"
