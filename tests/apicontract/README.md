@@ -41,6 +41,23 @@ GPU allocation requires an existing purchased GPU resource group; decoding and
 transport tests do not establish successful GPU provisioning. The live checks
 above do not purchase resources or test GPU allocation.
 
+## Cleanup policy and sandbox storage mounts
+
+`Cleanup policy and sandbox storage mounts` creates a cleanup policy, then a
+disposable custom tool and two storage mounts in `ap-guangzhou`. It requires
+`AGR_TEST_ROLE_ARN` for the CCR image pulls and fails instead of skipping when
+the role is missing. The tool uses the same pinned envd configuration as the
+preview sandbox scenarios; the runtime and instance mounts use
+`ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` at `/usr/bin`. The group proves
+policy lifecycle and pagination, instance startup with mounts, the four
+tool-update rejections, the three `SubPath` states, and cleanup from the known
+instance and tool IDs. Run it alone with:
+
+```sh
+AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Cleanup policy and sandbox storage mounts'
+GOFLAGS=-tags=preview AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Cleanup policy and sandbox storage mounts'
+```
+
 ## Sandbox keepalive and log format (preview)
 
 The preview-only `sandbox.keepalive` and `sandbox.log-format` scenarios run as

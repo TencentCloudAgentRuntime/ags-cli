@@ -328,6 +328,27 @@
                         }
                     }
                 },
+                    "StorageMounts": {
+                        "description": "Storage mounts attached when the instance starts. Mounts declared by the tool and supplied here are combined by the service.",
+                        "inputs": {
+                            "storage-mounts": {
+                                "usage": "StorageMounts as a JSON array, @file, or - for stdin. Each entry declares a mount available when the instance starts; MountOptions only adjusts mounts the tool already declares.",
+                                "format": "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"<path-in-image>\"}}}]",
+                                "values": [
+                                    "Image: container image volume source",
+                                    "Cos: Tencent Cloud Object Storage source",
+                                    "Cfs: Cloud File Storage source",
+                                    "AgentBucket: AgentBucket source",
+                                    "Volume: existing volume reference",
+                                    "VolumeTemplate: derived volume reference"
+                                ],
+                                "examples": [
+                                    "agr instance create --tool-id sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"MountPath\":\"/mnt/runtime\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v1\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"/usr/bin\"}}}]' -o text",
+                                    "agr instance create --tool-id sdt-example --storage-mounts @mounts.json -o text"
+                                ]
+                            }
+                        }
+                    },
                 "CustomConfiguration": {
                     "description": "Custom configuration for the sandbox instance.",
                     "inputs": {
@@ -890,7 +911,27 @@
                             ]
                         }
                     }
-                }
+                },
+                    "StorageMounts": {
+                        "description": "Image volume mounts to change on the tool. Each entry matches the tool's existing Image volume by Name; the service updates the image and optional sub-path.",
+                        "inputs": {
+                            "storage-mounts": {
+                                "usage": "StorageMounts as a JSON array, @file, or - for stdin. Omit --storage-mounts or pass [] to keep the current mounts. Each entry must match an existing Image volume Name and must not set MountPath or ReadOnly.",
+                                "format": "[{\"Name\":\"runtime\",\"StorageSource\":{\"Image\":{\"Reference\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"<path-in-image>\"}}}]",
+                                "values": [
+                                    "Name: name of an existing Image volume on the tool",
+                                    "Reference: image reference with a tag or sha256 digest",
+                                    "ImageRegistryType: personal, enterprise, or custom; required with Image",
+                                    "SubPath: omitted keeps the current directory, an empty string switches to the image root, a non-empty string switches to that directory",
+                                    "MountPath and ReadOnly belong to the tool configuration; omit them when updating mounts"
+                                ],
+                                "examples": [
+                                    "agr tool update sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v2\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"assets\"}}}]' -o text",
+                                    "agr tool update sdt-example --storage-mounts @image-updates.json --wait -o json"
+                                ]
+                            }
+                        }
+                    }
             }
         },
         "tool.delete": {
@@ -1145,6 +1186,198 @@
                 "Example - Query image volume pre-caching:\n  agr pre-cache-image-task get sha256:<digest> --image nginx:latest --image-registry-type personal --pre-cache-type image_volume -o json"
             ]
         },
+            "pre-cache-image-cleanup-policy.create": {
+                "short": "Create an image pre-cache cleanup policy",
+                "long": "Create an account-level policy that cleans up pre-cached images that stay idle for longer than IdleTTL.\n\nName and IdleTTL are required. IdleTTL is a positive integer followed by one unit: m, h, or d, for example 30m, 12h, or 3d. RegistryHost matches one registry host exactly and accepts at most 255 characters; omit it or pass an empty string to cover every registry. RepoPattern is a regular expression matched against the namespace/repository path and accepts at most 256 characters; omit it or pass an empty string to cover every repository. The service also limits compiled pattern size per policy and across the account's enabled policies.\n\nWhen --enabled is omitted, the service stores the policy as enabled. Pass --enabled=false to create a disabled policy. The result contains the new CleanupPolicyId; use it with show commands or with update and delete.",
+                "examples": [
+                    "Example - Create an enabled policy for one registry host:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d --registry-host tcr-cq.tencentcloudcr.com --repo-pattern '^ags\\.dev/.+$' -o text",
+                    "Example - Create a disabled policy for every repository:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d --enabled=false -o text",
+                    "Example - Capture the new policy ID:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d -o json --jq '.Data.CleanupPolicy.CleanupPolicyId'"
+                ],
+                "fields": {
+                    "Name": {
+                        "description": "Cleanup policy name.",
+                        "inputs": {
+                            "name": {
+                                "usage": "Cleanup policy name (required)"
+                            }
+                        }
+                    },
+                    "IdleTTL": {
+                        "description": "Idle expiry time: a positive integer followed by a single unit m, h, or d, such as 30m, 12h, or 3d.",
+                        "inputs": {
+                            "idle-ttl": {
+                                "usage": "Idle expiry time as a positive integer with one unit: m, h, or d (required)",
+                                "format": "3d"
+                            }
+                        }
+                    },
+                    "RegistryHost": {
+                        "description": "Registry host to match exactly; omit or pass an empty string for all registries. At most 255 characters.",
+                        "inputs": {
+                            "registry-host": {
+                                "usage": "Registry host to match exactly, empty for all registries; at most 255 characters"
+                            }
+                        }
+                    },
+                    "RepoPattern": {
+                        "description": "Regular expression for the namespace/repository path; omit or pass an empty string for all repositories. At most 256 characters.",
+                        "inputs": {
+                            "repo-pattern": {
+                                "usage": "Regular expression for the namespace/repository path, empty for all repositories; at most 256 characters"
+                            }
+                        }
+                    },
+                    "Enabled": {
+                        "description": "Whether the policy is enabled. Omit to let the service default to true.",
+                        "inputs": {
+                            "enabled": {
+                                "usage": "Enable the policy (service default: true); pass --enabled=false for a disabled policy",
+                                "values": [
+                                    "true",
+                                    "false"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "pre-cache-image-cleanup-policy.delete": {
+                "short": "Delete an image pre-cache cleanup policy",
+                "long": "Delete one image pre-cache cleanup policy by ID in a single request. The ID comes from create or list output as CleanupPolicy.CleanupPolicyId / CleanupPolicyId. The service returns an error when the ID does not exist or was already deleted, so a retry after success is not idempotent at the response level.",
+                "examples": [
+                    "Example - Delete a policy:\n  agr pre-cache-image-cleanup-policy delete pccp-example -o text",
+                    "Example - Delete with a raw request:\n  agr pre-cache-image-cleanup-policy delete pccp-example --request '{\"CleanupPolicyId\":\"pccp-example\"}' -o json"
+                ],
+                "fields": {
+                    "CleanupPolicyId": {
+                        "description": "Cleanup policy ID to delete.",
+                        "inputs": {
+                            "cleanup-policy-id": {
+                                "usage": "Cleanup policy ID, such as pccp-a1b2c3d4"
+                            }
+                        }
+                    }
+                }
+            },
+            "pre-cache-image-cleanup-policy.list": {
+                "short": "List image pre-cache cleanup policies",
+                "long": "List the account's image pre-cache cleanup policies.\n\nQuery by ID or filter the whole account, not both. --cleanup-policy-ids takes one ID per flag occurrence: repeat the flag for several IDs, for example --cleanup-policy-ids pccp-a --cleanup-policy-ids pccp-b. A comma-separated value is treated as one ID, not as a list. Up to 100 IDs are accepted; when any ID is supplied, Offset, Limit, and Filter are ignored and unknown or deleted IDs are silently skipped.\n\n--filter (also accepted as --filters) takes a JSON array, @file, or - for stdin: [{\"Name\":\"name\",\"Values\":[\"demo\"]}]. Supported filter names are name, enabled, and registry-host. Up to 10 filters are accepted, each with a Name and at least one Value; up to 10 values per filter, each at most 255 characters.\n\nEach call returns one page. Offset defaults to 0 and Limit accepts 1–100 with a service default of 20. Pass the next --offset yourself; pages are not fetched automatically. TotalCount counts all matches before pagination. JSON output contains CleanupPolicySet, TotalCount, and RequestId.",
+                "examples": [
+                    "Example - List policies by name:\n  agr pre-cache-image-cleanup-policy list --filter '[{\"Name\":\"name\",\"Values\":[\"demo\"]}]' -o text",
+                    "Example - Page through all policies:\n  agr pre-cache-image-cleanup-policy list --limit 20 --offset 0 -o json\n  agr pre-cache-image-cleanup-policy list --limit 20 --offset 20 -o json",
+                    "Example - Query specific IDs, repeating the flag once per ID:\n  agr pre-cache-image-cleanup-policy list --cleanup-policy-ids pccp-a --cleanup-policy-ids pccp-b -o json",
+                    "Example - Query the same IDs with a raw request:\n  agr pre-cache-image-cleanup-policy list --request '{\"CleanupPolicyIds\":[\"pccp-a\",\"pccp-b\"]}' -o json"
+                ],
+                "fields": {
+                    "CleanupPolicyIds": {
+                        "description": "Cleanup policy IDs to query. Repeat the flag once per ID, up to 100 IDs. When supplied, Offset, Limit, and Filters are ignored.",
+                        "inputs": {
+                            "cleanup-policy-ids": {
+                                "usage": "Cleanup policy ID to query; repeat the flag for each ID, up to 100 IDs",
+                                "format": "--cleanup-policy-ids <id1> --cleanup-policy-ids <id2>"
+                            }
+                        }
+                    },
+                    "Filters": {
+                        "description": "Filters applied when no IDs are supplied. Conditions combine with AND; values within one condition combine with OR.",
+                        "inputs": {
+                            "filter": {
+                                "usage": "Filters as a JSON array, @file, or - for stdin. Alias: --filters.",
+                                "format": "[{\"Name\":\"name\",\"Values\":[\"demo\"]}]",
+                                "values": [
+                                    "name: exact policy name",
+                                    "enabled: true or false",
+                                    "registry-host: exact registry host"
+                                ],
+                                "examples": [
+                                    "agr pre-cache-image-cleanup-policy list --filter '[{\"Name\":\"enabled\",\"Values\":[\"false\"]}]' -o json"
+                                ]
+                            }
+                        }
+                    },
+                    "Offset": {
+                        "description": "Pagination offset. Defaults to 0.",
+                        "inputs": {
+                            "offset": {
+                                "usage": "Offset of the first result in this page (default: 0)"
+                            }
+                        }
+                    },
+                    "Limit": {
+                        "description": "Page size from 1 to 100. Service default: 20.",
+                        "inputs": {
+                            "limit": {
+                                "usage": "Page size from 1 to 100 (service default: 20)"
+                            }
+                        }
+                    }
+                }
+            },
+            "pre-cache-image-cleanup-policy.update": {
+                "short": "Update an image pre-cache cleanup policy",
+                "long": "Update one image pre-cache cleanup policy selected by the positional CleanupPolicyId. Provide at least one of --name, --registry-host, --repo-pattern, --idle-ttl, or --enabled; every provided field replaces the stored value and omitted fields keep their current values.\n\nAn explicit empty --registry-host or --repo-pattern clears the limit so the policy matches every registry or repository. --enabled=false disables the policy. IdleTTL uses the same positive integer plus m, h, or d format as create. The result contains the updated policy; verify the effective values from the response or list.",
+                "examples": [
+                    "Example - Disable a policy and clear its repository pattern:\n  agr pre-cache-image-cleanup-policy update pccp-example --enabled=false --repo-pattern= -o text",
+                    "Example - Extend the idle time and change the registry host:\n  agr pre-cache-image-cleanup-policy update pccp-example --idle-ttl 7d --registry-host tcr-cq.tencentcloudcr.com -o text",
+                    "Example - Update with a raw request:\n  agr pre-cache-image-cleanup-policy update pccp-example --request '{\"CleanupPolicyId\":\"pccp-example\",\"Enabled\":false}' -o json"
+                ],
+                "fields": {
+                    "CleanupPolicyId": {
+                        "description": "Cleanup policy ID to update.",
+                        "inputs": {
+                            "cleanup-policy-id": {
+                                "usage": "Cleanup policy ID, such as pccp-a1b2c3d4"
+                            }
+                        }
+                    },
+                    "Name": {
+                        "description": "New cleanup policy name.",
+                        "inputs": {
+                            "name": {
+                                "usage": "New cleanup policy name"
+                            }
+                        }
+                    },
+                    "RegistryHost": {
+                        "description": "New registry host to match exactly; an explicit empty string means all registries. At most 255 characters.",
+                        "inputs": {
+                            "registry-host": {
+                                "usage": "New registry host to match exactly, empty string for all registries; at most 255 characters"
+                            }
+                        }
+                    },
+                    "RepoPattern": {
+                        "description": "New regular expression for the namespace/repository path; an explicit empty string means all repositories. At most 256 characters.",
+                        "inputs": {
+                            "repo-pattern": {
+                                "usage": "New regular expression for the namespace/repository path, empty string for all repositories; at most 256 characters"
+                            }
+                        }
+                    },
+                    "IdleTTL": {
+                        "description": "New idle expiry time: a positive integer followed by a single unit m, h, or d.",
+                        "inputs": {
+                            "idle-ttl": {
+                                "usage": "New idle expiry time as a positive integer with one unit: m, h, or d",
+                                "format": "7d"
+                            }
+                        }
+                    },
+                    "Enabled": {
+                        "description": "New enabled state for the policy.",
+                        "inputs": {
+                            "enabled": {
+                                "usage": "Enable or disable the policy",
+                                "values": [
+                                    "true",
+                                    "false"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
         "registry.record.approve": {
             "short": "Approve a record version",
             "long": "Approve a record version.",

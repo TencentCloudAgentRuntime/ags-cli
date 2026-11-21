@@ -84,6 +84,8 @@ func groupShort(group string) string {
 		return "Manage images"
 	case "pre-cache-image-task":
 		return "Manage image pre-cache tasks"
+	case "pre-cache-image-cleanup-policy":
+		return "Manage image pre-cache cleanup policies"
 	case "deployment":
 		return "Manage deployments"
 	case "event":
@@ -120,6 +122,8 @@ func groupLong(group string) string {
 		return "Find purchased GPU groups in the configured account and region, inspect allocation of individual GPU resources, and check which GPU specifications are available for purchase. Use a group ID from 'agr gpu group list' as Resources.GPUResourceGroupId when configuring a custom sandbox tool."
 	case "session":
 		return "Manage session spaces, persistent conversations, and their event history.\n\nStart by choosing or creating a space with 'agr session space list/create', then create a session and append events. SpaceId scopes the business data; UserId identifies a user in your application. Keep the same SpaceId, UserId, and SessionId when reading or updating a conversation. Use 'agr session event list' with pagination for the full history."
+	case "pre-cache-image-cleanup-policy":
+		return "Manage account-level policies that clean up pre-cached images after they stay idle for a configured duration.\n\nWorkflow:\n  1. create  saves a policy with a positive idle time such as 3d and an optional registry host and repository pattern\n  2. list    finds policies by ID or by name, enabled state, and registry host\n  3. update  replaces the fields you provide and keeps the rest\n  4. delete  removes one policy\n\nCleanup runs against images this account pre-cached; the policy does not change which images are pre-cached."
 	case "volume":
 		return "Manage sandbox volumes. A volume binds one concrete storage location that sandbox instances can mount."
 	case "volume-template":
@@ -217,6 +221,8 @@ func groupExamples(group string) []string {
 		return []string{"agr gpu group list -o text", "agr gpu resource list --resource-group-id gpug-example --allocation-state Idle -o text", "agr gpu spec list -o text"}
 	case "event":
 		return []string{"Example - Browse recent operational events:\n  agr event list -o text", "Example - Inspect aggregate results:\n  agr event list --mode Aggregate --limit 20 -o json"}
+	case "pre-cache-image-cleanup-policy":
+		return []string{"Example - Create a policy and inspect it through the list command:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d -o text\n  agr pre-cache-image-cleanup-policy list --filter '[{\"Name\":\"name\",\"Values\":[\"demo\"]}]' -o text", "Example - Change or remove a policy by ID:\n  agr pre-cache-image-cleanup-policy update pccp-example --idle-ttl 7d -o text\n  agr pre-cache-image-cleanup-policy delete pccp-example -o text"}
 	case "instance.snapshot":
 		return []string{"Example - Create and inspect a disk-only snapshot:\n  agr instance snapshot create --instance-id ins-xxxx --memory=false -o text\n  agr instance snapshot list -o text", "Example - Restore an ACTIVE snapshot into a new instance:\n  agr instance create --snapshot-id snapshot-xxxx -o text", "Example - Request snapshot deletion:\n  agr instance snapshot delete snapshot-xxxx -o text"}
 	case "session":
@@ -309,6 +315,12 @@ func useForCommand(commandID string) string {
 		return "create --image <image> --image-registry-type <type>"
 	case "pre-cache-image-task.get":
 		return "get [image-digest] [flags]"
+	case "pre-cache-image-cleanup-policy.create":
+		return "create --name <name> --idle-ttl <ttl>"
+	case "pre-cache-image-cleanup-policy.update":
+		return "update <cleanup-policy-id>"
+	case "pre-cache-image-cleanup-policy.delete":
+		return "delete <cleanup-policy-id>"
 	case "deployment.get":
 		return "get <deployment-id>"
 	case "deployment.update":

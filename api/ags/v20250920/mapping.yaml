@@ -176,6 +176,10 @@ actions:
         inputs:
           - flag: mount-options
             type: json
+      StorageMounts:
+        inputs:
+          - flag: storage-mounts
+            type: json
       Timeout:
         inputs:
           - flag: timeout
@@ -383,6 +387,10 @@ actions:
         inputs:
           - flag: network-configuration
             type: json
+      StorageMounts:
+        inputs:
+          - flag: storage-mounts
+            type: json
       Tags:
         inputs:
           - flag: tags
@@ -461,6 +469,47 @@ actions:
       ImageDigest:
         positional: true
         optional_positional: true
+
+  CreatePreCacheImageCleanupPolicy:
+    command: pre-cache-image-cleanup-policy.create
+    request: CreatePreCacheImageCleanupPolicyRequest
+    response: CreatePreCacheImageCleanupPolicyResponse
+    status: mapped
+
+  DeletePreCacheImageCleanupPolicy:
+    command: pre-cache-image-cleanup-policy.delete
+    request: DeletePreCacheImageCleanupPolicyRequest
+    response: DeletePreCacheImageCleanupPolicyResponse
+    status: mapped
+    fields:
+      CleanupPolicyId:
+        positional: true
+
+  DescribePreCacheImageCleanupPolicyList:
+    command: pre-cache-image-cleanup-policy.list
+    request: DescribePreCacheImageCleanupPolicyListRequest
+    response: DescribePreCacheImageCleanupPolicyListResponse
+    status: mapped
+    fields:
+      CleanupPolicyIds:
+        inputs:
+          - flag: cleanup-policy-ids
+            type: string_array
+      Filters:
+        inputs:
+          - flag: filter
+            type: json
+            aliases:
+              - filters
+
+  UpdatePreCacheImageCleanupPolicy:
+    command: pre-cache-image-cleanup-policy.update
+    request: UpdatePreCacheImageCleanupPolicyRequest
+    response: UpdatePreCacheImageCleanupPolicyResponse
+    status: mapped
+    fields:
+      CleanupPolicyId:
+        positional: true
 
   ApproveRegistryRecord:
     command: registry.record.approve
