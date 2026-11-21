@@ -43,7 +43,7 @@ func runDescriptor(t *testing.T, descriptor apicli.APIDescriptor, cp *fakeContro
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
-	return runtime.Handler.Run(context.Background(), command.Request{ArgValues: argValues, Flags: flags})
+	return runtime.Handler.Run(t.Context(), command.Request{ArgValues: argValues, Flags: flags})
 }
 
 func TestValidateIdleTTL(t *testing.T) {
