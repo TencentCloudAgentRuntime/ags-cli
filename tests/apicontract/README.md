@@ -51,7 +51,9 @@ preview sandbox scenarios; the runtime and instance mounts use
 `ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14` at `/usr/bin`. The group proves
 policy lifecycle and pagination, instance startup with mounts, the four
 tool-update rejections, the three `SubPath` states, and cleanup from the known
-instance and tool IDs. Run it alone with:
+instance and tool IDs. The mount check runs `instance exec --user root`: the
+fixture image is an Ubuntu-based envd image with no `user` account, so the
+CLI default user cannot start a process there. Run it alone with:
 
 ```sh
 AGR_TEST_API_SYNC_LIVE=1 go test ./tests/apicontract -count=1 -v -ginkgo.focus='Cleanup policy and sandbox storage mounts'

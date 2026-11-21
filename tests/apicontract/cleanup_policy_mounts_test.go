@@ -423,7 +423,11 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 		Expect(err).NotTo(HaveOccurred(), waitedInstance.Diagnostics())
 		Expect(testutil.StringField(instanceData, "InstanceId")).To(Equal(instanceID))
 		Expect(testutil.StringField(instanceData, "Status")).To(Equal("RUNNING"))
-		exec := cli.Run(ctx, "instance", "exec", instanceID, "--",
+		// The fixture image is the published envd image itself: an Ubuntu base that
+		// only carries root, with envd as its entrypoint. It has no "user" account,
+		// so the exec default (--user user) cannot start a process and the data
+		// plane answers with an internal error. Run the mount check as root.
+		exec := cli.Run(ctx, "instance", "exec", instanceID, "--user", "root", "--",
 			"sh", "-lc", "test -x "+runtimeMountPath+"/envd && test -x "+startMountPath+"/envd")
 		exec.ExpectSuccess()
 
