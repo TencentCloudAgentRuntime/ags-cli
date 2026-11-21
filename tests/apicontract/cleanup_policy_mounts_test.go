@@ -99,59 +99,85 @@ func runtimeImageUpdate(reference string, subPath *string) string {
 	return string(raw)
 }
 
-func findToolByName(ctx context.Context, cli *testutil.CLI, name string) string {
-	filters, err := json.Marshal([]map[string]any{{"Name": "ToolName", "Values": []string{name}}})
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	result := cli.Run(ctx, "tool", "list", "--filters", string(filters), "--limit", "100", "-o", "json")
-	if result.ExitCode != 0 {
-		return ""
-	}
-	data, err := succeededData(result)
+// cleanupRunner is the subset of *testutil.CLI the cleanup helpers use. The
+// helpers return errors instead of asserting so a failed lookup reports that
+// cleanup is unverified, and so the recovery paths can be exercised against a
+// scripted runner without a live endpoint.
+type cleanupRunner interface {
+	Run(ctx context.Context, args ...string) testutil.CommandResult
+}
+
+// findToolByName locates the tool this run created when its create response was
+// lost. The list filter key is tool-name: the service lowercases the filter name
+// and only its own lowercase keys select the exact-name filter, so a camel-case
+// key is ignored and the call would scan the account's first page instead.
+// The unique per-run name keeps the lookup scoped to this run's tool.
+func findToolByName(ctx context.Context, cli cleanupRunner, name string) (string, error) {
+	filters, err := json.Marshal([]map[string]any{{"Name": "tool-name", "Values": []string{name}}})
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("encode the tool-name filter for %q: %w", name, err)
 	}
-	items, _ := data["Items"].([]any)
+	listed := cli.Run(ctx, "tool", "list", "--filters", string(filters), "--limit", "100", "-o", "json")
+	data, err := succeededData(listed)
+	if err != nil {
+		return "", fmt.Errorf("look up tool %q by name: %w\n%s", name, err, listed.Diagnostics())
+	}
+	items, ok := data["Items"].([]any)
+	if !ok {
+		return "", fmt.Errorf("tool list for %q has no Items: %#v", name, data)
+	}
 	for _, value := range items {
 		item, ok := value.(map[string]any)
 		if !ok || item["ToolName"] != name {
 			continue
 		}
-		if id, ok := item["ToolId"].(string); ok {
-			return id
+		if id, ok := item["ToolId"].(string); ok && id != "" {
+			return id, nil
 		}
 	}
-	return ""
+	return "", nil
 }
 
 // cleanupInstance deletes one instance and confirms it is stopped or gone.
-func cleanupInstance(ctx context.Context, cli *testutil.CLI, instanceID string) {
+func cleanupInstance(ctx context.Context, cli cleanupRunner, instanceID string) error {
 	deleted := cli.Run(ctx, "instance", "delete", instanceID, "--wait", "--ignore-not-found", "-o", "json")
-	ExpectWithOffset(1, deleted.ExitCode).To(Equal(0), deleted.Diagnostics())
+	if deleted.ExitCode != 0 {
+		return fmt.Errorf("delete instance %s: %s", instanceID, deleted.Diagnostics())
+	}
 	observed := cli.Run(ctx, "instance", "get", instanceID, "-o", "json")
 	if observed.ExitCode == 0 {
 		data, err := succeededData(observed)
-		ExpectWithOffset(1, err).NotTo(HaveOccurred())
-		ExpectWithOffset(1, testutil.StringField(data, "Status")).To(Equal("STOPPED"))
-		return
+		if err != nil {
+			return fmt.Errorf("read instance %s after delete: %w", instanceID, err)
+		}
+		if status, _ := data["Status"].(string); status != "STOPPED" {
+			return fmt.Errorf("instance %s is %q after delete, want STOPPED", instanceID, status)
+		}
+		return nil
 	}
 	envelope, err := envelopeOf(observed)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	ExpectWithOffset(1, envelope.Failure).NotTo(BeNil(), observed.Diagnostics())
-	ExpectWithOffset(1, envelope.Failure.Kind).To(Equal("not_found"))
+	if err != nil {
+		return err
+	}
+	if envelope.Failure == nil || envelope.Failure.Kind != "not_found" {
+		return fmt.Errorf("instance %s is neither STOPPED nor gone: %s", instanceID, observed.Diagnostics())
+	}
+	return nil
 }
 
 // cleanupInstancesByTool removes every instance this run's tool owns, from the
-// tool ID rather than from an error payload.
-func cleanupInstancesByTool(ctx context.Context, cli *testutil.CLI, toolID string) {
+// tool ID rather than from an error payload, and reports a failed lookup instead
+// of leaving instances behind silently.
+func cleanupInstancesByTool(ctx context.Context, cli cleanupRunner, toolID string) error {
 	listed := cli.Run(ctx, "instance", "list", "--all", "--tool-id", toolID, "-o", "json")
-	if listed.ExitCode != 0 {
-		return
-	}
 	data, err := succeededData(listed)
 	if err != nil {
-		return
+		return fmt.Errorf("list instances of tool %s: %w\n%s", toolID, err, listed.Diagnostics())
 	}
-	items, _ := data["Items"].([]any)
+	items, ok := data["Items"].([]any)
+	if !ok {
+		return fmt.Errorf("instance list for tool %s has no Items: %#v", toolID, data)
+	}
 	for _, value := range items {
 		item, ok := value.(map[string]any)
 		if !ok || item["ToolId"] != toolID {
@@ -161,43 +187,65 @@ func cleanupInstancesByTool(ctx context.Context, cli *testutil.CLI, toolID strin
 		if instanceID == "" {
 			continue
 		}
-		cleanupInstance(ctx, cli, instanceID)
+		if err := cleanupInstance(ctx, cli, instanceID); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func deleteToolEventually(ctx context.Context, cli *testutil.CLI, toolID string) {
+// deleteToolEventually deletes the tool accepted by the service, retrying while
+// the tool still owns instances.
+func deleteToolEventually(ctx context.Context, cli cleanupRunner, toolID string) error {
 	deadline := time.Now().Add(5 * time.Minute)
 	request := fmt.Sprintf(`{"ToolId":%q}`, toolID)
 	for {
 		deleted := cli.Run(ctx, "tool", "delete", "--request", request, "-o", "json")
 		if deleted.ExitCode == 0 {
-			return
+			return nil
 		}
 		envelope, err := envelopeOf(deleted)
-		ExpectWithOffset(1, err).NotTo(HaveOccurred())
-		if envelope.Failure != nil && envelope.Failure.Code == "ResourceInUse.SandboxTool" && time.Now().Before(deadline) {
-			time.Sleep(5 * time.Second)
-			cleanupInstancesByTool(ctx, cli, toolID)
-			continue
+		if err != nil {
+			return err
 		}
-		ExpectWithOffset(1, deleted.ExitCode).To(Equal(0), deleted.Diagnostics())
+		if envelope.Failure == nil {
+			return fmt.Errorf("delete tool %s failed without a failure body: %s", toolID, deleted.Diagnostics())
+		}
+		if envelope.Failure.Code != "ResourceInUse.SandboxTool" {
+			return fmt.Errorf("delete tool %s: %s", toolID, deleted.Diagnostics())
+		}
+		if !time.Now().Before(deadline) {
+			return fmt.Errorf("tool %s still owns instances after 5m: %s", toolID, deleted.Diagnostics())
+		}
+		time.Sleep(5 * time.Second)
+		if err := cleanupInstancesByTool(ctx, cli, toolID); err != nil {
+			return err
+		}
 	}
 }
 
 // expectToolGone confirms the tool disappears after an accepted delete. The
 // service reports DELETING until the backend drops the record, so poll instead
 // of assuming the first read already answers not_found.
-func expectToolGone(ctx context.Context, cli *testutil.CLI, toolID string) {
-	var lastStatus string
-	EventuallyWithOffset(1, func() error {
+func expectToolGone(ctx context.Context, cli cleanupRunner, toolID string, window, interval time.Duration) error {
+	deadline := time.Now().Add(window)
+	for {
 		observed := cli.Run(ctx, "tool", "get", toolID, "-o", "json")
 		if observed.ExitCode == 0 {
 			data, err := succeededData(observed)
 			if err != nil {
 				return err
 			}
-			lastStatus = testutil.StringField(data, "Status")
-			return fmt.Errorf("tool %s is still present with status %q", toolID, lastStatus)
+			status, _ := data["Status"].(string)
+			if !time.Now().Before(deadline) {
+				return fmt.Errorf("tool %s is still present with status %q after %s", toolID, status, window)
+			}
+			select {
+			case <-ctx.Done():
+				return fmt.Errorf("tool %s is still present with status %q: %w", toolID, status, ctx.Err())
+			case <-time.After(interval):
+			}
+			continue
 		}
 		envelope, err := envelopeOf(observed)
 		if err != nil {
@@ -213,7 +261,66 @@ func expectToolGone(ctx context.Context, cli *testutil.CLI, toolID string) {
 			return fmt.Errorf("tool %s get reported not_found with code %s", toolID, envelope.Failure.Code)
 		}
 		return nil
-	}, "5m", "5s").Should(Succeed(), "delete is accepted but the tool never disappeared")
+	}
+}
+
+// findPolicyByName locates the cleanup policy this run created when its create
+// response was lost.
+func findPolicyByName(ctx context.Context, cli cleanupRunner, name, filters string) (string, error) {
+	listed := cli.Run(ctx, "pre-cache-image-cleanup-policy", "list", "--filter", filters, "-o", "json")
+	data, err := succeededData(listed)
+	if err != nil {
+		return "", fmt.Errorf("look up cleanup policy %q: %w\n%s", name, err, listed.Diagnostics())
+	}
+	rows, ok := data["CleanupPolicySet"].([]any)
+	if !ok {
+		return "", fmt.Errorf("cleanup policy list for %q has no CleanupPolicySet: %#v", name, data)
+	}
+	for _, value := range rows {
+		policy, ok := value.(map[string]any)
+		if !ok || policy["Name"] != name {
+			continue
+		}
+		if id, ok := policy["CleanupPolicyId"].(string); ok && id != "" {
+			return id, nil
+		}
+	}
+	return "", nil
+}
+
+// deletePolicy removes the policy this run created. The service answers not_found
+// for an ID this account never saw and success for one it already soft-deleted,
+// so both outcomes mean the policy is gone.
+func deletePolicy(ctx context.Context, cli cleanupRunner, policyID string) error {
+	deleted := cli.Run(ctx, "pre-cache-image-cleanup-policy", "delete", policyID, "-o", "json")
+	if deleted.ExitCode == 0 {
+		return nil
+	}
+	envelope, err := envelopeOf(deleted)
+	if err != nil {
+		return err
+	}
+	if envelope.Failure != nil && envelope.Failure.Kind == "not_found" {
+		return nil
+	}
+	return fmt.Errorf("delete cleanup policy %s: %s", policyID, deleted.Diagnostics())
+}
+
+// expectPolicyGone confirms the policy no longer appears in an ID lookup.
+func expectPolicyGone(ctx context.Context, cli cleanupRunner, policyID string) error {
+	remaining := cli.Run(ctx, "pre-cache-image-cleanup-policy", "list", "--cleanup-policy-ids", policyID, "-o", "json")
+	data, err := succeededData(remaining)
+	if err != nil {
+		return fmt.Errorf("confirm cleanup policy %s is gone: %w\n%s", policyID, err, remaining.Diagnostics())
+	}
+	rows, ok := data["CleanupPolicySet"].([]any)
+	if !ok {
+		return fmt.Errorf("cleanup policy list for %s has no CleanupPolicySet: %#v", policyID, data)
+	}
+	if len(rows) != 0 {
+		return fmt.Errorf("cleanup policy %s is still listed: %#v", policyID, rows)
+	}
+	return nil
 }
 
 var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
@@ -259,32 +366,15 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 			id := policyID
 			if id == "" {
 				// A lost create response still leaves the unique name to find.
-				listed := cli.Run(cleanupCtx, "pre-cache-image-cleanup-policy", "list", "--filter", string(nameFilter), "-o", "json")
-				if listed.ExitCode == 0 {
-					if data, err := succeededData(listed); err == nil {
-						rows, _ := data["CleanupPolicySet"].([]any)
-						for _, value := range rows {
-							if policy, ok := value.(map[string]any); ok && policy["Name"] == name {
-								id, _ = policy["CleanupPolicyId"].(string)
-								break
-							}
-						}
-					}
-				}
+				found, err := findPolicyByName(cleanupCtx, cli, name, string(nameFilter))
+				ExpectWithOffset(1, err).NotTo(HaveOccurred(), "cleanup unverified: locate the policy created by this run")
+				id = found
 			}
 			if id == "" {
 				return
 			}
-			deleted := cli.Run(cleanupCtx, "pre-cache-image-cleanup-policy", "delete", id, "-o", "json")
-			if deleted.ExitCode != 0 {
-				envelope, err := envelopeOf(deleted)
-				ExpectWithOffset(1, err).NotTo(HaveOccurred())
-				ExpectWithOffset(1, envelope.Failure).NotTo(BeNil(), deleted.Diagnostics())
-				ExpectWithOffset(1, envelope.Failure.Kind).To(Equal("not_found"), deleted.Diagnostics())
-			}
-			remaining, err := succeededData(cli.Run(cleanupCtx, "pre-cache-image-cleanup-policy", "list", "--cleanup-policy-ids", id, "-o", "json"))
-			ExpectWithOffset(1, err).NotTo(HaveOccurred())
-			ExpectWithOffset(1, remaining["CleanupPolicySet"]).To(BeEmpty())
+			ExpectWithOffset(1, deletePolicy(cleanupCtx, cli, id)).To(Succeed(), "cleanup unverified: delete the policy created by this run")
+			ExpectWithOffset(1, expectPolicyGone(cleanupCtx, cli, id)).To(Succeed(), "cleanup unverified: confirm the policy is gone")
 		})
 
 		created := run("pre-cache-image-cleanup-policy", "create",
@@ -357,14 +447,16 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 			defer cancel()
 			id := toolID
 			if id == "" {
-				id = findToolByName(cleanupCtx, cli, toolName)
+				found, err := findToolByName(cleanupCtx, cli, toolName)
+				ExpectWithOffset(1, err).NotTo(HaveOccurred(), "cleanup unverified: locate the tool created by this run")
+				id = found
 			}
 			if id == "" {
 				return
 			}
-			cleanupInstancesByTool(cleanupCtx, cli, id)
-			deleteToolEventually(cleanupCtx, cli, id)
-			expectToolGone(cleanupCtx, cli, id)
+			ExpectWithOffset(1, cleanupInstancesByTool(cleanupCtx, cli, id)).To(Succeed(), "cleanup unverified: remove the run's instances")
+			ExpectWithOffset(1, deleteToolEventually(cleanupCtx, cli, id)).To(Succeed(), "cleanup unverified: delete the run's tool")
+			ExpectWithOffset(1, expectToolGone(cleanupCtx, cli, id, 5*time.Minute, 5*time.Second)).To(Succeed(), "cleanup unverified: confirm the tool is gone")
 		})
 
 		createdTool := cli.Run(ctx, "tool", "create",
@@ -381,8 +473,10 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 			Expect(err).NotTo(HaveOccurred(), createdTool.Diagnostics())
 			toolID = testutil.StringField(data, "ToolId")
 		} else {
-			toolID = findToolByName(ctx, cli, toolName)
-			Expect(toolID).NotTo(BeEmpty(), "tool create failed and the unique-name lookup found nothing: %s", createdTool.Diagnostics())
+			found, err := findToolByName(ctx, cli, toolName)
+			Expect(err).NotTo(HaveOccurred(), "tool create failed and the unique-name lookup errored: %s", createdTool.Diagnostics())
+			Expect(found).NotTo(BeEmpty(), "tool create failed and the unique-name lookup found nothing: %s", createdTool.Diagnostics())
+			toolID = found
 		}
 
 		readTool := func() (map[string]any, error) {
@@ -436,7 +530,7 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 		DeferCleanup(func() {
 			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
-			cleanupInstance(cleanupCtx, cli, instanceID)
+			ExpectWithOffset(1, cleanupInstance(cleanupCtx, cli, instanceID)).To(Succeed(), "cleanup unverified: remove the run's instance")
 		})
 
 		waitedInstance := cli.Run(ctx, "instance", "get", instanceID, "--wait", "-o", "json")
@@ -476,7 +570,10 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 			envelope, err := envelopeOf(rejectedResult)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 			ExpectWithOffset(1, envelope.Failure).NotTo(BeNil(), rejected.name+": "+rejectedResult.Diagnostics())
-			ExpectWithOffset(1, envelope.Failure.Code).NotTo(BeEmpty())
+			// The service classifies every invalid image-volume update as a
+			// StorageMount parameter error; a generic non-zero exit would also pass
+			// for an auth or transport failure.
+			ExpectWithOffset(1, envelope.Failure.Code).To(Equal("InvalidParameterValue.StorageMount"), rejected.name+": "+rejectedResult.Diagnostics())
 		}
 		unchanged, err := readTool()
 		Expect(err).NotTo(HaveOccurred())
