@@ -267,7 +267,7 @@ func expectToolGone(ctx context.Context, cli cleanupRunner, toolID string, windo
 // findPolicyByName locates the cleanup policy this run created when its create
 // response was lost.
 func findPolicyByName(ctx context.Context, cli cleanupRunner, name, filters string) (string, error) {
-	listed := cli.Run(ctx, "pre-cache-image-cleanup-policy", "list", "--filter", filters, "-o", "json")
+	listed := cli.Run(ctx, "pre-cache-image-cleanup-policy", "list", "--filters", filters, "-o", "json")
 	data, err := succeededData(listed)
 	if err != nil {
 		return "", fmt.Errorf("look up cleanup policy %q: %w\n%s", name, err, listed.Diagnostics())
@@ -393,11 +393,11 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 		Expect(policy["RepoPattern"]).To(Equal(pattern))
 		Expect(policy["Name"]).To(Equal(name))
 
-		first, rows := list("--filter", string(nameFilter), "--limit", "1", "--offset", "0")
+		first, rows := list("--filters", string(nameFilter), "--limit", "1", "--offset", "0")
 		Expect(testutil.NumberField(first, "TotalCount")).To(Equal(1))
 		Expect(rows).To(HaveLen(1))
 		Expect(rows[0]["CleanupPolicyId"]).To(Equal(policyID))
-		second, rows := list("--filter", string(nameFilter), "--limit", "1", "--offset", "1")
+		second, rows := list("--filters", string(nameFilter), "--limit", "1", "--offset", "1")
 		Expect(testutil.NumberField(second, "TotalCount")).To(Equal(1))
 		Expect(rows).To(BeEmpty())
 

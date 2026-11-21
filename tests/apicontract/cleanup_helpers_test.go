@@ -195,6 +195,10 @@ func TestPolicyCleanupRecoveryPaths(t *testing.T) {
 	runner := &scriptedRunner{respond: func(args []string) testutil.CommandResult {
 		switch args[1] {
 		case "list":
+			// The recovery lookup must use the documented --filters spelling.
+			if got := flagValue(t, args, "--filters"); got != `[{"Name":"name","Values":["`+name+`"]}]` {
+				t.Fatalf("recovery lookup filters = %q", got)
+			}
 			return scriptedSucceeded(t, "pre-cache-image-cleanup-policy.list", map[string]any{"CleanupPolicySet": []any{
 				map[string]any{"CleanupPolicyId": "pccp-this-run", "Name": name},
 				map[string]any{"CleanupPolicyId": "pccp-other", "Name": "agr-issue180-other"},

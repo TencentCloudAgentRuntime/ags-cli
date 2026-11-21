@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -36,6 +37,34 @@ func createDescriptor() apicli.APIDescriptor { return create.APIDescriptor() }
 func updateDescriptor() apicli.APIDescriptor { return update.APIDescriptor() }
 func listDescriptor() apicli.APIDescriptor   { return list.APIDescriptor() }
 func deleteDescriptor() apicli.APIDescriptor { return delete.APIDescriptor() }
+
+func TestListModuleDocumentsOneFilterFlag(t *testing.T) {
+	descriptor := listDescriptor()
+	module := precacheimagecleanuppolicy.NewModule(descriptor)
+	var filters int
+	for _, flag := range module.Descriptor.Spec.Flags {
+		if flag.Name != "filters" {
+			continue
+		}
+		filters++
+		if !slices.Equal(flag.Aliases, []string{"filter"}) {
+			t.Fatalf("filters aliases = %v, want [filter]", flag.Aliases)
+		}
+		if !flag.HideAliases || !flag.RejectAliasConflicts {
+			t.Fatalf("filters flag = %+v, want hidden alias and rejected conflicts", flag)
+		}
+	}
+	if filters != 1 {
+		t.Fatalf("module declares %d filters flags, want 1", filters)
+	}
+	// The override must not rewrite the generated descriptor that other
+	// renderers hold on to.
+	for _, flag := range descriptor.Spec.Flags {
+		if flag.HideAliases || flag.RejectAliasConflicts {
+			t.Fatalf("NewModule mutated the generated descriptor: %+v", flag)
+		}
+	}
+}
 
 func runDescriptor(t *testing.T, descriptor apicli.APIDescriptor, cp *fakeControlPlane, argValues map[string]string, flags map[string]command.FlagValue) (*command.Result, error) {
 	t.Helper()
@@ -206,17 +235,18 @@ func TestTextRendering(t *testing.T) {
 			name:       "list rows",
 			descriptor: listDescriptor(),
 			response: map[string]any{"CleanupPolicySet": []any{
-				map[string]any{"CleanupPolicyId": "pccp-a", "Name": "demo", "Enabled": true, "IdleTTL": "3d"},
-				map[string]any{"CleanupPolicyId": "pccp-b", "Name": "other", "Enabled": false, "IdleTTL": "12h"},
-			}, "TotalCount": 2, "RequestId": "request-list"},
-			want: []string{"ID", "NAME", "ENABLED", "IDLE TTL", "pccp-a", "demo", "true", "3d", "pccp-b", "other", "false", "12h", "Total: 2"},
+				map[string]any{"CleanupPolicyId": "pccp-a", "Name": "demo", "Enabled": true, "IdleTTL": "3d", "RegistryHost": "example.invalid", "RepoPattern": "^demo$"},
+				map[string]any{"CleanupPolicyId": "pccp-b", "Name": "other", "Enabled": false, "IdleTTL": "12h", "RegistryHost": "", "RepoPattern": "-"},
+				map[string]any{"CleanupPolicyId": "pccp-c", "Name": "bare", "Enabled": true, "IdleTTL": "1h"},
+			}, "TotalCount": 3, "RequestId": "request-list"},
+			want: []string{"ID", "NAME", "ENABLED", "IDLE TTL", "REGISTRY HOST", "REPO PATTERN", "pccp-a", "demo", "true", "3d", "example.invalid", "^demo$", "pccp-b", "other", "false", "12h", "-", "pccp-c", "bare", "Total: 3"},
 		},
 		{
 			name:       "list empty",
 			descriptor: listDescriptor(),
 			response:   map[string]any{"CleanupPolicySet": []any{}, "TotalCount": 0, "RequestId": "request-list"},
 			want:       []string{"No pre-cache image cleanup policies found", "Total: 0"},
-			absent:     []string{"IDLE TTL"},
+			absent:     []string{"IDLE TTL", "REGISTRY HOST", "REPO PATTERN"},
 		},
 		{
 			name:       "delete",

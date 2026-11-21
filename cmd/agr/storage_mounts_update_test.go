@@ -182,6 +182,7 @@ func TestStorageMountsHelpAndSchema(t *testing.T) {
 			command: "tool.update",
 			fragments: []string{
 				"Omit --storage-mounts or pass [] to keep the current mounts",
+				"ImageRegistryType: personal or enterprise; required with Image",
 				"SubPath: omitted keeps the current directory, an empty string switches to the image root, a non-empty string switches to that directory",
 				"MountPath and ReadOnly belong to the tool configuration",
 			},

@@ -3,10 +3,12 @@
 package precacheimagecleanuppolicy
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -26,6 +28,19 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 	generated := module.Descriptor
 	module.Descriptor.Generated = &generated
 	module.Descriptor.Source = command.SourceMixedAPI
+	if api.Spec.ID == "pre-cache-image-cleanup-policy.list" {
+		module.Descriptor.Spec.Flags = slices.Clone(module.Descriptor.Spec.Flags)
+		for i, flag := range module.Descriptor.Spec.Flags {
+			if flag.Name != "filters" {
+				continue
+			}
+			// --filter stays accepted for Issue #180, but the command documents
+			// and renders one flag and refuses to guess when both are set.
+			flag.HideAliases = true
+			flag.RejectAliasConflicts = true
+			module.Descriptor.Spec.Flags[i] = flag
+		}
+	}
 	module.Build = func(deps command.Deps) (command.Runtime, error) {
 		deps = deps.WithDefaults()
 		builder := apicli.NewRequestBuilder(api)
@@ -137,13 +152,19 @@ func renderPolicyList(w io.Writer, policies []apivalue.Object, response apivalue
 	if len(policies) == 0 {
 		fmt.Fprintln(w, "No pre-cache image cleanup policies found")
 	} else {
-		fields := []string{"CleanupPolicyId", "Name", "Enabled", "IdleTTL"}
-		headers := []string{"ID", "NAME", "ENABLED", "IDLE TTL"}
+		fields := []string{"CleanupPolicyId", "Name", "Enabled", "IdleTTL", "RegistryHost", "RepoPattern"}
+		headers := []string{"ID", "NAME", "ENABLED", "IDLE TTL", "REGISTRY HOST", "REPO PATTERN"}
 		rows := make([][]string, 0, len(policies))
 		for _, policy := range policies {
 			row := make([]string, 0, len(fields))
 			for _, field := range fields {
-				row = append(row, policy.Display(field))
+				value := policy.Display(field)
+				if field == "RegistryHost" || field == "RepoPattern" {
+					// An empty scope covers every registry or repository. Values are
+					// shown as stored; -o json tells a dash apart from an empty scope.
+					value = cmp.Or(value, "-")
+				}
+				row = append(row, value)
 			}
 			rows = append(rows, row)
 		}

@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"sync/atomic"
@@ -119,19 +120,38 @@ func TestCleanupPolicySignedTransport(t *testing.T) {
 			want:       map[string]any{"CleanupPolicyIds": []any{"pccp-a", "pccp-b"}},
 		},
 		{
-			name:       "list filter inline",
-			args:       []string{"list", "--filter", filter, "--offset", "0", "--limit", "1"},
+			name:       "list filters inline",
+			args:       []string{"list", "--filters", filter, "--offset", "0", "--limit", "1"},
 			wantAction: "DescribePreCacheImageCleanupPolicyList",
 			want:       map[string]any{"Filters": []any{map[string]any{"Name": "name", "Values": []any{"demo"}}}, "Offset": float64(0), "Limit": float64(1)},
 		},
 		{
-			name:       "list filter alias file",
+			name:       "list filters file",
 			args:       []string{"list", "--filters", "@" + filterPath},
 			wantAction: "DescribePreCacheImageCleanupPolicyList",
 			want:       map[string]any{"Filters": []any{map[string]any{"Name": "name", "Values": []any{"demo"}}}},
 		},
 		{
-			name:       "list filter stdin",
+			name:       "list filters stdin",
+			args:       []string{"list", "--filters", "-"},
+			stdin:      filter,
+			wantAction: "DescribePreCacheImageCleanupPolicyList",
+			want:       map[string]any{"Filters": []any{map[string]any{"Name": "name", "Values": []any{"demo"}}}},
+		},
+		{
+			name:       "list filter alias inline",
+			args:       []string{"list", "--filter", filter},
+			wantAction: "DescribePreCacheImageCleanupPolicyList",
+			want:       map[string]any{"Filters": []any{map[string]any{"Name": "name", "Values": []any{"demo"}}}},
+		},
+		{
+			name:       "list filter alias file",
+			args:       []string{"list", "--filter", "@" + filterPath},
+			wantAction: "DescribePreCacheImageCleanupPolicyList",
+			want:       map[string]any{"Filters": []any{map[string]any{"Name": "name", "Values": []any{"demo"}}}},
+		},
+		{
+			name:       "list filter alias stdin",
 			args:       []string{"list", "--filter", "-"},
 			stdin:      filter,
 			wantAction: "DescribePreCacheImageCleanupPolicyList",
@@ -201,6 +221,11 @@ func TestCleanupPolicySignedTransport(t *testing.T) {
 }
 
 func TestCleanupPolicyLocalValidation(t *testing.T) {
+	const filters = `[{"Name":"name","Values":["demo"]}]`
+	filterPath := filepath.Join(t.TempDir(), "filters.json")
+	if err := os.WriteFile(filterPath, []byte(filters), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var calls atomic.Int32
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
@@ -208,33 +233,46 @@ func TestCleanupPolicyLocalValidation(t *testing.T) {
 	}))
 	defer server.Close()
 	for _, tc := range []struct {
-		name string
-		args []string
-		code string
+		name  string
+		args  []string
+		stdin string
+		code  string
 	}{
-		{"create missing name", []string{"create", "--idle-ttl", "3d"}, "MISSING_REQUIRED_FLAG"},
-		{"create missing ttl", []string{"create", "--name", "demo"}, "MISSING_REQUIRED_FLAG"},
-		{"create zero ttl", []string{"create", "--name", "demo", "--idle-ttl", "0"}, "INVALID_IDLE_TTL"},
-		{"create fractional ttl", []string{"create", "--name", "demo", "--idle-ttl", "1.5h"}, "INVALID_IDLE_TTL"},
-		{"create compound ttl", []string{"create", "--name", "demo", "--idle-ttl", "1h30m"}, "INVALID_IDLE_TTL"},
-		{"create seconds ttl", []string{"create", "--name", "demo", "--idle-ttl", "1s"}, "INVALID_IDLE_TTL"},
-		{"create request ttl", []string{"create", "--request", `{"Name":"demo","IdleTTL":3}`}, "INVALID_IDLE_TTL"},
-		{"update empty patch", []string{"update", "pccp-a"}, "MISSING_REQUIRED_FLAG"},
-		{"update null patch", []string{"update", "pccp-a", "--request", `{"CleanupPolicyId":"pccp-a","Name":null,"Enabled":null,"IdleTTL":null,"RegistryHost":null,"RepoPattern":null}`}, "MISSING_REQUIRED_FLAG"},
-		{"update mismatched positional", []string{"update", "pccp-a", "--request", `{"CleanupPolicyId":"pccp-b","Enabled":false}`}, "REQUEST_ARG_CONFLICT"},
-		{"delete mismatched positional", []string{"delete", "pccp-a", "--request", `{"CleanupPolicyId":"pccp-b"}`}, "REQUEST_ARG_CONFLICT"},
-		{"delete empty request", []string{"delete", "--request", `{}`}, "MISSING_REQUIRED_ARG"},
-		{"list invalid filter", []string{"list", "--filter", `{"Name":"name"}`}, "INVALID_REQUEST_JSON"},
+		{"create missing name", []string{"create", "--idle-ttl", "3d"}, "", "MISSING_REQUIRED_FLAG"},
+		{"create missing ttl", []string{"create", "--name", "demo"}, "", "MISSING_REQUIRED_FLAG"},
+		{"create zero ttl", []string{"create", "--name", "demo", "--idle-ttl", "0"}, "", "INVALID_IDLE_TTL"},
+		{"create fractional ttl", []string{"create", "--name", "demo", "--idle-ttl", "1.5h"}, "", "INVALID_IDLE_TTL"},
+		{"create compound ttl", []string{"create", "--name", "demo", "--idle-ttl", "1h30m"}, "", "INVALID_IDLE_TTL"},
+		{"create seconds ttl", []string{"create", "--name", "demo", "--idle-ttl", "1s"}, "", "INVALID_IDLE_TTL"},
+		{"create request ttl", []string{"create", "--request", `{"Name":"demo","IdleTTL":3}`}, "", "INVALID_IDLE_TTL"},
+		{"update empty patch", []string{"update", "pccp-a"}, "", "MISSING_REQUIRED_FLAG"},
+		{"update null patch", []string{"update", "pccp-a", "--request", `{"CleanupPolicyId":"pccp-a","Name":null,"Enabled":null,"IdleTTL":null,"RegistryHost":null,"RepoPattern":null}`}, "", "MISSING_REQUIRED_FLAG"},
+		{"update mismatched positional", []string{"update", "pccp-a", "--request", `{"CleanupPolicyId":"pccp-b","Enabled":false}`}, "", "REQUEST_ARG_CONFLICT"},
+		{"delete mismatched positional", []string{"delete", "pccp-a", "--request", `{"CleanupPolicyId":"pccp-b"}`}, "", "REQUEST_ARG_CONFLICT"},
+		{"delete empty request", []string{"delete", "--request", `{}`}, "", "MISSING_REQUIRED_ARG"},
+		{"list invalid filters", []string{"list", "--filters", `{"Name":"name"}`}, "", "INVALID_REQUEST_JSON"},
+		{"list invalid alias filters", []string{"list", "--filter", `{"Name":"name"}`}, "", "INVALID_REQUEST_JSON"},
+		{"list filters conflict", []string{"list", "--filters", filters, "--filter", filters}, "", "CONFLICTING_FLAGS"},
+		{"list filters conflict reversed", []string{"list", "--filter", filters, "--filters", filters}, "", "CONFLICTING_FLAGS"},
+		{"list filters conflict with stdin", []string{"list", "--filters", "-", "--filter", filters}, filters, "CONFLICTING_FLAGS"},
+		{"list filters conflict with file", []string{"list", "--filters", "@" + filterPath, "--filter", "@" + filterPath}, "", "CONFLICTING_FLAGS"},
+		{"list alias filters conflict with request", []string{"list", "--request", `{"Filters":[]}`, "--filter", filters}, "", "REQUEST_FLAG_CONFLICT"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			calls.Store(0)
-			out, stderr, err := runSnapshotCLI(t, server, "", append([]string{"pre-cache-image-cleanup-policy"}, tc.args...)...)
-			var envelope struct{ Failure struct{ Code string } }
+			out, stderr, err := runSnapshotCLI(t, server, tc.stdin, append([]string{"pre-cache-image-cleanup-policy"}, tc.args...)...)
+			var envelope struct{ Failure struct{ Code, Kind string } }
 			if err == nil || json.Unmarshal(out, &envelope) != nil {
 				t.Fatalf("expected a usage failure: %s %s (%v)", out, stderr, err)
 			}
 			if envelope.Failure.Code != tc.code {
 				t.Fatalf("failure code = %q, want %q: %s", envelope.Failure.Code, tc.code, out)
+			}
+			if envelope.Failure.Kind != "usage" {
+				t.Fatalf("failure kind = %q, want usage: %s", envelope.Failure.Kind, out)
+			}
+			if exit := exitCodeOf(err); exit != 2 {
+				t.Fatalf("exit code = %d, want 2: %s", exit, out)
 			}
 			requireDeclaredFailure(t, tc.args[0], envelope.Failure.Code)
 			if calls.Load() != 0 {
@@ -252,7 +290,7 @@ func TestCleanupPolicyOutputs(t *testing.T) {
 		case "UpdatePreCacheImageCleanupPolicy":
 			return `{"Response":{"CleanupPolicy":{"CleanupPolicyId":"pccp-a","Name":"demo","Enabled":false,"IdleTTL":"3d","RegistryHost":"example.invalid","RepoPattern":""},"RequestId":"request-update"}}`
 		case "DescribePreCacheImageCleanupPolicyList":
-			return `{"Response":{"CleanupPolicySet":[{"CleanupPolicyId":"pccp-a","Name":"demo","Enabled":true,"IdleTTL":"3d"}],"TotalCount":2,"RequestId":"request-list"}}`
+			return `{"Response":{"CleanupPolicySet":[{"CleanupPolicyId":"pccp-a","Name":"demo","Enabled":true,"IdleTTL":"3d","RegistryHost":"example.invalid","RepoPattern":"^agr-issue180/run$"},{"CleanupPolicyId":"pccp-b","Name":"demo-scope-cleared","Enabled":true,"IdleTTL":"1h","RegistryHost":"","RepoPattern":"-"},{"CleanupPolicyId":"pccp-c","Name":"demo-no-scope","Enabled":false,"IdleTTL":"12h"}],"TotalCount":3,"RequestId":"request-list"}}`
 		default:
 			return `{"Response":{"RequestId":"request-delete"}}`
 		}
@@ -264,7 +302,6 @@ func TestCleanupPolicyOutputs(t *testing.T) {
 	}{
 		{"create", []string{"create", "--name", "demo", "--idle-ttl", "3d"}, []string{"CleanupPolicyId:", "pccp-a", "IdleTTL:", "3d", "RepoPattern:", "^agr-issue180/run$"}},
 		{"update", []string{"update", "pccp-a", "--enabled=false"}, []string{"CleanupPolicyId:", "Enabled:", "false", "RepoPattern:"}},
-		{"list", []string{"list"}, []string{"ID", "NAME", "ENABLED", "IDLE TTL", "pccp-a", "demo", "Total: 2"}},
 		{"delete", []string{"delete", "pccp-a"}, []string{"Pre-cache image cleanup policy deleted: pccp-a"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -279,6 +316,109 @@ func TestCleanupPolicyOutputs(t *testing.T) {
 			}
 		})
 	}
+	// The text table has to carry the policy scope, with a placeholder for a
+	// dimension the policy does not limit, while JSON keeps the stored values.
+	t.Run("list scope columns", func(t *testing.T) {
+		out, stderr, err := runSnapshotCLIWithOutput(t, server, strings.NewReader(""), "text", "pre-cache-image-cleanup-policy", "list")
+		if err != nil {
+			t.Fatalf("CLI: %v; stdout=%s stderr=%s", err, out, stderr)
+		}
+		wantRows := [][]string{
+			{"pccp-a", "demo", "true", "3d", "example.invalid", "^agr-issue180/run$"},
+			{"pccp-b", "demo-scope-cleared", "true", "1h", "-", "-"},
+			{"pccp-c", "demo-no-scope", "false", "12h", "-", "-"},
+		}
+		header, rows := tableRows(string(out))
+		// Header labels contain spaces, so compare the header line with its
+		// column padding collapsed into separators.
+		gotHeader := tableGap.ReplaceAllString(header, "\t")
+		if wantHeader := "ID\tNAME\tENABLED\tIDLE TTL\tREGISTRY HOST\tREPO PATTERN"; gotHeader != wantHeader {
+			t.Fatalf("text header = %q, want %q", gotHeader, wantHeader)
+		}
+		if !reflect.DeepEqual(rows, wantRows) {
+			t.Fatalf("text table rows = %#v, want %#v", rows, wantRows)
+		}
+		if !bytes.Contains(out, []byte("Total: 3")) {
+			t.Fatalf("text output missing the total: %s", out)
+		}
+	})
+	t.Run("list scope json", func(t *testing.T) {
+		out, stderr, err := runSnapshotCLIWithOutput(t, server, strings.NewReader(""), "json", "pre-cache-image-cleanup-policy", "list")
+		if err != nil {
+			t.Fatalf("CLI: %v; stdout=%s stderr=%s", err, out, stderr)
+		}
+		var envelope struct {
+			Data struct {
+				CleanupPolicySet []map[string]any
+				TotalCount       int
+			}
+		}
+		if err := json.Unmarshal(out, &envelope); err != nil {
+			t.Fatalf("invalid json envelope: %v: %s", err, out)
+		}
+		policies := envelope.Data.CleanupPolicySet
+		if len(policies) != 3 || envelope.Data.TotalCount != 3 {
+			t.Fatalf("unexpected data: %s", out)
+		}
+		if policies[0]["RegistryHost"] != "example.invalid" || policies[0]["RepoPattern"] != "^agr-issue180/run$" {
+			t.Fatalf("first policy scope = %#v", policies[0])
+		}
+		if policies[1]["RegistryHost"] != "" || policies[1]["RepoPattern"] != "-" {
+			t.Fatalf("cleared scope must keep the stored empty string and literal dash: %#v", policies[1])
+		}
+		for _, field := range []string{"RegistryHost", "RepoPattern"} {
+			if _, present := policies[2][field]; present {
+				t.Fatalf("json must not invent a %s for a policy without one: %#v", field, policies[2])
+			}
+		}
+	})
+}
+
+// tableRows splits a rendered textview table into its header line and cells.
+// tabwriter separates columns by at least two spaces, which no policy field
+// contains in these fixtures.
+func tableRows(out string) (string, [][]string) {
+	var header string
+	var rows [][]string
+	for i, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
+		if strings.HasPrefix(line, "Total:") {
+			break
+		}
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if i == 0 {
+			header = line
+			continue
+		}
+		rows = append(rows, tableGap.Split(strings.TrimRight(line, " "), -1))
+	}
+	return header, rows
+}
+
+var tableGap = regexp.MustCompile(`  +`)
+
+// helpFlagNames returns the flag names documented in the Flags section of a
+// command help page, ignoring the prose above it.
+func helpFlagNames(help string) []string {
+	var names []string
+	inFlags := false
+	for _, line := range strings.Split(help, "\n") {
+		if !inFlags {
+			inFlags = line == "Flags:"
+			continue
+		}
+		if line != "" && !strings.HasPrefix(line, " ") {
+			break
+		}
+		trimmed := strings.TrimLeft(line, " ")
+		if !strings.HasPrefix(trimmed, "-") {
+			continue
+		}
+		name, _, _ := strings.Cut(strings.TrimLeft(trimmed, "-"), " ")
+		names = append(names, name)
+	}
+	return names
 }
 
 func TestCleanupPolicyResponseHandling(t *testing.T) {
@@ -394,7 +534,7 @@ func TestCleanupPolicyHelpAndSchema(t *testing.T) {
 		},
 		{
 			command:  "pre-cache-image-cleanup-policy.list",
-			checks:   map[string]string{"CleanupPolicyIds": "cleanup-policy-ids", "Filters": "filter", "Offset": "offset", "Limit": "limit"},
+			checks:   map[string]string{"CleanupPolicyIds": "cleanup-policy-ids", "Filters": "filters", "Offset": "offset", "Limit": "limit"},
 			wantArgs: nil,
 		},
 		{
@@ -432,8 +572,18 @@ func TestCleanupPolicyHelpAndSchema(t *testing.T) {
 	}
 
 	list := schemaForCommand(t, "pre-cache-image-cleanup-policy.list")
-	if list.Flags["filter"].Type != "json" || list.Flags["cleanup-policy-ids"].Type != "string_array" {
+	if list.Flags["filters"].Type != "json" || list.Flags["cleanup-policy-ids"].Type != "string_array" {
 		t.Fatalf("list flag types drifted: %+v", list.Flags)
+	}
+	// --filter is a compatibility spelling, not a second filter flag: the schema
+	// keeps it as an alias of the single filters flag.
+	requireFlagAbsent(t, list, "filter")
+	if aliases := list.RequestSchema["Filters"].Aliases; !slices.Equal(aliases, []string{"filter"}) {
+		t.Fatalf("Filters aliases = %v, want [filter]", aliases)
+	}
+	requirePropertyType(t, list, "Filters", "array")
+	if !slices.Contains(list.Failures, "CONFLICTING_FLAGS") {
+		t.Errorf("list Failures %v do not declare CONFLICTING_FLAGS", list.Failures)
 	}
 	listCmd, _ := findCobraCommand(root, "pre-cache-image-cleanup-policy.list")
 	listHelp := commandHelp(t, listCmd)
@@ -443,10 +593,32 @@ func TestCleanupPolicyHelpAndSchema(t *testing.T) {
 		"100 IDs",
 		"1–100",
 		"Offset",
+		"--filters takes a JSON array",
+		"--filter is a compatibility spelling",
+		"a - in either column means the policy does not limit that dimension",
 	} {
 		if !strings.Contains(listHelp, fragment) {
 			t.Errorf("list help missing %q:\n%s", fragment, listHelp)
 		}
+	}
+	flags := helpFlagNames(listHelp)
+	filterFlags := 0
+	for _, name := range flags {
+		switch name {
+		case "filter":
+			t.Fatalf("list help still defines --filter next to --filters: %v", flags)
+		case "filters":
+			filterFlags++
+		}
+	}
+	if filterFlags != 1 {
+		t.Fatalf("list help defines --filters %d times, want 1: %v", filterFlags, flags)
+	}
+	if groupHelp := commandHelp(t, group); strings.Contains(groupHelp, "--filter '") || strings.Contains(groupHelp, "list --filter ") {
+		t.Errorf("group examples still use the compatibility spelling:\n%s", groupHelp)
+	}
+	if !strings.Contains(commandHelp(t, group), "list --filters '") {
+		t.Errorf("group examples do not use --filters:\n%s", commandHelp(t, group))
 	}
 	createCmd, _ := findCobraCommand(root, "pre-cache-image-cleanup-policy.create")
 	createHelp := commandHelp(t, createCmd)

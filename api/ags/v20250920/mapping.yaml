@@ -497,10 +497,10 @@ actions:
             type: string_array
       Filters:
         inputs:
-          - flag: filter
+          - flag: filters
             type: json
             aliases:
-              - filters
+              - filter
 
   UpdatePreCacheImageCleanupPolicy:
     command: pre-cache-image-cleanup-policy.update

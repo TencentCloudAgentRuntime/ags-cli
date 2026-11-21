@@ -1261,9 +1261,9 @@
         },
         "pre-cache-image-cleanup-policy.list": {
             "short": "List image pre-cache cleanup policies",
-            "long": "List the account's image pre-cache cleanup policies.\n\nQuery by ID or filter the whole account, not both. --cleanup-policy-ids takes one ID per flag occurrence: repeat the flag for several IDs, for example --cleanup-policy-ids pccp-a --cleanup-policy-ids pccp-b. A comma-separated value is treated as one ID, not as a list. Up to 100 IDs are accepted; when any ID is supplied, Offset, Limit, and Filter are ignored and unknown or deleted IDs are silently skipped.\n\n--filter (also accepted as --filters) takes a JSON array, @file, or - for stdin: [{\"Name\":\"name\",\"Values\":[\"demo\"]}]. Supported filter names are name, enabled, and registry-host. Up to 10 filters are accepted, each with a Name and at least one Value; up to 10 values per filter, each at most 255 characters.\n\nEach call returns one page. Offset defaults to 0 and Limit accepts 1–100 with a service default of 20. Pass the next --offset yourself; pages are not fetched automatically. TotalCount counts all matches before pagination. JSON output contains CleanupPolicySet, TotalCount, and RequestId.",
+            "long": "List the account's image pre-cache cleanup policies.\n\nQuery by ID or filter the whole account, not both. --cleanup-policy-ids takes one ID per flag occurrence: repeat the flag for several IDs, for example --cleanup-policy-ids pccp-a --cleanup-policy-ids pccp-b. A comma-separated value is treated as one ID, not as a list. Up to 100 IDs are accepted; when any ID is supplied, Offset, Limit, and Filter are ignored and unknown or deleted IDs are silently skipped.\n\n--filters takes a JSON array, @file, or - for stdin: [{\"Name\":\"name\",\"Values\":[\"demo\"]}]. --filter is a compatibility spelling of the same input; choose one spelling per invocation, and a call that passes both is rejected. Supported filter names are name, enabled, and registry-host. Up to 10 filters are accepted, each with a Name and at least one Value; up to 10 values per filter, each at most 255 characters.\n\nEach call returns one page. Offset defaults to 0 and Limit accepts 1–100 with a service default of 20. Pass the next --offset yourself; pages are not fetched automatically. TotalCount counts all matches before pagination. JSON output contains CleanupPolicySet, TotalCount, and RequestId. The text table lists the policy scope in REGISTRY HOST and REPO PATTERN; a - in either column means the policy does not limit that dimension, and any other value is shown as stored, so use -o json when you need a value that is literally a dash.",
             "examples": [
-                "Example - List policies by name:\n  agr pre-cache-image-cleanup-policy list --filter '[{\"Name\":\"name\",\"Values\":[\"demo\"]}]' -o text",
+                "Example - List policies by name:\n  agr pre-cache-image-cleanup-policy list --filters '[{\"Name\":\"name\",\"Values\":[\"demo\"]}]' -o text",
                 "Example - Page through all policies:\n  agr pre-cache-image-cleanup-policy list --limit 20 --offset 0 -o json\n  agr pre-cache-image-cleanup-policy list --limit 20 --offset 20 -o json",
                 "Example - Query specific IDs, repeating the flag once per ID:\n  agr pre-cache-image-cleanup-policy list --cleanup-policy-ids pccp-a --cleanup-policy-ids pccp-b -o json",
                 "Example - Query the same IDs with a raw request:\n  agr pre-cache-image-cleanup-policy list --request '{\"CleanupPolicyIds\":[\"pccp-a\",\"pccp-b\"]}' -o json"
@@ -1281,8 +1281,8 @@
                 "Filters": {
                     "description": "Filters applied when no IDs are supplied. Conditions combine with AND; values within one condition combine with OR.",
                     "inputs": {
-                        "filter": {
-                            "usage": "Filters as a JSON array, @file, or - for stdin. Alias: --filters.",
+                        "filters": {
+                            "usage": "Filters as a JSON array, @file, or - for stdin",
                             "format": "[{\"Name\":\"name\",\"Values\":[\"demo\"]}]",
                             "values": [
                                 "name: exact policy name",
@@ -1290,7 +1290,7 @@
                                 "registry-host: exact registry host"
                             ],
                             "examples": [
-                                "agr pre-cache-image-cleanup-policy list --filter '[{\"Name\":\"enabled\",\"Values\":[\"false\"]}]' -o json"
+                                "agr pre-cache-image-cleanup-policy list --filters '[{\"Name\":\"enabled\",\"Values\":[\"false\"]}]' -o json"
                             ]
                         }
                     }

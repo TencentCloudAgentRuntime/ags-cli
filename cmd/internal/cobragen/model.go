@@ -222,7 +222,7 @@ func groupExamples(group string) []string {
 	case "event":
 		return []string{"Example - Browse recent operational events:\n  agr event list -o text", "Example - Inspect aggregate results:\n  agr event list --mode Aggregate --limit 20 -o json"}
 	case "pre-cache-image-cleanup-policy":
-		return []string{"Example - Create a policy and inspect it through the list command:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d -o text\n  agr pre-cache-image-cleanup-policy list --filter '[{\"Name\":\"name\",\"Values\":[\"demo\"]}]' -o text", "Example - Change or remove a policy by ID:\n  agr pre-cache-image-cleanup-policy update pccp-example --idle-ttl 7d -o text\n  agr pre-cache-image-cleanup-policy delete pccp-example -o text"}
+		return []string{"Example - Create a policy and inspect it through the list command:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d -o text\n  agr pre-cache-image-cleanup-policy list --filters '[{\"Name\":\"name\",\"Values\":[\"demo\"]}]' -o text", "Example - Change or remove a policy by ID:\n  agr pre-cache-image-cleanup-policy update pccp-example --idle-ttl 7d -o text\n  agr pre-cache-image-cleanup-policy delete pccp-example -o text"}
 	case "instance.snapshot":
 		return []string{"Example - Create and inspect a disk-only snapshot:\n  agr instance snapshot create --instance-id ins-xxxx --memory=false -o text\n  agr instance snapshot list -o text", "Example - Restore an ACTIVE snapshot into a new instance:\n  agr instance create --snapshot-id snapshot-xxxx -o text", "Example - Request snapshot deletion:\n  agr instance snapshot delete snapshot-xxxx -o text"}
 	case "session":
