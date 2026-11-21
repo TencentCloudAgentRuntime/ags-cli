@@ -184,14 +184,36 @@ func deleteToolEventually(ctx context.Context, cli *testutil.CLI, toolID string)
 	}
 }
 
+// expectToolGone confirms the tool disappears after an accepted delete. The
+// service reports DELETING until the backend drops the record, so poll instead
+// of assuming the first read already answers not_found.
 func expectToolGone(ctx context.Context, cli *testutil.CLI, toolID string) {
-	observed := cli.Run(ctx, "tool", "get", toolID, "-o", "json")
-	ExpectWithOffset(1, observed.ExitCode).NotTo(Equal(0), observed.Diagnostics())
-	envelope, err := envelopeOf(observed)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	ExpectWithOffset(1, envelope.Failure).NotTo(BeNil(), observed.Diagnostics())
-	ExpectWithOffset(1, envelope.Failure.Kind).To(Equal("not_found"))
-	ExpectWithOffset(1, envelope.Failure.Code).To(BeElementOf("TOOL_NOT_FOUND", "ResourceNotFound.SandboxTool"))
+	var lastStatus string
+	EventuallyWithOffset(1, func() error {
+		observed := cli.Run(ctx, "tool", "get", toolID, "-o", "json")
+		if observed.ExitCode == 0 {
+			data, err := succeededData(observed)
+			if err != nil {
+				return err
+			}
+			lastStatus = testutil.StringField(data, "Status")
+			return fmt.Errorf("tool %s is still present with status %q", toolID, lastStatus)
+		}
+		envelope, err := envelopeOf(observed)
+		if err != nil {
+			return err
+		}
+		if envelope.Failure == nil {
+			return fmt.Errorf("tool %s get failed without a failure body: %s", toolID, observed.Diagnostics())
+		}
+		if envelope.Failure.Kind != "not_found" {
+			return fmt.Errorf("tool %s get failed with kind %s: %s", toolID, envelope.Failure.Kind, observed.Diagnostics())
+		}
+		if envelope.Failure.Code != "TOOL_NOT_FOUND" && envelope.Failure.Code != "ResourceNotFound.SandboxTool" {
+			return fmt.Errorf("tool %s get reported not_found with code %s", toolID, envelope.Failure.Code)
+		}
+		return nil
+	}, "5m", "5s").Should(Succeed(), "delete is accepted but the tool never disappeared")
 }
 
 var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
@@ -331,7 +353,7 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 		// Register cleanup before the tool exists: it finds a lost create
 		// response by the run's unique name and never trusts error details.
 		DeferCleanup(func() {
-			cleanupCtx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 			defer cancel()
 			id := toolID
 			if id == "" {
