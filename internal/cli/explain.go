@@ -173,7 +173,7 @@ func explainCodeData(code string) (ExplainData, bool) {
 		"INVALID_SHELL", "INVALID_CLEANUP", "MISSING_SEPARATOR", "STDOUT_CONFLICT", "ADB_NOT_FOUND", "UNSUPPORTED_LANGUAGE",
 		"MISSING_ACTION", "NDJSON_REQUIRES_STREAM", "STREAM_JSON_CONFLICT", "TTY_REQUIRED", "UNIMPLEMENTED_COMMAND",
 		"CONFIG_EXISTS", "CONFIG_INIT_FAILED", "DOCTOR_CHECKS_FAILED", "PARTIAL_DELETE_FAILED", "TOOL_NOT_FOUND",
-		"INVALID_REQUEST_INPUT":
+		"INVALID_REQUEST_INPUT", "INVALID_IDLE_TTL":
 		base.Kind = output.KindUsage
 		base.ExitCode = output.ExitUsage
 		base.Meaning = meaningForCLIUsageCode(code)
@@ -382,6 +382,8 @@ func meaningForCLIUsageCode(code string) string {
 		return "The referenced sandbox tool does not exist."
 	case "INVALID_REQUEST_INPUT":
 		return "The provided request input does not match the expected request shape."
+	case "INVALID_IDLE_TTL":
+		return "The idle TTL is not a positive integer followed by a single unit: m, h, or d."
 	default:
 		return "The command line arguments are invalid for the requested command."
 	}
@@ -449,6 +451,8 @@ func fixForCLIUsageCode(code string) []string {
 		return []string{"agr tool list", "Verify the tool ID is correct and the tool has not been deleted."}
 	case "INVALID_REQUEST_INPUT":
 		return []string{"Review the command schema or request skeleton and retry with a matching JSON shape.", "agr schema -o json"}
+	case "INVALID_IDLE_TTL":
+		return []string{"Use a whole number with one unit, for example --idle-ttl 30m, --idle-ttl 12h, or --idle-ttl 3d.", "agr schema pre-cache-image-cleanup-policy.create -o json"}
 	default:
 		return []string{"agr schema -o json", "Review the command help and retry with valid flags or arguments."}
 	}

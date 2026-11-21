@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -235,6 +236,7 @@ func TestCleanupPolicyLocalValidation(t *testing.T) {
 			if envelope.Failure.Code != tc.code {
 				t.Fatalf("failure code = %q, want %q: %s", envelope.Failure.Code, tc.code, out)
 			}
+			requireDeclaredFailure(t, tc.args[0], envelope.Failure.Code)
 			if calls.Load() != 0 {
 				t.Fatal("invalid input caused an API call")
 			}
@@ -336,6 +338,10 @@ func TestCleanupPolicyResponseHandling(t *testing.T) {
 			}
 			if exitCode := exitCodeOf(err); exitCode != tc.exit {
 				t.Fatalf("exit code = %d, want %d: %s", exitCode, tc.exit, out)
+			}
+			if envelope.Failure.Code == "INTERNAL_ERROR" {
+				// The CLI owns this code, so the schema must declare it.
+				requireDeclaredFailure(t, tc.args[0], envelope.Failure.Code)
 			}
 			for _, fragment := range tc.want {
 				if !bytes.Contains(out, []byte(fragment)) {
@@ -459,6 +465,49 @@ func TestCleanupPolicyHelpAndSchema(t *testing.T) {
 	}
 	if strings.Contains(deleteHelp, "not idempotent at the response level") {
 		t.Errorf("delete help still claims a retried delete fails:\n%s", deleteHelp)
+	}
+}
+
+// A new local failure code only helps agents when agr explain describes it and
+// agr schema declares it for the commands that can emit it.
+func TestCleanupPolicyDeclaresLocalFailures(t *testing.T) {
+	for command, codes := range map[string][]string{
+		"pre-cache-image-cleanup-policy.create": {"INVALID_IDLE_TTL", "MISSING_REQUIRED_FLAG", "INTERNAL_ERROR"},
+		"pre-cache-image-cleanup-policy.update": {"INVALID_IDLE_TTL", "MISSING_REQUIRED_FLAG", "MISSING_REQUIRED_ARG", "INTERNAL_ERROR"},
+		"pre-cache-image-cleanup-policy.delete": {"MISSING_REQUIRED_ARG", "INTERNAL_ERROR"},
+	} {
+		schema := schemaForCommand(t, command)
+		for _, code := range codes {
+			if !slices.Contains(schema.Failures, code) {
+				t.Errorf("%s schema Failures %v do not declare %s", command, schema.Failures, code)
+			}
+		}
+	}
+	out, err := runAGR(t, "explain", "INVALID_IDLE_TTL", "-o", "text")
+	if err != nil {
+		t.Fatalf("agr explain INVALID_IDLE_TTL: %v\n%s", err, out)
+	}
+	for _, fragment := range []string{
+		"INVALID_IDLE_TTL (kind: usage, exit: 2",
+		"pre-cache-image-cleanup-policy.create",
+		"pre-cache-image-cleanup-policy.update",
+		"--idle-ttl 3d",
+	} {
+		if !strings.Contains(out, fragment) {
+			t.Errorf("explain output missing %q:\n%s", fragment, out)
+		}
+	}
+	if strings.Contains(out, "not registered") {
+		t.Errorf("explain still reports INVALID_IDLE_TTL as unregistered:\n%s", out)
+	}
+}
+
+func requireDeclaredFailure(t *testing.T, subcommand, code string) {
+	t.Helper()
+	command := "pre-cache-image-cleanup-policy." + subcommand
+	schema := schemaForCommand(t, command)
+	if !slices.Contains(schema.Failures, code) {
+		t.Errorf("%s emits %s but its schema Failures do not declare it: %v", command, code, schema.Failures)
 	}
 }
 

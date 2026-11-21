@@ -963,6 +963,10 @@ func buildHandwrittenSchemas() []CommandSchema {
 		{Name: "instance.snapshot.create", Failures: []string{"INTERNAL_ERROR"}},
 		{Name: "instance.snapshot.list", Failures: []string{"INVALID_PAGINATION"}},
 		{Name: "instance.snapshot.delete", Failures: []string{"MISSING_REQUIRED_ARG"}},
+		{Name: "pre-cache-image-cleanup-policy.create", Failures: []string{"INVALID_IDLE_TTL", "MISSING_REQUIRED_FLAG", "INTERNAL_ERROR"}},
+		{Name: "pre-cache-image-cleanup-policy.update", Failures: []string{"INVALID_IDLE_TTL", "MISSING_REQUIRED_FLAG", "MISSING_REQUIRED_ARG", "INTERNAL_ERROR"}},
+		{Name: "pre-cache-image-cleanup-policy.list", Failures: []string{"INTERNAL_ERROR"}},
+		{Name: "pre-cache-image-cleanup-policy.delete", Failures: []string{"MISSING_REQUIRED_ARG", "INTERNAL_ERROR"}},
 		{
 			Name: "instance.create", Summary: "Create a new sandbox instance",
 			Mutation: true, CreatesResource: true,
