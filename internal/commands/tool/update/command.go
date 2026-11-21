@@ -41,8 +41,11 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
+					if err := validateStorageMounts(apiReq); err != nil {
+						return nil, err
+					}
 					if !requestFlag(req) && len(apiReq) <= 1 {
-						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --tags, --custom-configuration, --computer-configuration, or --request must be specified", "Provide at least one field to update.")
+						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --storage-mounts, --tags, --custom-configuration, --computer-configuration, or --request must be specified", "Provide at least one field to update.")
 					}
 					result, err := executor.Execute(ctx, apiReq)
 					if err != nil {
@@ -93,6 +96,37 @@ func applyUpdateResultText(result *command.Result, req command.Request) {
 func requestFlag(req command.Request) bool {
 	flag, ok := req.Flags["request"]
 	return ok && flag.Changed && flag.String != ""
+}
+
+// validateStorageMounts rejects mount fields that belong to the tool's own
+// configuration. Mount updates identify an existing Image volume by Name and
+// may only change the image reference, registry type, and sub-path.
+func validateStorageMounts(request map[string]any) error {
+	value, ok := request["StorageMounts"]
+	if !ok || value == nil {
+		return nil
+	}
+	mounts, ok := value.([]any)
+	if !ok {
+		// Shape validation against the API contract reports non-array values.
+		return nil
+	}
+	for index, item := range mounts {
+		mount, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		for _, field := range []string{"MountPath", "ReadOnly"} {
+			if fieldValue, present := mount[field]; present && fieldValue != nil {
+				return output.NewUsageError(
+					"INVALID_REQUEST_JSON",
+					fmt.Sprintf("StorageMounts[%d].%s cannot be changed by tool update", index, field),
+					fmt.Sprintf("Omit %s from each --storage-mounts entry to keep the tool's mount configuration.", field),
+				)
+			}
+		}
+	}
+	return nil
 }
 
 // ToolID resolves the target tool id from normalized positional values and

@@ -699,6 +699,7 @@ type commandSchemaSnapshot struct {
 	RequestSchema map[string]struct {
 		Type    string
 		CliFlag *string
+		Aliases []string
 	}
 	Failures []string
 	Flags    map[string]struct {
@@ -826,8 +827,9 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 			} `json:"Args"`
 			RequestSchema struct {
 				Properties map[string]struct {
-					Type    string  `json:"Type"`
-					CliFlag *string `json:"CliFlag"`
+					Type    string   `json:"Type"`
+					CliFlag *string  `json:"CliFlag"`
+					Aliases []string `json:"Aliases"`
 				} `json:"Properties"`
 			} `json:"RequestSchema"`
 			Failures []string `json:"Failures"`
@@ -867,6 +869,7 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 		RequestSchema: map[string]struct {
 			Type    string
 			CliFlag *string
+			Aliases []string
 		}{},
 		Failures: env.Data.Failures,
 		Examples: append([]string(nil), env.Data.Examples...),
@@ -884,7 +887,8 @@ func schemaSnapshotForCommand(t *testing.T, command string) commandSchemaSnapsho
 		snapshot.RequestSchema[name] = struct {
 			Type    string
 			CliFlag *string
-		}{Type: prop.Type, CliFlag: prop.CliFlag}
+			Aliases []string
+		}{Type: prop.Type, CliFlag: prop.CliFlag, Aliases: prop.Aliases}
 	}
 	for _, arg := range env.Data.Args {
 		snapshot.Args = append(snapshot.Args, struct {

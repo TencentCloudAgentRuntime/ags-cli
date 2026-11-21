@@ -151,3 +151,20 @@ func TestSchemaFromDescriptorInfersEffects(t *testing.T) {
 		})
 	}
 }
+
+// Every failure code a command declares must be explainable. Otherwise
+// `agr explain <Code>` describes a condition the CLI itself produced as an
+// unknown server-side error, which misleads users and agents.
+func TestSchemaFailureCodesAreExplained(t *testing.T) {
+	for _, schema := range getAllSchemas() {
+		for _, code := range schema.Failures {
+			explained, _ := explainCodeData(normalizeExplainCode(code))
+			if strings.Contains(explained.Meaning, "is not registered") {
+				t.Errorf("%s declares %s, but agr explain cannot describe it", schema.Name, code)
+			}
+			if explained.Kind == "" || explained.ExitCode == 0 {
+				t.Errorf("%s declares %s, but explain has no kind or exit code: %+v", schema.Name, code, explained)
+			}
+		}
+	}
+}
