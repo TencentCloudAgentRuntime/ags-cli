@@ -443,8 +443,22 @@ func TestCleanupPolicyHelpAndSchema(t *testing.T) {
 		}
 	}
 	createCmd, _ := findCobraCommand(root, "pre-cache-image-cleanup-policy.create")
-	if help := commandHelp(t, createCmd); !strings.Contains(help, "--enabled=false") {
-		t.Errorf("create help lacks the disabled example:\n%s", help)
+	createHelp := commandHelp(t, createCmd)
+	if !strings.Contains(createHelp, "--enabled=false") {
+		t.Errorf("create help lacks the disabled example:\n%s", createHelp)
+	}
+	// There is no show command for a policy, so the create help must point at
+	// the ID lookup that exists.
+	if !strings.Contains(createHelp, "list --cleanup-policy-ids") {
+		t.Errorf("create help does not name the ID lookup:\n%s", createHelp)
+	}
+	deleteCmd, _ := findCobraCommand(root, "pre-cache-image-cleanup-policy.delete")
+	deleteHelp := commandHelp(t, deleteCmd)
+	if !strings.Contains(deleteHelp, "already deleted returns success") {
+		t.Errorf("delete help misses the soft-delete outcome:\n%s", deleteHelp)
+	}
+	if strings.Contains(deleteHelp, "not idempotent at the response level") {
+		t.Errorf("delete help still claims a retried delete fails:\n%s", deleteHelp)
 	}
 }
 

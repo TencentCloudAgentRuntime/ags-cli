@@ -338,9 +338,8 @@
                                     "Image: container image volume source",
                                     "Cos: Tencent Cloud Object Storage source",
                                     "Cfs: Cloud File Storage source",
-                                    "AgentBucket: AgentBucket source",
-                                    "Volume: existing volume reference",
-                                    "VolumeTemplate: derived volume reference"
+                                    "Volume: existing volume reference; provide VolumeId or VolumeName",
+                                    "Instance start supports only these sources; derived volume templates are tool-only"
                                 ],
                                 "examples": [
                                     "agr instance create --tool-id sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"MountPath\":\"/mnt/runtime\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v1\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"/usr/bin\"}}}]' -o text",
@@ -1188,7 +1187,7 @@
         },
             "pre-cache-image-cleanup-policy.create": {
                 "short": "Create an image pre-cache cleanup policy",
-                "long": "Create an account-level policy that cleans up pre-cached images that stay idle for longer than IdleTTL.\n\nName and IdleTTL are required. IdleTTL is a positive integer followed by one unit: m, h, or d, for example 30m, 12h, or 3d. RegistryHost matches one registry host exactly and accepts at most 255 characters; omit it or pass an empty string to cover every registry. RepoPattern is a regular expression matched against the namespace/repository path and accepts at most 256 characters; omit it or pass an empty string to cover every repository. The service also limits compiled pattern size per policy and across the account's enabled policies.\n\nWhen --enabled is omitted, the service stores the policy as enabled. Pass --enabled=false to create a disabled policy. The result contains the new CleanupPolicyId; use it with show commands or with update and delete.",
+                "long": "Create an account-level policy that cleans up pre-cached images that stay idle for longer than IdleTTL.\n\nName and IdleTTL are required. IdleTTL is a positive integer followed by one unit: m, h, or d, for example 30m, 12h, or 3d. RegistryHost matches one registry host exactly and accepts at most 255 characters; omit it or pass an empty string to cover every registry. RepoPattern is a regular expression matched against the namespace/repository path and accepts at most 256 characters; omit it or pass an empty string to cover every repository. The service also limits compiled pattern size per policy and across the account's enabled policies.\n\nWhen --enabled is omitted, the service stores the policy as enabled. Pass --enabled=false to create a disabled policy. The result contains the new CleanupPolicyId; use it with `list --cleanup-policy-ids`, or with update and delete.",
                 "examples": [
                     "Example - Create an enabled policy for one registry host:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d --registry-host tcr-cq.tencentcloudcr.com --repo-pattern '^ags\\.dev/.+$' -o text",
                     "Example - Create a disabled policy for every repository:\n  agr pre-cache-image-cleanup-policy create --name demo --idle-ttl 3d --enabled=false -o text",
@@ -1244,7 +1243,7 @@
             },
             "pre-cache-image-cleanup-policy.delete": {
                 "short": "Delete an image pre-cache cleanup policy",
-                "long": "Delete one image pre-cache cleanup policy by ID in a single request. The ID comes from create or list output as CleanupPolicy.CleanupPolicyId / CleanupPolicyId. The service returns an error when the ID does not exist or was already deleted, so a retry after success is not idempotent at the response level.",
+                "long": "Delete one image pre-cache cleanup policy by ID in a single request. The ID comes from create or list output as CleanupPolicy.CleanupPolicyId / CleanupPolicyId. The service returns an error when the ID never existed in this account. Deleting an ID this account already deleted returns success, so retrying a successful delete is safe at the response level.",
                 "examples": [
                     "Example - Delete a policy:\n  agr pre-cache-image-cleanup-policy delete pccp-example -o text",
                     "Example - Delete with a raw request:\n  agr pre-cache-image-cleanup-policy delete pccp-example --request '{\"CleanupPolicyId\":\"pccp-example\"}' -o json"

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -67,9 +68,9 @@ func TestStorageMountsSubPathWireShape(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server, requests := storageMountServer(t)
-			args := tc.args
+			args := slices.Clone(tc.args)
 			if tc.mounts != "" {
-				args = append(append([]string{}, tc.args...), "--storage-mounts", tc.mounts)
+				args = append(args, "--storage-mounts", tc.mounts)
 			}
 			out, stderr, err := runSnapshotCLI(t, server, "", args...)
 			if err != nil {
@@ -123,9 +124,9 @@ func TestToolUpdateRejectsImmutableMountFields(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			calls.Store(0)
-			args := tc.args
+			args := slices.Clone(tc.args)
 			if tc.mount != "" {
-				args = append(append([]string{}, tc.args...), "--storage-mounts", tc.mount)
+				args = append(args, "--storage-mounts", tc.mount)
 			}
 			out, stderr, err := runSnapshotCLI(t, server, "", args...)
 			var envelope struct{ Failure struct{ Code string } }
@@ -218,5 +219,32 @@ func TestStorageMountsHelpAndSchema(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestInstanceCreateMountSourcesStayInThePublicContract keeps instance start
+// help and schema on the sources the service accepts. A start request rejects
+// VolumeTemplate and AgentBucket, so recommending them sends agents into
+// InvalidParameterValue.StorageMount.
+func TestInstanceCreateMountSourcesStayInThePublicContract(t *testing.T) {
+	sources := schemaForCommand(t, "instance.create").Flags["storage-mounts"].Values
+	documented := strings.Join(sources, "\n")
+	for _, want := range []string{"Image:", "Cos:", "Cfs:", "Volume:"} {
+		if !strings.Contains(documented, want) {
+			t.Errorf("instance.create storage-mounts values miss %q: %s", want, documented)
+		}
+	}
+	cmd, ok := findCobraCommand(contractRoot(), "instance.create")
+	if !ok {
+		t.Fatal("instance.create command missing")
+	}
+	help := commandHelp(t, cmd)
+	for _, rejected := range []string{"VolumeTemplate", "AgentBucket"} {
+		if strings.Contains(documented, rejected) {
+			t.Errorf("instance.create storage-mounts values recommend %s: %s", rejected, documented)
+		}
+		if strings.Contains(help, rejected) {
+			t.Errorf("instance create --help recommends %s:\n%s", rejected, help)
+		}
 	}
 }

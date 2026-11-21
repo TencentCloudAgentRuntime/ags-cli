@@ -15,7 +15,7 @@ func APIDescriptor() apicli.APIDescriptor {
 			Path:         []string{"pre-cache-image-cleanup-policy", "delete"},
 			Use:          "delete <cleanup-policy-id>",
 			Short:        "Delete an image pre-cache cleanup policy",
-			Long:         "Delete one image pre-cache cleanup policy by ID in a single request. The ID comes from create or list output as CleanupPolicy.CleanupPolicyId / CleanupPolicyId. The service returns an error when the ID does not exist or was already deleted, so a retry after success is not idempotent at the response level.",
+			Long:         "Delete one image pre-cache cleanup policy by ID in a single request. The ID comes from create or list output as CleanupPolicy.CleanupPolicyId / CleanupPolicyId. The service returns an error when the ID never existed in this account. Deleting an ID this account already deleted returns success, so retrying a successful delete is safe at the response level.",
 			Examples:     []string{"Example - Delete a policy:\n  agr pre-cache-image-cleanup-policy delete pccp-example -o text", "Example - Delete with a raw request:\n  agr pre-cache-image-cleanup-policy delete pccp-example --request '{\"CleanupPolicyId\":\"pccp-example\"}' -o json"},
 			SupportsJSON: true,
 			Args: []command.ArgSpec{
