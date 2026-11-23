@@ -41,10 +41,11 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					if err := validateStorageMounts(apiReq); err != nil {
+					rawRequest := requestFlag(req)
+					if err := validateStorageMounts(apiReq, rawRequest); err != nil {
 						return nil, err
 					}
-					if !requestFlag(req) && len(apiReq) <= 1 {
+					if !rawRequest && len(apiReq) <= 1 {
 						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --storage-mounts, --tags, --custom-configuration, --computer-configuration, or --request must be specified", "Provide at least one field to update.")
 					}
 					result, err := executor.Execute(ctx, apiReq)
@@ -98,10 +99,9 @@ func requestFlag(req command.Request) bool {
 	return ok && flag.Changed && flag.String != ""
 }
 
-// validateStorageMounts rejects mount fields that belong to the tool's own
-// configuration. Mount updates identify an existing Image volume by Name and
-// may only change the image reference, registry type, and sub-path.
-func validateStorageMounts(request map[string]any) error {
+// validateStorageMounts preserves the tool's mount settings when users update
+// an image, including when they copy an image mount from tool get into a raw request.
+func validateStorageMounts(request map[string]any, rawRequest bool) error {
 	value, ok := request["StorageMounts"]
 	if !ok || value == nil {
 		return nil
@@ -115,6 +115,18 @@ func validateStorageMounts(request map[string]any) error {
 		mount, ok := item.(map[string]any)
 		if !ok {
 			continue
+		}
+		if rawRequest {
+			source, _ := mount["StorageSource"].(map[string]any)
+			if image, _ := source["Image"].(map[string]any); image != nil {
+				if _, ok := mount["MountPath"].(string); ok {
+					delete(mount, "MountPath")
+				}
+				if _, ok := mount["ReadOnly"].(bool); ok {
+					delete(mount, "ReadOnly")
+				}
+				continue
+			}
 		}
 		for _, field := range []string{"MountPath", "ReadOnly"} {
 			if fieldValue, present := mount[field]; present && fieldValue != nil {

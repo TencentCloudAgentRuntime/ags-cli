@@ -329,17 +329,15 @@
                     }
                 },
                 "StorageMounts": {
-                    "description": "Storage mounts attached when the instance starts. Mounts declared by the tool and supplied here are combined by the service.",
+                    "description": "Storage mounts attached at launch. Tool starts combine tool and request mounts. Clones inherit the source instance's mounts. Snapshot restores support direct StorageSource.Cos or StorageSource.Image mounts.",
                     "inputs": {
                         "storage-mounts": {
-                            "usage": "StorageMounts as a JSON array, @file, or - for stdin. Each entry declares a mount available when the instance starts; MountOptions only adjusts mounts the tool already declares.",
+                            "usage": "StorageMounts as a JSON array, @file, or - for stdin. Support depends on the launch mode. When starting from a tool, use MountOptions to adjust mounts the tool already declares.",
                             "format": "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"<path-in-image>\"}}}]",
                             "values": [
-                                "Image: container image volume source",
-                                "Cos: Tencent Cloud Object Storage source",
-                                "Cfs: Cloud File Storage source",
-                                "Volume: existing volume reference; provide VolumeId or VolumeName",
-                                "Instance start supports only these sources; derived volume templates are tool-only"
+                                "Tool start (--tool-id or --tool-name) supports Volume (VolumeId or VolumeName), StorageSource.Cfs, StorageSource.Cos, or StorageSource.Image.",
+                                "Clone (--source-instance-id) inherits the source instance's mounts. Omit StorageMounts or supply an empty array.",
+                                "Snapshot restore (--snapshot-id) supports only direct StorageSource.Cos or StorageSource.Image mounts."
                             ],
                             "examples": [
                                 "agr instance create --tool-id sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"MountPath\":\"/mnt/runtime\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v1\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"/usr/bin\"}}}]' -o text",
@@ -915,18 +913,21 @@
                     "description": "Image volume mounts to change on the tool. Each entry matches the tool's existing Image volume by Name; the service updates the image and optional sub-path.",
                     "inputs": {
                         "storage-mounts": {
-                            "usage": "StorageMounts as a JSON array, @file, or - for stdin. Omit --storage-mounts or pass [] to keep the current mounts. Each entry must match an existing Image volume Name and must not set MountPath or ReadOnly.",
+                            "usage": "StorageMounts as a JSON array, @file, or - for stdin. Omit --storage-mounts or pass [] to keep the current mounts. Match an existing Image volume by Name and omit MountPath and ReadOnly.",
                             "format": "[{\"Name\":\"runtime\",\"StorageSource\":{\"Image\":{\"Reference\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"<path-in-image>\"}}}]",
                             "values": [
                                 "Name: name of an existing Image volume on the tool",
                                 "Reference: image reference with a tag or sha256 digest",
                                 "ImageRegistryType: personal or enterprise; required with Image",
                                 "SubPath: omitted keeps the current directory, an empty string switches to the image root, a non-empty string switches to that directory",
-                                "MountPath and ReadOnly belong to the tool configuration; omit them when updating mounts"
+                                "With --request, you can reuse an Image mount from tool get. AGR strips MountPath and ReadOnly to preserve the tool's settings.",
+                                "The update response acknowledges the request. --wait checks the tool lifecycle (ACTIVE or ISOLATED).",
+                                "Read back the named mount before starting an instance.\n  agr tool get sdt-example -o json --jq '.Data.StorageMounts[]? | select(.Name == \"runtime\") | .StorageSource.Image'",
+                                "Repeat readback until Reference and ImageRegistryType match and the expected SubPath is visible. An omitted SubPath in the request keeps the previous directory. For an explicit empty SubPath, an empty or omitted readback means the image root."
                             ],
                             "examples": [
                                 "agr tool update sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v2\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"assets\"}}}]' -o text",
-                                "agr tool update sdt-example --storage-mounts @image-updates.json --wait -o json"
+                                "agr tool update sdt-example --storage-mounts @image-updates.json -o json"
                             ]
                         }
                     }

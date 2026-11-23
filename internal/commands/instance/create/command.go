@@ -65,6 +65,13 @@ func Module() command.Module {
 				if snapshotID != "" && (toolID != "" || toolName != "") {
 					return nil, output.NewUsageError("CONFLICTING_FLAGS", "cannot specify ToolId or ToolName with SnapshotId", "Use --snapshot-id without --tool-id or --tool-name/-t; omit ToolId and ToolName from --request when restoring a saved snapshot.")
 				}
+				if mounts, _ := apiReq["StorageMounts"].([]any); sourceID != "" && len(mounts) > 0 {
+					return nil, output.NewUsageError(
+						"CONFLICTING_FLAGS",
+						"cannot specify non-empty StorageMounts with SourceInstanceId",
+						"Clones inherit the source instance's mounts. Omit --storage-mounts or omit StorageMounts from --request.",
+					)
+				}
 
 				// Show spinner for interactive text mode only.
 				sp := progress.NewForCLI(deps.IO.ErrOut, cli.IsJSONOutput(), cli.NonInteractive(), deps.IO.IsStderrTTY(), cli.NoColor())

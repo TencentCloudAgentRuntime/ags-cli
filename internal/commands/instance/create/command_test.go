@@ -469,45 +469,49 @@ func TestSpinnerIsNopWhenStderrIsNotTTY(t *testing.T) {
 	}
 }
 
-func TestModuleBuildsStorageMountsForEveryStartMode(t *testing.T) {
-	const mounts = `[{"Name":"runtime","MountPath":"/mnt/agr-start","ReadOnly":true,"StorageSource":{"Image":{"Reference":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"personal","SubPath":"/usr/bin"}}}]`
-	var want []any
-	if err := json.Unmarshal([]byte(mounts), &want); err != nil {
-		t.Fatal(err)
-	}
+func TestModuleBuildsStorageMountsForToolAndSnapshot(t *testing.T) {
+	const imageMounts = `[{"Name":"runtime","MountPath":"/mnt/agr-start","ReadOnly":true,"StorageSource":{"Image":{"Reference":"ccr.ccs.tencentyun.com/ags-image/envd:v0.5.14","ImageRegistryType":"personal","SubPath":"/usr/bin"}}}]`
+	const cosMounts = `[{"Name":"objects","MountPath":"/mnt/cos","StorageSource":{"Cos":{"BucketName":"example-1250000000","Endpoint":"cos.ap-guangzhou.myqcloud.com"}}}]`
 	filePath := filepath.Join(t.TempDir(), "mounts.json")
-	if err := os.WriteFile(filePath, []byte(mounts), 0o600); err != nil {
+	if err := os.WriteFile(filePath, []byte(imageMounts), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct {
-		name  string
-		flags map[string]command.FlagValue
-		stdin string
+		name   string
+		flags  map[string]command.FlagValue
+		stdin  string
+		mounts string
 	}{
 		{
-			name:  "tool inline",
-			flags: withChanged(withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit"), "storage-mounts", mounts),
+			name:   "tool inline",
+			flags:  withChanged(withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit"), "storage-mounts", imageMounts),
+			mounts: imageMounts,
 		},
 		{
-			name:  "tool file",
-			flags: withChanged(withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit"), "storage-mounts", "@"+filePath),
+			name:   "tool file",
+			flags:  withChanged(withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit"), "storage-mounts", "@"+filePath),
+			mounts: imageMounts,
 		},
 		{
-			name:  "tool stdin",
-			flags: withChanged(withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit"), "storage-mounts", "-"),
-			stdin: mounts,
+			name:   "tool stdin",
+			flags:  withChanged(withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit"), "storage-mounts", "-"),
+			stdin:  imageMounts,
+			mounts: imageMounts,
 		},
 		{
-			name:  "tool request",
-			flags: withChanged(allInstanceCreateFlags(), "request", `{"ToolId":"sdt-unit","StorageMounts":`+mounts+`}`),
+			name:   "tool request",
+			flags:  withChanged(allInstanceCreateFlags(), "request", `{"ToolId":"sdt-unit","StorageMounts":`+imageMounts+`}`),
+			mounts: imageMounts,
 		},
 		{
-			name:  "clone inline",
-			flags: withChanged(withChanged(allInstanceCreateFlags(), "source-instance-id", "ins-source"), "storage-mounts", mounts),
+			name:   "snapshot image",
+			flags:  withChanged(withChanged(allInstanceCreateFlags(), "snapshot-id", "snapshot-unit"), "storage-mounts", imageMounts),
+			mounts: imageMounts,
 		},
 		{
-			name:  "snapshot inline",
-			flags: withChanged(withChanged(allInstanceCreateFlags(), "snapshot-id", "snapshot-unit"), "storage-mounts", mounts),
+			name:   "snapshot cos",
+			flags:  withChanged(withChanged(allInstanceCreateFlags(), "snapshot-id", "snapshot-unit"), "storage-mounts", cosMounts),
+			mounts: cosMounts,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -520,9 +524,13 @@ func TestModuleBuildsStorageMountsForEveryStartMode(t *testing.T) {
 			if tc.stdin != "" {
 				req.Stdin = strings.NewReader(tc.stdin)
 			}
-			result, err := runtime.Handler.Run(context.Background(), req)
+			result, err := runtime.Handler.Run(t.Context(), req)
 			if err != nil {
 				t.Fatalf("Run: %v", err)
+			}
+			var want []any
+			if err := json.Unmarshal([]byte(tc.mounts), &want); err != nil {
+				t.Fatal(err)
 			}
 			got, ok := cp.request["StorageMounts"].([]any)
 			if !ok || !reflect.DeepEqual(got, want) {
@@ -537,12 +545,16 @@ func TestModuleBuildsStorageMountsForEveryStartMode(t *testing.T) {
 
 func TestModuleOmitsAbsentStorageMounts(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		value string
-		want  []any
+		name     string
+		selector string
+		sourceID string
+		value    string
+		want     []any
 	}{
-		{"absent", "", nil},
-		{"empty array", "[]", []any{}},
+		{"tool absent", "tool-id", "sdt-unit", "", nil},
+		{"tool empty array", "tool-id", "sdt-unit", "[]", []any{}},
+		{"clone absent", "source-instance-id", "ins-source", "", nil},
+		{"clone empty array", "source-instance-id", "ins-source", "[]", []any{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cp := &fakeMixedControlPlane{resp: createdInstanceResponse("ins-unit")}
@@ -550,12 +562,15 @@ func TestModuleOmitsAbsentStorageMounts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}
-			flags := withChanged(allInstanceCreateFlags(), "tool-id", "sdt-unit")
+			flags := withChanged(allInstanceCreateFlags(), tc.selector, tc.sourceID)
 			if tc.value != "" {
 				flags = withChanged(flags, "storage-mounts", tc.value)
 			}
-			if _, err := runtime.Handler.Run(context.Background(), command.Request{Flags: flags}); err != nil {
+			if _, err := runtime.Handler.Run(t.Context(), command.Request{Flags: flags}); err != nil {
 				t.Fatalf("Run: %v", err)
+			}
+			if cp.action != "StartSandboxInstance" || cp.calls != 1 {
+				t.Fatalf("calls = %d, action = %q, want one StartSandboxInstance request", cp.calls, cp.action)
 			}
 			got, present := cp.request["StorageMounts"]
 			if tc.want == nil {
@@ -572,6 +587,7 @@ func TestModuleOmitsAbsentStorageMounts(t *testing.T) {
 }
 
 func TestModuleRejectsInvalidStorageMountsLocally(t *testing.T) {
+	const mounts = `[{"Name":"runtime"}]`
 	for _, tc := range []struct {
 		name  string
 		flags map[string]command.FlagValue
@@ -587,6 +603,16 @@ func TestModuleRejectsInvalidStorageMountsLocally(t *testing.T) {
 			flags: withChanged(withChanged(allInstanceCreateFlags(), "request", `{"ToolId":"sdt-unit"}`), "storage-mounts", `[]`),
 			code:  "REQUEST_FLAG_CONFLICT",
 		},
+		{
+			name:  "clone storage mounts flag",
+			flags: withChanged(withChanged(allInstanceCreateFlags(), "source-instance-id", "ins-source"), "storage-mounts", mounts),
+			code:  "CONFLICTING_FLAGS",
+		},
+		{
+			name:  "clone storage mounts raw request",
+			flags: withChanged(allInstanceCreateFlags(), "request", `{"SourceInstanceId":"ins-source","StorageMounts":`+mounts+`}`),
+			code:  "CONFLICTING_FLAGS",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cp := &fakeMixedControlPlane{resp: createdInstanceResponse("ins-unit")}
@@ -594,7 +620,7 @@ func TestModuleRejectsInvalidStorageMountsLocally(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}
-			_, err = runtime.Handler.Run(context.Background(), command.Request{Flags: tc.flags})
+			_, err = runtime.Handler.Run(t.Context(), command.Request{Flags: tc.flags})
 			var cliErr *output.CLIError
 			if !errors.As(err, &cliErr) || cliErr.Failure.Code != tc.code {
 				t.Fatalf("error = %v, want %s", err, tc.code)

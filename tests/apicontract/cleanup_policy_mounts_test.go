@@ -584,7 +584,7 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 		Expect(unchangedImage["Reference"]).To(Equal(cleanupMountOldImage), "a rejected update must not change the mount")
 
 		updateMount := func(mounts string) {
-			updated := cli.Run(ctx, "tool", "update", toolID, "--storage-mounts", mounts, "--wait", "-o", "json")
+			updated := cli.Run(ctx, "tool", "update", toolID, "--storage-mounts", mounts, "-o", "json")
 			updated.ExpectSuccess()
 		}
 		// pollMount waits for the published mount state, which trails the update
@@ -660,6 +660,37 @@ var _ = Describe("Cleanup policy and sandbox storage mounts", func() {
 				return fmt.Errorf("Reference = %v", image["Reference"])
 			}
 			if subPath, _ := image["SubPath"].(string); subPath != initialSubPath {
+				return fmt.Errorf("SubPath = %v, want %q", image["SubPath"], initialSubPath)
+			}
+			return nil
+		})
+
+		By("reusing the tool's Image mount in a raw request")
+		toolData, err = readTool()
+		Expect(err).NotTo(HaveOccurred())
+		mount, err := liveMount(toolData, "runtime")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(mount["MountPath"]).To(Equal(runtimeMountPath))
+		Expect(mount["ReadOnly"]).To(BeTrue())
+		image, err := liveMountImage(mount)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(image["Reference"]).To(Equal(cleanupMountNewImage))
+		image["Reference"] = cleanupMountOldImage
+		raw, err := json.Marshal(map[string]any{
+			"ToolId":        toolID,
+			"StorageMounts": []map[string]any{mount},
+		})
+		Expect(err).NotTo(HaveOccurred())
+		updated := cli.Run(ctx, "tool", "update", "--request", string(raw), "-o", "json")
+		updated.ExpectSuccess()
+		pollMount("raw image switch", func(_ map[string]any, image map[string]any) error {
+			if image["Reference"] != cleanupMountOldImage {
+				return fmt.Errorf("Reference = %v, want %q", image["Reference"], cleanupMountOldImage)
+			}
+			if image["ImageRegistryType"] != "personal" {
+				return fmt.Errorf("ImageRegistryType = %v, want personal", image["ImageRegistryType"])
+			}
+			if image["SubPath"] != initialSubPath {
 				return fmt.Errorf("SubPath = %v, want %q", image["SubPath"], initialSubPath)
 			}
 			return nil

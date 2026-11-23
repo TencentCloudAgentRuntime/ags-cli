@@ -5,6 +5,7 @@ package precacheimagecleanuppolicy
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -91,9 +92,17 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 			case "pre-cache-image-cleanup-policy.list":
 				policies, err := response.ReadObjects("CleanupPolicySet")
 				if err != nil {
-					return nil, err
+					return nil, invalidPolicyListResponse(err.Error())
 				}
-				result.Text = func(w io.Writer) { renderPolicyList(w, policies, response) }
+				if policies == nil {
+					return nil, invalidPolicyListResponse("CleanupPolicySet must be an array")
+				}
+				totalJSON, err := json.Marshal(response["TotalCount"])
+				var total *int64
+				if err != nil || json.Unmarshal(totalJSON, &total) != nil || total == nil || *total < 0 {
+					return nil, invalidPolicyListResponse("TotalCount must be a nonnegative integer")
+				}
+				result.Text = func(w io.Writer) { renderPolicyList(w, policies, *total) }
 			case "pre-cache-image-cleanup-policy.delete":
 				if response.String("RequestId") == "" {
 					return nil, output.NewCLIError(&output.Failure{
@@ -111,6 +120,15 @@ func NewModule(api apicli.APIDescriptor) command.Module {
 		})}, nil
 	}
 	return module
+}
+
+func invalidPolicyListResponse(reason string) error {
+	return output.NewCLIError(&output.Failure{
+		Code:    "INTERNAL_ERROR",
+		Kind:    output.KindGenericError,
+		Message: "invalid cleanup policy list response: " + reason,
+		Hint:    "Rerun with --debug. If the issue persists, inspect the control-plane response.",
+	})
 }
 
 func validateIdleTTL(value any) error {
@@ -148,7 +166,7 @@ func renderPolicy(w io.Writer, policy apivalue.Object) {
 	textview.PrintKV(w, pairs)
 }
 
-func renderPolicyList(w io.Writer, policies []apivalue.Object, response apivalue.Object) {
+func renderPolicyList(w io.Writer, policies []apivalue.Object, total int64) {
 	if len(policies) == 0 {
 		fmt.Fprintln(w, "No pre-cache image cleanup policies found")
 	} else {
@@ -170,7 +188,5 @@ func renderPolicyList(w io.Writer, policies []apivalue.Object, response apivalue
 		}
 		textview.PrintTable(w, headers, rows)
 	}
-	if total := response.Display("TotalCount"); total != "" {
-		fmt.Fprintf(w, "Total: %s\n", total)
-	}
+	fmt.Fprintf(w, "Total: %d\n", total)
 }

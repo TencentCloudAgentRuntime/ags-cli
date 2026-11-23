@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -457,6 +458,47 @@ func TestCleanupPolicyResponseHandling(t *testing.T) {
 			response: `{"Response":{"CleanupPolicySet":[null],"TotalCount":1,"RequestId":"request-list"}}`,
 			code:     "INTERNAL_ERROR",
 			exit:     1,
+			want:     []string{"CleanupPolicySet[0]"},
+		},
+		{
+			name: "list missing set", args: []string{"list"},
+			response: `{"Response":{"TotalCount":1}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"CleanupPolicySet"},
+		},
+		{
+			name: "list null set", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":null,"TotalCount":1}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"CleanupPolicySet"},
+		},
+		{
+			name: "list set is not an array", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":{},"TotalCount":1}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"CleanupPolicySet"},
+		},
+		{
+			name: "list missing total", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":[]}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"TotalCount"},
+		},
+		{
+			name: "list null total", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":[],"TotalCount":null}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"TotalCount"},
+		},
+		{
+			name: "list string total", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":[],"TotalCount":"1"}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"TotalCount"},
+		},
+		{
+			name: "list negative total", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":[],"TotalCount":-1}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"TotalCount"},
+		},
+		{
+			name: "list fractional total", args: []string{"list"},
+			response: `{"Response":{"CleanupPolicySet":[],"TotalCount":1.5}}`,
+			code:     "INTERNAL_ERROR", exit: 1, want: []string{"TotalCount"},
 		},
 		{
 			name:     "service error keeps the code",
@@ -490,15 +532,47 @@ func TestCleanupPolicyResponseHandling(t *testing.T) {
 			}
 		})
 	}
-	server, _ := cleanupPolicyServer(t, func(string, map[string]any) string {
-		return `{"Response":{"CleanupPolicySet":[],"TotalCount":0,"RequestId":"request-list"}}`
+	t.Run("list malformed output in text mode", func(t *testing.T) {
+		server, _ := cleanupPolicyServer(t, func(string, map[string]any) string {
+			return `{"Response":{"CleanupPolicySet":null,"TotalCount":1}}`
+		})
+		out, stderr, err := runSnapshotCLIWithOutput(t, server, nil, "text", "pre-cache-image-cleanup-policy", "list")
+		if exitCodeOf(err) != 1 || len(out) != 0 || !strings.Contains(stderr, "CleanupPolicySet") {
+			t.Fatalf("expected a list response error: stdout=%s stderr=%s (%v)", out, stderr, err)
+		}
 	})
-	out, stderr, err := runSnapshotCLIWithOutput(t, server, nil, "text", "pre-cache-image-cleanup-policy", "list")
-	if err != nil {
-		t.Fatalf("CLI: %v; stdout=%s stderr=%s", err, out, stderr)
-	}
-	if !bytes.Contains(out, []byte("No pre-cache image cleanup policies found")) || !bytes.Contains(out, []byte("Total: 0")) {
-		t.Fatalf("empty page output = %s", out)
+	for _, tc := range []struct {
+		name   string
+		count  int
+		offset string
+	}{
+		{"empty list", 0, "0"},
+		{"empty final page", 1, "1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			count := strconv.Itoa(tc.count)
+			server, _ := cleanupPolicyServer(t, func(string, map[string]any) string {
+				return `{"Response":{"CleanupPolicySet":[],"TotalCount":` + count + `,"RequestId":"request-list"}}`
+			})
+			args := []string{"pre-cache-image-cleanup-policy", "list", "--offset", tc.offset}
+			out, stderr, err := runSnapshotCLI(t, server, "", args...)
+			var envelope struct {
+				Status string
+				Data   map[string]json.RawMessage
+			}
+			if err != nil || json.Unmarshal(out, &envelope) != nil || envelope.Status != "succeeded" {
+				t.Fatalf("expected successful JSON: %s %s (%v)", out, stderr, err)
+			}
+			if len(envelope.Data) != 3 || string(envelope.Data["CleanupPolicySet"]) != "[]" ||
+				string(envelope.Data["TotalCount"]) != count || string(envelope.Data["RequestId"]) != `"request-list"` {
+				t.Fatalf("empty page JSON did not preserve the API response: %s", out)
+			}
+			out, stderr, err = runSnapshotCLIWithOutput(t, server, nil, "text", args...)
+			if err != nil || !bytes.Contains(out, []byte("No pre-cache image cleanup policies found")) ||
+				!bytes.Contains(out, []byte("Total: "+count+"\n")) {
+				t.Fatalf("expected successful empty page: stdout=%s stderr=%s (%v)", out, stderr, err)
+			}
+		})
 	}
 }
 
