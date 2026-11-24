@@ -655,8 +655,8 @@ func readFlagValue(flags *pflag.FlagSet, spec command.FlagSpec) (command.FlagVal
 		if spec.RejectAliasConflicts {
 			return out, output.NewUsageError(
 				"CONFLICTING_FLAGS",
-				fmt.Sprintf("cannot combine --%s with --%s", spec.Name, name),
-				fmt.Sprintf("Use --%s or its alias --%s, choosing one spelling per invocation.", spec.Name, name),
+				fmt.Sprintf("cannot combine --%s with --%s", setName, name),
+				fmt.Sprintf("Use either --%s or --%s.", setName, name),
 			)
 		}
 	}

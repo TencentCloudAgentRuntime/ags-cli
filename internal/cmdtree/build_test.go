@@ -485,21 +485,29 @@ func TestBuildModuleCommand_FlagUsagePreservesExistingAnnotations(t *testing.T) 
 func TestFlagAliasDocumentationAndConflicts(t *testing.T) {
 	spec := command.FlagSpec{
 		Name:                 "filters",
-		Aliases:              []string{"filter"},
+		Aliases:              []string{"filter", "legacy-filter"},
 		Type:                 command.FlagString,
 		HideAliases:          true,
 		RejectAliasConflicts: true,
 	}
 	for _, tc := range []struct {
-		name    string
-		args    []string
-		want    string
-		wantErr string
+		name     string
+		args     []string
+		want     string
+		wantErr  string
+		wantHint string
 	}{
 		{name: "canonical", args: []string{"--filters", "a"}, want: "a"},
 		{name: "alias", args: []string{"--filter", "a"}, want: "a"},
+		{name: "second alias", args: []string{"--legacy-filter", "a"}, want: "a"},
 		{name: "both", args: []string{"--filters", "a", "--filter", "b"}, wantErr: "cannot combine --filters with --filter"},
 		{name: "both reversed", args: []string{"--filter", "b", "--filters", "a"}, wantErr: "cannot combine --filters with --filter"},
+		{
+			name:     "two aliases without canonical flag",
+			args:     []string{"--filter", "a", "--legacy-filter", "b"},
+			wantErr:  "cannot combine --filter with --legacy-filter",
+			wantHint: "Use either --filter or --legacy-filter.",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
@@ -526,6 +534,9 @@ func TestFlagAliasDocumentationAndConflicts(t *testing.T) {
 				}
 				if cliErr.Failure.Message != tc.wantErr {
 					t.Fatalf("message = %q, want %q", cliErr.Failure.Message, tc.wantErr)
+				}
+				if tc.wantHint != "" && cliErr.Failure.Hint != tc.wantHint {
+					t.Errorf("hint = %q, want %q", cliErr.Failure.Hint, tc.wantHint)
 				}
 				return
 			}

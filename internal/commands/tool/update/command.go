@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -96,7 +97,7 @@ func applyUpdateResultText(result *command.Result, req command.Request) {
 
 func requestFlag(req command.Request) bool {
 	flag, ok := req.Flags["request"]
-	return ok && flag.Changed && flag.String != ""
+	return ok && flag.Changed && strings.TrimSpace(flag.String) != ""
 }
 
 // validateStorageMounts preserves the tool's mount settings when users update
@@ -110,6 +111,10 @@ func validateStorageMounts(request map[string]any, rawRequest bool) error {
 	if !ok {
 		// Shape validation against the API contract reports non-array values.
 		return nil
+	}
+	mountInput := "each --storage-mounts entry"
+	if rawRequest {
+		mountInput = "the non-Image StorageMounts entry in --request"
 	}
 	for index, item := range mounts {
 		mount, ok := item.(map[string]any)
@@ -133,7 +138,7 @@ func validateStorageMounts(request map[string]any, rawRequest bool) error {
 				return output.NewUsageError(
 					"INVALID_REQUEST_JSON",
 					fmt.Sprintf("StorageMounts[%d].%s cannot be changed by tool update", index, field),
-					fmt.Sprintf("Omit %s from each --storage-mounts entry to keep the tool's mount configuration.", field),
+					fmt.Sprintf("Omit %s from %s to keep the tool's mount configuration.", field, mountInput),
 				)
 			}
 		}

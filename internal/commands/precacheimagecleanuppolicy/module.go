@@ -10,6 +10,7 @@ import (
 	"io"
 	"regexp"
 	"slices"
+	"strconv"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -139,9 +140,13 @@ func validateIdleTTL(value any) error {
 	if ok && idleTTLPattern.MatchString(ttl) {
 		return nil
 	}
+	display := fmt.Sprint(value)
+	if ok {
+		display = strconv.Quote(ttl)
+	}
 	return output.NewUsageError(
 		"INVALID_IDLE_TTL",
-		fmt.Sprintf("IdleTTL %v must be a positive integer followed by one unit: m, h, or d", value),
+		fmt.Sprintf("IdleTTL %s must be a positive integer followed by one unit: m, h, or d", display),
 		"Use a value such as --idle-ttl 30m, --idle-ttl 12h, or --idle-ttl 3d.",
 	)
 }

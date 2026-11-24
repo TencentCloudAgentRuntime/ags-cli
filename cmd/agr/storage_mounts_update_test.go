@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
 func storageMountServer(t *testing.T) (*httptest.Server, chan map[string]any) {
@@ -135,7 +137,8 @@ func firstImageMount(t *testing.T, payload map[string]any) map[string]any {
 	return image
 }
 
-func TestToolUpdateRejectsImmutableMountFields(t *testing.T) {
+func TestToolUpdateLocalValidation(t *testing.T) {
+	const imageMountWithPath = `[{"Name":"runtime","MountPath":"/mnt/runtime","StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal","SubPath":"usr/bin"}}}]`
 	var calls atomic.Int32
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
@@ -145,31 +148,73 @@ func TestToolUpdateRejectsImmutableMountFields(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		args        []string
-		mount       string
+		wantCode    string
 		wantMessage string
+		wantHint    string
 	}{
-		{"mount path flag", []string{"tool", "update", "sdt-source"}, `[{"Name":"runtime","MountPath":"/mnt/runtime","StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal","SubPath":"usr/bin"}}}]`, "StorageMounts[0].MountPath cannot be changed"},
-		{"read only false flag", []string{"tool", "update", "sdt-source"}, `[{"Name":"runtime","ReadOnly":false,"StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal","SubPath":"usr/bin"}}}]`, "StorageMounts[0].ReadOnly cannot be changed"},
-		{"non-image mount path in raw request", []string{"tool", "update", "--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","MountPath":"/mnt/runtime"}]}`}, "", "StorageMounts[0].MountPath cannot be changed"},
-		{"wrong mount path type in raw request", []string{"tool", "update", "--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","MountPath":false,"StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal"}}}]}`}, "", "StorageMounts[0].MountPath: expected string"},
-		{"wrong read only type in raw request", []string{"tool", "update", "--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","ReadOnly":"false","StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal"}}}]}`}, "", "StorageMounts[0].ReadOnly: expected bool"},
+		{
+			name:        "mount path flag",
+			args:        []string{"sdt-source", "--storage-mounts", imageMountWithPath},
+			wantCode:    "INVALID_REQUEST_JSON",
+			wantMessage: "StorageMounts[0].MountPath cannot be changed",
+			wantHint:    "from each --storage-mounts entry",
+		},
+		{
+			name:        "read only false flag",
+			args:        []string{"sdt-source", "--storage-mounts", `[{"Name":"runtime","ReadOnly":false,"StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal","SubPath":"usr/bin"}}}]`},
+			wantCode:    "INVALID_REQUEST_JSON",
+			wantMessage: "StorageMounts[0].ReadOnly cannot be changed",
+		},
+		{
+			name:        "whitespace request keeps mount flag validation",
+			args:        []string{"sdt-source", "--request", " \t ", "--storage-mounts", imageMountWithPath},
+			wantCode:    "INVALID_REQUEST_JSON",
+			wantMessage: "StorageMounts[0].MountPath cannot be changed",
+			wantHint:    "from each --storage-mounts entry",
+		},
+		{
+			name:        "whitespace request needs an update field",
+			args:        []string{"sdt-source", "--request", " \t "},
+			wantCode:    "MISSING_REQUIRED_FLAG",
+			wantMessage: "at least one of",
+		},
+		{
+			name:        "non-image mount path in raw request",
+			args:        []string{"--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","MountPath":"/mnt/runtime"}]}`},
+			wantCode:    "INVALID_REQUEST_JSON",
+			wantMessage: "StorageMounts[0].MountPath cannot be changed",
+			wantHint:    "StorageMounts entry in --request",
+		},
+		{
+			name:        "wrong mount path type in raw request",
+			args:        []string{"--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","MountPath":false,"StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal"}}}]}`},
+			wantCode:    "INVALID_REQUEST_JSON",
+			wantMessage: "StorageMounts[0].MountPath: expected string",
+		},
+		{
+			name:        "wrong read only type in raw request",
+			args:        []string{"--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","ReadOnly":"false","StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal"}}}]}`},
+			wantCode:    "INVALID_REQUEST_JSON",
+			wantMessage: "StorageMounts[0].ReadOnly: expected bool",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			calls.Store(0)
-			args := slices.Clone(tc.args)
-			if tc.mount != "" {
-				args = append(args, "--storage-mounts", tc.mount)
-			}
+			args := append([]string{"tool", "update"}, tc.args...)
 			out, stderr, err := runSnapshotCLI(t, server, "", args...)
-			var envelope struct{ Failure struct{ Code string } }
-			if exitCodeOf(err) != 2 || json.Unmarshal(out, &envelope) != nil || envelope.Failure.Code != "INVALID_REQUEST_JSON" {
+			if count := calls.Load(); count != 0 {
+				t.Errorf("invalid update made %d API calls", count)
+			}
+			var envelope output.Envelope
+			if exitCodeOf(err) != output.ExitUsage || json.Unmarshal(out, &envelope) != nil ||
+				envelope.Failure == nil || envelope.Failure.Code != tc.wantCode || envelope.Failure.Kind != output.KindUsage {
 				t.Fatalf("unexpected result: %s %s (%v)", out, stderr, err)
 			}
-			if !strings.Contains(string(out), tc.wantMessage) {
-				t.Fatalf("failure did not explain the field error %q: %s", tc.wantMessage, out)
+			if !strings.Contains(envelope.Failure.Message, tc.wantMessage) {
+				t.Errorf("message = %q, want %q", envelope.Failure.Message, tc.wantMessage)
 			}
-			if calls.Load() != 0 {
-				t.Fatal("invalid mount caused an API call")
+			if tc.wantHint != "" && !strings.Contains(envelope.Failure.Hint, tc.wantHint) {
+				t.Errorf("hint = %q, want %q", envelope.Failure.Hint, tc.wantHint)
 			}
 		})
 	}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -91,18 +92,18 @@ func TestValidateIdleTTL(t *testing.T) {
 			}
 		})
 	}
-	for _, ttl := range []string{"0d", "1.5h", "1h30m", "1s", "3", "m", "-3d", " 3d", "3 d"} {
+	for _, ttl := range []string{"", "0d", "1.5h", "1h30m", "1s", "3", "m", "-3d", " 3d", "3 d"} {
 		t.Run("invalid "+ttl, func(t *testing.T) {
 			cp.calls = 0
-			_, err := runDescriptor(t, createDescriptor(), cp, nil, map[string]command.FlagValue{
-				"name":     {Name: "name", Type: command.FlagString, String: "demo", Changed: true},
+			_, err := runDescriptor(t, updateDescriptor(), cp, map[string]string{"cleanup-policy-id": "pccp-a"}, map[string]command.FlagValue{
 				"idle-ttl": {Name: "idle-ttl", Type: command.FlagString, String: ttl, Changed: true},
 			})
 			var cliErr *output.CLIError
 			if !errors.As(err, &cliErr) || cliErr.Failure.Code != "INVALID_IDLE_TTL" {
 				t.Fatalf("error = %v, want INVALID_IDLE_TTL", err)
 			}
-			if !strings.Contains(cliErr.Failure.Message, ttl) || !strings.Contains(cliErr.Failure.Hint, "--idle-ttl 30m") {
+			if !strings.HasPrefix(cliErr.Failure.Message, "IdleTTL "+strconv.Quote(ttl)+" must be ") ||
+				!strings.Contains(cliErr.Failure.Hint, "--idle-ttl 30m") {
 				t.Fatalf("failure is not actionable: %+v", cliErr.Failure)
 			}
 			if cp.calls != 0 {
@@ -155,11 +156,12 @@ func TestUpdateRequiresOneField(t *testing.T) {
 
 func TestResponseValidation(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
-		descriptor apicli.APIDescriptor
-		argValues  map[string]string
-		flags      map[string]command.FlagValue
-		response   any
+		name        string
+		descriptor  apicli.APIDescriptor
+		argValues   map[string]string
+		flags       map[string]command.FlagValue
+		response    any
+		wantMessage string
 	}{
 		{
 			name:       "create missing id",
@@ -184,25 +186,21 @@ func TestResponseValidation(t *testing.T) {
 			response:   map[string]any{},
 		},
 		{
-			name:       "list malformed set",
-			descriptor: listDescriptor(),
-			response:   map[string]any{"CleanupPolicySet": []any{nil}, "TotalCount": 1, "RequestId": "request-list"},
+			name:        "list malformed set",
+			descriptor:  listDescriptor(),
+			response:    map[string]any{"CleanupPolicySet": []any{nil}, "TotalCount": 1, "RequestId": "request-list"},
+			wantMessage: "CleanupPolicySet[0]",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cp := &fakeControlPlane{response: tc.response}
 			_, err := runDescriptor(t, tc.descriptor, cp, tc.argValues, tc.flags)
-			if tc.name == "list malformed set" {
-				// The CLI runner classifies decode errors from the shared response
-				// helpers as INTERNAL_ERROR; the handler itself returns a plain error.
-				if err == nil || !strings.Contains(err.Error(), "CleanupPolicySet[0]") {
-					t.Fatalf("error = %v, want a CleanupPolicySet decode error", err)
-				}
-			} else {
-				var cliErr *output.CLIError
-				if !errors.As(err, &cliErr) || cliErr.Failure.Code != "INTERNAL_ERROR" {
-					t.Fatalf("error = %v, want INTERNAL_ERROR", err)
-				}
+			var cliErr *output.CLIError
+			if !errors.As(err, &cliErr) || cliErr.Failure.Code != "INTERNAL_ERROR" {
+				t.Fatalf("error = %v, want INTERNAL_ERROR", err)
+			}
+			if tc.wantMessage != "" && !strings.Contains(cliErr.Failure.Message, tc.wantMessage) {
+				t.Errorf("message = %q, want %q", cliErr.Failure.Message, tc.wantMessage)
 			}
 			if cp.calls != 1 {
 				t.Fatalf("calls = %d", cp.calls)
