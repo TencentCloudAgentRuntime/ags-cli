@@ -321,6 +321,8 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/session\"\n")
 	} else if strings.HasPrefix(cmd.Command, "instance.snapshot.") {
 		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/instance/snapshot\"\n")
+	} else if strings.HasPrefix(cmd.Command, "pre-cache-image-cleanup-policy.") {
+		b.WriteString("\t\"github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagecleanuppolicy\"\n")
 	}
 	b.WriteString(")\n\n")
 	b.WriteString("func APIDescriptor() apicli.APIDescriptor {\n")
@@ -464,6 +466,8 @@ func renderAPICommand(cmd commandModel) ([]byte, error) {
 		b.WriteString("\treturn session.NewModule(APIDescriptor())\n")
 	} else if strings.HasPrefix(cmd.Command, "instance.snapshot.") {
 		b.WriteString("\treturn snapshot.NewModule(APIDescriptor())\n")
+	} else if strings.HasPrefix(cmd.Command, "pre-cache-image-cleanup-policy.") {
+		b.WriteString("\treturn precacheimagecleanuppolicy.NewModule(APIDescriptor())\n")
 	} else {
 		b.WriteString("\treturn apicli.NewModule(APIDescriptor())\n")
 	}
@@ -550,6 +554,14 @@ func outputDescription(cmd commandModel) string {
 		return "Image pre-cache task create response."
 	case "pre-cache-image-task.get":
 		return "Image pre-cache task response."
+	case "pre-cache-image-cleanup-policy.create":
+		return "Image pre-cache cleanup policy create response."
+	case "pre-cache-image-cleanup-policy.delete":
+		return "Image pre-cache cleanup policy delete response."
+	case "pre-cache-image-cleanup-policy.list":
+		return "Image pre-cache cleanup policy list response."
+	case "pre-cache-image-cleanup-policy.update":
+		return "Image pre-cache cleanup policy update response."
 	case "instance.create":
 		return "Instance create response."
 	case "instance.delete":
@@ -597,6 +609,14 @@ func outputEffects(cmd commandModel) []string {
 		return []string{"update:gpu-resource-group"}
 	case "gpu.group.delete":
 		return []string{"delete:gpu-resource-group"}
+	case "pre-cache-image-cleanup-policy.create":
+		return []string{"create:pre-cache-image-cleanup-policy"}
+	case "pre-cache-image-cleanup-policy.delete":
+		return []string{"delete:pre-cache-image-cleanup-policy"}
+	case "pre-cache-image-cleanup-policy.list":
+		return []string{"read:pre-cache-image-cleanup-policy"}
+	case "pre-cache-image-cleanup-policy.update":
+		return []string{"update:pre-cache-image-cleanup-policy"}
 	case "instance.snapshot.create":
 		return []string{"create:snapshot"}
 	case "instance.snapshot.delete":

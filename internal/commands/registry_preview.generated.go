@@ -89,6 +89,10 @@ import (
 	modelproviderrevisionget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/revision/get"
 	modelproviderrevisionlist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/revision/list"
 	modelproviderupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/modelprovider/update"
+	precacheimagecleanuppolicycreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagecleanuppolicy/create"
+	precacheimagecleanuppolicydelete "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagecleanuppolicy/delete"
+	precacheimagecleanuppolicylist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagecleanuppolicy/list"
+	precacheimagecleanuppolicyupdate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagecleanuppolicy/update"
 	precacheimagetaskcreate "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/create"
 	precacheimagetaskget "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/get"
 	precacheimagetasklist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/precacheimagetask/list"
@@ -225,6 +229,10 @@ func Registry() (*command.Registry, error) {
 		modelproviderrevisionget.Module(),
 		modelproviderrevisionlist.Module(),
 		modelproviderupdate.Module(),
+		precacheimagecleanuppolicycreate.GeneratedModule(),
+		precacheimagecleanuppolicydelete.GeneratedModule(),
+		precacheimagecleanuppolicylist.GeneratedModule(),
+		precacheimagecleanuppolicyupdate.GeneratedModule(),
 		precacheimagetaskcreate.Module(),
 		precacheimagetaskget.Module(),
 		precacheimagetasklist.Module(),

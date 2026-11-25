@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apicli"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/apivalue"
@@ -18,7 +19,9 @@ func Module() command.Module {
 	api := APIDescriptor()
 	generatedSpec := api.CommandSpec()
 	spec := generatedSpec
-	spec.Flags = append(spec.Flags, resourcewait.Flag())
+	waitFlag := resourcewait.Flag()
+	waitFlag.Usage = "Wait for tool status ACTIVE or ISOLATED. Read back updated fields to verify the update."
+	spec.Flags = append(spec.Flags, waitFlag)
 	return command.Module{
 		Descriptor: command.Descriptor{
 			Spec: spec,
@@ -41,22 +44,23 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					if !requestFlag(req) && len(apiReq) <= 1 {
-						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --tags, --custom-configuration, --computer-configuration, or --request must be specified", "Provide at least one field to update.")
+					rawRequest := requestFlag(req)
+					if err := validateStorageMounts(apiReq, rawRequest); err != nil {
+						return nil, err
+					}
+					if !rawRequest && len(apiReq) <= 1 {
+						return nil, output.NewUsageError("MISSING_REQUIRED_FLAG", "at least one of --description, --network-configuration, --storage-mounts, --tags, --custom-configuration, --computer-configuration, or --request must be specified", "Provide at least one field to update.")
 					}
 					result, err := executor.Execute(ctx, apiReq)
 					if err != nil {
 						return nil, err
 					}
-					applyUpdateResultText(result, req)
+					toolID, _ := apiReq["ToolId"].(string)
+					applyUpdateResultText(result, toolID)
 					if resourcewait.Requested(req) {
 						getter, ok := deps.ControlPlane.(resourcewait.ToolGetter)
 						if !ok {
 							return nil, fmt.Errorf("tool.update --wait requires GetTool support")
-						}
-						toolID, err := ToolID(req)
-						if err != nil {
-							return nil, err
 						}
 						tool, err := resourcewait.WaitForToolWithPolicy(
 							ctx,
@@ -77,14 +81,13 @@ func Module() command.Module {
 	}
 }
 
-func applyUpdateResultText(result *command.Result, req command.Request) {
+func applyUpdateResultText(result *command.Result, toolID string) {
 	if result == nil {
 		return
 	}
 	if _, err := apivalue.Decode(result.Data); err != nil {
 		return
 	}
-	toolID, _ := ToolID(req)
 	result.Text = func(w io.Writer) {
 		fmt.Fprintf(w, "Tool updated: %s\n", toolID)
 	}
@@ -92,18 +95,51 @@ func applyUpdateResultText(result *command.Result, req command.Request) {
 
 func requestFlag(req command.Request) bool {
 	flag, ok := req.Flags["request"]
-	return ok && flag.Changed && flag.String != ""
+	return ok && flag.Changed && strings.TrimSpace(flag.String) != ""
 }
 
-// ToolID resolves the target tool id from normalized positional values and
-// returns the command's required-argument usage error when absent.
-func ToolID(req command.Request) (string, error) {
-	toolID := req.ArgValues["tool-id"]
-	if toolID == "" && len(req.Args) > 0 {
-		toolID = req.Args[0]
+// validateStorageMounts preserves the tool's mount settings when users update
+// an image, including when they copy an image mount from tool get into a raw request.
+func validateStorageMounts(request map[string]any, rawRequest bool) error {
+	value, ok := request["StorageMounts"]
+	if !ok || value == nil {
+		return nil
 	}
-	if toolID == "" {
-		return "", output.NewUsageError("MISSING_REQUIRED_ARG", "missing tool id", "Provide <tool-id>.")
+	mounts, ok := value.([]any)
+	if !ok {
+		// Shape validation against the API contract reports non-array values.
+		return nil
 	}
-	return toolID, nil
+	mountInput := "each --storage-mounts entry"
+	if rawRequest {
+		mountInput = "the non-Image StorageMounts entry in --request"
+	}
+	for index, item := range mounts {
+		mount, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if rawRequest {
+			source, _ := mount["StorageSource"].(map[string]any)
+			if image, _ := source["Image"].(map[string]any); image != nil {
+				if _, ok := mount["MountPath"].(string); ok {
+					delete(mount, "MountPath")
+				}
+				if _, ok := mount["ReadOnly"].(bool); ok {
+					delete(mount, "ReadOnly")
+				}
+				continue
+			}
+		}
+		for _, field := range []string{"MountPath", "ReadOnly"} {
+			if fieldValue, present := mount[field]; present && fieldValue != nil {
+				return output.NewUsageError(
+					"INVALID_REQUEST_JSON",
+					fmt.Sprintf("StorageMounts[%d].%s cannot be changed by tool update", index, field),
+					fmt.Sprintf("Omit %s from %s to keep the tool's mount configuration.", field, mountInput),
+				)
+			}
+		}
+	}
+	return nil
 }

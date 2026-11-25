@@ -3,6 +3,7 @@ package cmdtree
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/command"
 	toollist "github.com/TencentCloudAgentRuntime/ags-cli/internal/commands/tool/list"
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/iostreams"
+	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -477,5 +479,94 @@ func TestBuildModuleCommand_FlagUsagePreservesExistingAnnotations(t *testing.T) 
 	}
 	if !strings.Contains(f.Usage, "Format:\n  @file or -") {
 		t.Fatalf("--config usage missing format:\n%s", f.Usage)
+	}
+}
+
+func TestFlagAliasDocumentationAndConflicts(t *testing.T) {
+	spec := command.FlagSpec{
+		Name:                 "filters",
+		Aliases:              []string{"filter", "legacy-filter"},
+		Type:                 command.FlagString,
+		HideAliases:          true,
+		RejectAliasConflicts: true,
+	}
+	for _, tc := range []struct {
+		name     string
+		args     []string
+		want     string
+		wantErr  string
+		wantHint string
+	}{
+		{name: "canonical", args: []string{"--filters", "a"}, want: "a"},
+		{name: "alias", args: []string{"--filter", "a"}, want: "a"},
+		{name: "second alias", args: []string{"--legacy-filter", "a"}, want: "a"},
+		{name: "both", args: []string{"--filters", "a", "--filter", "b"}, wantErr: "cannot combine --filters with --filter"},
+		{name: "both reversed", args: []string{"--filter", "b", "--filters", "a"}, wantErr: "cannot combine --filters with --filter"},
+		{
+			name:     "two aliases without canonical flag",
+			args:     []string{"--filter", "a", "--legacy-filter", "b"},
+			wantErr:  "cannot combine --filter with --legacy-filter",
+			wantHint: "Use either --filter or --legacy-filter.",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+			if err := registerFlags(flags, []command.FlagSpec{spec}); err != nil {
+				t.Fatalf("registerFlags: %v", err)
+			}
+			if alias := flags.Lookup("filter"); alias == nil || !alias.Hidden {
+				t.Fatalf("alias flag = %+v, want a hidden --filter", alias)
+			}
+			if tc.wantErr == "" && flags.Lookup("filters") == nil {
+				t.Fatal("--filters flag not found")
+			}
+			if err := flags.Parse(tc.args); err != nil {
+				t.Fatalf("Parse: %v", err)
+			}
+			value, err := readFlagValue(flags, spec)
+			if tc.wantErr != "" {
+				var cliErr *output.CLIError
+				if !errors.As(err, &cliErr) {
+					t.Fatalf("error = %v, want a CLI usage error", err)
+				}
+				if cliErr.Failure.Code != "CONFLICTING_FLAGS" || cliErr.Failure.Kind != output.KindUsage || cliErr.ExitCode != output.ExitUsage {
+					t.Fatalf("failure = %+v, exit %d", cliErr.Failure, cliErr.ExitCode)
+				}
+				if cliErr.Failure.Message != tc.wantErr {
+					t.Fatalf("message = %q, want %q", cliErr.Failure.Message, tc.wantErr)
+				}
+				if tc.wantHint != "" && cliErr.Failure.Hint != tc.wantHint {
+					t.Errorf("hint = %q, want %q", cliErr.Failure.Hint, tc.wantHint)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("readFlagValue: %v", err)
+			}
+			if !value.Changed || value.String != tc.want {
+				t.Fatalf("value = %+v, want %q", value, tc.want)
+			}
+		})
+	}
+}
+
+func TestFlagAliasesKeepFirstSpellingWithoutConflictCheck(t *testing.T) {
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	spec := command.FlagSpec{Name: "filters", Aliases: []string{"filter"}, Type: command.FlagString}
+	if err := registerFlags(flags, []command.FlagSpec{spec}); err != nil {
+		t.Fatalf("registerFlags: %v", err)
+	}
+	if flags.Lookup("filter").Hidden {
+		t.Fatal("an alias without HideAliases must stay visible")
+	}
+	if err := flags.Parse([]string{"--filters", "a", "--filter", "b"}); err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	value, err := readFlagValue(flags, spec)
+	if err != nil {
+		t.Fatalf("readFlagValue: %v", err)
+	}
+	if !value.Changed || value.String != "a" {
+		t.Fatalf("value = %+v, want the canonical spelling to win", value)
 	}
 }

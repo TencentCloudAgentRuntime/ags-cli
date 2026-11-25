@@ -116,7 +116,14 @@ type FlagSpec struct {
 	Type      FlagType
 	Default   any
 	Required  bool
-	Hidden    bool
+	// Hidden hides the flag from the Flags section of --help.
+	Hidden bool
+	// HideAliases also hides every alias from the Flags section, so a command
+	// whose alias is only a compatibility spelling documents one block.
+	HideAliases bool
+	// RejectAliasConflicts fails the invocation when more than one spelling of
+	// the flag is set, instead of silently keeping the first one.
+	RejectAliasConflicts bool
 	// Workflow marks hand-written workflow flags so cmdtree can produce a
 	// clearer error when they collide with generated API flags.
 	Workflow bool

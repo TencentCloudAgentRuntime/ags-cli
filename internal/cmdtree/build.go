@@ -559,7 +559,7 @@ func registerFlags(flags *pflag.FlagSet, specs []command.FlagSpec) error {
 			if f == nil {
 				continue
 			}
-			f.Hidden = spec.Hidden
+			f.Hidden = spec.Hidden || (spec.HideAliases && name != spec.Name)
 			f.Deprecated = spec.Deprecated
 			f.Annotations = spec.Annotations
 		}
@@ -641,11 +641,23 @@ func readFlagValue(flags *pflag.FlagSet, spec command.FlagSpec) (command.FlagVal
 	out := command.FlagValue{Name: spec.Name, Type: spec.Type}
 	names := append([]string{spec.Name}, spec.Aliases...)
 	readName := spec.Name
+	setName := ""
 	for _, name := range names {
-		if flags.Changed(name) {
-			readName = name
-			out.Changed = true
-			break
+		if !flags.Changed(name) {
+			continue
+		}
+		if setName == "" {
+			setName, readName, out.Changed = name, name, true
+			continue
+		}
+		// A second spelling only conflicts when the command asks for it; by
+		// default the first set spelling wins.
+		if spec.RejectAliasConflicts {
+			return out, output.NewUsageError(
+				"CONFLICTING_FLAGS",
+				fmt.Sprintf("cannot combine --%s with --%s", setName, name),
+				fmt.Sprintf("Use either --%s or --%s.", setName, name),
+			)
 		}
 	}
 	switch spec.Type {

@@ -283,9 +283,7 @@ func TestModuleInstanceWaitTimeoutIncludesLastStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer cancel()
-	_, err = runtime.Handler.Run(ctx, command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
+	_, err = runtime.Handler.Run(t.Context(), command.Request{Flags: map[string]command.FlagValue{"tool-id": {Name: "tool-id", Type: command.FlagString, String: "sdt-source", Changed: true}}})
 	assertDebugWaitError(t, err, "WAIT_TIMEOUT", starting)
 	assertDebugCleanupHint(t, err)
 	if got, want := strings.Join(cp.deletes, ","), "instance:ins-debug,tool:sdt-debug"; got != want {

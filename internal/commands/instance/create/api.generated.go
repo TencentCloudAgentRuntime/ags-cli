@@ -105,6 +105,13 @@ func APIDescriptor() apicli.APIDescriptor {
 				},
 			},
 			{
+				Name:   "StorageMounts",
+				Parser: "common.default_json",
+				Inputs: []apicli.InputSpec{
+					{Name: "storage-mounts", Flag: "storage-mounts", Usage: "StorageMounts as a JSON array, @file, or - for stdin. Support depends on the launch mode. When starting from a tool, use MountOptions to adjust mounts the tool already declares.", Format: "[{\"Name\":\"<name>\",\"MountPath\":\"<path>\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"<registry>/<image>:<tag>\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"<path-in-image>\"}}}]", Examples: []string{"agr instance create --tool-id sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"MountPath\":\"/mnt/runtime\",\"ReadOnly\":true,\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v1\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"/usr/bin\"}}}]' -o text", "agr instance create --tool-id sdt-example --storage-mounts @mounts.json -o text"}, Values: []string{"Tool start (--tool-id or --tool-name) supports Volume (VolumeId or VolumeName), StorageSource.Cfs, StorageSource.Cos, or StorageSource.Image.", "Clone (--source-instance-id) inherits the source instance's mounts. Omit StorageMounts or supply an empty array.", "Snapshot restore (--snapshot-id) supports only direct StorageSource.Cos or StorageSource.Image mounts."}, Type: command.FlagString},
+				},
+			},
+			{
 				Name:   "StartMode",
 				Parser: "common.default_string",
 				Inputs: []apicli.InputSpec{
