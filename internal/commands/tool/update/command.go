@@ -19,7 +19,9 @@ func Module() command.Module {
 	api := APIDescriptor()
 	generatedSpec := api.CommandSpec()
 	spec := generatedSpec
-	spec.Flags = append(spec.Flags, resourcewait.Flag())
+	waitFlag := resourcewait.Flag()
+	waitFlag.Usage = "Wait for tool status ACTIVE or ISOLATED. Read back updated fields to verify the update."
+	spec.Flags = append(spec.Flags, waitFlag)
 	return command.Module{
 		Descriptor: command.Descriptor{
 			Spec: spec,
@@ -53,15 +55,12 @@ func Module() command.Module {
 					if err != nil {
 						return nil, err
 					}
-					applyUpdateResultText(result, req)
+					toolID, _ := apiReq["ToolId"].(string)
+					applyUpdateResultText(result, toolID)
 					if resourcewait.Requested(req) {
 						getter, ok := deps.ControlPlane.(resourcewait.ToolGetter)
 						if !ok {
 							return nil, fmt.Errorf("tool.update --wait requires GetTool support")
-						}
-						toolID, err := ToolID(req)
-						if err != nil {
-							return nil, err
 						}
 						tool, err := resourcewait.WaitForToolWithPolicy(
 							ctx,
@@ -82,14 +81,13 @@ func Module() command.Module {
 	}
 }
 
-func applyUpdateResultText(result *command.Result, req command.Request) {
+func applyUpdateResultText(result *command.Result, toolID string) {
 	if result == nil {
 		return
 	}
 	if _, err := apivalue.Decode(result.Data); err != nil {
 		return
 	}
-	toolID, _ := ToolID(req)
 	result.Text = func(w io.Writer) {
 		fmt.Fprintf(w, "Tool updated: %s\n", toolID)
 	}
@@ -144,17 +142,4 @@ func validateStorageMounts(request map[string]any, rawRequest bool) error {
 		}
 	}
 	return nil
-}
-
-// ToolID resolves the target tool id from normalized positional values and
-// returns the command's required-argument usage error when absent.
-func ToolID(req command.Request) (string, error) {
-	toolID := req.ArgValues["tool-id"]
-	if toolID == "" && len(req.Args) > 0 {
-		toolID = req.Args[0]
-	}
-	if toolID == "" {
-		return "", output.NewUsageError("MISSING_REQUIRED_ARG", "missing tool id", "Provide <tool-id>.")
-	}
-	return toolID, nil
 }

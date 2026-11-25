@@ -923,7 +923,9 @@
                                 "With --request, you can reuse an Image mount from tool get. AGR strips MountPath and ReadOnly to preserve the tool's settings.",
                                 "The update response acknowledges the request. --wait checks the tool lifecycle (ACTIVE or ISOLATED).",
                                 "Read back the named mount before starting an instance.\n  agr tool get sdt-example -o json --jq '.Data.StorageMounts[]? | select(.Name == \"runtime\") | .StorageSource.Image'",
-                                "Repeat readback until Reference and ImageRegistryType match and the expected SubPath is visible. An omitted SubPath in the request keeps the previous directory. For an explicit empty SubPath, an empty or omitted readback means the image root."
+                                "Repeat readback until Reference and ImageRegistryType match and the expected SubPath is visible. An omitted SubPath in the request keeps the previous directory. For an explicit empty SubPath, an empty or omitted readback means the image root.",
+                                "When reusing a tag, confirm Digest matches the expected digest from your registry before starting an instance. The other fields can match while the previous image is still mounted.",
+                                "To select an immutable image, use a digest-pinned Reference such as <registry>/<image>@sha256:<digest>."
                             ],
                             "examples": [
                                 "agr tool update sdt-example --storage-mounts '[{\"Name\":\"runtime\",\"StorageSource\":{\"Image\":{\"Reference\":\"ccr.ccs.tencentyun.com/example/runtime:v2\",\"ImageRegistryType\":\"personal\",\"SubPath\":\"assets\"}}}]' -o text",

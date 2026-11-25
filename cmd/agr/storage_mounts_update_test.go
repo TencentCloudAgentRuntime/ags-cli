@@ -15,6 +15,8 @@ import (
 	"github.com/TencentCloudAgentRuntime/ags-cli/internal/output"
 )
 
+const toolMountReadback = `.Data.StorageMounts[]? | select(.Name == "runtime") | .StorageSource.Image`
+
 func storageMountServer(t *testing.T) (*httptest.Server, chan map[string]any) {
 	t.Helper()
 	requests := make(chan map[string]any, 4)
@@ -186,6 +188,12 @@ func TestToolUpdateLocalValidation(t *testing.T) {
 			wantHint:    "StorageMounts entry in --request",
 		},
 		{
+			name:        "raw request with explicit wait",
+			args:        []string{"--request", `{"ToolId":"sdt-source","Description":"updated"}`, "--wait"},
+			wantCode:    "REQUEST_FLAG_CONFLICT",
+			wantMessage: "--request cannot be combined with --wait",
+		},
+		{
 			name:        "wrong mount path type in raw request",
 			args:        []string{"--request", `{"ToolId":"sdt-source","StorageMounts":[{"Name":"runtime","MountPath":false,"StorageSource":{"Image":{"Reference":"repo/img:v1","ImageRegistryType":"personal"}}}]}`},
 			wantCode:    "INVALID_REQUEST_JSON",
@@ -232,16 +240,20 @@ func TestToolUpdateReusesRawImageMount(t *testing.T) {
 	if err := os.WriteFile(requestFile, []byte(raw), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	for _, tc := range []struct{ name, request, stdin string }{
-		{"inline", raw, ""},
-		{"file", "@" + requestFile, ""},
-		{"stdin", "-", raw},
+	for _, tc := range []struct{ name, request, stdin, format string }{
+		{"inline", raw, "", "json"},
+		{"file", "@" + requestFile, "", "json"},
+		{"stdin", "-", raw, "json"},
+		{"inline text", raw, "", "text"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server, requests := storageMountServer(t)
-			out, stderr, err := runSnapshotCLI(t, server, tc.stdin, "tool", "update", "--request", tc.request)
+			out, stderr, err := runSnapshotCLIWithOutput(t, server, strings.NewReader(tc.stdin), tc.format, "tool", "update", "--request", tc.request)
 			if err != nil {
 				t.Fatalf("CLI: %v; stdout=%s stderr=%s", err, out, stderr)
+			}
+			if tc.format == "text" && string(out) != "Tool updated: sdt-source\n" {
+				t.Errorf("success text = %q, want the ToolId from --request", out)
 			}
 			select {
 			case got := <-requests:
@@ -280,6 +292,45 @@ func TestToolUpdateKeepsVolumeOnlyMounts(t *testing.T) {
 	}
 }
 
+func TestToolMountReadbackDistinguishesReusedTag(t *testing.T) {
+	const reference = "repo/img:latest"
+	oldDigest := "sha256:" + strings.Repeat("a", 64)
+	newDigest := "sha256:" + strings.Repeat("b", 64)
+	var reads atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-TC-Action") != "DescribeSandboxToolList" || r.Header.Get("Authorization") == "" {
+			t.Error("expected a signed tool read")
+		}
+		digest := oldDigest
+		if reads.Add(1) > 1 {
+			digest = newDigest
+		}
+		image := map[string]string{"Reference": reference, "ImageRegistryType": "personal", "SubPath": "assets", "Digest": digest}
+		mount := map[string]any{"Name": "runtime", "StorageSource": map[string]any{"Image": image}}
+		tool := map[string]any{"ToolId": "sdt-example", "Status": "ACTIVE", "StorageMounts": []any{mount}}
+		response := map[string]any{"RequestId": "same-tag-read", "SandboxToolSet": []any{tool}}
+		_ = json.NewEncoder(w).Encode(map[string]any{"Response": response})
+	}))
+	t.Cleanup(server.Close)
+
+	for _, want := range []string{oldDigest, newDigest} {
+		out, stderr, err := runSnapshotCLI(t, server, "", "tool", "get", "sdt-example", "--jq", toolMountReadback)
+		if err != nil {
+			t.Fatalf("tool get: %v; stdout=%s stderr=%s", err, out, stderr)
+		}
+		var image struct{ Reference, ImageRegistryType, SubPath, Digest string }
+		if err := json.Unmarshal(out, &image); err != nil {
+			t.Fatalf("decode readback %q: %v", out, err)
+		}
+		if image.Reference != reference || image.ImageRegistryType != "personal" || image.SubPath != "assets" || image.Digest != want {
+			t.Errorf("readback = %+v, want the reused reference with digest %q", image, want)
+		}
+	}
+	if count := reads.Load(); count != 2 {
+		t.Errorf("tool reads = %d, want 2", count)
+	}
+}
+
 func TestStorageMountsHelpAndSchema(t *testing.T) {
 	for _, tc := range []struct {
 		command   string
@@ -304,9 +355,11 @@ func TestStorageMountsHelpAndSchema(t *testing.T) {
 				"With --request, you can reuse an Image mount from tool get",
 				"The update response acknowledges the request",
 				"--wait checks the tool lifecycle (ACTIVE or ISOLATED)",
-				`agr tool get sdt-example -o json --jq '.Data.StorageMounts[]? | select(.Name == "runtime") | .StorageSource.Image'`,
+				"agr tool get sdt-example -o json --jq '" + toolMountReadback + "'",
 				"Repeat readback until Reference and ImageRegistryType match and the expected SubPath is visible",
 				"an empty or omitted readback means the image root",
+				"confirm Digest matches the expected digest from your registry",
+				"<registry>/<image>@sha256:<digest>",
 			},
 		},
 	} {
@@ -324,6 +377,15 @@ func TestStorageMountsHelpAndSchema(t *testing.T) {
 				t.Fatalf("%s command missing", tc.command)
 			}
 			help := commandHelp(t, cmd)
+			if tc.command == "tool.update" {
+				const want = "Wait for tool status ACTIVE or ISOLATED. Read back updated fields to verify the update."
+				if got := schema.Flags["wait"].Description; got != want {
+					t.Errorf("wait schema description = %q, want %q", got, want)
+				}
+				if !strings.Contains(help, want) {
+					t.Errorf("tool.update help missing wait description %q", want)
+				}
+			}
 			for _, fragment := range tc.fragments {
 				if !strings.Contains(documented, fragment) {
 					t.Errorf("%s schema missing %q: %s", tc.command, fragment, documented)

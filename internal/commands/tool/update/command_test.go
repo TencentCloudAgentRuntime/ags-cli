@@ -49,23 +49,25 @@ func TestModuleWaitsAfterUpdatingExactlyOnce(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
-	result, err := runtime.Handler.Run(context.Background(), command.Request{
-		Args:      []string{"sdt-unit"},
-		ArgValues: map[string]string{"tool-id": "sdt-unit"},
+	const toolID = "sdt-unit"
+	result, err := runtime.Handler.Run(t.Context(), command.Request{
+		Args:      []string{toolID},
+		ArgValues: map[string]string{"tool-id": toolID},
 		Flags: map[string]command.FlagValue{
 			"description": {Name: "description", Type: command.FlagString, String: "updated", Changed: true},
 			"request":     {Name: "request", Type: command.FlagString},
-			"wait":        {Name: "wait", Type: command.FlagBool, Bool: true},
+			"wait":        {Name: "wait", Type: command.FlagBool, Bool: true, Changed: true},
 		},
 	})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	if cp.calls != 1 || cp.getCalls != 1 {
-		t.Fatalf("Call = %d, GetTool = %d", cp.calls, cp.getCalls)
+	if cp.calls != 1 || cp.getCalls != 1 || cp.request["ToolId"] != toolID {
+		t.Fatalf("Call = %d, GetTool = %d, request = %#v", cp.calls, cp.getCalls, cp.request)
 	}
-	if result.Data.(map[string]any)["Status"] != "ACTIVE" {
-		t.Fatalf("result = %#v", result.Data)
+	tool := result.Data.(map[string]any)
+	if tool["Status"] != "ACTIVE" || tool["ToolId"] != toolID {
+		t.Fatalf("result = %#v, want active tool %q", tool, toolID)
 	}
 }
 
@@ -231,22 +233,21 @@ func TestModuleReturnsExecutorError(t *testing.T) {
 	}
 }
 
-func TestToolID(t *testing.T) {
-	id, err := ToolID(command.Request{Args: []string{"sdt-arg"}})
-	if err != nil || id != "sdt-arg" {
-		t.Fatalf("ToolID from Args = %q, %v", id, err)
+func TestModuleRequiresToolIDBeforeUpdating(t *testing.T) {
+	cp := &fakeControlPlane{}
+	runtime, err := Module().Build(command.Deps{ControlPlane: cp})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
 	}
-	id, err = ToolID(command.Request{ArgValues: map[string]string{"tool-id": "sdt-value"}})
-	if err != nil || id != "sdt-value" {
-		t.Fatalf("ToolID from ArgValues = %q, %v", id, err)
+	_, err = runtime.Handler.Run(t.Context(), command.Request{Flags: map[string]command.FlagValue{
+		"request": {Name: "request", Type: command.FlagString, String: `{"Description":"updated"}`, Changed: true},
+	}})
+	var cliErr *output.CLIError
+	if !errors.As(err, &cliErr) || cliErr.Failure.Code != "MISSING_REQUIRED_ARG" {
+		t.Fatalf("error = %v, want MISSING_REQUIRED_ARG", err)
 	}
-	if _, err := ToolID(command.Request{}); err == nil {
-		t.Fatalf("expected missing tool-id error")
-	} else {
-		cliErr := output.ClassifyError(err)
-		if cliErr == nil || cliErr.Failure == nil || cliErr.Failure.Code != "MISSING_REQUIRED_ARG" {
-			t.Fatalf("error = %#v, want MISSING_REQUIRED_ARG", err)
-		}
+	if cp.calls != 0 || cp.getCalls != 0 {
+		t.Fatalf("Call = %d, GetTool = %d, want no API calls", cp.calls, cp.getCalls)
 	}
 }
 
