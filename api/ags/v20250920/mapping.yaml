@@ -209,7 +209,6 @@ actions:
     fields:
       SnapshotId:
         positional: true
-        optional_positional: true
 
   DescribeSandboxSnapshotList:
     command: instance.snapshot.list

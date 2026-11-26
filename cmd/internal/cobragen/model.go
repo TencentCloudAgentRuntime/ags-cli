@@ -296,7 +296,7 @@ func useForCommand(commandID string) string {
 	case "gpu.group.delete":
 		return "delete <resource-group-id>"
 	case "instance.snapshot.delete":
-		return "delete [snapshot-id]"
+		return "delete <snapshot-id>"
 	case "instance.update":
 		return "update <instance-id>"
 	case "instance.pause":

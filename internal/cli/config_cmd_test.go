@@ -21,7 +21,7 @@ var _ = Describe("config command", func() {
 		cfgPath := filepath.Join(GinkgoT().TempDir(), "config.toml")
 		config.SetConfigFile(cfgPath)
 
-		result, err := configSetFn(nil, []string{"token=token-1234567890"})
+		result, err := configSetFn(&cobra.Command{}, []string{"token=token-1234567890"})
 		Expect(err).NotTo(HaveOccurred())
 
 		var out bytes.Buffer
@@ -38,8 +38,11 @@ var _ = Describe("config command", func() {
 		cfgPath := filepath.Join(GinkgoT().TempDir(), "config.toml")
 		config.SetConfigFile(cfgPath)
 		tokenFlag = "flag-token-1234"
+		cmd := &cobra.Command{}
+		cmd.Flags().String("token", "", "")
+		Expect(cmd.Flags().Set("token", tokenFlag)).To(Succeed())
 
-		_, err := configSetFn(&cobra.Command{}, nil)
+		_, err := configSetFn(cmd, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		content, readErr := os.ReadFile(cfgPath)

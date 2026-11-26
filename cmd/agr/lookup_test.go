@@ -96,7 +96,7 @@ func TestInstanceLookupInvalidInputsStayLocal(t *testing.T) {
 		name, stdin, code string
 		args              []string
 	}{
-		{"missing IDs", "", "INVALID_USAGE", nil},
+		{"missing IDs", "", "MISSING_REQUIRED_ARG", nil},
 		{"empty ID", "", "INVALID_USAGE", []string{""}},
 		{"whitespace ID", "", "INVALID_USAGE", []string{" ins-a"}},
 		{"long ID", "", "INVALID_USAGE", []string{strings.Repeat("a", 65)}},

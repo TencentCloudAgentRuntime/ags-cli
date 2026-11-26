@@ -370,6 +370,18 @@ func finalizeSchema(schema CommandSchema) CommandSchema {
 			schema.Kind = "command"
 		}
 	}
+	// --dry-run exists only to preview a mutation, so its presence defines the
+	// capability; a hand-written SupportsDryRun=true without the flag would be
+	// just as wrong as the reverse.
+	if hasFlagName(schema.Flags, "dry-run") {
+		schema.SupportsDryRun = true
+	}
+	if schema.Kind == "command" {
+		schema.Failures = appendUniqueStrings(schema.Failures, "INVALID_USAGE")
+		if hasValidatedRequiredArg(schema.Args) {
+			schema.Failures = appendUniqueStrings(schema.Failures, "MISSING_REQUIRED_ARG")
+		}
+	}
 	if schema.RequiresAuth {
 		schema.Failures = appendUniqueStrings(schema.Failures, "MISSING_CLOUD_CREDENTIALS", "AUTH_FAILED")
 	}
@@ -957,6 +969,29 @@ func hasFlagType(flags []FlagSchema, typ string) bool {
 	return false
 }
 
+func hasFlagName(flags []FlagSchema, name string) bool {
+	for _, flag := range flags {
+		if flag.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// hasValidatedRequiredArg reports whether a required positional can fail with
+// MISSING_REQUIRED_ARG. Arguments after `--` are validated by the remote
+// execution commands themselves, which report a separator-specific code
+// (MISSING_COMMAND_SEPARATOR for instance.exec, MISSING_SEPARATOR for
+// instance.mobile.adb) instead.
+func hasValidatedRequiredArg(args []ArgSchema) bool {
+	for _, arg := range args {
+		if arg.Required && !arg.AfterDash {
+			return true
+		}
+	}
+	return false
+}
+
 func buildHandwrittenSchemas() []CommandSchema {
 	schemas := []CommandSchema{
 		{Name: "instance.lookup", Failures: []string{"INVALID_USAGE", "MISSING_REQUIRED_ARG", "INVALID_REQUEST_INPUT", "INTERNAL_ERROR"}},
@@ -1054,7 +1089,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 			Idempotency: "none", SupportsDryRun: false, Interactive: false,
 			RequiresAuth: true, SupportsJson: true, SupportsNdjson: false, SupportsJq: true,
 			SupportsRequest: false,
-			Args:            []ArgSchema{{Name: "InstanceId", Type: "string", Required: true, Variadic: true}},
+			Args:            []ArgSchema{{Name: "InstanceId", Type: "string", Required: true}},
 			Failures:        []string{"MISSING_REQUIRED_ARG"},
 		},
 		{
@@ -1072,7 +1107,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 			Idempotency: "none", SupportsDryRun: false, Interactive: false,
 			RequiresAuth: true, SupportsJson: true, SupportsNdjson: false, SupportsJq: true,
 			SupportsRequest: false,
-			Args:            []ArgSchema{{Name: "InstanceId", Type: "string", Required: true}},
+			Args:            []ArgSchema{{Name: "InstanceId", Type: "string", Required: true, Variadic: true}},
 			Flags:           []FlagSchema{{Name: "ignore-not-found", Type: "bool"}},
 			Output:          "DeleteResult", Failures: []string{"INSTANCE_NOT_FOUND", "MISSING_REQUIRED_ARG", "REQUEST_FLAG_CONFLICT", "PARTIAL_DELETE_FAILED"},
 		},
@@ -1115,7 +1150,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 				{Name: "tool-name", Shorthand: "t", Type: "string"},
 				{Name: "tool-id", Type: "string"},
 			},
-			Output: "ExecResult", Failures: []string{"MISSING_INSTANCE", "REMOTE_COMMAND_FAILED", "INVALID_ENV", "CONFLICTING_FLAGS", "INVALID_CLEANUP", "MISSING_REQUIRED_FLAG"},
+			Output: "ExecResult", Failures: []string{"MISSING_INSTANCE", "REMOTE_COMMAND_FAILED", "INVALID_ENV", "CONFLICTING_FLAGS", "INVALID_CLEANUP", "MISSING_REQUIRED_FLAG", "MISSING_COMMAND_SEPARATOR"},
 		},
 		{
 			Name: "instance.file.upload", Summary: "Upload file to sandbox instance",
@@ -1363,7 +1398,7 @@ func buildHandwrittenSchemas() []CommandSchema {
 			RequiresAuth: true, SupportsJson: true, SupportsNdjson: false, SupportsJq: true,
 			SupportsRequest: false,
 			Args:            []ArgSchema{{Name: "ToolId", Type: "string", Required: true, Variadic: true}},
-			Failures:        []string{"MISSING_REQUIRED_ARG", "REQUEST_FLAG_CONFLICT"},
+			Failures:        []string{"MISSING_REQUIRED_ARG", "REQUEST_FLAG_CONFLICT", "PARTIAL_DELETE_FAILED"},
 		},
 		{
 			Name: "apikey.create", Summary: "Create a new API key",

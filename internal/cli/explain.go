@@ -27,7 +27,7 @@ var explainCmd = &cobra.Command{
 	Use:     "explain <CODE|exit-codes>",
 	Short:   "Explain an AGR error code or exit codes",
 	Example: exampleBlocks("agr explain MISSING_CLOUD_CREDENTIALS", "agr explain exit-codes"),
-	Args:    cobra.ExactArgs(1),
+	Args:    requireOnePositional("code", "Run: agr explain <CODE> or agr explain exit-codes."),
 }
 
 func init() {
@@ -170,12 +170,20 @@ func explainCodeData(code string) (ExplainData, bool) {
 		base.Fix = []string{"agr init --secret-id <id> --secret-key <key>", "agr doctor"}
 	case "INVALID_USAGE", "JQ_REQUIRES_JSON", "SKELETON_UNSUPPORTED", "CONFLICTING_FLAGS", "CONFLICTING_INPUTS",
 		"MISSING_CODE", "MISSING_REQUIRED_INPUT", "INVALID_ENV", "INVALID_PORT", "INVALID_PAGINATION", "INVALID_LOCAL_PATH", "INVALID_ADDRESS",
-		"INVALID_SHELL", "INVALID_CLEANUP", "MISSING_SEPARATOR", "STDOUT_CONFLICT", "ADB_NOT_FOUND", "UNSUPPORTED_LANGUAGE",
+		"INVALID_SHELL", "INVALID_CLEANUP", "MISSING_SEPARATOR", "MISSING_COMMAND_SEPARATOR", "STDOUT_CONFLICT", "ADB_NOT_FOUND", "UNSUPPORTED_LANGUAGE",
 		"MISSING_ACTION", "NDJSON_REQUIRES_STREAM", "STREAM_JSON_CONFLICT", "TTY_REQUIRED", "UNIMPLEMENTED_COMMAND",
-		"CONFIG_EXISTS", "CONFIG_INIT_FAILED", "DOCTOR_CHECKS_FAILED", "PARTIAL_DELETE_FAILED", "TOOL_NOT_FOUND",
+		"CONFIG_EXISTS", "CONFIG_INIT_FAILED", "DOCTOR_CHECKS_FAILED", "TOOL_NOT_FOUND",
 		"INVALID_REQUEST_INPUT", "INVALID_IDLE_TTL":
 		base.Kind = output.KindUsage
 		base.ExitCode = output.ExitUsage
+		base.Meaning = meaningForCLIUsageCode(code)
+		base.AffectedCommands = affectedCommands(code)
+		base.Fix = fixForCLIUsageCode(code)
+	case "PARTIAL_DELETE_FAILED":
+		// A bulk delete that failed for some ids is a partial business result,
+		// not a usage error: the invocation itself was valid.
+		base.Kind = output.KindPartialSuccess
+		base.ExitCode = output.ExitGenericError
 		base.Meaning = meaningForCLIUsageCode(code)
 		base.AffectedCommands = affectedCommands(code)
 		base.Fix = fixForCLIUsageCode(code)
@@ -274,7 +282,9 @@ func explainCodeData(code string) (ExplainData, bool) {
 
 func affectedCommands(code string) []string {
 	var out []string
-	for _, s := range getAllSchemas() {
+	// getAllSchemas only covers registered seeds, so commands attached solely
+	// through the command tree (for example update) would be missed.
+	for _, s := range buildSchemaCatalog(rootCmd).Ordered {
 		if (code == "AUTH_FAILED" || code == "MISSING_CLOUD_CREDENTIALS") && s.RequiresAuth {
 			out = append(out, s.Name)
 			continue
@@ -368,6 +378,8 @@ func meaningForCLIUsageCode(code string) string {
 		return "The adb binary was not found on the local machine."
 	case "MISSING_SEPARATOR":
 		return "The mobile adb command is missing the required -- separator before adb arguments."
+	case "MISSING_COMMAND_SEPARATOR":
+		return "The instance exec command is missing the remote command after the required -- separator."
 	case "MISSING_ACTION":
 		return "agr api call was invoked without the required API action name."
 	case "CONFLICTING_FLAGS":
@@ -437,6 +449,8 @@ func fixForCLIUsageCode(code string) []string {
 		return []string{"Install Android SDK Platform-Tools or set ADB_PATH to a valid adb binary."}
 	case "MISSING_SEPARATOR":
 		return []string{"Insert -- before adb arguments, for example: agr instance mobile adb <id> -- devices."}
+	case "MISSING_COMMAND_SEPARATOR":
+		return []string{"Insert -- before the remote command, for example: agr instance exec <id> -- ls -la."}
 	case "MISSING_ACTION":
 		return []string{"Run: agr api call <Action> --request '{\"...\":\"...\"}'."}
 	case "CONFLICTING_FLAGS":
