@@ -18,7 +18,7 @@ func init() {
 			"agr completion fish > ~/.config/fish/completions/agr.fish",
 			"agr completion powershell > agr.ps1",
 		),
-		Args:      cobra.ExactArgs(1),
+		Args:      requireOnePositional("shell", "Run 'agr completion bash' (supported shells: bash, zsh, fish, powershell)."),
 		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
 	}
 	completionCmd.RunE = WrapNoJSON(func(cmd *cobra.Command, args []string) error {

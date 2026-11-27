@@ -4,7 +4,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"maps"
+	"os/exec"
 	"slices"
 	"strings"
 	"testing"
@@ -103,30 +105,52 @@ func TestSandboxConfigPreviewRejectsBadInputLocally(t *testing.T) {
 		name   string
 		args   []string
 		marker string
+		code   string
 	}{
 		{
 			name:   "malformed keepalive json",
 			args:   []string{"tool", "create", "-n", "sandbox-config", "-t", "code-interpreter", "--keepalive-configuration", `{"KeepaliveMode":`},
 			marker: "INVALID_JSON",
+			code:   "INVALID_JSON_FLAG",
 		},
 		{
 			name:   "unknown top-level member",
 			args:   []string{"instance", "update", "ins-xxxx", "--request", `{"KeepaliveMode":"REQUEST"}`},
 			marker: "INVALID_REQUEST_JSON",
+			code:   "INVALID_REQUEST_JSON",
 		},
 		{
 			name:   "missing selector",
 			args:   []string{"instance", "update", "--auto-pause"},
-			marker: "requires at least 1 arg",
+			marker: "missing required argument",
+			code:   "MISSING_REQUIRED_ARG",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			output, err := runAGR(t, append(tc.args, "-o", "json")...)
+			out, err := runAGRExecute(t, append(tc.args, "-o", "json")...)
 			if err == nil {
-				t.Fatalf("command unexpectedly succeeded:\n%s", output)
+				t.Fatalf("command unexpectedly succeeded:\n%s", out)
 			}
-			if !strings.Contains(output, tc.marker) {
-				t.Fatalf("output does not report %s:\n%s", tc.marker, output)
+			if !strings.Contains(out, tc.marker) {
+				t.Fatalf("output does not report %s:\n%s", tc.marker, out)
+			}
+			// The message is only prose; the envelope code, kind and exit code are
+			// the contract a caller actually branches on.
+			var envelope struct {
+				Failure *struct {
+					Code string `json:"Code"`
+					Kind string `json:"Kind"`
+				} `json:"Failure"`
+			}
+			if err := json.Unmarshal([]byte(out), &envelope); err != nil {
+				t.Fatalf("output is not a JSON envelope: %v\n%s", err, out)
+			}
+			if envelope.Failure == nil || envelope.Failure.Code != tc.code || envelope.Failure.Kind != "usage" {
+				t.Fatalf("failure = %+v, want %s/usage\n%s", envelope.Failure, tc.code, out)
+			}
+			var exitErr *exec.ExitError
+			if !errors.As(err, &exitErr) || exitErr.ExitCode() != 2 {
+				t.Fatalf("exit code = %v, want 2", err)
 			}
 		})
 	}

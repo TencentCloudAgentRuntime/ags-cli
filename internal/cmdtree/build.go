@@ -686,9 +686,13 @@ func argsValidator(spec command.Spec) cobra.PositionalArgs {
 	return func(cmd *cobra.Command, args []string) error {
 		required := 0
 		repeatable := false
-		for _, arg := range spec.Args {
+		var missing []string
+		for i, arg := range spec.Args {
 			if arg.Required {
 				required++
+				if i >= len(args) {
+					missing = append(missing, arg.Name)
+				}
 			}
 			if arg.Repeatable {
 				repeatable = true
@@ -696,13 +700,40 @@ func argsValidator(spec command.Spec) cobra.PositionalArgs {
 		}
 		// --request may supply required values, but cannot add positional slots.
 		if len(args) < required && !cmd.Flags().Changed("request") {
-			return fmt.Errorf("%s requires at least %d arg(s), got %d", spec.ID, required, len(args))
+			return missingRequiredArgsError(spec, missing, required, len(args))
 		}
 		if !repeatable && len(args) > len(spec.Args) {
 			return fmt.Errorf("%s accepts at most %d arg(s), got %d", spec.ID, len(spec.Args), len(args))
 		}
 		return nil
 	}
+}
+
+// missingRequiredArgsError reports absent positional arguments as
+// MISSING_REQUIRED_ARG so agents can tell "you forgot an argument" apart from
+// "your arguments are malformed" (INVALID_USAGE).
+func missingRequiredArgsError(spec command.Spec, names []string, required, got int) error {
+	display := make([]string, 0, len(names))
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		// "args" is the placeholder used by commands whose positionals are
+		// documented in Use; naming it adds no information.
+		if name == "" || strings.EqualFold(name, "args") {
+			continue
+		}
+		display = append(display, "<"+strings.ToLower(name)+">")
+	}
+	hint := fmt.Sprintf("Run 'agr %s --help' to see the required arguments.", strings.Join(spec.Path, " "))
+	if len(display) == 0 {
+		return output.NewUsageError("MISSING_REQUIRED_ARG",
+			fmt.Sprintf("%s requires at least %d arg(s), got %d", spec.ID, required, got), hint)
+	}
+	label := "argument"
+	if len(display) > 1 {
+		label = "arguments"
+	}
+	return output.NewUsageError("MISSING_REQUIRED_ARG",
+		fmt.Sprintf("missing required %s %s", label, strings.Join(display, ", ")), hint)
 }
 
 func defaultRender(deps command.Deps, result *command.Result) error {

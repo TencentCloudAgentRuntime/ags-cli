@@ -37,6 +37,21 @@ func SetIOStreams(s *iostreams.IOStreams) {
 	ios = s
 }
 
+// requireOnePositional behaves like cobra.ExactArgs(1) but reports an absent
+// value as MISSING_REQUIRED_ARG instead of a generic usage error; extra
+// arguments stay INVALID_USAGE.
+func requireOnePositional(argName, hint string) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return output.NewUsageError("MISSING_REQUIRED_ARG", "missing required argument <"+argName+">", hint)
+		}
+		if len(args) != 1 {
+			return fmt.Errorf("%s accepts 1 arg(s), received %d", cmd.CommandPath(), len(args))
+		}
+		return nil
+	}
+}
+
 // IO returns the current IOStreams.
 func IO() *iostreams.IOStreams { return ios }
 

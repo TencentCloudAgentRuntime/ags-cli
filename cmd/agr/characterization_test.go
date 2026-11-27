@@ -579,27 +579,79 @@ func TestCharacterization_RequestModeAllowsRequestOnlyForCommandsWithRequiredPos
 	cases := []struct {
 		name string
 		args []string
+		code string
 	}{
-		{name: "apikey.delete", args: []string{"apikey", "delete", "--request", `{"KeyId":"ak-test"}`, "-o", "json"}},
-		{name: "instance.delete", args: []string{"instance", "delete", "--request", `{"InstanceId":"ins-test"}`, "-o", "json"}},
-		{name: "instance.pause", args: []string{"instance", "pause", "--request", `{"InstanceId":"ins-test"}`, "-o", "json"}},
-		{name: "instance.resume", args: []string{"instance", "resume", "--request", `{"InstanceId":"ins-test"}`, "-o", "json"}},
-		{name: "instance.update", args: []string{"instance", "update", "--request", `{"InstanceId":"ins-test","Timeout":"5m"}`, "-o", "json"}},
-		{name: "pre-cache-image-task.get", args: []string{"pre-cache-image-task", "get", "--request", `{"ImageDigest":"sha256:test"}`, "-o", "json"}},
-		{name: "tool.delete", args: []string{"tool", "delete", "--request", `{"ToolId":"sdt-test"}`, "-o", "json"}},
-		{name: "tool.update", args: []string{"tool", "update", "--request", `{"ToolId":"sdt-test","Description":"demo"}`, "-o", "json"}},
+		{name: "apikey.delete", args: []string{"apikey", "delete", "--request", `{"KeyId":"ak-test"}`, "-o", "json"}, code: "MISSING_CLOUD_CREDENTIALS"},
+		// A bulk delete reports per-id failures instead of a single auth error.
+		{name: "instance.delete", args: []string{"instance", "delete", "--request", `{"InstanceId":"ins-test"}`, "-o", "json"}, code: "PARTIAL_DELETE_FAILED"},
+		{name: "instance.pause", args: []string{"instance", "pause", "--request", `{"InstanceId":"ins-test"}`, "-o", "json"}, code: "MISSING_CLOUD_CREDENTIALS"},
+		{name: "instance.resume", args: []string{"instance", "resume", "--request", `{"InstanceId":"ins-test"}`, "-o", "json"}, code: "MISSING_CLOUD_CREDENTIALS"},
+		{name: "instance.update", args: []string{"instance", "update", "--request", `{"InstanceId":"ins-test","Timeout":"5m"}`, "-o", "json"}, code: "MISSING_CLOUD_CREDENTIALS"},
+		{name: "pre-cache-image-task.get", args: []string{"pre-cache-image-task", "get", "--request", `{"ImageDigest":"sha256:test"}`, "-o", "json"}, code: "MISSING_REQUIRED_INPUT"},
+		{name: "tool.delete", args: []string{"tool", "delete", "--request", `{"ToolId":"sdt-test"}`, "-o", "json"}, code: "MISSING_CLOUD_CREDENTIALS"},
+		{name: "tool.update", args: []string{"tool", "update", "--request", `{"ToolId":"sdt-test","Description":"demo"}`, "-o", "json"}, code: "MISSING_CLOUD_CREDENTIALS"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			output, _ := runAGR(t, tc.args...)
-			if strings.Contains(output, "requires at least 1 arg(s), got 0") {
-				t.Fatalf("%s still rejected request-only mode\n%s", tc.name, output)
+			out, _ := runAGRExecute(t, tc.args...)
+			// The command must reach its runtime and fail there, rather than
+			// stopping in argument validation because the positionals were only
+			// present in --request.
+			var envelope struct {
+				Command  string   `json:"Command"`
+				Warnings []string `json:"Warnings"`
+				Failure  *struct {
+					Code string `json:"Code"`
+				} `json:"Failure"`
 			}
-			if !strings.Contains(output, `"Command":"`) {
-				t.Fatalf("%s did not execute through the JSON envelope path\n%s", tc.name, output)
+			if err := json.Unmarshal([]byte(out), &envelope); err != nil {
+				t.Fatalf("%s did not return a JSON envelope: %v\n%s", tc.name, err, out)
+			}
+			if envelope.Command == "" || envelope.Failure == nil {
+				t.Fatalf("%s did not execute through the JSON envelope path\n%s", tc.name, out)
+			}
+			switch code := envelope.Failure.Code; code {
+			case "MISSING_REQUIRED_ARG", "MISSING_REQUIRED_FLAG", "INVALID_USAGE":
+				t.Fatalf("%s still rejected request-only mode with %s\n%s", tc.name, code, out)
+			case tc.code:
+			default:
+				t.Fatalf("%s failure = %s, want %s\n%s", tc.name, code, tc.code, out)
+			}
+			if tc.name == "instance.delete" {
+				foundCredWarning := false
+				for _, w := range envelope.Warnings {
+					if strings.Contains(w, "cloud API credentials are required") {
+						foundCredWarning = true
+						break
+					}
+				}
+				if !foundCredWarning {
+					t.Fatalf("instance.delete did not terminate on missing credentials\n%s", out)
+				}
 			}
 		})
+	}
+}
+
+func TestCharacterization_RunAGRIsolatesHostEnv(t *testing.T) {
+	t.Setenv("AGR_AUTH.SECRET_ID", "fake-secret-id")
+	t.Setenv("AGR_AUTH.SECRET_KEY", "fake-secret-key")
+	t.Setenv("TENCENTCLOUD_SECRET_ID", "fake-secret-id")
+	t.Setenv("TENCENTCLOUD_SECRET_KEY", "fake-secret-key")
+	t.Setenv("AGR_DEBUG", "1")
+
+	out, _ := runAGRExecute(t, "tool", "delete", "--request", `{"ToolId":"sdt-test"}`, "-o", "json")
+	var envelope struct {
+		Failure *struct {
+			Code string `json:"Code"`
+		} `json:"Failure"`
+	}
+	if err := json.Unmarshal([]byte(out), &envelope); err != nil {
+		t.Fatalf("expected JSON envelope without debug noise: %v\n%s", err, out)
+	}
+	if envelope.Failure == nil || envelope.Failure.Code != "MISSING_CLOUD_CREDENTIALS" {
+		t.Fatalf("expected MISSING_CLOUD_CREDENTIALS under isolated env, got %+v\n%s", envelope.Failure, out)
 	}
 }
 
@@ -1265,22 +1317,45 @@ func requireAllowsOutput(t *testing.T, schema commandSchemaSnapshot, flagName st
 
 func runAGR(t *testing.T, args ...string) (string, error) {
 	t.Helper()
+	return runAGRWithMode(t, "1", args...)
+}
+
+func runAGRExecute(t *testing.T, args ...string) (string, error) {
+	t.Helper()
+	return runAGRWithMode(t, "execute", args...)
+}
+
+func runAGRWithMode(t *testing.T, mode string, args ...string) (string, error) {
+	t.Helper()
 	cmd := exec.Command(os.Args[0], append([]string{"-test.run=TestCharacterizationHelperProcess", "--"}, args...)...)
-	cmd.Env = append(os.Environ(),
-		"AGR_CHARACTERIZATION_HELPER=1",
-		"HOME="+t.TempDir(),
-		"USERPROFILE="+t.TempDir(),
+	home := t.TempDir()
+	cmd.Env = append(isolatedCharacterizationEnv(),
+		"AGR_CHARACTERIZATION_HELPER="+mode,
+		"HOME="+home,
+		"USERPROFILE="+home,
 		// Parallel helpers inherit one GOCOVERDIR from `go test -coverprofile`
 		// and race to rename the same meta-data file. The loser writes an
 		// "error: coverage meta-data emit failed" line into this command's
 		// output, which then fails to parse as an envelope.
 		"GOCOVERDIR="+t.TempDir(),
 		"GORACE="+characterizationGORACE(os.Getenv("GORACE")),
-		"TENCENTCLOUD_SECRET_ID=",
-		"TENCENTCLOUD_SECRET_KEY=",
 	)
 	out, err := cmd.CombinedOutput()
 	return string(out), err
+}
+
+func isolatedCharacterizationEnv() []string {
+	env := os.Environ()
+	filtered := make([]string, 0, len(env))
+	for _, entry := range env {
+		key, _, _ := strings.Cut(entry, "=")
+		upper := strings.ToUpper(key)
+		if strings.HasPrefix(upper, "AGR_") || strings.HasPrefix(upper, "TENCENTCLOUD_") {
+			continue
+		}
+		filtered = append(filtered, entry)
+	}
+	return filtered
 }
 
 func characterizationGORACE(existing string) string {
@@ -1324,7 +1399,8 @@ func TestCharacterizationGORACEDisablesChildExitSleep(t *testing.T) {
 }
 
 func TestCharacterizationHelperProcess(t *testing.T) {
-	if os.Getenv("AGR_CHARACTERIZATION_HELPER") != "1" {
+	mode := os.Getenv("AGR_CHARACTERIZATION_HELPER")
+	if mode != "1" && mode != "execute" {
 		return
 	}
 	args := os.Args
@@ -1336,11 +1412,18 @@ func TestCharacterizationHelperProcess(t *testing.T) {
 	}
 	ios := &iostreams.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
 	cli.SetIOStreams(ios)
-	root := cli.RootCmd()
 	if err := attachCommands(); err != nil {
 		_, _ = os.Stderr.WriteString(err.Error() + "\n")
 		os.Exit(1)
 	}
+	if mode == "execute" {
+		// Run the shipped Execute path when a test needs pre-parsed global flags,
+		// JSON error envelopes and production exit codes.
+		os.Args = append([]string{"agr"}, args...)
+		cli.Execute()
+		os.Exit(0)
+	}
+	root := cli.RootCmd()
 	root.SetArgs(args)
 	root.SetOut(os.Stdout)
 	root.SetErr(os.Stderr)

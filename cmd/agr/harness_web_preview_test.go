@@ -382,7 +382,7 @@ func TestHarnessWebSchemaAndHelp(t *testing.T) {
 		}
 	}
 	result, _, err := runHarness(t, server, "harness", "web", "--no-open")
-	if err == nil || failureCode(result) != "INVALID_USAGE" {
+	if err == nil || failureCode(result) != "MISSING_REQUIRED_ARG" {
 		t.Fatalf("missing ID: err=%v failure=%+v", err, result.Failure)
 	}
 	if len(fake.actions()) != 0 {

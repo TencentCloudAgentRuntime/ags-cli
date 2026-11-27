@@ -195,8 +195,14 @@ func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 	}), nil
 }
 
-func parseConfigSetArgs(_ *cobra.Command, args []string) (string, string, error) {
-	if tokenFlag != "" && len(args) == 0 {
+func parseConfigSetArgs(cmd *cobra.Command, args []string) (string, string, error) {
+	// --token is a root persistent flag. Preserve backwards compatibility for
+	// wrapper scripts that pass --token="" with positional config set args,
+	// while still rejecting a standalone empty `agr config set --token=`.
+	if len(args) == 0 && cmd.Flags().Changed("token") {
+		if strings.TrimSpace(tokenFlag) == "" {
+			return "", "", output.NewUsageError("INVALID_USAGE", "--token requires a non-empty token value", "Run: agr config set --token <token>")
+		}
 		return "token", tokenFlag, nil
 	}
 	if tokenFlag != "" && len(args) != 0 {
@@ -205,14 +211,17 @@ func parseConfigSetArgs(_ *cobra.Command, args []string) (string, string, error)
 	switch len(args) {
 	case 1:
 		key, value, ok := strings.Cut(args[0], "=")
-		if !ok || key == "" {
-			return "", "", output.NewUsageError("INVALID_USAGE", "config set requires <key> <value> or <key>=<value>", "Run: agr config set token=<token>")
+		if !ok {
+			return "", "", output.NewUsageError("MISSING_REQUIRED_ARG", "missing required argument <value>", "Run: agr config set <key> <value> or agr config set <key>=<value>.")
+		}
+		if key == "" {
+			return "", "", output.NewUsageError("INVALID_USAGE", "invalid config key/value pair; key cannot be empty", "Run: agr config set <key> <value> or agr config set <key>=<value>.")
 		}
 		return key, value, nil
 	case 2:
 		return args[0], args[1], nil
 	default:
-		return "", "", output.NewUsageError("INVALID_USAGE", "config set requires <key> <value> or <key>=<value>", "Run: agr config set secret_id <id>")
+		return "", "", output.NewUsageError("MISSING_REQUIRED_ARG", "missing required arguments <key> <value>", "Run: agr config set <key> <value>, agr config set <key>=<value>, or agr config set --token <token>.")
 	}
 }
 
