@@ -199,6 +199,8 @@ func TestInvalidUsageStaysForMalformedArguments(t *testing.T) {
 		{command: "config.set", args: []string{"config", "set", "=value"}},
 		// --token is explicit but empty, which is malformed rather than absent.
 		{command: "config.set", args: []string{"config", "set", "--token="}},
+		{command: "config.set", args: []string{"--token=", "config", "set"}},
+		{command: "config.set", args: []string{"--token=tok-123", "config", "set", "region", "ap-guangzhou"}},
 		{command: "schema", args: []string{"schema", "a", "b"}},
 		{command: "gpu.group.delete", args: []string{"gpu", "group", "delete", "gpu-a", "gpu-b"}},
 	} {
@@ -214,6 +216,27 @@ func TestInvalidUsageStaysForMalformedArguments(t *testing.T) {
 				t.Fatalf("failure = %+v, want INVALID_USAGE/usage", failure.Failure)
 			}
 		})
+	}
+
+	// Scripts that unconditionally forward `--token="$TOKEN"` must still be able
+	// to run `config set <key> <value>` when TOKEN is empty.
+	result := runSchemaCLI(t, "--token=", "config", "set", "region", "ap-guangzhou", "-o", "json")
+	if result.exitCode != 0 || len(result.stderr) != 0 {
+		t.Fatalf("empty global --token= broke config set: exit=%d stdout=%s stderr=%s", result.exitCode, result.stdout, result.stderr)
+	}
+	var setEnv struct {
+		Status string `json:"Status"`
+		Data   struct {
+			Key   string `json:"Key"`
+			Value string `json:"Value"`
+			Path  string `json:"Path"`
+		} `json:"Data"`
+	}
+	if err := decodeEnvelope(t, result, &setEnv); err != nil {
+		t.Fatal(err)
+	}
+	if setEnv.Status != "succeeded" || setEnv.Data.Key != "region" || setEnv.Data.Value != "ap-guangzhou" {
+		t.Fatalf("unexpected config set envelope: %+v", setEnv)
 	}
 }
 

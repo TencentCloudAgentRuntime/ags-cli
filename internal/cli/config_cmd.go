@@ -196,16 +196,17 @@ func configSetFn(cmd *cobra.Command, args []string) (*CmdResult, error) {
 }
 
 func parseConfigSetArgs(cmd *cobra.Command, args []string) (string, string, error) {
-	// --token is a root persistent flag, so its presence is only observable
-	// through Changed; an explicit empty value must not be treated as absent.
-	if cmd.Flags().Changed("token") {
-		if len(args) != 0 {
-			return "", "", output.NewUsageError("INVALID_USAGE", "--token cannot be combined with positional config set arguments", "Run: agr config set --token <token>")
-		}
+	// --token is a root persistent flag. Preserve backwards compatibility for
+	// wrapper scripts that pass --token="" with positional config set args,
+	// while still rejecting a standalone empty `agr config set --token=`.
+	if len(args) == 0 && cmd.Flags().Changed("token") {
 		if strings.TrimSpace(tokenFlag) == "" {
 			return "", "", output.NewUsageError("INVALID_USAGE", "--token requires a non-empty token value", "Run: agr config set --token <token>")
 		}
 		return "token", tokenFlag, nil
+	}
+	if tokenFlag != "" && len(args) != 0 {
+		return "", "", output.NewUsageError("INVALID_USAGE", "--token cannot be combined with positional config set arguments", "Run: agr config set --token <token>")
 	}
 	switch len(args) {
 	case 1:

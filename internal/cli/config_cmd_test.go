@@ -50,6 +50,22 @@ var _ = Describe("config command", func() {
 		Expect(string(content)).To(ContainSubstring("flag-token-1234"))
 	})
 
+	It("allows an empty global --token= when positional config set args are provided", func() {
+		cfgPath := filepath.Join(GinkgoT().TempDir(), "config.toml")
+		config.SetConfigFile(cfgPath)
+		tokenFlag = ""
+		cmd := &cobra.Command{}
+		cmd.Flags().String("token", "", "")
+		Expect(cmd.Flags().Set("token", "")).To(Succeed())
+
+		_, err := configSetFn(cmd, []string{"region", "ap-guangzhou"})
+		Expect(err).NotTo(HaveOccurred())
+
+		content, readErr := os.ReadFile(cfgPath)
+		Expect(readErr).NotTo(HaveOccurred())
+		Expect(string(content)).To(ContainSubstring("region = 'ap-guangzhou'"))
+	})
+
 	It("masks token in config show output", func() {
 		config.SetToken("token-abcdef123456")
 		defer config.SetToken("")
